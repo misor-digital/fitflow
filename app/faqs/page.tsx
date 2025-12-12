@@ -1,0 +1,84 @@
+'use client';
+
+import { useState } from 'react';
+import Navigation from '@/components/Navigation';
+import Footer from '@/components/Footer';
+
+const faqs = [
+  {
+    question: 'Колко често ще получавам кутията си?',
+    answer: 'Можеш да избереш между еднократна покупка или абонаментен план - всеки месец, всеки 3 месеца, всеки 6 месеца.'
+  },
+  {
+    question: 'Кога ще получа кутията си?',
+    answer: 'При еднократна покупка ще получиш кутия до 3 работни дни. Ако избереш абонаментен план, ще получаваш кутията си в началото на месеца, между първо и пето число.'
+  },
+  {
+    question: 'Мога ли да купя кутия без абонамент?',
+    answer: 'Да, може да избереш еднократна покупка на кутия.'
+  },
+  {
+    question: 'Мога ли да анулирам абонамента си?',
+    answer: 'Да, може да анулираш абонамента си, като попълниш нашата форма за анулиране до 3 дни преди пускането на абонаментните кутии.'
+  }
+];
+
+export default function FAQsPage() {
+  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+
+  const toggleFAQ = (index: number) => {
+    setActiveIndex(activeIndex === index ? null : index);
+  };
+
+  return (
+    <>
+      <Navigation />
+      <div className="min-h-screen bg-gradient-to-b from-[#f0f9ff] to-white pt-24 pb-16 px-5">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-3xl md:text-4xl font-bold text-[#023047] text-center mb-12 relative after:content-[''] after:block after:w-16 after:h-1 after:bg-[#FB7D00] after:mx-auto after:mt-4 after:rounded">
+            Често задавани въпроси
+          </h1>
+
+          <div className="space-y-5">
+            {faqs.map((faq, index) => (
+              <div
+                key={index}
+                className={`bg-white rounded-2xl shadow-lg overflow-hidden transition-all ${
+                  activeIndex === index ? 'shadow-xl' : ''
+                }`}
+              >
+                <button
+                  onClick={() => toggleFAQ(index)}
+                  className="w-full text-left p-6 md:p-7 pr-16 relative hover:bg-[#FB7D00]/5 transition-colors"
+                >
+                  <h3 className="text-lg md:text-xl font-semibold text-[#023047] pr-8">
+                    {faq.question}
+                  </h3>
+                  <span
+                    className={`absolute right-6 top-1/2 -translate-y-1/2 text-3xl text-[#FB7D00] font-light transition-transform ${
+                      activeIndex === index ? 'rotate-180' : ''
+                    }`}
+                  >
+                    {activeIndex === index ? '−' : '+'}
+                  </span>
+                </button>
+                <div
+                  className={`overflow-hidden transition-all duration-300 ${
+                    activeIndex === index ? 'max-h-96' : 'max-h-0'
+                  }`}
+                >
+                  <div className="px-6 md:px-7 pb-6 md:pb-7">
+                    <p className="text-base md:text-lg text-gray-600 leading-relaxed">
+                      {faq.answer}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      <Footer />
+    </>
+  );
+}
