@@ -1,0 +1,56 @@
+name: 🧹 Chore / Setup / Polish
+description: Non-functional tasks, setup, maintenance, UX polish, and baseline hygiene
+title: "[Chore]: "
+labels:
+  - chore
+  - non-functional
+assignees: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this for tasks that do **not** add user-facing features and are **not** tech debt.
+        Examples: favicon, meta tags, CI tweaks, repo setup, analytics hooks, release polish.
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Why this task is needed
+      placeholder: >
+        Improves baseline UX / branding / project hygiene.
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope of work
+      description: What exactly needs to be done
+      placeholder: |
+        - Add favicon.ico
+        - Add apple-touch-icon
+        - Add metadata icons in app/layout.tsx
+    validations:
+      required: true
+
+  - type: dropdown
+    id: impact
+    attributes:
+      label: Impact
+      options:
+        - Cosmetic / UX polish
+        - Branding
+        - Developer experience
+        - Release readiness
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Completion checklist
+      options:
+        - label: No functional behavior change
+        - label: No migration or refactor required
+        - label: Safe to merge independently
