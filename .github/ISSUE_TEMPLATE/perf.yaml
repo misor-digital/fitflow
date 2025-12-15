@@ -1,0 +1,34 @@
+name: Performance
+description: Slow pages, hydration issues, large bundles
+title: "[Performance]: "
+labels: ["performance"]
+body:
+  - type: dropdown
+    id: area
+    attributes:
+      label: Affected area
+      options:
+        - Page load
+        - Hydration
+        - Bundle size
+        - API latency
+        - Images
+        - Caching
+
+  - type: textarea
+    id: metrics
+    attributes:
+      label: Metrics
+      placeholder: |
+        LCP:
+        CLS:
+        TTFB:
+        Bundle size:
+    validations:
+      required: true
+
+  - type: textarea
+    id: details
+    attributes:
+      label: Details / profiling output
+      render: shell

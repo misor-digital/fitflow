@@ -1,0 +1,29 @@
+name: Tech Debt
+description: Refactor, cleanup, or structural improvement
+title: "[Tech Debt]: "
+labels: ["tech-debt"]
+body:
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      placeholder: What needs cleanup and why?
+    validations:
+      required: true
+
+  - type: textarea
+    id: risk
+    attributes:
+      label: Risk if not addressed
+      placeholder: Performance, bugs, maintainability, etc.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: urgency
+    attributes:
+      label: Urgency
+      options:
+        - Low
+        - Medium
+        - High

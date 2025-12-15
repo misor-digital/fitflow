@@ -1,0 +1,64 @@
+name: Bug
+description: Something is broken or behaving incorrectly
+title: "[Bug]: "
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: router
+    attributes:
+      label: Router
+      options:
+        - App Router
+        - Pages Router
+        - Both
+    validations:
+      required: true
+
+  - type: input
+    id: next-version
+    attributes:
+      label: Next.js version
+      placeholder: e.g. 14.2.5
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug description
+      placeholder: What is happening?
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1.
+        2.
+        3.
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / stack traces
+      render: shell
+
+  - type: dropdown
+    id: env
+    attributes:
+      label: Environment
+      options:
+        - Development
+        - Preview
+        - Production
