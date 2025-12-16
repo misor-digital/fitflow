@@ -1,0 +1,30 @@
+name: Require Changeset (soft)
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, labeled, unlabeled]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Enforce changeset (unless skipped)
+        run: |
+          LABELS=$(jq -r '.pull_request.labels[].name' "$GITHUB_EVENT_PATH")
+
+          if echo "$LABELS" | grep -q "^skip-release$"; then
+            echo "🟡 skip-release label present, skipping changeset check"
+            exit 0
+          fi
+
+          if ls .changeset/*.md 1> /dev/null 2>&1; then
+            echo "✅ Changeset found"
+            exit 0
+          fi
+
+          echo "❌ No changeset found."
+          echo "Either add a changeset or apply the 'skip-release' label."
+          exit 1

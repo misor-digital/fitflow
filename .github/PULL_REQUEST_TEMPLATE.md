@@ -1,3 +1,10 @@
+> 📘 Development workflow: docs/workflow.md  
+> 📦 Releases: docs/releases.md  
+> 🚑 Hotfixes: docs/hotfixes.md  
+> ↩️ Rollback: docs/rollback.md  
+
+---
+
 ## Linked Issue
 Closes #
 
@@ -13,30 +20,33 @@ Closes #
 ---
 
 ## Description
-Briefly explain what this PR does and why.
+What changed and why?  
+Focus on *impact*, not implementation details.
 
 ---
 
-## Scope
-- [ ] API
-- [ ] Database
-- [ ] Auth
-- [ ] Background jobs
-- [ ] Config / Env
-- [ ] CI/CD
-- [ ] Docs
+## Target branch checklist
+- [ ] dev → feature work
+- [ ] stage → release candidate
+- [ ] main → production only
 
 ---
 
-## Environment impact
-- [ ] Dev
-- [ ] Stage
-- [ ] Production
+## Release intent
+- [ ] This change affects production behavior
+- [ ] This change does NOT require a release (docs / infra)
+
+> If this is a Feature or Bug going to `main`, a **changeset is required**  
+> unless `skip-release` is explicitly approved.
 
 ---
 
-## Checklist
-- [ ] Issue is linked
-- [ ] Tests added or updated (if applicable)
-- [ ] No secrets committed
-- [ ] Ready for review
+## Versioning
+- [ ] This PR does NOT bump versions (required unless targeting main)
+- [ ] This PR includes a changeset (if user-facing change)
+
+---
+
+## Validation
+- [ ] Build passes
+- [ ] Tested on Vercel preview (if applicable)
