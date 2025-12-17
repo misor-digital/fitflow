@@ -21,11 +21,11 @@ export default function Home() {
 
         <div className="relative z-20 max-w-[90%]">
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-4 drop-shadow-lg tracking-wide text-left">
-            Кутия за <br/>
-            АКТИВНИ дами
+            <p className='pb-2 md:pb-3'>Кутия за</p>
+            <p>АКТИВНИ дами</p>
           </h1>
-          <p className="text-xl md:text-2xl font-extrabold text-[#FFD700] mb-4 uppercase tracking-[3px] text-left drop-shadow-[0_0_20px_rgba(255,215,0,0.8)] animate-pulse">
-            Скоро стартираме!
+          <p className="text-sm md:text-2xl font-extrabold text-[#FFD700] mb-4 uppercase tracking-[3px] text-left drop-shadow-[0_0_20px_rgba(255,215,0,0.8)] animate-pulse">
+            ПРЕДВАРИТЕЛНА ПОРЪЧКА
           </p>
           <p className="text-base md:text-xl text-white mb-8 drop-shadow-md text-left">
             Спортно облекло, аксесоари, протеинови продукти, добавки и мотивация на едно място
