@@ -31,10 +31,10 @@ export default function Step1() {
     
     // Handle premium frequency selection
     if (id === 'monthly-premium') {
-      const finalSelection = `${id}-${premiumFrequency}` as any;
+      const finalSelection = `${id}-${premiumFrequency}` as typeof boxType;
       setBoxType(finalSelection);
     } else {
-      setBoxType(id as any);
+      setBoxType(id as typeof boxType);
     }
   };
 
@@ -43,7 +43,7 @@ export default function Step1() {
     
     // Always select the premium box and update with frequency
     setSelected('monthly-premium');
-    const finalSelection = `monthly-premium-${frequency}` as any;
+    const finalSelection = `monthly-premium-${frequency}` as typeof boxType;
     setBoxType(finalSelection);
   };
 
