@@ -16,7 +16,8 @@ jobs:
               'bug',
               'performance',
               'tech-debt',
-              'docs'
+              'docs',
+              'chore'
             ];
 
             const labels = context.payload.pull_request.labels.map(l => l.name);
