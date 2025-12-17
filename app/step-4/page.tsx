@@ -242,7 +242,7 @@ export default function Step4() {
         {/* Confirmation Message */}
         <div className="bg-gradient-to-br from-[#FB7D00]/10 to-[#FB7D00]/5 border-l-4 border-[#FB7D00] p-8 rounded-2xl shadow-lg mb-10">
           <p className="text-lg text-[#023047] leading-relaxed text-center font-semibold">
-            Моля, прегледай внимателно информацията по-горе. След натискане на "Потвърди и изпрати", твоята предварителна поръчка ще бъде записана и ще получиш потвърждение на имейла си.
+            Моля, прегледай внимателно информацията по-горе. След натискане на &quot;Потвърди и изпрати&quot;, твоята предварителна поръчка ще бъде записана и ще получиш потвърждение на имейла си.
           </p>
         </div>
 
