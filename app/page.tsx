@@ -111,8 +111,9 @@ export default function Home() {
           ].map((quote, idx) => (
             <div key={idx} className="bg-white/10 backdrop-blur-sm p-8 rounded-2xl border-l-4 border-[#FB7D00] hover:-translate-y-1 hover:bg-white/15 hover:shadow-2xl transition-all text-center">
               <p className="text-lg md:text-xl italic text-white leading-relaxed mb-4 max-w-2xl mx-auto">
-                <span className="text-5xl text-[#FB7D00] leading-none mr-1">"</span>
-                <span dangerouslySetInnerHTML={{ __html: quote.text }} />
+                <span className="text-5xl text-[#FB7D00] leading-none mr-1">&ldquo;</span>
+                <span dangerouslySetInnerHTML={{ __html: quote.text }} />                
+                <span className="text-5xl text-[#FB7D00] leading-none mr-1">&rdquo;</span>
               </p>
               <p className="text-base font-semibold text-white">
                 <span className="text-[#FB7D00]">— </span>{quote.author}
