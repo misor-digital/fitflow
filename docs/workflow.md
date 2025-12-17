@@ -35,6 +35,10 @@ Only `main` creates versions.
 ### 2. Development
 - Branch from `dev`
 - Commit freely
+- Run lint and fix all problems before pushing - CI will fail otherwise
+  ```bash
+  pnpm lint
+  ```
 
 ### 3. PR → `dev`
 - CI runs
