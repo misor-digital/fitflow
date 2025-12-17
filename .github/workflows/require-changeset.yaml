@@ -1,4 +1,4 @@
-name: Require Changeset (soft)
+name: Require Changeset
 
 on:
   pull_request:
