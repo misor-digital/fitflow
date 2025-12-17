@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFormStore } from '@/store/formStore';
 
@@ -66,13 +66,13 @@ export default function Step2() {
   const [notes, setNotes] = useState(store.additionalNotes);
 
   // Determine active steps based on box type and personalization
-  const getActiveSteps = () => {
-    if (wantsPersonalization === null) {
+  const getActiveSteps = (personalization: boolean | null, premium: boolean) => {
+    if (personalization === null) {
       return ['personalization'];
     }
     
-    if (isPremium) {
-      if (wantsPersonalization) {
+    if (premium) {
+      if (personalization) {
         return ['personalization', 'sport', 'colors', 'contents', 'flavors', 'size', 'dietary', 'notes'];
         // return ['personalization', 'sport', 'colors', 'contents', 'flavors', 'size', 'dietary', 'notes', 'summary'];
       } else {
@@ -81,7 +81,7 @@ export default function Step2() {
       }
     } else {
       // Standard box
-      if (wantsPersonalization) {
+      if (personalization) {
         return ['personalization', 'sport', 'flavors', 'dietary', 'notes'];
         // return ['personalization', 'sport', 'flavors', 'dietary', 'notes', 'summary'];
       } else {
@@ -91,18 +91,12 @@ export default function Step2() {
     }
   };
 
-  const [activeSteps, setActiveSteps] = useState<string[]>(getActiveSteps());
+  // Compute active steps directly based on dependencies
+  const activeSteps = getActiveSteps(wantsPersonalization, isPremium);
   const [currentStep, setCurrentStep] = useState(0);
 
-  useEffect(() => {
-    const newSteps = getActiveSteps();
-    setActiveSteps(newSteps);
-    
-    // If current step is beyond the new steps length, reset to last valid step
-    if (currentStep >= newSteps.length) {
-      setCurrentStep(Math.max(0, newSteps.length - 1));
-    }
-  }, [wantsPersonalization, isPremium]);
+  // Ensure current step is within valid range
+  const validCurrentStep = Math.min(currentStep, Math.max(0, activeSteps.length - 1));
 
   const progress = wantsPersonalization !== null
     ? ((currentStep + 1) / activeSteps.length) * 100
@@ -117,7 +111,7 @@ export default function Step2() {
   };
 
   const validateStep = () => {
-    const step = activeSteps[currentStep];
+    const step = activeSteps[validCurrentStep];
     switch (step) {
       case 'personalization':
         return wantsPersonalization !== null;
@@ -150,12 +144,11 @@ export default function Step2() {
   const handleNext = () => {
     if (!validateStep()) return;
     
-    // Special handling for personalization step - update active steps before moving forward
+    // Special handling for personalization step - move to next step
     if (activeSteps[currentStep] === 'personalization' && wantsPersonalization !== null) {
-      const newSteps = getActiveSteps();
-      setActiveSteps(newSteps);
-      // Move to next step in the new steps array
-      if (newSteps.length > 1) {
+      // Active steps will be recalculated automatically based on wantsPersonalization
+      // Move to next step in the array
+      if (activeSteps.length > 1) {
         setCurrentStep(1);
         window.scrollTo(0, 0);
       } else {
@@ -199,7 +192,7 @@ export default function Step2() {
   };
 
   const renderStep = () => {
-    const step = activeSteps[currentStep];
+    const step = activeSteps[validCurrentStep];
 
     switch (step) {
       case 'personalization':
