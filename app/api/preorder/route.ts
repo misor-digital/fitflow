@@ -1,87 +1,98 @@
 import { NextResponse } from 'next/server';
+import { createPreorder, type PreorderFormData } from '@/lib/supabase';
+import { handlePreorderEmailWorkflow } from '@/lib/email';
 
 export async function POST(request: Request) {
   try {
     const data = await request.json();
 
+    console.log('Received preorder data:', JSON.stringify(data, null, 2));
+
     // Validate required fields
     if (!data.fullName || !data.email || !data.boxType) {
+      console.error('Missing required fields:', { fullName: data.fullName, email: data.email, boxType: data.boxType });
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
       );
     }
 
-    // Log the data (in production, you would save to database)
-    console.log('Pre-order received:', {
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(data.email)) {
+      return NextResponse.json(
+        { error: 'Invalid email format' },
+        { status: 400 }
+      );
+    }
+
+    // Prepare the preorder data
+    const preorderData: PreorderFormData = {
+      boxType: data.boxType,
+      wantsPersonalization: data.wantsPersonalization ?? false,
       fullName: data.fullName,
       email: data.email,
       phone: data.phone,
-      boxType: data.boxType,
-      wantsPersonalization: data.wantsPersonalization,
-      preferences: data.preferences,
-      sizes: data.sizes,
-      timestamp: new Date().toISOString(),
-    });
+      // Personalization preferences (Step 2)
+      sports: data.preferences?.sports || data.sports,
+      sportOther: data.preferences?.sportOther || data.sportOther,
+      colors: data.preferences?.colors || data.colors,
+      contents: data.preferences?.contents || data.contents,
+      flavors: data.preferences?.flavors || data.flavors,
+      flavorOther: data.preferences?.flavorOther || data.flavorOther,
+      sizeUpper: data.sizes?.upper || data.sizeUpper,
+      sizeLower: data.sizes?.lower || data.sizeLower,
+      dietary: data.preferences?.dietary || data.dietary,
+      dietaryOther: data.preferences?.dietaryOther || data.dietaryOther,
+      additionalNotes: data.preferences?.additionalNotes || data.additionalNotes,
+    };
 
-    // TODO: In production, you would:
-    // 1. Save to PostgreSQL database
-    // 2. Send confirmation email via Resend/SendGrid
-    // 3. Add to email marketing list
-    
-    // Example database save (uncomment when you set up database):
-    /*
-    const { Pool } = require('pg');
-    const pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
-    });
+    console.log('Transformed preorder data:', JSON.stringify(preorderData, null, 2));
 
-    await pool.query(
-      `INSERT INTO preorders (full_name, email, phone, box_type, wants_personalization, created_at)
-       VALUES ($1, $2, $3, $4, $5, NOW())`,
-      [data.fullName, data.email, data.phone, data.boxType, data.wantsPersonalization]
-    );
+    // Save to Supabase
+    const { data: preorder, error } = await createPreorder(preorderData);
 
-    if (data.preferences) {
-      await pool.query(
-        `INSERT INTO preferences (preorder_id, sports, colors, contents, size_upper, size_lower, dietary, additional_notes)
-         VALUES (lastval(), $1, $2, $3, $4, $5, $6, $7)`,
-        [
-          JSON.stringify(data.preferences.sports),
-          JSON.stringify(data.preferences.colors),
-          JSON.stringify(data.preferences.contents),
-          data.sizes.upper,
-          data.sizes.lower,
-          JSON.stringify(data.preferences.dietary),
-          data.preferences.additionalNotes
-        ]
+    if (error) {
+      console.error('Error saving preorder to database:', error.message);
+      return NextResponse.json(
+        { error: `Failed to save preorder: ${error.message}` },
+        { status: 500 }
       );
     }
-    */
 
-    // Example email sending (uncomment when you set up Resend):
-    /*
-    const { Resend } = require('resend');
-    const resend = new Resend(process.env.RESEND_API_KEY);
-
-    await resend.emails.send({
-      from: 'FitFlow <onboarding@fitflow.bg>',
-      to: data.email,
-      subject: 'Благодарим за предварителната поръчка! 💪',
-      html: `
-        <h1>Здравей, ${data.fullName}!</h1>
-        <p>Благодарим ти, че се присъедини към списъка с предварителни поръчки на FitFlow!</p>
-        <p>Избрана кутия: ${data.boxType}</p>
-        <p>Скоро ще се свържем с теб с повече информация.</p>
-        <p>Поздрави,<br/>Екипът на FitFlow</p>
-      `
+    console.log('Pre-order saved successfully:', {
+      id: preorder?.id,
+      fullName: preorder?.full_name,
+      email: preorder?.email,
+      boxType: preorder?.box_type,
+      timestamp: preorder?.created_at,
     });
-    */
+
+    // Send confirmation email and add to contacts via Brevo
+    if (preorder) {
+      try {
+        const { emailResult, contactResult } = await handlePreorderEmailWorkflow(preorder);
+        
+        if (!emailResult.success) {
+          console.warn('Failed to send confirmation email:', emailResult.error);
+          // Don't fail the request - preorder was saved successfully
+        }
+        
+        if (!contactResult.success) {
+          console.warn('Failed to add contact to Brevo:', contactResult.error);
+          // Don't fail the request - this is not critical
+        }
+      } catch (emailError) {
+        // Log but don't fail the request - the preorder was saved successfully
+        console.error('Error in email workflow:', emailError);
+      }
+    }
 
     return NextResponse.json(
       { 
         success: true,
-        message: 'Pre-order submitted successfully'
+        message: 'Pre-order submitted successfully',
+        preorderId: preorder?.id
       },
       { status: 200 }
     );
