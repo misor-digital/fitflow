@@ -137,6 +137,8 @@ export default function Step4() {
           contents: store.contents,
           dietary: store.dietary,
           dietaryOther: store.dietaryOther,
+          flavors: store.flavors,
+          flavorOther: store.flavorOther,
           additionalNotes: store.additionalNotes,
         } : null,
         sizes: {
