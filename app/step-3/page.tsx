@@ -112,7 +112,7 @@ export default function Step3() {
                 id="email"
                 value={email}
                 onChange={handleEmailChange}
-                placeholder="твоят@email.com"
+                placeholder="name@email.com"
                 required
                 className={`w-full p-4 border-2 rounded-xl focus:outline-none transition-colors text-[#023047] ${
                   emailError 
