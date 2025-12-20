@@ -80,8 +80,7 @@ pnpm dev
   1. Personalization choice
   2. Sport preferences
   3. Color preferences
-  4. Box contents
-  5. Size selection
+  4. Size selection
   6. Dietary restrictions
   7. Additional notes
   8. Summary and confirmation
@@ -121,7 +120,6 @@ Handles form submission. Currently logs data to console.
   "preferences": {
     "sports": ["string"],
     "colors": ["string"],
-    "contents": ["string"],
     "dietary": ["string"],
     "additionalNotes": "string"
   },
@@ -218,7 +216,6 @@ CREATE TABLE preferences (
     sports JSONB,
     sport_other TEXT,
     colors JSONB,
-    contents JSONB,
     size_upper VARCHAR(10),
     size_lower VARCHAR(10),
     dietary JSONB,
