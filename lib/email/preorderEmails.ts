@@ -21,7 +21,7 @@ export async function sendPreorderConfirmationEmail(
     boxType: preorder.box_type,
     boxTypeDisplay: getBoxTypeDisplayName(preorder.box_type),
     wantsPersonalization: preorder.wants_personalization,
-    preorderId: preorder.id,
+    preorderId: preorder.order_id,
     sports: preorder.sports || undefined,
     colors: preorder.colors || undefined,
     contents: preorder.contents || undefined,
@@ -75,7 +75,7 @@ export async function addPreorderCustomerToContacts(
     attributes: {
       BOX_TYPE: preorder.box_type,
       WANTS_PERSONALIZATION: preorder.wants_personalization,
-      PREORDER_ID: preorder.id,
+      PREORDER_ID: preorder.order_id,
       PREORDER_DATE: preorder.created_at,
       PHONE: preorder.phone || '',
       // Store preferences as JSON strings for complex data

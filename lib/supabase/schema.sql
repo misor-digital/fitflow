@@ -15,9 +15,35 @@ EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;
 
+-- Create a function to generate human-readable order ID
+-- Format: FF-{DDMMYY}-{RAND(6)} e.g., FF-201224-A7K2M9
+CREATE OR REPLACE FUNCTION generate_order_id()
+RETURNS TEXT AS $$
+DECLARE
+  date_part TEXT;
+  random_part TEXT;
+  new_order_id TEXT;
+  chars TEXT := 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; -- Excluding I, O, 0, 1 to avoid confusion
+BEGIN
+  -- Generate date part (DDMMYY)
+  date_part := TO_CHAR(NOW(), 'DDMMYY');
+  
+  -- Generate 6 random alphanumeric characters
+  random_part := '';
+  FOR i IN 1..6 LOOP
+    random_part := random_part || SUBSTR(chars, FLOOR(RANDOM() * LENGTH(chars) + 1)::INT, 1);
+  END LOOP;
+  
+  new_order_id := 'FF-' || date_part || '-' || random_part;
+  
+  RETURN new_order_id;
+END;
+$$ LANGUAGE plpgsql;
+
 -- Create the preorders table
 CREATE TABLE IF NOT EXISTS preorders (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  order_id TEXT UNIQUE DEFAULT generate_order_id() NOT NULL,
   
   -- Contact Information (Step 3)
   full_name TEXT NOT NULL,
@@ -56,6 +82,9 @@ CREATE INDEX IF NOT EXISTS idx_preorders_created_at ON preorders(created_at DESC
 
 -- Create index on box_type for filtering
 CREATE INDEX IF NOT EXISTS idx_preorders_box_type ON preorders(box_type);
+
+-- Create index on order_id for faster lookups
+CREATE INDEX IF NOT EXISTS idx_preorders_order_id ON preorders(order_id);
 
 -- Create a function to automatically update the updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -110,3 +139,4 @@ COMMENT ON COLUMN preorders.colors IS 'Array of preferred colors';
 COMMENT ON COLUMN preorders.contents IS 'Array of preferred box contents (supplements, apparel, etc.)';
 COMMENT ON COLUMN preorders.flavors IS 'Array of preferred flavors for supplements';
 COMMENT ON COLUMN preorders.dietary IS 'Array of dietary restrictions/preferences';
+COMMENT ON COLUMN preorders.order_id IS 'Human-readable order ID in format FF-DDMMYY-XXXXXX';

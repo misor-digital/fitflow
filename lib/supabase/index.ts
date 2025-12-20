@@ -8,7 +8,8 @@ export type { Database, Preorder, PreorderInsert, BoxType } from './types';
 export { 
   createPreorder, 
   getPreorderById, 
+  getPreorderByOrderId, 
   getPreorderByEmail, 
-  getAllPreorders,
+  getAllPreorders, 
   type PreorderFormData 
 } from './preorderService';

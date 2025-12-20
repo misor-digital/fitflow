@@ -27,6 +27,7 @@ export interface PreorderInsert {
 
 export interface Preorder extends PreorderInsert {
   id: string;
+  order_id: string;
   created_at: string;
   updated_at: string;
 }

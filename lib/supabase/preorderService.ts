@@ -75,7 +75,7 @@ export async function createPreorder(data: PreorderFormData): Promise<{ data: Pr
 }
 
 /**
- * Get a preorder by ID
+ * Get a preorder by ID (UUID)
  */
 export async function getPreorderById(id: string): Promise<{ data: Preorder | null; error: Error | null }> {
   try {
@@ -93,6 +93,29 @@ export async function getPreorderById(id: string): Promise<{ data: Preorder | nu
     return { data: preorder as Preorder, error: null };
   } catch (err) {
     console.error('Error fetching preorder:', err);
+    return { data: null, error: err instanceof Error ? err : new Error('Unknown error') };
+  }
+}
+
+/**
+ * Get a preorder by human-readable order ID (e.g., FF-201224-A7K2)
+ */
+export async function getPreorderByOrderId(orderId: string): Promise<{ data: Preorder | null; error: Error | null }> {
+  try {
+    const { data: preorder, error } = await supabase
+      .from('preorders')
+      .select('*')
+      .eq('order_id', orderId)
+      .single();
+
+    if (error) {
+      console.error('Supabase error fetching preorder by order_id:', error);
+      return { data: null, error: new Error(error.message) };
+    }
+
+    return { data: preorder as Preorder, error: null };
+  } catch (err) {
+    console.error('Error fetching preorder by order_id:', err);
     return { data: null, error: err instanceof Error ? err : new Error('Unknown error') };
   }
 }
