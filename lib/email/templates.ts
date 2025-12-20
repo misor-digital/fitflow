@@ -220,8 +220,8 @@ export function generatePreorderConfirmationEmail(data: PreorderEmailData): stri
               <div style="border-left: 4px solid #ff6a00; padding-left: 20px; margin: 30px 0;">
                 <h3 style="color: #363636; margin-top: 0;">Какво следва?</h3>
                 <ol style="color: #4a5568; padding-left: 20px;">
-                  <li style="margin-bottom: 10px;">Ще прегледаме твоята поръчка в близко бъдеще.</li>
-                  <li style="margin-bottom: 10px;">Ще се свържем с теб за потвърждение на детайлите.</li>
+                  <li style="margin-bottom: 10px;">Ще прегледаме твоята поръчка и предпочитания.</li>
+                  <li style="margin-bottom: 10px;">Ще се свържем с теб за потвърждение на детайлите в близко бъдеще.</li>
                   <li style="margin-bottom: 10px;">Ще подготвим твоята персонализирана FitFlow кутия.</li>
                   <li>Ще получиш известие, когато кутията е на път към теб!</li>
                 </ol>
