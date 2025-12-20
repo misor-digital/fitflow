@@ -77,7 +77,7 @@ export default function Step3() {
         {/* Thank You Message */}
         <div className="bg-gradient-to-br from-[#FB7D00]/10 to-[#FB7D00]/5 border-l-4 border-[#FB7D00] p-8 rounded-2xl shadow-lg mb-10">
           <p className="text-2xl font-bold text-[#023047] mb-4 text-center">
-            Почти готово!
+            Почти e готово!
           </p>
           <p className="text-lg text-[#023047] leading-relaxed text-center">
             Попълни личните си данни, за да завършиш предварителната поръчка. Ще получиш потвърждение на имейла си.
@@ -112,7 +112,7 @@ export default function Step3() {
                 id="email"
                 value={email}
                 onChange={handleEmailChange}
-                placeholder="твоят@email.com"
+                placeholder="name@email.com"
                 required
                 className={`w-full p-4 border-2 rounded-xl focus:outline-none transition-colors text-[#023047] ${
                   emailError 

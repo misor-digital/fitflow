@@ -10,7 +10,6 @@ interface FormData {
   sports: string[];
   sportOther: string;
   colors: string[];
-  contents: string[];
   flavors: string[];
   flavorOther: string;
   sizeUpper: string;
@@ -31,7 +30,6 @@ interface FormStore extends FormData {
   setSports: (sports: string[]) => void;
   setSportOther: (other: string) => void;
   setColors: (colors: string[]) => void;
-  setContents: (contents: string[]) => void;
   setFlavors: (flavors: string[]) => void;
   setFlavorOther: (other: string) => void;
   setSizes: (upper: string, lower: string) => void;
@@ -48,7 +46,6 @@ const initialState: FormData = {
   sports: [],
   sportOther: '',
   colors: [],
-  contents: [],
   flavors: [],
   flavorOther: '',
   sizeUpper: '',
@@ -75,8 +72,6 @@ export const useFormStore = create<FormStore>()(
       setSportOther: (other) => set({ sportOther: other }),
       
       setColors: (colors) => set({ colors }),
-      
-      setContents: (contents) => set({ contents }),
       
       setFlavors: (flavors) => set({ flavors }),
       
