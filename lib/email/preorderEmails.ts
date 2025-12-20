@@ -41,7 +41,7 @@ export async function sendPreorderConfirmationEmail(
       email: preorder.email,
       name: preorder.full_name,
     },
-    subject: 'Потвърждение на предварителна поръчка - FitFlow',
+    subject: `FitFlow - Потвърждение на предварителна поръчка ${preorder.order_id}`,
     htmlContent,
     tags: [EMAIL_CONFIG.tags.preorder, EMAIL_CONFIG.tags.confirmation, EMAIL_CONFIG.tags.transactional],
   });
