@@ -47,6 +47,19 @@ const DIETARY_LABELS: Record<string, string> = {
   'other': 'Друго'
 };
 
+const COLOR_NAMES: Record<string, string> = {
+  '#000000': 'Черно',
+  '#FFFFFF': 'Бяло',
+  '#8A8A8A': 'Сиво',
+  '#0A1A33': 'Тъмно синьо',
+  '#7EC8E3': 'Светло синьо',
+  '#F4C2C2': 'Розово',
+  '#8d010d': 'Бордо',
+  '#B497D6': 'Лилаво',
+  '#556B2F': 'Маслинено зелено',
+  '#FB7D00': 'Оранжево'
+};
+
 // Success Modal Component
 function SuccessModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   if (!isOpen) return null;
@@ -239,7 +252,7 @@ export default function Step4() {
                     <div className="font-semibold text-[#023047] mb-2">Цветове:</div>
                     <div className="flex gap-2 flex-wrap">
                       {store.colors.map(c => (
-                        <div key={c} className="w-8 h-8 rounded-lg border-2 border-gray-300 shadow-sm" style={{ backgroundColor: c }} />
+                        <div key={c} title={COLOR_NAMES[c]} className="w-8 h-8 rounded-lg border-2 border-gray-300 shadow-sm" style={{ backgroundColor: c }} />
                       ))}
                     </div>
                   </div>

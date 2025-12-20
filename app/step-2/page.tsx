@@ -9,6 +9,19 @@ const COLORS = [
   '#F4C2C2', '#8d010d', '#B497D6', '#556B2F', '#FB7D00'
 ];
 
+const COLOR_NAMES: Record<string, string> = {
+  '#000000': 'Черно',
+  '#FFFFFF': 'Бяло',
+  '#8A8A8A': 'Сиво',
+  '#0A1A33': 'Тъмно синьо',
+  '#7EC8E3': 'Светло синьо',
+  '#F4C2C2': 'Розово',
+  '#8d010d': 'Бордо',
+  '#B497D6': 'Лилаво',
+  '#556B2F': 'Маслинено зелено',
+  '#FB7D00': 'Оранжево'
+};
+
 const SPORT_LABELS: Record<string, string> = {
   'fitness': 'Фитнес',
   'dance': 'Танци',
@@ -287,6 +300,7 @@ export default function Step2() {
                 <div
                   key={color}
                   onClick={() => toggleItem(colors, color, setColors)}
+                  title={COLOR_NAMES[color]}
                   className={`aspect-square rounded-xl cursor-pointer transition-all shadow-md hover:scale-105 ${
                     colors.includes(color) ? 'ring-4 ring-[#FB7D00] ring-offset-2' : ''
                   } ${color === '#FFFFFF' ? 'border-2 border-gray-300' : ''} ${color === '#FB7D00' && colors.includes(color) ? 'ring-[#023047]' : ''}`}

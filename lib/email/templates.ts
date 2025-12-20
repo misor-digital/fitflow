@@ -108,6 +108,44 @@ export function getDietaryDisplayNames(dietary: string[]): string[] {
 }
 
 /**
+ * Color name map for hex colors
+ */
+const COLOR_NAMES: Record<string, string> = {
+  '#000000': 'Черно',
+  '#FFFFFF': 'Бяло',
+  '#8A8A8A': 'Сиво',
+  '#0A1A33': 'Тъмно синьо',
+  '#7EC8E3': 'Светло синьо',
+  '#F4C2C2': 'Розово',
+  '#8d010d': 'Бордо',
+  '#B497D6': 'Лилаво',
+  '#556B2F': 'Маслинено зелено',
+  '#FB7D00': 'Оранжево'
+};
+
+/**
+ * Get color display name from hex code
+ */
+export function getColorDisplayName(color: string): string {
+  return COLOR_NAMES[color] || color;
+}
+
+/**
+ * Generate color swatches HTML for email
+ */
+function generateColorSwatchesHtml(colors: string[]): string {
+  if (!colors || colors.length === 0) return '';
+  
+  const swatches = colors.map(color => {
+    const colorName = getColorDisplayName(color);
+    const borderStyle = color === '#FFFFFF' ? 'border: 1px solid #e0e0e0;' : '';
+    return `<span title="${colorName}" style="display: inline-block; width: 24px; height: 24px; background-color: ${color}; border-radius: 4px; margin-right: 6px; ${borderStyle}"></span>`;
+  }).join('');
+  
+  return `<p style="margin: 5px 0;"><strong>Любими цветове:</strong></p><p style="margin: 5px 0;">${swatches}</p>`;
+}
+
+/**
  * Generate preorder confirmation email HTML
  */
 export function generatePreorderConfirmationEmail(data: PreorderEmailData): string {
@@ -122,7 +160,7 @@ export function generatePreorderConfirmationEmail(data: PreorderEmailData): stri
       <div style="background-color: #fff4ec; padding: 20px; border-radius: 8px; margin: 20px 0;">
         <h3 style="color: #363636; margin-top: 0;">Твоите предпочитания</h3>
         ${sportsDisplay.length ? `<p><strong>Спортове:</strong> ${sportsDisplay.join(', ')}</p>` : ''}
-        ${data.colors?.length ? `<p><strong>Любими цветове:</strong> ${data.colors.join(', ')}</p>` : ''}
+        ${data.colors?.length ? generateColorSwatchesHtml(data.colors) : ''}
         ${contentsDisplay.length ? `<p><strong>Предпочитано съдържание:</strong> ${contentsDisplay.join(', ')}</p>` : ''}
         ${flavorsDisplay.length ? `<p><strong>Вкусове:</strong> ${flavorsDisplay.join(', ')}</p>` : ''}
         ${data.sizeUpper ? `<p><strong>Размер (горна част):</strong> ${data.sizeUpper}</p>` : ''}
