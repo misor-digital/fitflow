@@ -29,16 +29,9 @@ const SPORT_LABELS: Record<string, string> = {
   'running': 'Бягане',
   'swimming': 'Плуване',
   'team': 'Отборен спорт',
-  'other': 'Друго'
+  'other': 'Друг'
 };
 
-const CONTENT_LABELS: Record<string, string> = {
-  'clothes': 'Спортни дрехи',
-  'accessories': 'Спортни аксесоари',
-  'protein': 'Протеинови продукти',
-  'supplements': 'Хранителни добавки',
-  'challenges': 'Тренировъчни предизвикателства и оферти'
-};
 
 const FLAVOR_LABELS: Record<string, string> = {
   'chocolate': 'Шоколад',
@@ -46,7 +39,7 @@ const FLAVOR_LABELS: Record<string, string> = {
   'vanilla': 'Ванилия',
   'salted-caramel': 'Солен карамел',
   'biscuit': 'Бисквита',
-  'other': 'Друго'
+  'other': 'Друг'
 };
 
 const DIETARY_LABELS: Record<string, string> = {
@@ -69,7 +62,6 @@ export default function Step2() {
   const [sports, setSports] = useState<string[]>(store.sports);
   const [sportOther, setSportOther] = useState(store.sportOther);
   const [colors, setColors] = useState<string[]>(store.colors);
-  const [contents, setContents] = useState<string[]>(store.contents);
   const [flavors, setFlavors] = useState<string[]>(store.flavors);
   const [flavorOther, setFlavorOther] = useState(store.flavorOther);
   const [sizeUpper, setSizeUpper] = useState(store.sizeUpper);
@@ -86,8 +78,8 @@ export default function Step2() {
     
     if (premium) {
       if (personalization) {
-        return ['personalization', 'sport', 'colors', 'contents', 'flavors', 'size', 'dietary', 'notes'];
-        // return ['personalization', 'sport', 'colors', 'contents', 'flavors', 'size', 'dietary', 'notes', 'summary'];
+        return ['personalization', 'sport', 'colors', 'flavors', 'size', 'dietary', 'notes'];
+        // return ['personalization', 'sport', 'colors', 'flavors', 'size', 'dietary', 'notes', 'summary'];
       } else {
         return ['personalization', 'size'];
         // return ['personalization', 'size', 'summary'];
@@ -135,8 +127,6 @@ export default function Step2() {
         return sports.length > 0;
       case 'colors':
         return colors.length > 0;
-      case 'contents':
-        return contents.length > 0;
       case 'flavors':
         if (flavors.includes('other')) {
           return flavors.length > 0 && flavorOther.trim().length > 0;
@@ -193,7 +183,6 @@ export default function Step2() {
     store.setSports(sports);
     store.setSportOther(sportOther);
     store.setColors(colors);
-    store.setContents(contents);
     store.setFlavors(flavors);
     store.setFlavorOther(flavorOther);
     store.setSizes(sizeUpper, sizeLower);
@@ -306,37 +295,6 @@ export default function Step2() {
                   } ${color === '#FFFFFF' ? 'border-2 border-gray-300' : ''} ${color === '#FB7D00' && colors.includes(color) ? 'ring-[#023047]' : ''}`}
                   style={{ backgroundColor: color }}
                 />
-              ))}
-            </div>
-          </div>
-        );
-
-      case 'contents':
-        return (
-          <div>
-            <h2 className="text-2xl md:text-3xl font-bold text-[#023047] text-center mb-10">
-              Какво държиш да има в твоята кутия?
-            </h2>
-            <div className="space-y-4">
-              {['clothes', 'accessories', 'protein', 'supplements', 'challenges'].map((item) => (
-                <div
-                  key={item}
-                  onClick={() => toggleItem(contents, item, setContents)}
-                  className={`bg-white rounded-xl p-5 shadow-md cursor-pointer transition-all border-3 ${
-                    contents.includes(item)
-                      ? 'border-[#FB7D00] bg-gradient-to-br from-[#FB7D00]/5 to-[#FB7D00]/2'
-                      : 'border-transparent hover:shadow-lg hover:-translate-y-0.5'
-                  }`}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className={`w-6 h-6 rounded border-3 flex-shrink-0 flex items-center justify-center ${contents.includes(item) ? 'border-[#FB7D00] bg-[#FB7D00]' : 'border-gray-300'}`}>
-                      {contents.includes(item) && <div className="text-white text-sm font-bold">✓</div>}
-                    </div>
-                    <div className="text-lg font-semibold text-[#023047]">
-                      {CONTENT_LABELS[item]}
-                    </div>
-                  </div>
-                </div>
               ))}
             </div>
           </div>
@@ -535,14 +493,6 @@ export default function Step2() {
                         {colors.map(c => (
                           <div key={c} className="w-6 h-6 rounded border" style={{ backgroundColor: c }} />
                         ))}
-                      </div>
-                    </div>
-                  )}
-                  {isPremium && contents.length > 0 && (
-                    <div className="border-b pb-4">
-                      <div className="font-semibold text-[#023047] mb-2">Продукти:</div>
-                      <div className="text-gray-600">
-                        {contents.map(c => CONTENT_LABELS[c] || c).join(', ')}
                       </div>
                     </div>
                   )}

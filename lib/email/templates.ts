@@ -57,12 +57,6 @@ export function getContentDisplayName(content: string): string {
   return contentMap[content] || content;
 }
 
-/**
- * Map contents array to display names
- */
-export function getContentsDisplayNames(contents: string[]): string[] {
-  return contents.map(getContentDisplayName);
-}
 
 /**
  * Map flavor value to display name in Bulgarian
@@ -151,7 +145,6 @@ function generateColorSwatchesHtml(colors: string[]): string {
 export function generatePreorderConfirmationEmail(data: PreorderEmailData): string {
   // Convert raw values to display names
   const sportsDisplay = data.sports?.length ? getSportsDisplayNames(data.sports) : [];
-  const contentsDisplay = data.contents?.length ? getContentsDisplayNames(data.contents) : [];
   const flavorsDisplay = data.flavors?.length ? getFlavorsDisplayNames(data.flavors) : [];
   const dietaryDisplay = data.dietary?.length ? getDietaryDisplayNames(data.dietary) : [];
 
@@ -159,13 +152,12 @@ export function generatePreorderConfirmationEmail(data: PreorderEmailData): stri
     ? `
       <div style="background-color: #fff4ec; padding: 20px; border-radius: 8px; margin: 20px 0;">
         <h3 style="color: #363636; margin-top: 0;">Твоите предпочитания</h3>
-        ${sportsDisplay.length ? `<p><strong>Спортове:</strong> ${sportsDisplay.join(', ')}</p>` : ''}
+        ${sportsDisplay.length ? `<p><strong>Спортове:</strong> ${sportsDisplay.join(', ')}  ${data.sportOther && ` (${data.sportOther})`}</p>` : ''}
         ${data.colors?.length ? generateColorSwatchesHtml(data.colors) : ''}
-        ${contentsDisplay.length ? `<p><strong>Предпочитано съдържание:</strong> ${contentsDisplay.join(', ')}</p>` : ''}
-        ${flavorsDisplay.length ? `<p><strong>Вкусове:</strong> ${flavorsDisplay.join(', ')}</p>` : ''}
+        ${flavorsDisplay.length ? `<p><strong>Вкусове:</strong> ${flavorsDisplay.join(', ')}  ${data.flavorOther && ` (${data.flavorOther})`}</p>` : ''}
         ${data.sizeUpper ? `<p><strong>Размер (горна част):</strong> ${data.sizeUpper}</p>` : ''}
         ${data.sizeLower ? `<p><strong>Размер (долна част):</strong> ${data.sizeLower}</p>` : ''}
-        ${dietaryDisplay.length ? `<p><strong>Диетични предпочитания:</strong> ${dietaryDisplay.join(', ')}</p>` : ''}
+        ${dietaryDisplay.length ? `<p><strong>Диетични предпочитания:</strong> ${dietaryDisplay.join(', ')}  ${data.dietaryOther && ` (${data.dietaryOther})`}</p>` : ''}
         ${data.additionalNotes ? `<p><strong>Допълнителни бележки:</strong> ${data.additionalNotes}</p>` : ''}
       </div>
     `

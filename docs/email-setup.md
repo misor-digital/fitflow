@@ -83,7 +83,7 @@ When using templates, these variables are passed:
 - `BOXTYPEDISPLAY` - Human-readable box type name
 - `PREORDERID` - Unique preorder ID
 - `WANTSPERSONALIZATION` - Boolean
-- `SPORTS`, `COLORS`, `CONTENTS`, `FLAVORS` - Preferences (comma-separated)
+- `SPORTS`, `COLORS`, `FLAVORS` - Preferences (comma-separated)
 - `SIZEUPPER`, `SIZELOWER` - Size preferences
 - `DIETARY` - Dietary preferences
 - `ADDITIONALNOTES` - Customer notes

@@ -74,11 +74,13 @@ export interface PreorderEmailData {
   wantsPersonalization: boolean;
   preorderId: string;
   sports?: string[];
+  sportOther?: string;
   colors?: string[];
-  contents?: string[];
   flavors?: string[];
+  flavorOther?: string;
   sizeUpper?: string;
   sizeLower?: string;
   dietary?: string[];
+  dietaryOther?: string;
   additionalNotes?: string;
 }

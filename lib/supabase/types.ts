@@ -15,7 +15,6 @@ export interface PreorderInsert {
   sports?: string[] | null;
   sport_other?: string | null;
   colors?: string[] | null;
-  contents?: string[] | null;
   flavors?: string[] | null;
   flavor_other?: string | null;
   size_upper?: string | null;

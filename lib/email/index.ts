@@ -28,7 +28,6 @@ export {
   getSportDisplayName,
   getSportsDisplayNames,
   getContentDisplayName,
-  getContentsDisplayNames,
   getFlavorDisplayName,
   getFlavorsDisplayNames,
   getDietaryDisplayName,

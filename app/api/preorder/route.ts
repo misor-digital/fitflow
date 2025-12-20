@@ -37,7 +37,6 @@ export async function POST(request: Request) {
       sports: data.preferences?.sports || data.sports,
       sportOther: data.preferences?.sportOther || data.sportOther,
       colors: data.preferences?.colors || data.colors,
-      contents: data.preferences?.contents || data.contents,
       flavors: data.preferences?.flavors || data.flavors,
       flavorOther: data.preferences?.flavorOther || data.flavorOther,
       sizeUpper: data.sizes?.upper || data.sizeUpper,

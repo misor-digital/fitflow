@@ -60,7 +60,6 @@ CREATE TABLE IF NOT EXISTS preorders (
   sports TEXT[] DEFAULT NULL,
   sport_other TEXT,
   colors TEXT[] DEFAULT NULL,
-  contents TEXT[] DEFAULT NULL,
   flavors TEXT[] DEFAULT NULL,
   flavor_other TEXT,
   size_upper TEXT,
@@ -136,7 +135,6 @@ COMMENT ON COLUMN preorders.box_type IS 'Type of subscription box selected in St
 COMMENT ON COLUMN preorders.wants_personalization IS 'Whether user opted for personalized box in Step 2';
 COMMENT ON COLUMN preorders.sports IS 'Array of sports/activities selected for personalization';
 COMMENT ON COLUMN preorders.colors IS 'Array of preferred colors';
-COMMENT ON COLUMN preorders.contents IS 'Array of preferred box contents (supplements, apparel, etc.)';
 COMMENT ON COLUMN preorders.flavors IS 'Array of preferred flavors for supplements';
 COMMENT ON COLUMN preorders.dietary IS 'Array of dietary restrictions/preferences';
 COMMENT ON COLUMN preorders.order_id IS 'Human-readable order ID in format FF-DDMMYY-XXXXXX';

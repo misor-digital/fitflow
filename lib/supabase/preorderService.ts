@@ -10,7 +10,6 @@ export interface PreorderFormData {
   sports?: string[];
   sportOther?: string;
   colors?: string[];
-  contents?: string[];
   flavors?: string[];
   flavorOther?: string;
   sizeUpper?: string;
@@ -38,7 +37,6 @@ function transformFormDataToInsert(data: PreorderFormData): PreorderInsert {
     sports: data.sports?.length ? data.sports : null,
     sport_other: data.sportOther || null,
     colors: data.colors?.length ? data.colors : null,
-    contents: data.contents?.length ? data.contents : null,
     flavors: data.flavors?.length ? data.flavors : null,
     flavor_other: data.flavorOther || null,
     size_upper: data.sizeUpper || null,

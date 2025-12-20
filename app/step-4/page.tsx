@@ -22,14 +22,6 @@ const SPORT_LABELS: Record<string, string> = {
   'other': 'Друго'
 };
 
-const CONTENT_LABELS: Record<string, string> = {
-  'clothes': 'Спортни дрехи',
-  'accessories': 'Спортни аксесоари',
-  'protein': 'Протеинови продукти',
-  'supplements': 'Хранителни добавки',
-  'challenges': 'Тренировъчни предизвикателства и оферти'
-};
-
 const FLAVOR_LABELS: Record<string, string> = {
   'chocolate': 'Шоколад',
   'strawberry': 'Ягода',
@@ -147,7 +139,6 @@ export default function Step4() {
           sports: store.sports,
           sportOther: store.sportOther,
           colors: store.colors,
-          contents: store.contents,
           dietary: store.dietary,
           dietaryOther: store.dietaryOther,
           flavors: store.flavors,
@@ -257,19 +248,12 @@ export default function Step4() {
                     </div>
                   </div>
                 )}
-                {store.contents.length > 0 && (
-                  <div>
-                    <div className="font-semibold text-[#023047] mb-1">Продукти:</div>
-                    <div className="text-gray-600">
-                      {store.contents.map(c => CONTENT_LABELS[c] || c).join(', ')}
-                    </div>
-                  </div>
-                )}
                 {store.flavors.length > 0 && (
                   <div>
                     <div className="font-semibold text-[#023047] mb-1">Вкусове:</div>
                     <div className="text-gray-600">
                       {store.flavors.map(f => FLAVOR_LABELS[f] || f).join(', ')}
+                      {store.flavorOther && ` (${store.flavorOther})`}
                     </div>
                   </div>
                 )}

@@ -23,12 +23,14 @@ export async function sendPreorderConfirmationEmail(
     wantsPersonalization: preorder.wants_personalization,
     preorderId: preorder.order_id,
     sports: preorder.sports || undefined,
+    sportOther: preorder.sport_other || undefined,
     colors: preorder.colors || undefined,
-    contents: preorder.contents || undefined,
     flavors: preorder.flavors || undefined,
+    flavorOther: preorder.flavor_other || undefined,
     sizeUpper: preorder.size_upper || undefined,
     sizeLower: preorder.size_lower || undefined,
     dietary: preorder.dietary || undefined,
+    dietaryOther: preorder.dietary_other || undefined,
     additionalNotes: preorder.additional_notes || undefined,
   };
 
@@ -80,7 +82,12 @@ export async function addPreorderCustomerToContacts(
       PHONE: preorder.phone || '',
       // Store preferences as JSON strings for complex data
       SPORTS: preorder.sports?.join(', ') || '',
+      SPORTS_OTHER: preorder.sport_other || '',
       COLORS: preorder.colors?.join(', ') || '',
+      FLAVORS: preorder.flavors?.join(', ') || '',
+      FLAVORS_OTHER: preorder.flavor_other || '',
+      DIETARY: preorder.dietary?.join(', ') || '',
+      DIETARY_OTHER: preorder.dietary_other || '',
       SIZE_UPPER: preorder.size_upper || '',
       SIZE_LOWER: preorder.size_lower || '',
     },
