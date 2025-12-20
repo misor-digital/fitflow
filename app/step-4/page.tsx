@@ -52,76 +52,14 @@ const COLOR_NAMES: Record<string, string> = {
   '#FB7D00': 'Оранжево'
 };
 
-// Success Modal Component
-function SuccessModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-  if (!isOpen) return null;
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
-      {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={onClose}
-      />
-      
-      {/* Modal */}
-      <div className="relative bg-white rounded-3xl p-8 md:p-12 max-w-md mx-4 shadow-2xl transform animate-[scaleIn_0.3s_ease-out]">
-        {/* Success Icon */}
-        <div className="flex justify-center mb-6">
-          <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center">
-            <svg 
-              className="w-10 h-10 text-green-500" 
-              fill="none" 
-              stroke="currentColor" 
-              viewBox="0 0 24 24"
-            >
-              <path 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                strokeWidth={3} 
-                d="M5 13l4 4L19 7" 
-              />
-            </svg>
-          </div>
-        </div>
-
-        {/* Title */}
-        <h3 className="text-2xl md:text-3xl font-bold text-[#023047] text-center mb-4">
-          Благодарим ти!
-        </h3>
-
-        {/* Message */}
-        <p className="text-gray-600 text-center text-lg mb-8 leading-relaxed">
-          Твоите данни са изпратени успешно. Скоро ще се свържем с теб!
-        </p>
-
-        {/* Button */}
-        <button
-          onClick={onClose}
-          className="w-full bg-[#FB7D00] text-white py-4 rounded-full text-lg font-semibold uppercase tracking-wide shadow-lg hover:bg-[#e67100] transition-all hover:-translate-y-0.5 hover:shadow-xl"
-        >
-          Към началото
-        </button>
-      </div>
-    </div>
-  );
-}
-
 export default function Step4() {
   const router = useRouter();
   const store = useFormStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const handleBack = () => {
     router.push('/step-3');
-  };
-
-  const handleModalClose = () => {
-    setShowSuccessModal(false);
-    store.reset();
-    router.push('/');
   };
 
   const handleFinalSubmit = async () => {
@@ -163,7 +101,8 @@ export default function Step4() {
         throw new Error('Failed to submit');
       }
 
-      setShowSuccessModal(true);
+      // Redirect to thank you page on success
+      router.push('/thank-you/preorder');
     } catch (err) {
       setError('Възникна грешка. Моля, опитайте отново.');
       console.error(err);
@@ -330,9 +269,6 @@ export default function Step4() {
           </button>
         </div>
       </div>
-
-      {/* Success Modal */}
-      <SuccessModal isOpen={showSuccessModal} onClose={handleModalClose} />
     </div>
   );
 }
