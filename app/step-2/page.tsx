@@ -29,7 +29,7 @@ const SPORT_LABELS: Record<string, string> = {
   'running': 'Бягане',
   'swimming': 'Плуване',
   'team': 'Отборен спорт',
-  'other': 'Друг'
+  'other': 'Други'
 };
 
 
@@ -39,7 +39,7 @@ const FLAVOR_LABELS: Record<string, string> = {
   'vanilla': 'Ванилия',
   'salted-caramel': 'Солен карамел',
   'biscuit': 'Бисквита',
-  'other': 'Друг'
+  'other': 'Други'
 };
 
 const DIETARY_LABELS: Record<string, string> = {
@@ -47,7 +47,7 @@ const DIETARY_LABELS: Record<string, string> = {
   'lactose': 'Без лактоза',
   'gluten': 'Без глутен',
   'vegan': 'Веган',
-  'other': 'Друго'
+  'other': 'Други'
 };
 
 export default function Step2() {
@@ -144,6 +144,15 @@ export default function Step2() {
     }
   };
 
+  // Helper function to sort raw items with 'other' at the end
+  function sortRawWithOtherAtEnd(items: string[]): string[] {
+    return [...items].sort((a, b) => {
+      if (a === 'other') return 1;
+      if (b === 'other') return -1;
+      return 0;
+    });
+  }
+
   const handleNext = () => {
     if (!validateStep()) return;
     
@@ -180,13 +189,13 @@ export default function Step2() {
   const handleSubmit = () => {
     // Save all data to store
     store.setPersonalization(wantsPersonalization!);
-    store.setSports(sports);
+    store.setSports(sortRawWithOtherAtEnd(sports));
     store.setSportOther(sportOther);
     store.setColors(colors);
-    store.setFlavors(flavors);
+    store.setFlavors(sortRawWithOtherAtEnd(flavors));
     store.setFlavorOther(flavorOther);
     store.setSizes(sizeUpper, sizeLower);
-    store.setDietary(dietary);
+    store.setDietary(sortRawWithOtherAtEnd(dietary));
     store.setDietaryOther(dietaryOther);
     store.setAdditionalNotes(notes);
     

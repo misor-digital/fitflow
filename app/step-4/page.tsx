@@ -19,7 +19,7 @@ const SPORT_LABELS: Record<string, string> = {
   'running': 'Бягане',
   'swimming': 'Плуване',
   'team': 'Отборен спорт',
-  'other': 'Друго'
+  'other': 'Други'
 };
 
 const FLAVOR_LABELS: Record<string, string> = {
@@ -28,7 +28,7 @@ const FLAVOR_LABELS: Record<string, string> = {
   'vanilla': 'Ванилия',
   'salted-caramel': 'Солен карамел',
   'biscuit': 'Бисквита',
-  'other': 'Друго'
+  'other': 'Други'
 };
 
 const DIETARY_LABELS: Record<string, string> = {
@@ -36,7 +36,7 @@ const DIETARY_LABELS: Record<string, string> = {
   'lactose': 'Без лактоза',
   'gluten': 'Без глутен',
   'vegan': 'Веган',
-  'other': 'Друго'
+  'other': 'Други'
 };
 
 const COLOR_NAMES: Record<string, string> = {
