@@ -13,7 +13,7 @@ export default function Navigation() {
   return (
     <nav className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm shadow-md z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex justify-between items-center h-12">
           {/* Desktop Menu - Left Side */}
           <div className="hidden md:flex items-center space-x-8">
             <Link
@@ -66,14 +66,14 @@ export default function Navigation() {
           </button>
 
           {/* Logo - Center */}
-          <Link href="/" className="absolute left-1/2 transform -translate-x-1/2 text-2xl md:text-3xl font-extrabold text-[#023047] italic hover:text-[#FB7D00] transition-colors">
+          <Link href="/" className="absolute left-1/2 transform -translate-x-1/2 text-2xl md:text-3xl font-extrabold text-[#023047] italic hover:text-[#FB7D00] hover:scale-150 transition-all duration-300">
             FitFlow
           </Link>
 
           {/* CTA Button - Right Side */}
           <Link
             href="/step-1"
-            className="bg-[#FB7D00] hover:bg-[#e06f00] text-white font-semibold px-4 py-2 rounded-lg transition-colors"
+            className="bg-[#023047] hover:bg-[#FB7D00] text-white font-semibold text-sm md:text-base px-3 py-1.5 md:px-4 md:py-2 rounded-lg transition-colors text-center flex items-center justify-center"
           >
             Стартирай
           </Link>
