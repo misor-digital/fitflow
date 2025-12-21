@@ -33,22 +33,24 @@ export default function AboutPage() {
               </p>
 
               <p className="text-base md:text-lg leading-relaxed text-[#333] font-semibold">
-                И точно тогава се роди идеята за FitFlow - спортна абонаментна кутия за активни жени, пълна с полезни продукти и предизвикателства, които да ни напомнят защо започнахме и защо не трябва да спираме. Тя e начин да се чувстваме вдъхновени, да сме активни и да се грижим за себе си с удоволствие.
+                И точно тогава се роди идеята за <span className="text-[#FB7D00] font-bold">FitFlow</span> - спортна абонаментна кутия за активни жени, пълна с полезни продукти и предизвикателства, които да ни напомнят защо започнахме и защо не трябва да спираме. Тя e начин да се чувстваме вдъхновени, да сме активни и да се грижим за себе си с удоволствие.
               </p>
 
               <p className="text-base md:text-lg leading-relaxed text-[#333] font-semibold">
-                Идеята за FitFlow идва от един човек, но зад развитието ѝ стоят много. Това са хора, които вярват в нея – специалисти, професионалисти и близки. Те помагат със знания, опит и различни гледни точки. Може да не са пред камерата, но са неразделна част от това, което FitFlow представлява.
+                Идеята за <span className="text-[#FB7D00] font-bold">FitFlow</span> идва от един човек, но зад развитието ѝ стоят много. Това са хора, които вярват в нея – специалисти, професионалисти и близки. Те помагат със знания, опит и различни гледни точки. Може да не са пред камерата, но са неразделна част от това, което <span className="text-[#FB7D00] font-bold">FitFlow</span> представлява.
               </p>
 
-              <div className="bg-gradient-to-br from-[#023047] to-[#045a7f] p-8 rounded-2xl border-l-4 border-[#FB7D00] hover:-translate-y-1 hover:shadow-2xl transition-all text-center">
-                <p className="text-lg md:text-xl italic text-white leading-relaxed mb-4 max-w-2xl mx-auto">
-                  <span className="text-5xl text-[#FB7D00] leading-none mr-1">&quot;</span>
-                  <span>Най-трудно е решението да се действа, останалото е просто упоритост.</span>
+              <div className="border-l-4 border-[#FB7D00] pl-5 my-8">
+                <p className="text-lg md:text-xl italic text-[#333] leading-relaxed mb-2">
+                  &quot;Най-трудно е решението да се действа, останалото е просто упоритост.&quot;
                 </p>
-                <p className="text-base font-semibold text-white">
-                  <span className="text-[#FB7D00]">— </span>Амелия Еърхарт
+                <p className="text-base font-semibold text-[#666]">
+                  — Амелия Еърхарт
                 </p>
               </div>
+              <p className="text-base text-[#333] mt-6 font-semibold text-right">
+                От екипа на FitFlow
+              </p>
             </div>
           </div>
         </div>
