@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 
@@ -14,8 +15,14 @@ export default function AboutPage() {
           <div className="flex flex-col md:flex-row items-center gap-8 md:gap-16">
             {/* Photo Placeholder */}
             <div className="w-full max-w-sm md:max-w-md lg:w-96 flex-shrink-0 md:order-2">
-              <div className="bg-gradient-to-br from-[#FB7D00] to-[#ff9a3d] rounded-3xl shadow-2xl flex items-center justify-center overflow-hidden">
-                <img src="/storage/about.jpg" alt="Симона от FitFlow" className="w-full h-full object-cover" />
+              <div className="bg-gradient-to-br from-[#FB7D00] to-[#ff9a3d] rounded-3xl shadow-2xl overflow-hidden">
+                <Image 
+                  src="/storage/about.jpg" 
+                  alt="Симона от FitFlow" 
+                  width={400}
+                  height={500}
+                  className="w-full h-auto"
+                />
               </div>
             </div>
 
