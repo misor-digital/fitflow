@@ -14,12 +14,7 @@ export default function Navigation() {
     <nav className="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-sm shadow-md z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <Link href="/" className="text-2xl md:text-3xl font-extrabold text-[#023047] italic hover:text-[#FB7D00] transition-colors">
-            FitFlow
-          </Link>
-
-          {/* Desktop Menu */}
+          {/* Desktop Menu - Left Side */}
           <div className="hidden md:flex items-center space-x-8">
             <Link
               href="/"
@@ -47,7 +42,7 @@ export default function Navigation() {
             </Link>
           </div>
 
-          {/* Mobile Menu Button */}
+          {/* Mobile Menu Button - Left Side */}
           <button
             onClick={() => setIsOpen(!isOpen)}
             className="md:hidden p-2 rounded-lg text-[#023047] hover:bg-gray-100 transition-colors"
@@ -69,6 +64,19 @@ export default function Navigation() {
               )}
             </svg>
           </button>
+
+          {/* Logo - Center */}
+          <Link href="/" className="absolute left-1/2 transform -translate-x-1/2 text-2xl md:text-3xl font-extrabold text-[#023047] italic hover:text-[#FB7D00] transition-colors">
+            FitFlow
+          </Link>
+
+          {/* CTA Button - Right Side */}
+          <Link
+            href="/step-1"
+            className="bg-[#FB7D00] hover:bg-[#e06f00] text-white font-semibold px-4 py-2 rounded-lg transition-colors"
+          >
+            Стартирай
+          </Link>
         </div>
 
         {/* Mobile Menu */}
