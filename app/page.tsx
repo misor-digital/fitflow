@@ -11,7 +11,7 @@ export default function Home() {
         {/* Hero Section */}
         <section className="relative flex flex-col justify-center items-center text-center px-5 overflow-hidden mt-12 h-[calc(100vh-3rem)]">
         <Image
-          src="/storage/a woman stepping on a box dark blue 2 exntended.png"
+          src="/storage/hero.png"
           alt="FitFlow активна жена"
           fill
           className="object-cover"
