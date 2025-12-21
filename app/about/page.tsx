@@ -42,7 +42,7 @@ export default function AboutPage() {
 
               <div className="bg-gradient-to-br from-[#023047] to-[#045a7f] p-8 rounded-2xl border-l-4 border-[#FB7D00] hover:-translate-y-1 hover:shadow-2xl transition-all text-center">
                 <p className="text-lg md:text-xl italic text-white leading-relaxed mb-4 max-w-2xl mx-auto">
-                  <span className="text-5xl text-[#FB7D00] leading-none mr-1">"</span>
+                  <span className="text-5xl text-[#FB7D00] leading-none mr-1">&quot;</span>
                   <span>Най-трудно е решението да се действа, останалото е просто упоритост.</span>
                 </p>
                 <p className="text-base font-semibold text-white">
