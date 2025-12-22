@@ -45,4 +45,5 @@ export type {
   ContactData,
   ContactResult,
   PreorderEmailData,
+  EmailDiscountData,
 } from './types';

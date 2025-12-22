@@ -44,6 +44,15 @@ export async function POST(request: Request) {
       dietary: data.preferences?.dietary || data.dietary,
       dietaryOther: data.preferences?.dietaryOther || data.dietaryOther,
       additionalNotes: data.preferences?.additionalNotes || data.additionalNotes,
+      // Promo code and discount (Step 4)
+      promoCode: data.promoCode || undefined,
+      discount: data.discount ? {
+        code: data.discount.code,
+        discountType: data.discount.discountType,
+        discountValue: data.discount.discountValue,
+        discountAmount: data.discount.discountAmount,
+        description: data.discount.description,
+      } : undefined,
     };
 
     console.log('Transformed preorder data:', JSON.stringify(preorderData, null, 2));

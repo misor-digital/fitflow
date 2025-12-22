@@ -5,8 +5,9 @@
 
 import { sendEmail, createOrUpdateContact, addContactToList, EMAIL_CONFIG } from './emailService';
 import { generatePreorderConfirmationEmail, getBoxTypeDisplayName } from './templates';
-import type { EmailResult, ContactResult, PreorderEmailData } from './types';
+import type { EmailResult, ContactResult, PreorderEmailData, EmailDiscountData } from './types';
 import type { Preorder } from '@/lib/supabase/types';
+import { BOX_PRICES } from '@/lib/promo';
 
 /**
  * Send preorder confirmation email to customer
@@ -14,6 +15,20 @@ import type { Preorder } from '@/lib/supabase/types';
 export async function sendPreorderConfirmationEmail(
   preorder: Preorder
 ): Promise<EmailResult> {
+  // Calculate prices for email
+  const originalPrice = BOX_PRICES[preorder.box_type] || 0;
+  const discountAmount = preorder.discount?.discount_amount || 0;
+  const finalPrice = Math.max(0, originalPrice - discountAmount);
+
+  // Transform discount data for email
+  const emailDiscount: EmailDiscountData | undefined = preorder.discount ? {
+    code: preorder.discount.code,
+    discountType: preorder.discount.discount_type,
+    discountValue: preorder.discount.discount_value,
+    discountAmount: preorder.discount.discount_amount,
+    description: preorder.discount.description,
+  } : undefined;
+
   // Prepare email data
   const emailData: PreorderEmailData = {
     fullName: preorder.full_name,
@@ -32,6 +47,11 @@ export async function sendPreorderConfirmationEmail(
     dietary: preorder.dietary || undefined,
     dietaryOther: preorder.dietary_other || undefined,
     additionalNotes: preorder.additional_notes || undefined,
+    // Discount info
+    promoCode: preorder.promo_code || undefined,
+    discount: emailDiscount,
+    originalPrice: preorder.discount ? originalPrice : undefined,
+    finalPrice: preorder.discount ? finalPrice : undefined,
   };
 
   // Generate email content

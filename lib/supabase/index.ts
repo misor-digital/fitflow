@@ -2,7 +2,7 @@
 export { supabase } from './client';
 
 // Types
-export type { Database, Preorder, PreorderInsert, BoxType } from './types';
+export type { Database, Preorder, PreorderInsert, BoxType, DiscountData } from './types';
 
 // Services
 export { 

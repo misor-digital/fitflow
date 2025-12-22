@@ -1,16 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFormStore } from '@/store/formStore';
 import Link from 'next/link';
+import type { AppliedDiscount } from '@/lib/promo';
 
-const BOX_TYPES: Record<string, { name: string; price: string }> = {
-  'monthly-standard': { name: 'Месечна - Стандартна', price: '48.70 лв / 24.90 €' },
-  'monthly-premium-monthly': { name: 'Месечна - Премиум (всеки месец)', price: '68.26 лв / 34.90 €' },
-  'monthly-premium-seasonal': { name: 'Месечна - Премиум (всеки 3 месеца)', price: '68.26 лв / 34.90 €' },
-  'onetime-standard': { name: 'Еднократна - Стандартна', price: '58.48 лв / 29.90 €' },
-  'onetime-premium': { name: 'Еднократна - Премиум', price: '78.04 лв / 39.90 €' },
+const BOX_TYPES: Record<string, { name: string; price: string; priceBGN: number }> = {
+  'monthly-standard': { name: 'Месечна - Стандартна', price: '48.70 лв / 24.90 €', priceBGN: 48.70 },
+  'monthly-premium-monthly': { name: 'Месечна - Премиум (всеки месец)', price: '68.26 лв / 34.90 €', priceBGN: 68.26 },
+  'monthly-premium-seasonal': { name: 'Месечна - Премиум (всеки 3 месеца)', price: '68.26 лв / 34.90 €', priceBGN: 68.26 },
+  'onetime-standard': { name: 'Еднократна - Стандартна', price: '58.48 лв / 29.90 €', priceBGN: 58.48 },
+  'onetime-premium': { name: 'Еднократна - Премиум', price: '78.04 лв / 39.90 €', priceBGN: 78.04 },
 };
 
 const SPORT_LABELS: Record<string, string> = {
@@ -53,14 +54,107 @@ const COLOR_NAMES: Record<string, string> = {
   '#FB7D00': 'Оранжево'
 };
 
+// BGN to EUR conversion rate (approximate)
+const BGN_TO_EUR = 0.51;
+
 export default function Step4() {
   const router = useRouter();
   const store = useFormStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  
+  // Promo code state
+  const [promoCodeInput, setPromoCodeInput] = useState(store.promoCode || '');
+  const [promoError, setPromoError] = useState('');
+  const [promoSuccess, setPromoSuccess] = useState(!!store.appliedDiscount);
+  const [isValidating, setIsValidating] = useState(false);
 
   const handleBack = () => {
     router.push('/step-3');
+  };
+
+  // Calculate prices
+  const boxInfo = store.boxType ? BOX_TYPES[store.boxType] : null;
+  const originalPrice = boxInfo?.priceBGN ?? 0;
+  const discountAmount = store.appliedDiscount?.discountAmount ?? 0;
+  const finalPrice = Math.max(0, originalPrice - discountAmount);
+  const finalPriceEUR = (finalPrice * BGN_TO_EUR).toFixed(2);
+
+  // Validate promo code
+  const validatePromoCode = useCallback(async () => {
+    if (!promoCodeInput.trim()) {
+      // Clear any applied discount if input is empty
+      store.setPromoCode('');
+      store.setAppliedDiscount(null);
+      setPromoError('');
+      setPromoSuccess(false);
+      return;
+    }
+
+    if (!store.boxType) {
+      setPromoError('Моля, първо изберете тип кутия');
+      return;
+    }
+
+    setIsValidating(true);
+    setPromoError('');
+    setPromoSuccess(false);
+
+    try {
+      const response = await fetch('/api/promo/validate', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          code: promoCodeInput.trim(),
+          boxType: store.boxType,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        setPromoError(result.error || 'Грешка при валидиране');
+        store.setPromoCode('');
+        store.setAppliedDiscount(null);
+        return;
+      }
+
+      if (!result.valid) {
+        setPromoError(result.error || 'Невалиден промо код');
+        store.setPromoCode('');
+        store.setAppliedDiscount(null);
+        return;
+      }
+
+      // Success - apply discount
+      if (result.discount) {
+        store.setPromoCode(promoCodeInput.trim().toUpperCase());
+        store.setAppliedDiscount(result.discount as AppliedDiscount);
+        setPromoSuccess(true);
+      } else {
+        // Valid but no discount (empty code)
+        store.setPromoCode('');
+        store.setAppliedDiscount(null);
+      }
+    } catch (err) {
+      console.error('Error validating promo code:', err);
+      setPromoError('Грешка при валидиране на промо кода');
+      store.setPromoCode('');
+      store.setAppliedDiscount(null);
+    } finally {
+      setIsValidating(false);
+    }
+  }, [promoCodeInput, store]);
+
+  // Remove applied promo code
+  const removePromoCode = () => {
+    setPromoCodeInput('');
+    store.setPromoCode('');
+    store.setAppliedDiscount(null);
+    setPromoSuccess(false);
+    setPromoError('');
   };
 
   const handleFinalSubmit = async () => {
@@ -88,6 +182,15 @@ export default function Step4() {
           upper: store.sizeUpper,
           lower: store.sizeLower,
         },
+        // Include promo code and discount info
+        promoCode: store.promoCode || null,
+        discount: store.appliedDiscount ? {
+          code: store.appliedDiscount.code,
+          discountType: store.appliedDiscount.discountType,
+          discountValue: store.appliedDiscount.discountValue,
+          discountAmount: store.appliedDiscount.discountAmount,
+          description: store.appliedDiscount.description,
+        } : null,
       };
 
       const response = await fetch('/api/preorder', {
@@ -139,11 +242,126 @@ export default function Step4() {
                   {store.boxType && BOX_TYPES[store.boxType]?.name || 'Не е избрана'}
                 </div>
               </div>
-              <div className="text-2xl font-bold text-[#FB7D00]">
-                {store.boxType && BOX_TYPES[store.boxType]?.price || '-'}
+              <div className="text-right">
+                {store.appliedDiscount ? (
+                  <div>
+                    <div className="text-lg text-gray-400 line-through">
+                      {store.boxType && BOX_TYPES[store.boxType]?.price || '-'}
+                    </div>
+                    <div className="text-2xl font-bold text-[#FB7D00]">
+                      {finalPrice.toFixed(2)} лв / {finalPriceEUR} €
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-2xl font-bold text-[#FB7D00]">
+                    {store.boxType && BOX_TYPES[store.boxType]?.price || '-'}
+                  </div>
+                )}
               </div>
             </div>
           </div>
+
+          {/* Promo Code Section */}
+          <div className="bg-white rounded-2xl p-6 shadow-lg">
+            <h3 className="text-xl font-bold text-[#023047] mb-4 border-b pb-2">Промо код (по избор)</h3>
+            
+            {store.appliedDiscount ? (
+              // Show applied discount
+              <div className="bg-green-50 border border-green-200 rounded-xl p-4">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-green-600 font-bold text-lg">✓ {store.appliedDiscount.code}</span>
+                      <span className="bg-green-100 text-green-700 px-2 py-1 rounded-full text-sm font-medium">
+                        {store.appliedDiscount.description}
+                      </span>
+                    </div>
+                    <div className="text-green-600 mt-1">
+                      Отстъпка: -{store.appliedDiscount.discountAmount.toFixed(2)} лв.
+                    </div>
+                  </div>
+                  <button
+                    onClick={removePromoCode}
+                    className="text-gray-500 hover:text-red-500 transition-colors p-2"
+                    title="Премахни промо код"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              // Show promo code input
+              <div>
+                <div className="flex gap-3">
+                  <input
+                    type="text"
+                    value={promoCodeInput}
+                    onChange={(e) => {
+                      setPromoCodeInput(e.target.value.toUpperCase());
+                      setPromoError('');
+                    }}
+                    placeholder="Въведи промо код"
+                    className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl focus:border-[#FB7D00] focus:outline-none transition-colors text-[#023047] font-medium uppercase"
+                    disabled={isValidating}
+                  />
+                  <button
+                    onClick={validatePromoCode}
+                    disabled={isValidating || !promoCodeInput.trim()}
+                    className="bg-[#023047] text-white px-6 py-3 rounded-xl font-semibold hover:bg-[#034a6e] transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+                  >
+                    {isValidating ? (
+                      <span className="flex items-center gap-2">
+                        <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      </span>
+                    ) : (
+                      'Приложи'
+                    )}
+                  </button>
+                </div>
+                
+                {promoError && (
+                  <div className="mt-3 bg-red-50 border border-red-200 text-red-600 px-4 py-2 rounded-lg flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {promoError}
+                  </div>
+                )}
+                
+                <p className="text-gray-500 text-sm mt-3">
+                  Имаш промо код? Въведи го тук за отстъпка от поръчката.
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Order Total with Discount */}
+          {store.appliedDiscount && (
+            <div className="bg-gradient-to-r from-[#FB7D00]/10 to-[#FB7D00]/5 rounded-2xl p-6 shadow-lg border-2 border-[#FB7D00]/20">
+              <h3 className="text-xl font-bold text-[#023047] mb-4">Обобщение на цената</h3>
+              <div className="space-y-2">
+                <div className="flex justify-between text-gray-600">
+                  <span>Цена на кутията:</span>
+                  <span>{originalPrice.toFixed(2)} лв.</span>
+                </div>
+                <div className="flex justify-between text-green-600 font-medium">
+                  <span>Отстъпка ({store.appliedDiscount.code}):</span>
+                  <span>-{discountAmount.toFixed(2)} лв.</span>
+                </div>
+                <div className="border-t border-[#FB7D00]/30 pt-2 mt-2">
+                  <div className="flex justify-between text-[#023047] font-bold text-xl">
+                    <span>Крайна цена:</span>
+                    <span className="text-[#FB7D00]">{finalPrice.toFixed(2)} лв. / {finalPriceEUR} €</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Contact Info */}
           <div className="bg-white rounded-2xl p-6 shadow-lg">

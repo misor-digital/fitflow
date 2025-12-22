@@ -148,6 +148,39 @@ function generateColorSwatchesHtml(colors: string[]): string {
 }
 
 /**
+ * Generate discount section HTML for email
+ */
+function generateDiscountSectionHtml(data: PreorderEmailData): string {
+  if (!data.discount || !data.originalPrice || !data.finalPrice) {
+    return '';
+  }
+
+  return `
+    <div style="background-color: #ecfdf5; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid #10b981;">
+      <h3 style="color: #047857; margin-top: 0;">🎉 Приложена отстъпка</h3>
+      <table style="width: 100%; border-collapse: collapse;">
+        <tr>
+          <td style="padding: 5px 0; color: #4a5568;">Промо код:</td>
+          <td style="padding: 5px 0; text-align: right; font-weight: bold; color: #047857;">${data.discount.code}</td>
+        </tr>
+        <tr>
+          <td style="padding: 5px 0; color: #4a5568;">Отстъпка:</td>
+          <td style="padding: 5px 0; text-align: right; color: #047857;">${data.discount.description} (-${data.discount.discountAmount.toFixed(2)} лв.)</td>
+        </tr>
+        <tr style="border-top: 1px solid #10b981;">
+          <td style="padding: 10px 0 5px 0; color: #4a5568;">Оригинална цена:</td>
+          <td style="padding: 10px 0 5px 0; text-align: right; text-decoration: line-through; color: #9ca3af;">${data.originalPrice.toFixed(2)} лв.</td>
+        </tr>
+        <tr>
+          <td style="padding: 5px 0; color: #363636; font-weight: bold; font-size: 18px;">Крайна цена:</td>
+          <td style="padding: 5px 0; text-align: right; font-weight: bold; font-size: 18px; color: #ff6a00;">${data.finalPrice.toFixed(2)} лв.</td>
+        </tr>
+      </table>
+    </div>
+  `;
+}
+
+/**
  * Generate preorder confirmation email HTML
  */
 export function generatePreorderConfirmationEmail(data: PreorderEmailData): string {
@@ -170,6 +203,8 @@ export function generatePreorderConfirmationEmail(data: PreorderEmailData): stri
       </div>
     `
     : '';
+
+  const discountSection = generateDiscountSectionHtml(data);
 
   return `
 <table role="presentation" style="width: 100%; border-collapse: collapse; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f6f3f0;">
@@ -205,6 +240,8 @@ export function generatePreorderConfirmationEmail(data: PreorderEmailData): stri
               <p style="margin: 5px 0;"><strong>Избрана кутия:</strong> ${data.boxTypeDisplay}</p>
               <p style="margin: 5px 0;"><strong>Персонализация:</strong> ${data.wantsPersonalization ? 'Да' : 'Не'}</p>
             </div>
+            
+            ${discountSection}
             
             ${personalizationSection}
             

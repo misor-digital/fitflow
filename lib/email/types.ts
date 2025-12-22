@@ -65,6 +65,15 @@ export interface ContactResult {
   error?: string;
 }
 
+// Discount data for emails
+export interface EmailDiscountData {
+  code: string;
+  discountType: 'percentage' | 'fixed';
+  discountValue: number;
+  discountAmount: number;
+  description: string;
+}
+
 // Preorder-specific email data
 export interface PreorderEmailData {
   fullName: string;
@@ -83,4 +92,9 @@ export interface PreorderEmailData {
   dietary?: string[];
   dietaryOther?: string;
   additionalNotes?: string;
+  // Discount info
+  promoCode?: string;
+  discount?: EmailDiscountData;
+  originalPrice?: number;
+  finalPrice?: number;
 }

@@ -1,5 +1,13 @@
 import { supabase } from './client';
-import type { PreorderInsert, Preorder } from './types';
+import type { PreorderInsert, Preorder, DiscountData } from './types';
+
+export interface DiscountFormData {
+  code: string;
+  discountType: 'percentage' | 'fixed';
+  discountValue: number;
+  discountAmount: number;
+  description: string;
+}
 
 export interface PreorderFormData {
   // Step 1
@@ -22,6 +30,25 @@ export interface PreorderFormData {
   fullName: string;
   email: string;
   phone?: string;
+  
+  // Step 4 - Promo code
+  promoCode?: string;
+  discount?: DiscountFormData;
+}
+
+/**
+ * Transform discount form data to database format
+ */
+function transformDiscountToDbFormat(discount?: DiscountFormData): DiscountData | null {
+  if (!discount) return null;
+  
+  return {
+    code: discount.code,
+    discount_type: discount.discountType,
+    discount_value: discount.discountValue,
+    discount_amount: discount.discountAmount,
+    description: discount.description,
+  };
 }
 
 /**
@@ -44,6 +71,8 @@ function transformFormDataToInsert(data: PreorderFormData): PreorderInsert {
     dietary: data.dietary?.length ? data.dietary : null,
     dietary_other: data.dietaryOther || null,
     additional_notes: data.additionalNotes || null,
+    promo_code: data.promoCode || null,
+    discount: transformDiscountToDbFormat(data.discount),
   };
 }
 

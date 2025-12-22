@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import type { AppliedDiscount } from '@/lib/promo';
 
 interface FormData {
   // Step 1
@@ -22,6 +23,10 @@ interface FormData {
   fullName: string;
   email: string;
   phone: string;
+  
+  // Step 4 - Promo code
+  promoCode: string;
+  appliedDiscount: AppliedDiscount | null;
 }
 
 interface FormStore extends FormData {
@@ -37,6 +42,8 @@ interface FormStore extends FormData {
   setDietaryOther: (other: string) => void;
   setAdditionalNotes: (notes: string) => void;
   setContactInfo: (name: string, email: string, phone: string) => void;
+  setPromoCode: (code: string) => void;
+  setAppliedDiscount: (discount: AppliedDiscount | null) => void;
   reset: () => void;
 }
 
@@ -56,6 +63,8 @@ const initialState: FormData = {
   fullName: '',
   email: '',
   phone: '',
+  promoCode: '',
+  appliedDiscount: null,
 };
 
 export const useFormStore = create<FormStore>()(
@@ -87,6 +96,10 @@ export const useFormStore = create<FormStore>()(
       
       setContactInfo: (name, email, phone) => 
         set({ fullName: name, email, phone }),
+      
+      setPromoCode: (code) => set({ promoCode: code }),
+      
+      setAppliedDiscount: (discount) => set({ appliedDiscount: discount }),
       
       reset: () => set(initialState),
     }),

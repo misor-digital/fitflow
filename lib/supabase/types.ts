@@ -6,6 +6,14 @@ export type BoxType =
   | 'onetime-standard' 
   | 'onetime-premium';
 
+export interface DiscountData {
+  code: string;
+  discount_type: 'percentage' | 'fixed';
+  discount_value: number;
+  discount_amount: number;
+  description: string;
+}
+
 export interface PreorderInsert {
   full_name: string;
   email: string;
@@ -22,6 +30,8 @@ export interface PreorderInsert {
   dietary?: string[] | null;
   dietary_other?: string | null;
   additional_notes?: string | null;
+  promo_code?: string | null;
+  discount?: DiscountData | null;
 }
 
 export interface Preorder extends PreorderInsert {
