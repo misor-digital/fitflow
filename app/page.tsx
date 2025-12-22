@@ -9,7 +9,7 @@ export default function Home() {
       <Navigation />
       <div className="min-h-screen">
         {/* Hero Section */}
-        <section className="relative flex flex-col justify-center items-center text-center px-5 overflow-hidden mt-12 h-[calc(100vh-3rem)]">
+        <section className="relative flex flex-col justify-center items-center text-center px-5 overflow-hidden mt-24 h-[calc(100vh-6rem)]">
         <Image
           src="/storage/hero.jpg"
           alt="FitFlow активна жена"
