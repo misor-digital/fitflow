@@ -176,7 +176,7 @@ export default function Step4() {
                     <div className="font-semibold text-[#023047] mb-1">Спорт:</div>
                     <div className="text-gray-600">
                       {store.sports.map(s => SPORT_LABELS[s] || s).join(', ')}
-                      {store.sportOther && ` (${store.sportOther})`}
+                      {store.sports.includes('other') && store.sportOther && ` (${store.sportOther})`}
                     </div>
                   </div>
                 )}
@@ -195,7 +195,7 @@ export default function Step4() {
                     <div className="font-semibold text-[#023047] mb-1">Вкусове:</div>
                     <div className="text-gray-600">
                       {store.flavors.map(f => FLAVOR_LABELS[f] || f).join(', ')}
-                      {store.flavorOther && ` (${store.flavorOther})`}
+                      {store.flavors.includes('other') && store.flavorOther && ` (${store.flavorOther})`}
                     </div>
                   </div>
                 )}
@@ -204,7 +204,7 @@ export default function Step4() {
                     <div className="font-semibold text-[#023047] mb-1">Хранителни ограничения:</div>
                     <div className="text-gray-600">
                       {store.dietary.map(d => DIETARY_LABELS[d] || d).join(', ')}
-                      {store.dietaryOther && ` (${store.dietaryOther})`}
+                      {store.flavors.includes('other') && store.dietaryOther && ` (${store.dietaryOther})`}
                     </div>
                   </div>
                 )}
@@ -259,7 +259,8 @@ export default function Step4() {
         <div className="max-w-3xl mx-auto flex gap-4 justify-center">
           <button
             onClick={handleBack}
-            className="bg-gray-300 text-[#023047] px-10 py-4 rounded-full text-lg font-semibold uppercase tracking-wide hover:bg-gray-400 transition-all"
+            disabled={isSubmitting}
+            className="bg-gray-300 text-[#023047] px-10 py-4 rounded-full text-lg font-semibold uppercase tracking-wide hover:bg-gray-400 transition-all disabled:bg-gray-300 disabled:cursor-not-allowed disabled:hover:translate-y-0"
           >
             Назад
           </button>
