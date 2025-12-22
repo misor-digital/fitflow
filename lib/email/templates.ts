@@ -124,6 +124,14 @@ export function getColorDisplayName(color: string): string {
   return COLOR_NAMES[color] || color;
 }
 
+function printOtherOption(array: string[] | undefined, otherValue: string | undefined): string {
+  if (array?.includes('other') && otherValue) {
+    return ` (${otherValue})`;
+  }
+
+  return '';
+}
+
 /**
  * Generate color swatches HTML for email
  */
@@ -152,12 +160,12 @@ export function generatePreorderConfirmationEmail(data: PreorderEmailData): stri
     ? `
       <div style="background-color: #fff4ec; padding: 20px; border-radius: 8px; margin: 20px 0;">
         <h3 style="color: #363636; margin-top: 0;">Твоите предпочитания</h3>
-        ${sportsDisplay.length ? `<p><strong>Спортове:</strong> ${sportsDisplay.join(', ')}  ${data.sportOther && ` (${data.sportOther})`}</p>` : ''}
+        ${sportsDisplay.length ? `<p><strong>Спортове:</strong> ${sportsDisplay.join(', ')}  ${printOtherOption(data.sports, data.sportOther)}</p>` : ''}
         ${data.colors?.length ? generateColorSwatchesHtml(data.colors) : ''}
-        ${flavorsDisplay.length ? `<p><strong>Вкусове:</strong> ${flavorsDisplay.join(', ')}  ${data.flavorOther && ` (${data.flavorOther})`}</p>` : ''}
+        ${flavorsDisplay.length ? `<p><strong>Вкусове:</strong> ${flavorsDisplay.join(', ')}  ${printOtherOption(data.flavors, data.flavorOther)}</p>` : ''}
         ${data.sizeUpper ? `<p><strong>Размер (горна част):</strong> ${data.sizeUpper}</p>` : ''}
         ${data.sizeLower ? `<p><strong>Размер (долна част):</strong> ${data.sizeLower}</p>` : ''}
-        ${dietaryDisplay.length ? `<p><strong>Диетични предпочитания:</strong> ${dietaryDisplay.join(', ')}  ${data.dietaryOther && ` (${data.dietaryOther})`}</p>` : ''}
+        ${dietaryDisplay.length ? `<p><strong>Диетични предпочитания:</strong> ${dietaryDisplay.join(', ')}  ${printOtherOption(data.dietary, data.dietaryOther)}</p>` : ''}
         ${data.additionalNotes ? `<p><strong>Допълнителни бележки:</strong> ${data.additionalNotes}</p>` : ''}
       </div>
     `
