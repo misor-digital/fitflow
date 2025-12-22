@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFormStore } from '@/store/formStore';
+import Link from 'next/link';
 
 const COLORS = [
   '#000000', '#FFFFFF', '#8A8A8A', '#0A1A33', '#7EC8E3',
@@ -551,13 +552,15 @@ export default function Step2() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#f0f9ff] to-white py-5 px-5 pb-32">
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-3xl mx-auto mt-16">
         {/* Header */}
         <div className="flex justify-between items-center mb-10">
           <div className="text-xl font-semibold text-[#023047]">
             Стъпка 2 от 4 - Персонализация
           </div>
-          <div className="text-3xl font-extrabold text-[#023047] italic">FitFlow</div>
+          <Link href="/" className="text-2xl md:text-3xl font-extrabold text-[#023047] italic hover:text-[#FB7D00] hover:scale-150 transition-all duration-300">
+            FitFlow
+          </Link>
         </div>
 
         {/* Progress Bar */}
@@ -577,14 +580,14 @@ export default function Step2() {
         <div className="max-w-3xl mx-auto flex gap-4 justify-center">
           <button
             onClick={handleBack}
-            className="bg-gray-300 text-[#023047] px-10 py-4 rounded-full font-semibold uppercase tracking-wide hover:bg-gray-400 transition-all"
+            className="bg-gray-300 text-[#023047] px-10 py-4 rounded-full text-lg font-semibold uppercase tracking-wide hover:bg-gray-400 transition-all"
           >
             Назад
           </button>
             <button
               onClick={handleNext}
               disabled={!validateStep()}
-              className="bg-[#FB7D00] text-white px-12 py-4 rounded-full font-semibold uppercase tracking-wide shadow-lg hover:bg-[#e67100] transition-all hover:-translate-y-0.5 hover:shadow-xl disabled:bg-gray-300 disabled:cursor-not-allowed"
+              className="bg-[#FB7D00] text-white px-12 py-4 rounded-full text-lg font-semibold uppercase tracking-wide shadow-lg hover:bg-[#e67100] transition-all hover:-translate-y-0.5 hover:shadow-xl disabled:bg-gray-300 disabled:cursor-not-allowed"
             >
               Напред
             </button>

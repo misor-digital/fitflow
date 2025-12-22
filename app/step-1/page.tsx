@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFormStore } from '@/store/formStore';
+import Link from 'next/link';
 
 export default function Step1() {
   const router = useRouter();
@@ -59,11 +60,13 @@ export default function Step1() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#f0f9ff] to-white py-5 px-5 pb-32">
-      <div className="max-w-[900px] mx-auto">
+      <div className="max-w-[900px] mx-auto mt-16">
         {/* Header */}
         <div className="flex justify-between items-center mb-16">
           <div className="text-xl font-semibold text-[#023047]">Стъпка 1 от 4 - Кутия</div>
-          <div className="text-3xl font-extrabold text-[#023047] italic">FitFlow</div>
+          <Link href="/" className="text-2xl md:text-3xl font-extrabold text-[#023047] italic hover:text-[#FB7D00] hover:scale-110 transition-all duration-300">
+            FitFlow
+          </Link>
         </div>
 
         {/* Title */}
