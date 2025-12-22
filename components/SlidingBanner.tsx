@@ -20,7 +20,6 @@ export default function SlidingBanner() {
             <span className="text-[#FFD700] font-bold text-sm md:text-base tracking-wide">
               🚚 {text}
             </span>
-            {/* <span className="px-8 text-white/50">•</span> */}
           </span>
         ))}
       </div>
