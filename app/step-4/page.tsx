@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFormStore } from '@/store/formStore';
+import Link from 'next/link';
 
 const BOX_TYPES: Record<string, { name: string; price: string }> = {
   'monthly-standard': { name: 'Месечна - Стандартна', price: '48.70 лв / 24.90 €' },
@@ -117,7 +118,9 @@ export default function Step4() {
         {/* Header */}
         <div className="flex justify-between items-center mb-16">
           <div className="text-xl font-semibold text-[#023047]">Стъпка 4 от 4 - Финализиране</div>
-          <div className="text-3xl font-extrabold text-[#023047] italic">FitFlow</div>
+          <Link href="/" className="text-2xl md:text-3xl font-extrabold text-[#023047] italic hover:text-[#FB7D00] hover:scale-150 transition-all duration-300">
+            FitFlow
+          </Link>
         </div>
 
         {/* Title */}

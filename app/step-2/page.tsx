@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFormStore } from '@/store/formStore';
+import Link from 'next/link';
 
 const COLORS = [
   '#000000', '#FFFFFF', '#8A8A8A', '#0A1A33', '#7EC8E3',
@@ -557,7 +558,9 @@ export default function Step2() {
           <div className="text-xl font-semibold text-[#023047]">
             Стъпка 2 от 4 - Персонализация
           </div>
-          <div className="text-3xl font-extrabold text-[#023047] italic">FitFlow</div>
+          <Link href="/" className="text-2xl md:text-3xl font-extrabold text-[#023047] italic hover:text-[#FB7D00] hover:scale-150 transition-all duration-300">
+            FitFlow
+          </Link>
         </div>
 
         {/* Progress Bar */}
