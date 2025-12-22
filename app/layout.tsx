@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import SlidingBanner from "@/components/SlidingBanner";
 
 export const metadata: Metadata = {
   title: "FitFlow - Кутия за АКТИВНИ дами",
@@ -21,6 +22,7 @@ export default function RootLayout({
   return (
     <html lang="bg">
       <body className="antialiased">
+        <SlidingBanner />
         {children}
       </body>
     </html>
