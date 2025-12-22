@@ -69,9 +69,9 @@ export default function Home() {
         </h2>
         <div className="max-w-3xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
           {[
-            { img: 'protein  nameless.png', title: 'Протеинови продукти', desc: 'Протеинови продукти за подсилване преди тренировка', gradient: 'from-[#FB7D00] to-[#ff9a3d]' },
+            { img: 'protein  nameless.png', title: 'Протеинови продукти', desc: 'Протеинови продукти за подсилване преди и след тренировка', gradient: 'from-[#FB7D00] to-[#ff9a3d]' },
             { img: 'botttle no brand.png', title: 'Спортни аксесоари', desc: 'Спортни аксесоари за по-лесни и интересни тренировки', gradient: 'from-[#8ECAE6] to-[#5ab4db]' },
-            { img: 'supplement no brand.png', title: 'Добавки', desc: 'Добавки за здраво тяло и здрав дух', gradient: 'from-[#023047] to-[#045a7f]' },
+            { img: 'supplement no brand.png', title: 'Добавки', desc: 'Хранителни добавки за здрав дух и здраво тяло', gradient: 'from-[#023047] to-[#045a7f]' },
             { img: 'sports bra no logo 2.png', title: 'Спортно облекло', desc: 'Клин, спортен сутиен, тениска и др.', gradient: 'from-[#FB7D00] to-[#ff9a3d]' }
           ].map((product, idx) => (
             <div key={idx} className="bg-white p-8 rounded-2xl shadow-lg text-center hover:-translate-y-1 hover:shadow-xl transition-all border-2 border-transparent hover:border-[#FB7D00]">
