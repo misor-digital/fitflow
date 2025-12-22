@@ -259,7 +259,8 @@ export default function Step4() {
         <div className="max-w-3xl mx-auto flex gap-4 justify-center">
           <button
             onClick={handleBack}
-            className="bg-gray-300 text-[#023047] px-10 py-4 rounded-full text-lg font-semibold uppercase tracking-wide hover:bg-gray-400 transition-all"
+            disabled={isSubmitting}
+            className="bg-gray-300 text-[#023047] px-10 py-4 rounded-full text-lg font-semibold uppercase tracking-wide hover:bg-gray-400 transition-all disabled:bg-gray-300 disabled:cursor-not-allowed disabled:hover:translate-y-0"
           >
             Назад
           </button>
