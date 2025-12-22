@@ -34,7 +34,7 @@ export default function FAQsPage() {
     <>
       <Navigation />
       <div className="min-h-screen bg-gradient-to-b from-[#f0f9ff] to-white pt-24 pb-16 px-5">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-4xl mx-auto mt-16">
           <h1 className="text-3xl md:text-4xl font-bold text-[#023047] text-center mb-12 relative after:content-[''] after:block after:w-16 after:h-1 after:bg-[#FB7D00] after:mx-auto after:mt-4 after:rounded">
             Често задавани въпроси
           </h1>

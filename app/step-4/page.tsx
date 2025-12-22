@@ -113,7 +113,7 @@ export default function Step4() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#f0f9ff] to-white py-5 px-5 pb-32">
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-3xl mx-auto mt-16">
         {/* Header */}
         <div className="flex justify-between items-center mb-16">
           <div className="text-xl font-semibold text-[#023047]">Стъпка 4 от 4 - Финализиране</div>
