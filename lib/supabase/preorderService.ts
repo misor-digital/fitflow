@@ -22,6 +22,12 @@ export interface PreorderFormData {
   fullName: string;
   email: string;
   phone?: string;
+  
+  // Promo code (validated server-side)
+  promoCode?: string | null;
+  discountPercent?: number | null;
+  originalPriceEur?: number | null;
+  finalPriceEur?: number | null;
 }
 
 /**
@@ -44,6 +50,11 @@ function transformFormDataToInsert(data: PreorderFormData): PreorderInsert {
     dietary: data.dietary?.length ? data.dietary : null,
     dietary_other: data.dietaryOther || null,
     additional_notes: data.additionalNotes || null,
+    // Promo code fields
+    promo_code: data.promoCode || null,
+    discount_percent: data.discountPercent || null,
+    original_price_eur: data.originalPriceEur || null,
+    final_price_eur: data.finalPriceEur || null,
   };
 }
 

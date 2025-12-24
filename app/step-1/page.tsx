@@ -3,11 +3,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFormStore } from '@/store/formStore';
+import { calculatePrice } from '@/lib/promo';
+import PriceDisplay from '@/components/PriceDisplay';
 import Link from 'next/link';
 
 export default function Step1() {
   const router = useRouter();
-  const { boxType, setBoxType } = useFormStore();
+  const { boxType, setBoxType, promoCode } = useFormStore();
   
   // Initialize selected state - normalize premium variants to 'monthly-premium'
   const getInitialSelected = (): string | null => {
@@ -26,6 +28,14 @@ export default function Step1() {
   };
   
   const [premiumFrequency, setPremiumFrequency] = useState<'monthly' | 'seasonal'>(getInitialFrequency());
+
+  // Calculate prices for all box types
+  const monthlyStandardPrice = calculatePrice('monthly-standard', promoCode);
+  const monthlyPremiumPrice = calculatePrice('monthly-premium', promoCode);
+  const onetimeStandardPrice = calculatePrice('onetime-standard', promoCode);
+  const onetimePremiumPrice = calculatePrice('onetime-premium', promoCode);
+
+  const hasDiscount = promoCode && monthlyStandardPrice.discountPercent > 0;
 
   const handleSelect = (id: string) => {
     setSelected(id);
@@ -74,6 +84,15 @@ export default function Step1() {
           Избери кутия
         </h2>
 
+        {/* Discount Banner */}
+        {hasDiscount && (
+          <div className="bg-gradient-to-r from-[#FB7D00]/10 to-[#FB7D00]/5 border-l-4 border-[#FB7D00] p-4 rounded-xl mb-8">
+            <p className="text-[#023047] font-semibold">
+              🎉 Промо код <span className="text-[#FB7D00] font-bold">{promoCode}</span> е приложен – {monthlyStandardPrice.discountPercent}% отстъпка на всички кутии!
+            </p>
+          </div>
+        )}
+
         {/* Subscription Types */}
         <div className="space-y-10 mb-10">
           {/* Monthly Subscription */}
@@ -105,9 +124,7 @@ export default function Step1() {
                 <p className="text-sm text-gray-600 leading-relaxed mb-4">
                   Получаваш кутия с 4-6 продукта, включително протеинови продукти, хранителни добавки и спортни аксесоари
                 </p>
-                <div className="text-lg font-bold text-[#023047]">
-                  48.70 лв / 24.90 €
-                </div>
+                <PriceDisplay priceInfo={monthlyStandardPrice} />
               </div>
 
               {/* Premium */}
@@ -137,12 +154,10 @@ export default function Step1() {
                 <p className="text-sm text-gray-600 leading-relaxed mb-4">
                   Получаваш всичко от стандартната кутия плюс <span className="text-[#FB7D00] font-bold">спортно облекло</span>
                 </p>
-                <div className="text-lg font-bold text-[#023047] mb-5">
-                  68.26 лв / 34.90 €
-                </div>
+                <PriceDisplay priceInfo={monthlyPremiumPrice} />
                 
                 {/* Frequency Selection */}
-                <div className="pt-5 border-t-2 border-gray-100">
+                <div className="pt-5 mt-5 border-t-2 border-gray-100">
                   <div className="text-base font-semibold text-[#023047] mb-4">
                     Колко често искаш да получаваш кутията?
                   </div>
@@ -210,9 +225,7 @@ export default function Step1() {
                 <p className="text-sm text-gray-600 leading-relaxed mb-4">
                   Получаваш кутия с 4-6 продукта, включително протеинови продукти, хранителни добавки и спортни аксесоари
                 </p>
-                <div className="text-lg font-bold text-[#023047]">
-                  58.48 лв / 29.90 €
-                </div>
+                <PriceDisplay priceInfo={onetimeStandardPrice} />
               </div>
 
               {/* Premium */}
@@ -242,9 +255,7 @@ export default function Step1() {
                 <p className="text-sm text-gray-600 leading-relaxed mb-4">
                   Получаваш всичко от стандартната кутия плюс <span className="text-[#FB7D00] font-bold">спортно облекло</span>
                 </p>
-                <div className="text-lg font-bold text-[#023047]">
-                  78.04 лв / 39.90 €
-                </div>
+                <PriceDisplay priceInfo={onetimePremiumPrice} />
               </div>
             </div>
           </div>

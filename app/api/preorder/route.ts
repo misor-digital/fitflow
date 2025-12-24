@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createPreorder, type PreorderFormData } from '@/lib/supabase';
 import { handlePreorderEmailWorkflow } from '@/lib/email';
+import { calculatePrice, validatePromoCode } from '@/lib/promo';
 
 export async function POST(request: Request) {
   try {
@@ -26,7 +27,19 @@ export async function POST(request: Request) {
       );
     }
 
-    // Prepare the preorder data
+    // Server-side promo code validation and price calculation
+    // IMPORTANT: Never trust client-side price calculations
+    const priceInfo = calculatePrice(data.boxType, data.promoCode);
+    const validatedPromo = validatePromoCode(data.promoCode);
+
+    console.log('Server-side price calculation:', {
+      boxType: data.boxType,
+      promoCode: data.promoCode,
+      validatedPromo,
+      priceInfo,
+    });
+
+    // Prepare the preorder data with server-validated prices
     const preorderData: PreorderFormData = {
       boxType: data.boxType,
       wantsPersonalization: data.wantsPersonalization ?? false,
@@ -44,6 +57,11 @@ export async function POST(request: Request) {
       dietary: data.preferences?.dietary || data.dietary,
       dietaryOther: data.preferences?.dietaryOther || data.dietaryOther,
       additionalNotes: data.preferences?.additionalNotes || data.additionalNotes,
+      // Server-validated promo code and prices
+      promoCode: validatedPromo?.code || null,
+      discountPercent: priceInfo.discountPercent || null,
+      originalPriceEur: priceInfo.originalPriceEur,
+      finalPriceEur: priceInfo.finalPriceEur,
     };
 
     console.log('Transformed preorder data:', JSON.stringify(preorderData, null, 2));
@@ -64,6 +82,10 @@ export async function POST(request: Request) {
       fullName: preorder?.full_name,
       email: preorder?.email,
       boxType: preorder?.box_type,
+      promoCode: preorder?.promo_code,
+      discountPercent: preorder?.discount_percent,
+      originalPriceEur: preorder?.original_price_eur,
+      finalPriceEur: preorder?.final_price_eur,
       timestamp: preorder?.created_at,
     });
 

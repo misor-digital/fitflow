@@ -1,9 +1,26 @@
+'use client';
+
 import Image from 'next/image';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { useEffect, Suspense } from 'react';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
+import { useFormStore } from '@/store/formStore';
+import { isValidPromoCode } from '@/lib/promo';
 
-export default function Home() {
+function HomeContent() {
+  const searchParams = useSearchParams();
+  const { setPromoCode } = useFormStore();
+  
+  // Extract promo code from URL and store it
+  useEffect(() => {
+    const urlPromoCode = searchParams.get('promocode');
+    if (urlPromoCode && isValidPromoCode(urlPromoCode)) {
+      setPromoCode(urlPromoCode.toUpperCase());
+    }
+  }, [searchParams, setPromoCode]);
+
   return (
     <>
       <Navigation />
@@ -124,5 +141,17 @@ export default function Home() {
       </div>
       <Footer />
     </>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[#FB7D00]"></div>
+      </div>
+    }>
+      <HomeContent />
+    </Suspense>
   );
 }
