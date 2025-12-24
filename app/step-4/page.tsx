@@ -3,14 +3,15 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFormStore } from '@/store/formStore';
+import { calculatePrice, formatPrice } from '@/lib/promo';
 import Link from 'next/link';
 
-const BOX_TYPES: Record<string, { name: string; price: string }> = {
-  'monthly-standard': { name: 'Месечна - Стандартна', price: '48.70 лв / 24.90 €' },
-  'monthly-premium-monthly': { name: 'Месечна - Премиум (всеки месец)', price: '68.26 лв / 34.90 €' },
-  'monthly-premium-seasonal': { name: 'Месечна - Премиум (всеки 3 месеца)', price: '68.26 лв / 34.90 €' },
-  'onetime-standard': { name: 'Еднократна - Стандартна', price: '58.48 лв / 29.90 €' },
-  'onetime-premium': { name: 'Еднократна - Премиум', price: '78.04 лв / 39.90 €' },
+const BOX_TYPES: Record<string, { name: string }> = {
+  'monthly-standard': { name: 'Месечна - Стандартна' },
+  'monthly-premium-monthly': { name: 'Месечна - Премиум (всеки месец)' },
+  'monthly-premium-seasonal': { name: 'Месечна - Премиум (всеки 3 месеца)' },
+  'onetime-standard': { name: 'Еднократна - Стандартна' },
+  'onetime-premium': { name: 'Еднократна - Премиум' },
 };
 
 const SPORT_LABELS: Record<string, string> = {
@@ -59,6 +60,10 @@ export default function Step4() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
+  // Calculate price with promo code
+  const priceInfo = store.boxType ? calculatePrice(store.boxType, store.promoCode) : null;
+  const hasDiscount = priceInfo && priceInfo.discountPercent > 0;
+
   const handleBack = () => {
     router.push('/step-3');
   };
@@ -88,6 +93,8 @@ export default function Step4() {
           upper: store.sizeUpper,
           lower: store.sizeLower,
         },
+        // Include promo code for server-side validation
+        promoCode: store.promoCode,
       };
 
       const response = await fetch('/api/preorder', {
@@ -133,16 +140,48 @@ export default function Step4() {
           {/* Box Type */}
           <div className="bg-white rounded-2xl p-6 shadow-lg">
             <h3 className="text-xl font-bold text-[#023047] mb-4 border-b pb-2">Избрана кутия</h3>
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-start">
               <div>
                 <div className="text-lg font-semibold text-[#023047]">
                   {store.boxType && BOX_TYPES[store.boxType]?.name || 'Не е избрана'}
                 </div>
               </div>
-              <div className="text-2xl font-bold text-[#FB7D00]">
-                {store.boxType && BOX_TYPES[store.boxType]?.price || '-'}
-              </div>
+              {priceInfo && (
+                <div className="text-right">
+                  {hasDiscount ? (
+                    <div className="space-y-1">
+                      <div className="text-sm text-gray-400 line-through">
+                        {formatPrice(priceInfo.originalPriceBgn)} лв / {formatPrice(priceInfo.originalPriceEur)} €
+                      </div>
+                      <div className="text-2xl font-bold text-[#FB7D00]">
+                        {formatPrice(priceInfo.finalPriceBgn)} лв / {formatPrice(priceInfo.finalPriceEur)} €
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-2xl font-bold text-[#FB7D00]">
+                      {formatPrice(priceInfo.originalPriceBgn)} лв / {formatPrice(priceInfo.originalPriceEur)} €
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
+            
+            {/* Promo Code Applied Note */}
+            {hasDiscount && store.promoCode && (
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                <div className="flex items-center gap-2 text-green-600">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="font-semibold">
+                    Промо код {store.promoCode} е приложен – {priceInfo.discountPercent}% отстъпка
+                  </span>
+                </div>
+                <div className="text-sm text-gray-500 mt-1">
+                  Спестяваш {formatPrice(priceInfo.discountAmountBgn)} лв / {formatPrice(priceInfo.discountAmountEur)} €
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Contact Info */}

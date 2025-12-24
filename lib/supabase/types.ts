@@ -22,6 +22,11 @@ export interface PreorderInsert {
   dietary?: string[] | null;
   dietary_other?: string | null;
   additional_notes?: string | null;
+  // Promo code fields
+  promo_code?: string | null;
+  discount_percent?: number | null;
+  original_price_eur?: number | null;
+  final_price_eur?: number | null;
 }
 
 export interface Preorder extends PreorderInsert {
