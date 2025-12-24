@@ -3,10 +3,16 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { useFormStore } from '@/store/formStore';
+import { getDiscountPercent } from '@/lib/promo';
+import PromoDiscountPrompt from './PromoDiscountPrompt';
 
 export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
+  const { promoCode } = useFormStore();
+  
+  const discountPercent = getDiscountPercent(promoCode);
 
   const isActive = (path: string) => pathname === path;
 
@@ -70,24 +76,29 @@ export default function Navigation() {
             FitFlow
           </Link>
 
-          {/* CTA Button - Right Side */}
-          <Link
-            href="/step-1"
-            className="bg-[#023047] hover:bg-[#FB7D00] px-4 py-2 rounded-lg"
-            aria-label="Запиши предварителна поръчка"
-          >
-            <svg
-              className="w-5 h-5 md:w-6 md:h-6"
-              fill="none"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
+          {/* CTA Button with Promo Prompt - Right Side */}
+          <div className="relative">
+            <Link
+              href="/step-1"
+              className="bg-[#023047] hover:bg-[#FB7D00] px-4 py-2 rounded-lg transition-colors block"
+              aria-label="Запиши предварителна поръчка"
             >
-              <path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-            </svg>
-          </Link>
+              <svg
+                className="w-5 h-5 md:w-6 md:h-6 text-white"
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+              </svg>
+            </Link>
+            
+            {/* Promo Discount Prompt - Below CTA with arrow pointing up */}
+            <PromoDiscountPrompt discountPercent={discountPercent} />
+          </div>
         </div>
 
         {/* Mobile Menu */}
@@ -121,6 +132,14 @@ export default function Navigation() {
               >
                 Въпроси
               </Link>
+              {/* Mobile Promo Badge */}
+              {discountPercent > 0 && (
+                <div className="bg-[#FB7D00]/10 border border-[#FB7D00] px-3 py-2 rounded-lg">
+                  <p className="text-sm font-semibold text-[#023047]">
+                    🎉 Имаш <span className="text-[#FB7D00] font-bold">{discountPercent}%</span> отстъпка!
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         )}
