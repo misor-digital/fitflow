@@ -27,15 +27,11 @@ export default function RootLayout({
         <SlidingBanner />
         {children}
         <CookieConsentBanner />
-        {/* 
-          TODO: Add your tracking IDs here when ready:
-          <ConditionalScripts 
-            googleAnalyticsId="G-XXXXXXXXXX"
-            facebookPixelId="XXXXXXXXXXXXXXX"
-            googleAdsId="AW-XXXXXXXXXX"
-          />
-        */}
-        <ConditionalScripts />
+        <ConditionalScripts 
+          googleAnalyticsId="G-P4N3Y0W613"
+          facebookPixelId="878687741371287"
+          googleAdsId="AW-XXXXXXXXXX"
+        />
       </body>
     </html>
   );
