@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFormStore } from '@/store/formStore';
-import { calculatePrice, formatPrice } from '@/lib/promo';
+import { calculatePrice } from '@/lib/promo';
+import PriceDisplay from '@/components/PriceDisplay';
 import Link from 'next/link';
 
 export default function Step1() {
@@ -65,31 +66,6 @@ export default function Step1() {
 
   const handleBack = () => {
     router.push('/');
-  };
-
-  // Price display component
-  const PriceDisplay = ({ priceInfo }: { priceInfo: ReturnType<typeof calculatePrice> }) => {
-    if (priceInfo.discountPercent > 0) {
-      return (
-        <div className="space-y-1">
-          <div className="text-sm text-gray-400 line-through">
-            {formatPrice(priceInfo.originalPriceBgn)} лв / {formatPrice(priceInfo.originalPriceEur)} €
-          </div>
-          <div className="text-lg font-bold text-[#FB7D00]">
-            {formatPrice(priceInfo.finalPriceBgn)} лв / {formatPrice(priceInfo.finalPriceEur)} €
-          </div>
-          <div className="text-xs text-green-600 font-semibold">
-            -{priceInfo.discountPercent}% отстъпка
-          </div>
-        </div>
-      );
-    }
-    
-    return (
-      <div className="text-lg font-bold text-[#023047]">
-        {formatPrice(priceInfo.originalPriceBgn)} лв / {formatPrice(priceInfo.originalPriceEur)} €
-      </div>
-    );
   };
 
   return (
