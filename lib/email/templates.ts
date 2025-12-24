@@ -148,6 +148,50 @@ function generateColorSwatchesHtml(colors: string[]): string {
 }
 
 /**
+ * Format price for display
+ */
+function formatPriceForEmail(price: number): string {
+  return price.toFixed(2);
+}
+
+/**
+ * EUR to BGN conversion rate
+ */
+const EUR_TO_BGN_RATE = 1.9558;
+
+/**
+ * Generate promo code section HTML for email
+ */
+function generatePromoCodeSection(data: PreorderEmailData): string {
+  if (!data.promoCode || !data.discountPercent || data.discountPercent <= 0) {
+    return '';
+  }
+
+  const originalPriceEur = data.originalPriceEur || 0;
+  const finalPriceEur = data.finalPriceEur || 0;
+  const discountAmountEur = originalPriceEur - finalPriceEur;
+  const originalPriceBgn = originalPriceEur * EUR_TO_BGN_RATE;
+  const finalPriceBgn = finalPriceEur * EUR_TO_BGN_RATE;
+  const discountAmountBgn = discountAmountEur * EUR_TO_BGN_RATE;
+
+  return `
+    <div style="background-color: #d4edda; border: 1px solid #c3e6cb; padding: 15px; border-radius: 8px; margin: 15px 0;">
+      <p style="margin: 0 0 10px 0; color: #155724; font-weight: bold;">
+        ✅ Промо код ${data.promoCode} е приложен – ${data.discountPercent}% отстъпка
+      </p>
+      <p style="margin: 5px 0; color: #155724;">
+        <span style="text-decoration: line-through; color: #6c757d;">${formatPriceForEmail(originalPriceBgn)} лв / ${formatPriceForEmail(originalPriceEur)} €</span>
+        &nbsp;→&nbsp;
+        <strong>${formatPriceForEmail(finalPriceBgn)} лв / ${formatPriceForEmail(finalPriceEur)} €</strong>
+      </p>
+      <p style="margin: 5px 0 0 0; color: #155724; font-size: 14px;">
+        Спестяваш ${formatPriceForEmail(discountAmountBgn)} лв / ${formatPriceForEmail(discountAmountEur)} €
+      </p>
+    </div>
+  `;
+}
+
+/**
  * Generate preorder confirmation email HTML
  */
 export function generatePreorderConfirmationEmail(data: PreorderEmailData): string {
@@ -170,6 +214,9 @@ export function generatePreorderConfirmationEmail(data: PreorderEmailData): stri
       </div>
     `
     : '';
+
+  // Generate promo code section if applicable
+  const promoCodeSection = generatePromoCodeSection(data);
 
   return `
 <table role="presentation" style="width: 100%; border-collapse: collapse; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f6f3f0;">
@@ -205,6 +252,8 @@ export function generatePreorderConfirmationEmail(data: PreorderEmailData): stri
               <p style="margin: 5px 0;"><strong>Избрана кутия:</strong> ${data.boxTypeDisplay}</p>
               <p style="margin: 5px 0;"><strong>Персонализация:</strong> ${data.wantsPersonalization ? 'Да' : 'Не'}</p>
             </div>
+            
+            ${promoCodeSection}
             
             ${personalizationSection}
             

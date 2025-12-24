@@ -22,6 +22,9 @@ interface FormData {
   fullName: string;
   email: string;
   phone: string;
+  
+  // Promo code (from URL query string)
+  promoCode: string | null;
 }
 
 interface FormStore extends FormData {
@@ -37,6 +40,7 @@ interface FormStore extends FormData {
   setDietaryOther: (other: string) => void;
   setAdditionalNotes: (notes: string) => void;
   setContactInfo: (name: string, email: string, phone: string) => void;
+  setPromoCode: (code: string | null) => void;
   reset: () => void;
 }
 
@@ -56,6 +60,7 @@ const initialState: FormData = {
   fullName: '',
   email: '',
   phone: '',
+  promoCode: null,
 };
 
 export const useFormStore = create<FormStore>()(
@@ -87,6 +92,8 @@ export const useFormStore = create<FormStore>()(
       
       setContactInfo: (name, email, phone) => 
         set({ fullName: name, email, phone }),
+      
+      setPromoCode: (code) => set({ promoCode: code }),
       
       reset: () => set(initialState),
     }),
