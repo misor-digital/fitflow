@@ -227,13 +227,12 @@ CREATE TABLE preferences (
 
 ## 🎯 Features to Add
 
-- [ ] Email confirmation after submission
-- [ ] Admin dashboard to view pre-orders
-- [ ] Payment integration (Stripe)
-- [ ] User authentication
-- [ ] Order tracking
-- [ ] Subscription management
-- [ ] Analytics dashboard
+- Admin dashboard to view pre-orders
+- Analytics dashboard
+- User authentication
+- Payment integration (Stripe)
+- Order tracking
+- Subscription management
 
 ## 🐛 Troubleshooting
 

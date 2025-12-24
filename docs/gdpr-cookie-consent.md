@@ -193,7 +193,7 @@ Legal pages are server-rendered from markdown files in `content/legal/`:
 - [x] "Reject Non-Essential" keeps only necessary and hides banner
 - [x] Preferences modal allows individual toggles
 - [x] Consent persists across page refreshes
-- [ ] Scripts only load after consent is given
+- [x] Scripts only load after consent is given
 - [x] Cookie settings button on `/cookies` page reopens modal
 - [x] Incrementing CONSENT_VERSION re-prompts users
 - [x] Legal pages render correctly from markdown
