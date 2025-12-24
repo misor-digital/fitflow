@@ -54,7 +54,7 @@ export default function PromoDiscountPrompt({ discountPercent }: PromoDiscountPr
       
       <p className="text-xs font-extrabold text-[#023047] whitespace-nowrap relative z-10 flex items-center gap-1.5">
         <span className="text-sm bg-[#023047] px-1.5 py-0.5 rounded-full">🎉</span>
-        <span><span className="text-[#c41e3a] font-black">{discountPercent}%</span> отстъпка!</span>
+        <span>Имаш <span className="text-[#c41e3a] font-black">{discountPercent}%</span> отстъпка!</span>
       </p>
     </div>
   );

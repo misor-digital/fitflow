@@ -132,14 +132,6 @@ export default function Navigation() {
               >
                 Въпроси
               </Link>
-              {/* Mobile Promo Badge */}
-              {discountPercent > 0 && (
-                <div className="bg-[#FB7D00]/10 border border-[#FB7D00] px-3 py-2 rounded-lg">
-                  <p className="text-sm font-semibold text-[#023047]">
-                    🎉 Имаш <span className="text-[#FB7D00] font-bold">{discountPercent}%</span> отстъпка!
-                  </p>
-                </div>
-              )}
             </div>
           </div>
         )}
