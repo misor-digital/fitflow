@@ -191,8 +191,8 @@ For production, consider upgrading to a paid plan for:
 ## Future Enhancements
 
 The email service is designed to support:
-- [ ] Marketing campaigns via Brevo Campaigns API
-- [ ] Email automation workflows
-- [ ] A/B testing for email templates
-- [ ] Advanced segmentation based on customer preferences
-- [ ] Webhook integration for delivery tracking
+- Marketing campaigns via Brevo Campaigns API
+- Email automation workflows
+- A/B testing for email templates
+- Advanced segmentation based on customer preferences
+- Webhook integration for delivery tracking
