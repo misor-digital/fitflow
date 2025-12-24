@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { useConsentStore } from '@/lib/consent';
 
@@ -26,19 +26,25 @@ export default function CookieConsentBanner() {
   // Local state for preference toggles
   const [analyticsEnabled, setAnalyticsEnabled] = useState(false);
   const [marketingEnabled, setMarketingEnabled] = useState(false);
+  
+  // Track previous showPreferences value to detect when modal opens
+  const prevShowPreferencesRef = useRef(showPreferences);
 
   // Initialize consent state on mount
   useEffect(() => {
     initialize();
   }, [initialize]);
 
-  // Sync local state with store when preferences modal opens
+  // Sync local state when modal opens - using ref comparison to avoid effect setState
   useEffect(() => {
-    if (showPreferences) {
+    // Only sync when modal opens (transition from false to true)
+    if (showPreferences && !prevShowPreferencesRef.current) {
       setAnalyticsEnabled(preferences.analytics);
       setMarketingEnabled(preferences.marketing);
     }
-  }, [showPreferences, preferences]);
+    prevShowPreferencesRef.current = showPreferences;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showPreferences]);
 
   // Don't render until loaded (prevents hydration mismatch)
   if (!isLoaded) return null;

@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import Link from 'next/link';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import LegalContent from '@/components/LegalContent';
@@ -26,7 +27,7 @@ export default async function CookiesPage() {
         <div className="max-w-4xl mx-auto mt-8">
           {/* Breadcrumb */}
           <nav className="text-sm text-gray-500 mb-6">
-            <a href="/" className="hover:text-[#FB7D00]">Начало</a>
+            <Link href="/" className="hover:text-[#FB7D00]">Начало</Link>
             <span className="mx-2">/</span>
             <span className="text-[#023047]">{document.title}</span>
           </nav>
