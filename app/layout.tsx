@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import SlidingBanner from "@/components/SlidingBanner";
+import CookieConsentBanner from "@/components/CookieConsentBanner";
+import ConditionalScripts from "@/components/ConditionalScripts";
 
 export const metadata: Metadata = {
   title: "FitFlow - Кутия за АКТИВНИ дами",
@@ -24,6 +26,16 @@ export default function RootLayout({
       <body className="antialiased">
         <SlidingBanner />
         {children}
+        <CookieConsentBanner />
+        {/* 
+          TODO: Add your tracking IDs here when ready:
+          <ConditionalScripts 
+            googleAnalyticsId="G-XXXXXXXXXX"
+            facebookPixelId="XXXXXXXXXXXXXXX"
+            googleAdsId="AW-XXXXXXXXXX"
+          />
+        */}
+        <ConditionalScripts />
       </body>
     </html>
   );
