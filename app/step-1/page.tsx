@@ -1,15 +1,35 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFormStore } from '@/store/formStore';
-import { calculatePrice } from '@/lib/promo';
 import PriceDisplay from '@/components/PriceDisplay';
 import Link from 'next/link';
+
+interface PriceInfo {
+  originalPriceEur: number;
+  originalPriceBgn: number;
+  finalPriceEur: number;
+  finalPriceBgn: number;
+  discountPercent: number;
+  discountAmountEur: number;
+  discountAmountBgn: number;
+}
+
+interface PricesData {
+  prices: Record<string, PriceInfo>;
+  discountPercent: number;
+  promoCode: string | null;
+}
 
 export default function Step1() {
   const router = useRouter();
   const { boxType, setBoxType, promoCode } = useFormStore();
+  
+  // Prices state - fetched from API
+  const [prices, setPrices] = useState<Record<string, PriceInfo> | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   // Initialize selected state - normalize premium variants to 'monthly-premium'
   const getInitialSelected = (): string | null => {
@@ -29,13 +49,46 @@ export default function Step1() {
   
   const [premiumFrequency, setPremiumFrequency] = useState<'monthly' | 'seasonal'>(getInitialFrequency());
 
-  // Calculate prices for all box types
-  const monthlyStandardPrice = calculatePrice('monthly-standard', promoCode);
-  const monthlyPremiumPrice = calculatePrice('monthly-premium', promoCode);
-  const onetimeStandardPrice = calculatePrice('onetime-standard', promoCode);
-  const onetimePremiumPrice = calculatePrice('onetime-premium', promoCode);
+  // Fetch prices from API
+  useEffect(() => {
+    async function fetchPrices() {
+      try {
+        setLoading(true);
+        const url = promoCode 
+          ? `/api/catalog?type=prices&promoCode=${encodeURIComponent(promoCode)}`
+          : '/api/catalog?type=prices';
+        
+        const response = await fetch(url);
+        if (!response.ok) {
+          throw new Error('Failed to fetch prices');
+        }
+        
+        const data: PricesData = await response.json();
+        setPrices(data.prices);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching prices:', err);
+        setError('Грешка при зареждане на цените. Моля, опитайте отново.');
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    fetchPrices();
+  }, [promoCode]);
 
-  const hasDiscount = promoCode && monthlyStandardPrice.discountPercent > 0;
+  // Get price info for a box type
+  const getPriceInfo = (boxTypeId: string): PriceInfo | null => {
+    if (!prices) return null;
+    return prices[boxTypeId] || null;
+  };
+
+  const monthlyStandardPrice = getPriceInfo('monthly-standard');
+  const monthlyPremiumPrice = getPriceInfo('monthly-premium');
+  const onetimeStandardPrice = getPriceInfo('onetime-standard');
+  const onetimePremiumPrice = getPriceInfo('onetime-premium');
+
+  const hasDiscount = promoCode && monthlyStandardPrice && monthlyStandardPrice.discountPercent > 0;
 
   const handleSelect = (id: string) => {
     setSelected(id);
@@ -68,6 +121,35 @@ export default function Step1() {
     router.push('/');
   };
 
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[#f0f9ff] to-white py-5 px-5 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FB7D00] mx-auto mb-4"></div>
+          <p className="text-[#023047] font-semibold">Зареждане...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[#f0f9ff] to-white py-5 px-5 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 font-semibold mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-[#FB7D00] text-white px-6 py-3 rounded-full font-semibold"
+          >
+            Опитай отново
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#f0f9ff] to-white py-5 px-5 pb-32">
       <div className="max-w-[900px] mx-auto mt-16">
@@ -85,7 +167,7 @@ export default function Step1() {
         </h2>
 
         {/* Discount Banner */}
-        {hasDiscount && (
+        {hasDiscount && monthlyStandardPrice && (
           <div className="bg-gradient-to-r from-[#FB7D00]/10 to-[#FB7D00]/5 border-l-4 border-[#FB7D00] p-4 rounded-xl mb-8">
             <p className="text-[#023047] font-semibold">
               🎉 Промо код <span className="text-[#FB7D00] font-bold">{promoCode}</span> е приложен – {monthlyStandardPrice.discountPercent}% отстъпка на всички кутии!
@@ -124,7 +206,7 @@ export default function Step1() {
                 <p className="text-sm text-gray-600 leading-relaxed mb-4">
                   Получаваш кутия с 4-6 продукта, включително протеинови продукти, хранителни добавки и спортни аксесоари
                 </p>
-                <PriceDisplay priceInfo={monthlyStandardPrice} />
+                {monthlyStandardPrice && <PriceDisplay priceInfo={monthlyStandardPrice} />}
               </div>
 
               {/* Premium */}
@@ -154,7 +236,7 @@ export default function Step1() {
                 <p className="text-sm text-gray-600 leading-relaxed mb-4">
                   Получаваш всичко от стандартната кутия плюс <span className="text-[#FB7D00] font-bold">спортно облекло</span>
                 </p>
-                <PriceDisplay priceInfo={monthlyPremiumPrice} />
+                {monthlyPremiumPrice && <PriceDisplay priceInfo={monthlyPremiumPrice} />}
                 
                 {/* Frequency Selection */}
                 <div className="pt-5 mt-5 border-t-2 border-gray-100">
@@ -225,7 +307,7 @@ export default function Step1() {
                 <p className="text-sm text-gray-600 leading-relaxed mb-4">
                   Получаваш кутия с 4-6 продукта, включително протеинови продукти, хранителни добавки и спортни аксесоари
                 </p>
-                <PriceDisplay priceInfo={onetimeStandardPrice} />
+                {onetimeStandardPrice && <PriceDisplay priceInfo={onetimeStandardPrice} />}
               </div>
 
               {/* Premium */}
@@ -255,7 +337,7 @@ export default function Step1() {
                 <p className="text-sm text-gray-600 leading-relaxed mb-4">
                   Получаваш всичко от стандартната кутия плюс <span className="text-[#FB7D00] font-bold">спортно облекло</span>
                 </p>
-                <PriceDisplay priceInfo={onetimePremiumPrice} />
+                {onetimePremiumPrice && <PriceDisplay priceInfo={onetimePremiumPrice} />}
               </div>
             </div>
           </div>

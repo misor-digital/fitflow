@@ -1,10 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { useFormStore } from '@/store/formStore';
-import { getDiscountPercent } from '@/lib/promo';
 import PromoDiscountPrompt from './PromoDiscountPrompt';
 
 export default function Navigation() {
@@ -12,7 +11,30 @@ export default function Navigation() {
   const pathname = usePathname();
   const { promoCode } = useFormStore();
   
-  const discountPercent = getDiscountPercent(promoCode);
+  // Fetch discount percent from API
+  const [discountPercent, setDiscountPercent] = useState(0);
+  
+  useEffect(() => {
+    async function fetchDiscount() {
+      if (!promoCode) {
+        setDiscountPercent(0);
+        return;
+      }
+      
+      try {
+        const response = await fetch(`/api/promo/validate?code=${encodeURIComponent(promoCode)}`);
+        if (response.ok) {
+          const data = await response.json();
+          setDiscountPercent(data.valid ? data.discountPercent : 0);
+        }
+      } catch (err) {
+        console.error('Error fetching discount:', err);
+        setDiscountPercent(0);
+      }
+    }
+    
+    fetchDiscount();
+  }, [promoCode]);
 
   const isActive = (path: string) => pathname === path;
 
