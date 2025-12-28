@@ -7,17 +7,26 @@ import { useEffect, Suspense } from 'react';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { useFormStore } from '@/store/formStore';
-import { isValidPromoCode } from '@/lib/promo';
 
 function HomeContent() {
   const searchParams = useSearchParams();
   const { setPromoCode } = useFormStore();
   
-  // Extract promo code from URL and store it
+  // Extract promo code from URL and validate via API
   useEffect(() => {
     const urlPromoCode = searchParams.get('promocode');
-    if (urlPromoCode && isValidPromoCode(urlPromoCode)) {
-      setPromoCode(urlPromoCode.toUpperCase());
+    if (urlPromoCode) {
+      // Validate promo code via API
+      fetch(`/api/promo/validate?code=${encodeURIComponent(urlPromoCode)}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.valid) {
+            setPromoCode(data.code);
+          }
+        })
+        .catch(err => {
+          console.error('Error validating promo code:', err);
+        });
     }
   }, [searchParams, setPromoCode]);
 

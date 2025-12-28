@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createPreorder, type PreorderFormData } from '@/lib/supabase';
 import { handlePreorderEmailWorkflow } from '@/lib/email';
-import { calculatePrice, validatePromoCode } from '@/lib/promo';
+import { calculatePrice, validatePromoCode, incrementPromoCodeUsage } from '@/lib/data/catalog';
 
 export async function POST(request: Request) {
   try {
@@ -29,13 +29,13 @@ export async function POST(request: Request) {
 
     // Server-side promo code validation and price calculation
     // IMPORTANT: Never trust client-side price calculations
-    const priceInfo = calculatePrice(data.boxType, data.promoCode);
-    const validatedPromo = validatePromoCode(data.promoCode);
+    const priceInfo = await calculatePrice(data.boxType, data.promoCode);
+    const validatedPromo = data.promoCode ? await validatePromoCode(data.promoCode) : null;
 
     console.log('Server-side price calculation:', {
       boxType: data.boxType,
       promoCode: data.promoCode,
-      validatedPromo,
+      validatedPromo: validatedPromo ? { code: validatedPromo.code, discount: validatedPromo.discount_percent } : null,
       priceInfo,
     });
 
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
       dietaryOther: data.preferences?.dietaryOther || data.dietaryOther,
       additionalNotes: data.preferences?.additionalNotes || data.additionalNotes,
       // Server-validated promo code and prices
-      promoCode: validatedPromo?.code || null,
+      promoCode: priceInfo.promoCode || null,
       discountPercent: priceInfo.discountPercent || null,
       originalPriceEur: priceInfo.originalPriceEur,
       finalPriceEur: priceInfo.finalPriceEur,
@@ -75,6 +75,16 @@ export async function POST(request: Request) {
         { error: `Failed to save preorder: ${error.message}` },
         { status: 500 }
       );
+    }
+
+    // Increment promo code usage if a valid promo was applied
+    if (priceInfo.promoCode) {
+      try {
+        await incrementPromoCodeUsage(priceInfo.promoCode);
+      } catch (promoError) {
+        console.warn('Failed to increment promo code usage:', promoError);
+        // Non-critical error, don't fail the request
+      }
     }
 
     console.log('Pre-order saved successfully:', {
