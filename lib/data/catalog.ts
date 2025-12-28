@@ -99,15 +99,18 @@ export async function validatePromoCode(code: string): Promise<PromoCode | null>
 
   if (error || !data) return null;
 
+  // Cast to PromoCode type
+  const promo = data as PromoCode;
+
   // Check validity window
   const now = new Date();
-  if (data.starts_at && new Date(data.starts_at) > now) return null;
-  if (data.ends_at && new Date(data.ends_at) < now) return null;
+  if (promo.starts_at && new Date(promo.starts_at) > now) return null;
+  if (promo.ends_at && new Date(promo.ends_at) < now) return null;
 
   // Check usage limits
-  if (data.max_uses !== null && data.current_uses >= data.max_uses) return null;
+  if (promo.max_uses !== null && promo.current_uses >= promo.max_uses) return null;
 
-  return data;
+  return promo;
 }
 
 /**

@@ -10,6 +10,7 @@ export type { PromoCode, AppliedPromo, PriceInfo } from './types';
 export {
   validatePromoCode,
   calculatePrice,
+  calculatePriceSync,
   getDiscountPercent,
   isValidPromoCode,
   getAllBoxPrices,

@@ -3,13 +3,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFormStore } from '@/store/formStore';
-import { calculatePrice } from '@/lib/promo';
+import { calculatePriceSync } from '@/lib/promo';
 import PriceDisplay from '@/components/PriceDisplay';
 import Link from 'next/link';
 
 export default function Step1() {
   const router = useRouter();
-  const { boxType, setBoxType, promoCode } = useFormStore();
+  const { boxType, setBoxType, promoCode, discountPercent } = useFormStore();
   
   // Initialize selected state - normalize premium variants to 'monthly-premium'
   const getInitialSelected = (): string | null => {
@@ -29,13 +29,13 @@ export default function Step1() {
   
   const [premiumFrequency, setPremiumFrequency] = useState<'monthly' | 'seasonal'>(getInitialFrequency());
 
-  // Calculate prices for all box types
-  const monthlyStandardPrice = calculatePrice('monthly-standard', promoCode);
-  const monthlyPremiumPrice = calculatePrice('monthly-premium', promoCode);
-  const onetimeStandardPrice = calculatePrice('onetime-standard', promoCode);
-  const onetimePremiumPrice = calculatePrice('onetime-premium', promoCode);
+  // Calculate prices for all box types using sync function with discountPercent from store
+  const monthlyStandardPrice = calculatePriceSync('monthly-standard', discountPercent);
+  const monthlyPremiumPrice = calculatePriceSync('monthly-premium', discountPercent);
+  const onetimeStandardPrice = calculatePriceSync('onetime-standard', discountPercent);
+  const onetimePremiumPrice = calculatePriceSync('onetime-premium', discountPercent);
 
-  const hasDiscount = promoCode && monthlyStandardPrice.discountPercent > 0;
+  const hasDiscount = promoCode && discountPercent > 0;
 
   const handleSelect = (id: string) => {
     setSelected(id);
@@ -88,7 +88,7 @@ export default function Step1() {
         {hasDiscount && (
           <div className="bg-gradient-to-r from-[#FB7D00]/10 to-[#FB7D00]/5 border-l-4 border-[#FB7D00] p-4 rounded-xl mb-8">
             <p className="text-[#023047] font-semibold">
-              🎉 Промо код <span className="text-[#FB7D00] font-bold">{promoCode}</span> е приложен – {monthlyStandardPrice.discountPercent}% отстъпка на всички кутии!
+              🎉 Промо код <span className="text-[#FB7D00] font-bold">{promoCode}</span> е приложен – {discountPercent}% отстъпка на всички кутии!
             </p>
           </div>
         )}

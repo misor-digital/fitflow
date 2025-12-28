@@ -4,15 +4,12 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useFormStore } from '@/store/formStore';
-import { getDiscountPercent } from '@/lib/promo';
 import PromoDiscountPrompt from './PromoDiscountPrompt';
 
 export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
   const pathname = usePathname();
-  const { promoCode } = useFormStore();
-  
-  const discountPercent = getDiscountPercent(promoCode);
+  const { discountPercent } = useFormStore();
 
   const isActive = (path: string) => pathname === path;
 

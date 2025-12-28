@@ -21,7 +21,7 @@ function HomeContent() {
         .then(res => res.json())
         .then(data => {
           if (data.valid) {
-            setPromoCode(data.code);
+            setPromoCode(data.code, data.discountPercent);
           }
         })
         .catch(err => {

@@ -25,6 +25,8 @@ interface FormData {
   
   // Promo code (from URL query string)
   promoCode: string | null;
+  // Discount percentage (validated server-side)
+  discountPercent: number;
 }
 
 interface FormStore extends FormData {
@@ -40,7 +42,7 @@ interface FormStore extends FormData {
   setDietaryOther: (other: string) => void;
   setAdditionalNotes: (notes: string) => void;
   setContactInfo: (name: string, email: string, phone: string) => void;
-  setPromoCode: (code: string | null) => void;
+  setPromoCode: (code: string | null, discountPercent?: number) => void;
   reset: () => void;
 }
 
@@ -61,6 +63,7 @@ const initialState: FormData = {
   email: '',
   phone: '',
   promoCode: null,
+  discountPercent: 0,
 };
 
 export const useFormStore = create<FormStore>()(
@@ -93,7 +96,8 @@ export const useFormStore = create<FormStore>()(
       setContactInfo: (name, email, phone) => 
         set({ fullName: name, email, phone }),
       
-      setPromoCode: (code) => set({ promoCode: code }),
+      setPromoCode: (code, discountPercent = 0) => 
+        set({ promoCode: code, discountPercent }),
       
       reset: () => set(initialState),
     }),

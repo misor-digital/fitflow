@@ -163,9 +163,49 @@ export async function getAllBoxPrices(promoCode: string | null | undefined): Pro
 }
 
 // ============================================================================
-// LEGACY SYNCHRONOUS EXPORTS (for backward compatibility during migration)
-// These should be replaced with async versions in call sites
+// SYNCHRONOUS VERSIONS (for client-side use without DB access)
 // ============================================================================
+
+/**
+ * Synchronous price calculation for client-side use
+ * Uses hardcoded prices and discountPercent from store
+ */
+export function calculatePriceSync(
+  boxType: string,
+  discountPercent: number = 0
+): PriceInfo {
+  const originalPriceEur = FALLBACK_BOX_PRICES_EUR[boxType] || 0;
+  const originalPriceBgn = eurToBgnSync(originalPriceEur);
+  
+  if (discountPercent === 0) {
+    return {
+      originalPriceEur,
+      originalPriceBgn,
+      discountPercent: 0,
+      discountAmountEur: 0,
+      discountAmountBgn: 0,
+      finalPriceEur: originalPriceEur,
+      finalPriceBgn: originalPriceBgn,
+      promoCode: null,
+    };
+  }
+  
+  const discountAmountEur = Math.round(originalPriceEur * (discountPercent / 100) * 100) / 100;
+  const discountAmountBgn = eurToBgnSync(discountAmountEur);
+  const finalPriceEur = Math.round((originalPriceEur - discountAmountEur) * 100) / 100;
+  const finalPriceBgn = eurToBgnSync(finalPriceEur);
+  
+  return {
+    originalPriceEur,
+    originalPriceBgn,
+    discountPercent,
+    discountAmountEur,
+    discountAmountBgn,
+    finalPriceEur,
+    finalPriceBgn,
+    promoCode: null,
+  };
+}
 
 /**
  * @deprecated Use async validatePromoCode instead

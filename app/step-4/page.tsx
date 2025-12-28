@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFormStore } from '@/store/formStore';
-import { calculatePrice, formatPrice } from '@/lib/promo';
+import { calculatePriceSync, formatPrice } from '@/lib/promo';
 import Link from 'next/link';
 
 const BOX_TYPES: Record<string, { name: string }> = {
@@ -60,9 +60,9 @@ export default function Step4() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  // Calculate price with promo code
-  const priceInfo = store.boxType ? calculatePrice(store.boxType, store.promoCode) : null;
-  const hasDiscount = priceInfo && priceInfo.discountPercent > 0;
+  // Calculate price with discountPercent from store (sync version)
+  const priceInfo = store.boxType ? calculatePriceSync(store.boxType, store.discountPercent) : null;
+  const hasDiscount = priceInfo && store.discountPercent > 0;
 
   const handleBack = () => {
     router.push('/step-3');
@@ -174,7 +174,7 @@ export default function Step4() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   <span className="font-semibold">
-                    Промо код {store.promoCode} е приложен – {priceInfo.discountPercent}% отстъпка
+                    Промо код {store.promoCode} е приложен – {store.discountPercent}% отстъпка
                   </span>
                 </div>
                 <div className="text-sm text-gray-500 mt-1">
