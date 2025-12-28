@@ -99,7 +99,11 @@ export async function validatePromoCode(code: string): Promise<PromoCode | null>
 
   if (error || !data) return null;
 
+<<<<<<< Updated upstream
   // Cast to PromoCode type
+=======
+  // Cast to PromoCode type for proper typing
+>>>>>>> Stashed changes
   const promo = data as PromoCode;
 
   // Check validity window

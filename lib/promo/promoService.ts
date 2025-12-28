@@ -93,9 +93,10 @@ export async function validatePromoCode(code: string | null | undefined): Promis
 }
 
 /**
- * Calculate price with optional promo code discount
+ * Calculate price with optional promo code discount - ASYNC version (server-side)
  * All calculations are based on EUR price as the source of truth
  */
+<<<<<<< Updated upstream
 export async function calculatePrice(
   boxType: string,
   promoCode: string | null | undefined
@@ -118,6 +119,47 @@ export async function calculatePrice(
     const originalPriceEur = FALLBACK_BOX_PRICES_EUR[boxType] || 0;
     const originalPriceBgn = eurToBgnSync(originalPriceEur);
     
+=======
+export async function calculatePriceAsync(
+  boxType: string,
+  promoCode: string | null | undefined
+): Promise<PriceInfo> {
+  try {
+    const result = await dbCalculatePrice(boxType, promoCode);
+    return {
+      originalPriceEur: result.originalPriceEur,
+      originalPriceBgn: result.originalPriceBgn,
+      discountPercent: result.discountPercent,
+      discountAmountEur: result.discountAmountEur,
+      discountAmountBgn: result.discountAmountBgn,
+      finalPriceEur: result.finalPriceEur,
+      finalPriceBgn: result.finalPriceBgn,
+      promoCode: result.promoCode,
+    };
+  } catch (error) {
+    console.error('Error calculating price from DB:', error);
+    // Fallback to sync calculation
+    return calculatePrice(boxType, promoCode);
+  }
+}
+
+/**
+ * Calculate price with optional promo code discount - SYNC version (client-side)
+ * Uses hardcoded prices and known promo codes for client-side display
+ * Actual validation happens server-side on form submission
+ */
+export function calculatePrice(
+  boxType: string,
+  promoCode: string | null | undefined
+): PriceInfo {
+  const originalPriceEur = FALLBACK_BOX_PRICES_EUR[boxType] || 0;
+  const originalPriceBgn = eurToBgnSync(originalPriceEur);
+  
+  // Get discount from known promo codes
+  const discountPercent = getDiscountPercent(promoCode);
+  
+  if (discountPercent === 0) {
+>>>>>>> Stashed changes
     return {
       originalPriceEur,
       originalPriceBgn,
@@ -129,6 +171,7 @@ export async function calculatePrice(
       promoCode: null,
     };
   }
+<<<<<<< Updated upstream
 }
 
 /**
@@ -189,6 +232,8 @@ export function calculatePriceSync(
       promoCode: null,
     };
   }
+=======
+>>>>>>> Stashed changes
   
   const discountAmountEur = Math.round(originalPriceEur * (discountPercent / 100) * 100) / 100;
   const discountAmountBgn = eurToBgnSync(discountAmountEur);
@@ -203,11 +248,89 @@ export function calculatePriceSync(
     discountAmountBgn,
     finalPriceEur,
     finalPriceBgn,
+<<<<<<< Updated upstream
     promoCode: null,
+=======
+    promoCode: promoCode?.trim().toUpperCase() || null,
+>>>>>>> Stashed changes
   };
 }
 
 /**
+<<<<<<< Updated upstream
  * @deprecated Use async validatePromoCode instead
  */
+=======
+ * Get discount percentage for a promo code (for display purposes) - ASYNC version
+ * Returns 0 if code is invalid
+ */
+export async function getDiscountPercentAsync(promoCode: string | null | undefined): Promise<number> {
+  return getPromoDiscountPercent(promoCode);
+}
+
+/**
+ * Get discount percentage for a promo code (for display purposes) - SYNC version
+ * For client-side use only - validates against known promo codes
+ * Returns 0 if code is invalid or unknown
+ */
+export function getDiscountPercent(promoCode: string | null | undefined): number {
+  // Client-side fallback - return 0 since we can't validate without DB
+  // The actual discount will be validated server-side on form submission
+  if (!promoCode || typeof promoCode !== 'string') {
+    return 0;
+  }
+  
+  // Known promo codes for client-side display only
+  // These are just for UI hints - actual validation happens server-side
+  const KNOWN_PROMOS: Record<string, number> = {
+    'FITFLOW10': 10,
+    'FITFLOW20': 20,
+    'FITFLOW25': 25,
+    'FITFLOW30': 30,
+  };
+  
+  const normalizedCode = promoCode.trim().toUpperCase();
+  return KNOWN_PROMOS[normalizedCode] || 0;
+}
+
+/**
+ * Check if a promo code is valid (for quick validation) - ASYNC version
+ */
+export async function isValidPromoCodeAsync(code: string | null | undefined): Promise<boolean> {
+  const appliedPromo = await validatePromoCode(code);
+  return appliedPromo !== null;
+}
+
+/**
+ * Check if a promo code is valid (for quick validation) - SYNC version
+ * For client-side use only - validates against known promo codes
+ */
+export function isValidPromoCode(code: string | null | undefined): boolean {
+  return getDiscountPercent(code) > 0;
+}
+
+/**
+ * Get all box prices with optional promo code applied
+ * Useful for displaying all prices on step-1
+ */
+export async function getAllBoxPrices(promoCode: string | null | undefined): Promise<Record<string, PriceInfo>> {
+  const result: Record<string, PriceInfo> = {};
+  const boxPrices = await getBoxPricesEur();
+  
+  for (const boxType of Object.keys(boxPrices)) {
+    result[boxType] = await calculatePrice(boxType, promoCode);
+  }
+  
+  return result;
+}
+
+// ============================================================================
+// LEGACY SYNCHRONOUS EXPORTS (for backward compatibility during migration)
+// These should be replaced with async versions in call sites
+// ============================================================================
+
+/**
+ * @deprecated Use async validatePromoCode instead
+ */
+>>>>>>> Stashed changes
 export const BOX_PRICES_EUR = FALLBACK_BOX_PRICES_EUR;

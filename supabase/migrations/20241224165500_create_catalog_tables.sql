@@ -146,7 +146,12 @@ ON CONFLICT (id) DO UPDATE SET
 -- ============================================================================
 INSERT INTO promo_codes (code, discount_percent, description, is_enabled) VALUES
     ('FITFLOW10', 10, 'Launch promo - 10% off', true),
+<<<<<<< Updated upstream
     ('FITFLOW25', 25, 'Special promo - 25% off', true),
+=======
+    ('FITFLOW20', 20, 'Special promo - 20% off', true),
+    ('FITFLOW30', 30, 'VIP promo - 30% off', true)
+>>>>>>> Stashed changes
 ON CONFLICT (code) DO UPDATE SET
     discount_percent = EXCLUDED.discount_percent,
     description = EXCLUDED.description,
