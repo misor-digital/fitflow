@@ -4,7 +4,7 @@
  */
 
 import { supabase } from '@/lib/supabase/client';
-import type { PromoCodeRow } from '@/lib/supabase/database.types';
+import type { PromoCodeRow } from '@/lib/supabase/types';
 
 /**
  * Validate a promo code and return the promo data if valid

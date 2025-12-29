@@ -1,3 +1,9 @@
+/**
+ * Database types for Supabase
+ * 
+ * Update using: supabase gen types typescript
+ */
+
 export type BoxType = 
   | 'monthly-standard' 
   | 'monthly-premium' 
@@ -5,6 +11,10 @@ export type BoxType =
   | 'monthly-premium-seasonal' 
   | 'onetime-standard' 
   | 'onetime-premium';
+
+// ============================================================================
+// Preorders Table
+// ============================================================================
 
 export interface PreorderInsert {
   full_name: string;
@@ -36,7 +46,160 @@ export interface Preorder extends PreorderInsert {
   updated_at: string;
 }
 
-// Box price info returned by calculate_box_prices function
+// ============================================================================
+// Box Types Table
+// ============================================================================
+
+export interface BoxTypeRow {
+  id: string;
+  name: string;
+  description: string | null;
+  price_eur: number;
+  is_subscription: boolean;
+  is_premium: boolean;
+  frequency: string | null;
+  sort_order: number;
+  is_enabled: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface BoxTypeInsert {
+  id: string;
+  name: string;
+  description?: string | null;
+  price_eur: number;
+  is_subscription?: boolean;
+  is_premium?: boolean;
+  frequency?: string | null;
+  sort_order?: number;
+  is_enabled?: boolean;
+}
+
+export interface BoxTypeUpdate {
+  id?: string;
+  name?: string;
+  description?: string | null;
+  price_eur?: number;
+  is_subscription?: boolean;
+  is_premium?: boolean;
+  frequency?: string | null;
+  sort_order?: number;
+  is_enabled?: boolean;
+}
+
+// ============================================================================
+// Promo Codes Table
+// ============================================================================
+
+export interface PromoCodeRow {
+  id: string;
+  code: string;
+  discount_percent: number;
+  description: string | null;
+  is_enabled: boolean;
+  starts_at: string | null;
+  ends_at: string | null;
+  max_uses: number | null;
+  current_uses: number;
+  min_order_value_eur: number | null;
+  applicable_box_types: string[] | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PromoCodeInsert {
+  code: string;
+  discount_percent: number;
+  description?: string | null;
+  is_enabled?: boolean;
+  starts_at?: string | null;
+  ends_at?: string | null;
+  max_uses?: number | null;
+  current_uses?: number;
+  min_order_value_eur?: number | null;
+  applicable_box_types?: string[] | null;
+}
+
+export interface PromoCodeUpdate {
+  code?: string;
+  discount_percent?: number;
+  description?: string | null;
+  is_enabled?: boolean;
+  starts_at?: string | null;
+  ends_at?: string | null;
+  max_uses?: number | null;
+  current_uses?: number;
+  min_order_value_eur?: number | null;
+  applicable_box_types?: string[] | null;
+}
+
+// ============================================================================
+// Options Table
+// ============================================================================
+
+export type OptionSetId = 'sports' | 'colors' | 'flavors' | 'dietary' | 'sizes';
+
+export interface OptionRow {
+  id: string;
+  option_set_id: string;
+  label: string;
+  value: string | null;
+  sort_order: number;
+  is_enabled: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface OptionInsert {
+  id: string;
+  option_set_id: string;
+  label: string;
+  value?: string | null;
+  sort_order?: number;
+  is_enabled?: boolean;
+}
+
+export interface OptionUpdate {
+  id?: string;
+  option_set_id?: string;
+  label?: string;
+  value?: string | null;
+  sort_order?: number;
+  is_enabled?: boolean;
+}
+
+// ============================================================================
+// Site Config Table
+// ============================================================================
+
+export interface SiteConfigRow {
+  key: string;
+  value: string;
+  description: string | null;
+  value_type: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SiteConfigInsert {
+  key: string;
+  value: string;
+  description?: string | null;
+  value_type?: string;
+}
+
+export interface SiteConfigUpdate {
+  key?: string;
+  value?: string;
+  description?: string | null;
+  value_type?: string;
+}
+
+// ============================================================================
+// RPC Function Return Types
+// ============================================================================
+
 export interface BoxPriceInfo {
   box_type_id: string;
   box_type_name: string;
@@ -49,6 +212,10 @@ export interface BoxPriceInfo {
   final_price_bgn: number;
 }
 
+// ============================================================================
+// Database Schema Type (for Supabase client)
+// ============================================================================
+
 export interface Database {
   public: {
     Tables: {
@@ -56,6 +223,30 @@ export interface Database {
         Row: Preorder;
         Insert: PreorderInsert;
         Update: Partial<PreorderInsert>;
+        Relationships: [];
+      };
+      box_types: {
+        Row: BoxTypeRow;
+        Insert: BoxTypeInsert;
+        Update: BoxTypeUpdate;
+        Relationships: [];
+      };
+      promo_codes: {
+        Row: PromoCodeRow;
+        Insert: PromoCodeInsert;
+        Update: PromoCodeUpdate;
+        Relationships: [];
+      };
+      options: {
+        Row: OptionRow;
+        Insert: OptionInsert;
+        Update: OptionUpdate;
+        Relationships: [];
+      };
+      site_config: {
+        Row: SiteConfigRow;
+        Insert: SiteConfigInsert;
+        Update: SiteConfigUpdate;
         Relationships: [];
       };
     };

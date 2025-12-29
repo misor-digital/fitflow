@@ -5,7 +5,7 @@
 
 import { cache } from 'react';
 import { supabase } from '@/lib/supabase/client';
-import type { BoxTypeRow, OptionRow, OptionSetId } from '@/lib/supabase/database.types';
+import type { BoxTypeRow, OptionRow, OptionSetId } from '@/lib/supabase/types';
 
 // ============================================================================
 // Box Types
@@ -188,14 +188,27 @@ export interface PriceInfo {
   promoCode: string | null;
 }
 
+interface RpcBoxPriceRow {
+  box_type_id: string;
+  box_type_name: string;
+  original_price_eur: number;
+  original_price_bgn: number;
+  discount_percent: number;
+  discount_amount_eur: number;
+  discount_amount_bgn: number;
+  final_price_eur: number;
+  final_price_bgn: number;
+}
+
 /**
  * Get all box prices in a single database call using Supabase RPC
  * This is the optimized version that eliminates multiple round-trips
  */
 export const getAllBoxPrices = cache(async (promoCode: string | null | undefined): Promise<PriceInfo[]> => {
+  // Use type assertion to work around Supabase client type limitations
   const { data, error } = await supabase.rpc('calculate_box_prices', {
     p_promo_code: promoCode || null,
-  });
+  } as unknown as undefined) as { data: RpcBoxPriceRow[] | null; error: Error | null };
 
   if (error) {
     console.error('Error calling calculate_box_prices:', error);
@@ -206,17 +219,7 @@ export const getAllBoxPrices = cache(async (promoCode: string | null | undefined
     throw new Error('No box types configured. Please contact support.');
   }
 
-  return data.map((row: {
-    box_type_id: string;
-    box_type_name: string;
-    original_price_eur: number;
-    original_price_bgn: number;
-    discount_percent: number;
-    discount_amount_eur: number;
-    discount_amount_bgn: number;
-    final_price_eur: number;
-    final_price_bgn: number;
-  }) => ({
+  return data.map((row) => ({
     boxTypeId: row.box_type_id,
     boxTypeName: row.box_type_name,
     originalPriceEur: Number(row.original_price_eur),

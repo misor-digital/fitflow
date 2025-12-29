@@ -13,7 +13,7 @@ import {
   getAllBoxPricesMap,
   type PriceInfo,
 } from '@/lib/data';
-import type { OptionSetId } from '@/lib/supabase/database.types';
+import type { OptionSetId } from '@/lib/supabase/types';
 
 /**
  * GET /api/catalog
