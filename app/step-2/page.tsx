@@ -219,7 +219,7 @@ export default function Step2() {
             </h2>
             <div className="space-y-3 sm:space-y-4 md:space-y-5">
               {[
-                { value: true, title: 'Да, искам персонализация', desc: 'Персонализацията включва няколко въпроса, свързани с твоите предпочитания и нужди' },
+                { value: true, title: 'Да, искам персонализация', desc: 'Включва няколко въпроса, които ни помагат по-добре да разберем твоите предпочитания и нужди' },
                 { value: false, title: 'Не, оставям избора на вас', desc: null }
               ].map((option) => (
                 <div

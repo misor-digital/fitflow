@@ -273,6 +273,9 @@ export default function Step4() {
                   </div>
                 )}
               </div>
+              <p className="text-xs text-gray-400 mt-4 pt-3 border-t border-gray-100">
+                Персонализацията е насочена към твоите нужди, но не гарантира 100% съвпадение.
+              </p>
             </div>
           ) : (
             <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 shadow-lg">
