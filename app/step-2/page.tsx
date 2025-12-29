@@ -1,59 +1,47 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFormStore } from '@/store/formStore';
 import Link from 'next/link';
 
-const COLORS = [
-  '#000000', '#FFFFFF', '#8A8A8A', '#0A1A33', '#7EC8E3',
-  '#F4C2C2', '#8d010d', '#B497D6', '#556B2F', '#FB7D00'
-];
+interface OptionItem {
+  id: string;
+  label: string;
+  value?: string | null;
+}
 
-const COLOR_NAMES: Record<string, string> = {
-  '#000000': 'Черно',
-  '#FFFFFF': 'Бяло',
-  '#8A8A8A': 'Сиво',
-  '#0A1A33': 'Тъмно синьо',
-  '#7EC8E3': 'Светло синьо',
-  '#F4C2C2': 'Розово',
-  '#8d010d': 'Бордо',
-  '#B497D6': 'Лилаво',
-  '#556B2F': 'Маслинено зелено',
-  '#FB7D00': 'Оранжево'
-};
+interface ColorItem {
+  id: string;
+  label: string;
+  hex: string;
+}
 
-const SPORT_LABELS: Record<string, string> = {
-  'fitness': 'Фитнес',
-  'dance': 'Танци',
-  'yoga': 'Йога/пилатес',
-  'running': 'Бягане',
-  'swimming': 'Плуване',
-  'team': 'Отборен спорт',
-  'other': 'Други'
-};
-
-
-const FLAVOR_LABELS: Record<string, string> = {
-  'chocolate': 'Шоколад',
-  'strawberry': 'Ягода',
-  'vanilla': 'Ванилия',
-  'salted-caramel': 'Солен карамел',
-  'biscuit': 'Бисквита',
-  'other': 'Други'
-};
-
-const DIETARY_LABELS: Record<string, string> = {
-  'none': 'Не',
-  'lactose': 'Без лактоза',
-  'gluten': 'Без глутен',
-  'vegan': 'Веган',
-  'other': 'Други'
-};
+interface CatalogData {
+  options: {
+    sports: OptionItem[];
+    colors: ColorItem[];
+    flavors: OptionItem[];
+    dietary: OptionItem[];
+    sizes: OptionItem[];
+  };
+  labels: {
+    sports: Record<string, string>;
+    colors: Record<string, string>;
+    flavors: Record<string, string>;
+    dietary: Record<string, string>;
+    sizes: Record<string, string>;
+  };
+}
 
 export default function Step2() {
   const router = useRouter();
   const store = useFormStore();
+  
+  // Catalog data from API
+  const [catalogData, setCatalogData] = useState<CatalogData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   
   // Determine if box is premium
   const isPremium = store.boxType?.includes('premium') || false;
@@ -71,6 +59,41 @@ export default function Step2() {
   const [dietaryOther, setDietaryOther] = useState(store.dietaryOther);
   const [notes, setNotes] = useState(store.additionalNotes);
 
+  // Fetch catalog data from API
+  useEffect(() => {
+    async function fetchCatalog() {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/catalog?type=all');
+        if (!response.ok) {
+          throw new Error('Failed to fetch catalog');
+        }
+        const data = await response.json();
+        setCatalogData(data);
+        setError(null);
+      } catch (err) {
+        console.error('Error fetching catalog:', err);
+        setError('Грешка при зареждане. Моля, опитайте отново.');
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    fetchCatalog();
+  }, []);
+
+  // Get labels from catalog data or use fallbacks
+  const SPORT_LABELS = catalogData?.labels?.sports || {};
+  const FLAVOR_LABELS = catalogData?.labels?.flavors || {};
+  const DIETARY_LABELS = catalogData?.labels?.dietary || {};
+  
+  // Get options from catalog data
+  const sportsOptions = catalogData?.options?.sports || [];
+  const colorsOptions = catalogData?.options?.colors || [];
+  const flavorsOptions = catalogData?.options?.flavors || [];
+  const dietaryOptions = catalogData?.options?.dietary || [];
+  const sizesOptions = catalogData?.options?.sizes || [];
+
   // Determine active steps based on box type and personalization
   const getActiveSteps = (personalization: boolean | null, premium: boolean) => {
     if (personalization === null) {
@@ -80,19 +103,15 @@ export default function Step2() {
     if (premium) {
       if (personalization) {
         return ['personalization', 'sport', 'colors', 'flavors', 'size', 'dietary', 'notes'];
-        // return ['personalization', 'sport', 'colors', 'flavors', 'size', 'dietary', 'notes', 'summary'];
       } else {
         return ['personalization', 'size'];
-        // return ['personalization', 'size', 'summary'];
       }
     } else {
       // Standard box
       if (personalization) {
         return ['personalization', 'sport', 'flavors', 'dietary', 'notes'];
-        // return ['personalization', 'sport', 'flavors', 'dietary', 'notes', 'summary'];
       } else {
         return ['personalization'];
-        // return ['personalization', 'summary'];
       }
     }
   };
@@ -159,8 +178,6 @@ export default function Step2() {
     
     // Special handling for personalization step - move to next step
     if (activeSteps[currentStep] === 'personalization' && wantsPersonalization !== null) {
-      // Active steps will be recalculated automatically based on wantsPersonalization
-      // Move to next step in the array
       if (activeSteps.length > 1) {
         setCurrentStep(1);
         window.scrollTo(0, 0);
@@ -202,6 +219,35 @@ export default function Step2() {
     
     router.push('/step-3');
   };
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[#f0f9ff] to-white py-5 px-5 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FB7D00] mx-auto mb-4"></div>
+          <p className="text-[#023047] font-semibold">Зареждане...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[#f0f9ff] to-white py-5 px-5 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-red-600 font-semibold mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-[#FB7D00] text-white px-6 py-3 rounded-full font-semibold"
+          >
+            Опитай отново
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   const renderStep = () => {
     const step = activeSteps[validCurrentStep];
@@ -249,22 +295,22 @@ export default function Step2() {
               Какъв спорт практикуваш?
             </h2>
             <div className="space-y-4">
-              {['fitness', 'dance', 'yoga', 'running', 'swimming', 'team', 'other'].map((sport) => (
+              {sportsOptions.map((sport) => (
                 <div
-                  key={sport}
-                  onClick={() => toggleItem(sports, sport, setSports)}
+                  key={sport.id}
+                  onClick={() => toggleItem(sports, sport.id, setSports)}
                   className={`bg-white rounded-xl p-5 shadow-md cursor-pointer transition-all border-3 ${
-                    sports.includes(sport)
+                    sports.includes(sport.id)
                       ? 'border-[#FB7D00] bg-gradient-to-br from-[#FB7D00]/5 to-[#FB7D00]/2'
                       : 'border-transparent hover:shadow-lg hover:-translate-y-0.5'
                   }`}
                 >
                   <div className="flex items-center gap-4">
-                    <div className={`w-6 h-6 rounded border-3 flex-shrink-0 flex items-center justify-center ${sports.includes(sport) ? 'border-[#FB7D00] bg-[#FB7D00]' : 'border-gray-300'}`}>
-                      {sports.includes(sport) && <div className="text-white text-sm font-bold">✓</div>}
+                    <div className={`w-6 h-6 rounded border-3 flex-shrink-0 flex items-center justify-center ${sports.includes(sport.id) ? 'border-[#FB7D00] bg-[#FB7D00]' : 'border-gray-300'}`}>
+                      {sports.includes(sport.id) && <div className="text-white text-sm font-bold">✓</div>}
                     </div>
                     <div className="text-lg font-semibold text-[#023047]">
-                      {SPORT_LABELS[sport]}
+                      {sport.label}
                     </div>
                   </div>
                 </div>
@@ -295,15 +341,15 @@ export default function Step2() {
               В какви цветове предпочиташ да са твоите спортни дрехи?
             </h2>
             <div className="grid grid-cols-5 gap-4">
-              {COLORS.map((color) => (
+              {colorsOptions.map((color) => (
                 <div
-                  key={color}
-                  onClick={() => toggleItem(colors, color, setColors)}
-                  title={COLOR_NAMES[color]}
+                  key={color.id}
+                  onClick={() => toggleItem(colors, color.hex, setColors)}
+                  title={color.label}
                   className={`aspect-square rounded-xl cursor-pointer transition-all shadow-md hover:scale-105 ${
-                    colors.includes(color) ? 'ring-4 ring-[#FB7D00] ring-offset-2' : ''
-                  } ${color === '#FFFFFF' ? 'border-2 border-gray-300' : ''} ${color === '#FB7D00' && colors.includes(color) ? 'ring-[#023047]' : ''}`}
-                  style={{ backgroundColor: color }}
+                    colors.includes(color.hex) ? 'ring-4 ring-[#FB7D00] ring-offset-2' : ''
+                  } ${color.hex === '#FFFFFF' ? 'border-2 border-gray-300' : ''} ${color.hex === '#FB7D00' && colors.includes(color.hex) ? 'ring-[#023047]' : ''}`}
+                  style={{ backgroundColor: color.hex }}
                 />
               ))}
             </div>
@@ -317,22 +363,22 @@ export default function Step2() {
               Кои вкусове предпочиташ?
             </h2>
             <div className="space-y-4">
-              {['chocolate', 'strawberry', 'vanilla', 'salted-caramel', 'biscuit', 'other'].map((flavor) => (
+              {flavorsOptions.map((flavor) => (
                 <div
-                  key={flavor}
-                  onClick={() => toggleItem(flavors, flavor, setFlavors)}
+                  key={flavor.id}
+                  onClick={() => toggleItem(flavors, flavor.id, setFlavors)}
                   className={`bg-white rounded-xl p-5 shadow-md cursor-pointer transition-all border-3 ${
-                    flavors.includes(flavor)
+                    flavors.includes(flavor.id)
                       ? 'border-[#FB7D00] bg-gradient-to-br from-[#FB7D00]/5 to-[#FB7D00]/2'
                       : 'border-transparent hover:shadow-lg hover:-translate-y-0.5'
                   }`}
                 >
                   <div className="flex items-center gap-4">
-                    <div className={`w-6 h-6 rounded border-3 flex-shrink-0 flex items-center justify-center ${flavors.includes(flavor) ? 'border-[#FB7D00] bg-[#FB7D00]' : 'border-gray-300'}`}>
-                      {flavors.includes(flavor) && <div className="text-white text-sm font-bold">✓</div>}
+                    <div className={`w-6 h-6 rounded border-3 flex-shrink-0 flex items-center justify-center ${flavors.includes(flavor.id) ? 'border-[#FB7D00] bg-[#FB7D00]' : 'border-gray-300'}`}>
+                      {flavors.includes(flavor.id) && <div className="text-white text-sm font-bold">✓</div>}
                     </div>
                     <div className="text-lg font-semibold text-[#023047]">
-                      {FLAVOR_LABELS[flavor]}
+                      {flavor.label}
                     </div>
                   </div>
                 </div>
@@ -366,17 +412,17 @@ export default function Step2() {
               <div className="bg-white p-6 rounded-xl shadow-md">
                 <div className="text-lg font-semibold text-[#023047] mb-4">Горна част:</div>
                 <div className="flex gap-3 flex-wrap">
-                  {['XS', 'S', 'M', 'L', 'XL'].map((size) => (
+                  {sizesOptions.map((size) => (
                     <button
-                      key={size}
-                      onClick={() => setSizeUpper(size)}
+                      key={size.id}
+                      onClick={() => setSizeUpper(size.id)}
                       className={`px-6 py-3 rounded-xl font-semibold transition-all ${
-                        sizeUpper === size
+                        sizeUpper === size.id
                           ? 'bg-[#FB7D00] text-white'
                           : 'bg-gray-100 text-[#023047] hover:bg-gray-200'
                       }`}
                     >
-                      {size}
+                      {size.label}
                     </button>
                   ))}
                 </div>
@@ -384,17 +430,17 @@ export default function Step2() {
               <div className="bg-white p-6 rounded-xl shadow-md">
                 <div className="text-lg font-semibold text-[#023047] mb-4">Долна част:</div>
                 <div className="flex gap-3 flex-wrap">
-                  {['XS', 'S', 'M', 'L', 'XL'].map((size) => (
+                  {sizesOptions.map((size) => (
                     <button
-                      key={size}
-                      onClick={() => setSizeLower(size)}
+                      key={size.id}
+                      onClick={() => setSizeLower(size.id)}
                       className={`px-6 py-3 rounded-xl font-semibold transition-all ${
-                        sizeLower === size
+                        sizeLower === size.id
                           ? 'bg-[#FB7D00] text-white'
                           : 'bg-gray-100 text-[#023047] hover:bg-gray-200'
                       }`}
                     >
-                      {size}
+                      {size.label}
                     </button>
                   ))}
                 </div>
@@ -410,32 +456,32 @@ export default function Step2() {
               Имаш ли хранителни ограничения?
             </h2>
             <div className="space-y-4">
-              {['none', 'lactose', 'gluten', 'vegan', 'other'].map((item) => (
+              {dietaryOptions.map((item) => (
                 <div
-                  key={item}
+                  key={item.id}
                   onClick={() => {
                     // If clicking 'none', clear all other selections
-                    if (item === 'none') {
+                    if (item.id === 'none') {
                       setDietary(['none']);
                       setDietaryOther('');
                     } else {
                       // If clicking any other option, remove 'none' and toggle the item
                       const newDietary = dietary.filter(d => d !== 'none');
-                      toggleItem(newDietary, item, setDietary);
+                      toggleItem(newDietary, item.id, setDietary);
                     }
                   }}
                   className={`bg-white rounded-xl p-5 shadow-md cursor-pointer transition-all border-3 ${
-                    dietary.includes(item)
+                    dietary.includes(item.id)
                       ? 'border-[#FB7D00] bg-gradient-to-br from-[#FB7D00]/5 to-[#FB7D00]/2'
                       : 'border-transparent hover:shadow-lg hover:-translate-y-0.5'
                   }`}
                 >
                   <div className="flex items-center gap-4">
-                    <div className={`w-6 h-6 rounded border-3 flex-shrink-0 flex items-center justify-center ${dietary.includes(item) ? 'border-[#FB7D00] bg-[#FB7D00]' : 'border-gray-300'}`}>
-                      {dietary.includes(item) && <div className="text-white text-sm font-bold">✓</div>}
+                    <div className={`w-6 h-6 rounded border-3 flex-shrink-0 flex items-center justify-center ${dietary.includes(item.id) ? 'border-[#FB7D00] bg-[#FB7D00]' : 'border-gray-300'}`}>
+                      {dietary.includes(item.id) && <div className="text-white text-sm font-bold">✓</div>}
                     </div>
                     <div className="text-lg font-semibold text-[#023047]">
-                      {DIETARY_LABELS[item]}
+                      {item.label}
                     </div>
                   </div>
                 </div>

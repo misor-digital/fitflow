@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createPreorder, type PreorderFormData } from '@/lib/supabase';
 import { handlePreorderEmailWorkflow } from '@/lib/email';
-import { calculatePrice, validatePromoCode } from '@/lib/promo';
+import { calculatePrice, validatePromoCode, incrementPromoCodeUsage } from '@/lib/data';
 
 export async function POST(request: Request) {
   try {
@@ -29,8 +29,8 @@ export async function POST(request: Request) {
 
     // Server-side promo code validation and price calculation
     // IMPORTANT: Never trust client-side price calculations
-    const priceInfo = calculatePrice(data.boxType, data.promoCode);
-    const validatedPromo = validatePromoCode(data.promoCode);
+    const priceInfo = await calculatePrice(data.boxType, data.promoCode);
+    const validatedPromo = await validatePromoCode(data.promoCode);
 
     console.log('Server-side price calculation:', {
       boxType: data.boxType,
@@ -88,6 +88,16 @@ export async function POST(request: Request) {
       finalPriceEur: preorder?.final_price_eur,
       timestamp: preorder?.created_at,
     });
+
+    // Increment promo code usage if one was applied
+    if (validatedPromo?.code) {
+      try {
+        await incrementPromoCodeUsage(validatedPromo.code);
+      } catch (promoError) {
+        console.warn('Failed to increment promo code usage:', promoError);
+        // Don't fail the request - preorder was saved successfully
+      }
+    }
 
     // Send confirmation email and add to contacts via Brevo
     if (preorder) {

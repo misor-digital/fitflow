@@ -1,67 +1,90 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFormStore } from '@/store/formStore';
-import { calculatePrice, formatPrice } from '@/lib/promo';
 import Link from 'next/link';
 
-const BOX_TYPES: Record<string, { name: string }> = {
-  'monthly-standard': { name: 'Месечна - Стандартна' },
-  'monthly-premium-monthly': { name: 'Месечна - Премиум (всеки месец)' },
-  'monthly-premium-seasonal': { name: 'Месечна - Премиум (всеки 3 месеца)' },
-  'onetime-standard': { name: 'Еднократна - Стандартна' },
-  'onetime-premium': { name: 'Еднократна - Премиум' },
-};
+interface PriceInfo {
+  originalPriceEur: number;
+  originalPriceBgn: number;
+  finalPriceEur: number;
+  finalPriceBgn: number;
+  discountPercent: number;
+  discountAmountEur: number;
+  discountAmountBgn: number;
+}
 
-const SPORT_LABELS: Record<string, string> = {
-  'fitness': 'Фитнес',
-  'dance': 'Танци',
-  'yoga': 'Йога/пилатес',
-  'running': 'Бягане',
-  'swimming': 'Плуване',
-  'team': 'Отборен спорт',
-  'other': 'Други'
-};
+interface CatalogData {
+  boxTypeNames: Record<string, string>;
+  labels: {
+    sports: Record<string, string>;
+    colors: Record<string, string>;
+    flavors: Record<string, string>;
+    dietary: Record<string, string>;
+  };
+}
 
-const FLAVOR_LABELS: Record<string, string> = {
-  'chocolate': 'Шоколад',
-  'strawberry': 'Ягода',
-  'vanilla': 'Ванилия',
-  'salted-caramel': 'Солен карамел',
-  'biscuit': 'Бисквита',
-  'other': 'Други'
-};
-
-const DIETARY_LABELS: Record<string, string> = {
-  'none': 'Не',
-  'lactose': 'Без лактоза',
-  'gluten': 'Без глутен',
-  'vegan': 'Веган',
-  'other': 'Други'
-};
-
-const COLOR_NAMES: Record<string, string> = {
-  '#000000': 'Черно',
-  '#FFFFFF': 'Бяло',
-  '#8A8A8A': 'Сиво',
-  '#0A1A33': 'Тъмно синьо',
-  '#7EC8E3': 'Светло синьо',
-  '#F4C2C2': 'Розово',
-  '#8d010d': 'Бордо',
-  '#B497D6': 'Лилаво',
-  '#556B2F': 'Маслинено зелено',
-  '#FB7D00': 'Оранжево'
-};
+function formatPrice(price: number): string {
+  return price.toFixed(2);
+}
 
 export default function Step4() {
   const router = useRouter();
   const store = useFormStore();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  
+  // Catalog data from API
+  const [catalogData, setCatalogData] = useState<CatalogData | null>(null);
+  const [priceInfo, setPriceInfo] = useState<PriceInfo | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  // Calculate price with promo code
-  const priceInfo = store.boxType ? calculatePrice(store.boxType, store.promoCode) : null;
+  // Fetch catalog data and prices from API
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        setLoading(true);
+        
+        // Fetch catalog data
+        const catalogResponse = await fetch('/api/catalog?type=all');
+        if (!catalogResponse.ok) {
+          throw new Error('Failed to fetch catalog');
+        }
+        const catalog = await catalogResponse.json();
+        setCatalogData(catalog);
+        
+        // Fetch prices with promo code
+        if (store.boxType) {
+          const priceUrl = store.promoCode 
+            ? `/api/catalog?type=prices&promoCode=${encodeURIComponent(store.promoCode)}`
+            : '/api/catalog?type=prices';
+          
+          const priceResponse = await fetch(priceUrl);
+          if (priceResponse.ok) {
+            const priceData = await priceResponse.json();
+            if (priceData.prices && priceData.prices[store.boxType]) {
+              setPriceInfo(priceData.prices[store.boxType]);
+            }
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching data:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    fetchData();
+  }, [store.boxType, store.promoCode]);
+
+  // Get labels from catalog data
+  const BOX_TYPES = catalogData?.boxTypeNames || {};
+  const SPORT_LABELS = catalogData?.labels?.sports || {};
+  const COLOR_NAMES = catalogData?.labels?.colors || {};
+  const FLAVOR_LABELS = catalogData?.labels?.flavors || {};
+  const DIETARY_LABELS = catalogData?.labels?.dietary || {};
+
   const hasDiscount = priceInfo && priceInfo.discountPercent > 0;
 
   const handleBack = () => {
@@ -119,6 +142,18 @@ export default function Step4() {
     }
   };
 
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-b from-[#f0f9ff] to-white py-5 px-5 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#FB7D00] mx-auto mb-4"></div>
+          <p className="text-[#023047] font-semibold">Зареждане...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#f0f9ff] to-white py-5 px-5 pb-32">
       <div className="max-w-3xl mx-auto mt-16">
@@ -143,7 +178,7 @@ export default function Step4() {
             <div className="flex justify-between items-start">
               <div>
                 <div className="text-lg font-semibold text-[#023047]">
-                  {store.boxType && BOX_TYPES[store.boxType]?.name || 'Не е избрана'}
+                  {store.boxType && (BOX_TYPES[store.boxType] || store.boxType)}
                 </div>
               </div>
               {priceInfo && (
@@ -167,7 +202,7 @@ export default function Step4() {
             </div>
             
             {/* Promo Code Applied Note */}
-            {hasDiscount && store.promoCode && (
+            {hasDiscount && store.promoCode && priceInfo && (
               <div className="mt-4 pt-4 border-t border-gray-100">
                 <div className="flex items-center gap-2 text-green-600">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -224,7 +259,7 @@ export default function Step4() {
                     <div className="font-semibold text-[#023047] mb-2">Цветове:</div>
                     <div className="flex gap-2 flex-wrap">
                       {store.colors.map(c => (
-                        <div key={c} title={COLOR_NAMES[c]} className="w-8 h-8 rounded-lg border-2 border-gray-300 shadow-sm" style={{ backgroundColor: c }} />
+                        <div key={c} title={COLOR_NAMES[c] || c} className="w-8 h-8 rounded-lg border-2 border-gray-300 shadow-sm" style={{ backgroundColor: c }} />
                       ))}
                     </div>
                   </div>
@@ -243,7 +278,7 @@ export default function Step4() {
                     <div className="font-semibold text-[#023047] mb-1">Хранителни ограничения:</div>
                     <div className="text-gray-600">
                       {store.dietary.map(d => DIETARY_LABELS[d] || d).join(', ')}
-                      {store.flavors.includes('other') && store.dietaryOther && ` (${store.dietaryOther})`}
+                      {store.dietary.includes('other') && store.dietaryOther && ` (${store.dietaryOther})`}
                     </div>
                   </div>
                 )}
