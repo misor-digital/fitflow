@@ -10,6 +10,14 @@ import {
   transformToApiRequest,
 } from '@/lib/preorder';
 
+// Preload the thank-you page for faster navigation
+const preloadThankYouPage = () => {
+  const link = document.createElement('link');
+  link.rel = 'prefetch';
+  link.href = '/thank-you/preorder';
+  document.head.appendChild(link);
+};
+
 interface CatalogData {
   boxTypeNames: Record<string, string>;
   labels: {
@@ -31,6 +39,12 @@ export default function Step4() {
   const [catalogData, setCatalogData] = useState<CatalogData | null>(null);
   const [priceInfo, setPriceInfo] = useState<PriceInfo | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Preload thank-you page when component mounts
+  useEffect(() => {
+    preloadThankYouPage();
+    router.prefetch('/thank-you/preorder');
+  }, [router]);
 
   // Fetch catalog data and prices from API
   useEffect(() => {
@@ -108,7 +122,6 @@ export default function Step4() {
     } catch (err) {
       setError('Възникна грешка. Моля, опитайте отново.');
       console.error(err);
-    } finally {
       setIsSubmitting(false);
     }
   };
