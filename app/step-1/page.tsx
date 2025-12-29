@@ -5,49 +5,25 @@ import { useRouter } from 'next/navigation';
 import { useFormStore } from '@/store/formStore';
 import PriceDisplay from '@/components/PriceDisplay';
 import Link from 'next/link';
-
-interface PriceInfo {
-  originalPriceEur: number;
-  originalPriceBgn: number;
-  finalPriceEur: number;
-  finalPriceBgn: number;
-  discountPercent: number;
-  discountAmountEur: number;
-  discountAmountBgn: number;
-}
-
-interface PricesData {
-  prices: Record<string, PriceInfo>;
-  discountPercent: number;
-  promoCode: string | null;
-}
+import type { PriceInfo, PricesMap, BoxTypeId } from '@/lib/preorder';
+import { getDisplayBoxType, getPremiumFrequency, buildBoxTypeId } from '@/lib/preorder';
 
 export default function Step1() {
   const router = useRouter();
   const { boxType, setBoxType, promoCode } = useFormStore();
   
   // Prices state - fetched from API
-  const [prices, setPrices] = useState<Record<string, PriceInfo> | null>(null);
+  const [prices, setPrices] = useState<PricesMap | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Initialize selected state - normalize premium variants to 'monthly-premium'
-  const getInitialSelected = (): string | null => {
-    if (boxType === 'monthly-premium-monthly' || boxType === 'monthly-premium-seasonal') {
-      return 'monthly-premium';
-    }
-    return boxType;
-  };
+  // Initialize selected state using shared helper
+  const [selected, setSelected] = useState<string | null>(() => getDisplayBoxType(boxType));
   
-  const [selected, setSelected] = useState<string | null>(getInitialSelected());
-  
-  // Initialize premium frequency based on stored boxType
-  const getInitialFrequency = (): 'monthly' | 'seasonal' => {
-    if (boxType === 'monthly-premium-seasonal') return 'seasonal';
-    return 'monthly';
-  };
-  
-  const [premiumFrequency, setPremiumFrequency] = useState<'monthly' | 'seasonal'>(getInitialFrequency());
+  // Initialize premium frequency using shared helper
+  const [premiumFrequency, setPremiumFrequency] = useState<'monthly' | 'seasonal'>(() => 
+    getPremiumFrequency(boxType)
+  );
 
   // Fetch prices from API
   useEffect(() => {
@@ -63,7 +39,7 @@ export default function Step1() {
           throw new Error('Failed to fetch prices');
         }
         
-        const data: PricesData = await response.json();
+        const data = await response.json();
         setPrices(data.prices);
         setError(null);
       } catch (err) {
@@ -93,12 +69,12 @@ export default function Step1() {
   const handleSelect = (id: string) => {
     setSelected(id);
     
-    // Handle premium frequency selection
+    // Handle premium frequency selection using shared helper
     if (id === 'monthly-premium') {
-      const finalSelection = `${id}-${premiumFrequency}` as typeof boxType;
+      const finalSelection = buildBoxTypeId(id, premiumFrequency);
       setBoxType(finalSelection);
     } else {
-      setBoxType(id as typeof boxType);
+      setBoxType(id as BoxTypeId);
     }
   };
 
@@ -107,7 +83,7 @@ export default function Step1() {
     
     // Always select the premium box and update with frequency
     setSelected('monthly-premium');
-    const finalSelection = `monthly-premium-${frequency}` as typeof boxType;
+    const finalSelection = buildBoxTypeId('monthly-premium', frequency);
     setBoxType(finalSelection);
   };
 

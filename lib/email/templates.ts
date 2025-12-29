@@ -2,133 +2,80 @@
  * Email templates for FitFlow transactional emails
  * These are inline HTML templates. For production, consider using Brevo's template editor.
  * 
- * NOTE: These label maps are fallbacks. In production, labels should be fetched from DB.
- * The maps here ensure emails work even if DB is unavailable.
+ * NOTE: Labels must be fetched from the database via lib/data/catalog.ts
+ * and passed to email generation functions. No hardcoded fallbacks.
  */
 
 import type { PreorderEmailData } from './types';
+import {
+  formatPrice,
+  EUR_TO_BGN_RATE,
+} from '@/lib/preorder';
 
-// Fallback label maps - used when DB labels are not available
-// These should match the seeded data in the options table
-
-const BOX_TYPE_LABELS: Record<string, string> = {
-  'monthly-standard': 'Месечен абонамент - Стандартна кутия',
-  'monthly-premium': 'Месечен абонамент - Премиум кутия',
-  'monthly-premium-monthly': 'Месечен абонамент - Премиум (месечно)',
-  'monthly-premium-seasonal': 'Месечен абонамент - Премиум (сезонно)',
-  'onetime-standard': 'Еднократна поръчка - Стандартна кутия',
-  'onetime-premium': 'Еднократна поръчка - Премиум кутия',
-};
-
-const SPORT_LABELS: Record<string, string> = {
-  'fitness': 'Фитнес',
-  'dance': 'Танци',
-  'yoga': 'Йога/пилатес',
-  'running': 'Бягане',
-  'swimming': 'Плуване',
-  'team': 'Отборен спорт',
-  'other': 'Други',
-};
-
-const FLAVOR_LABELS: Record<string, string> = {
-  'chocolate': 'Шоколад',
-  'strawberry': 'Ягода',
-  'vanilla': 'Ванилия',
-  'salted-caramel': 'Солен карамел',
-  'biscuit': 'Бисквита',
-  'other': 'Други',
-};
-
-const DIETARY_LABELS: Record<string, string> = {
-  'none': 'Няма',
-  'lactose': 'Без лактоза',
-  'gluten': 'Без глутен',
-  'vegan': 'Веган',
-  'other': 'Други',
-};
-
-const COLOR_LABELS: Record<string, string> = {
-  '#000000': 'Черно',
-  '#FFFFFF': 'Бяло',
-  '#8A8A8A': 'Сиво',
-  '#0A1A33': 'Тъмно синьо',
-  '#7EC8E3': 'Светло синьо',
-  '#F4C2C2': 'Розово',
-  '#8d010d': 'Бордо',
-  '#B497D6': 'Лилаво',
-  '#556B2F': 'Маслинено зелено',
-  '#FB7D00': 'Оранжево',
-};
-
-const CONTENT_LABELS: Record<string, string> = {
-  'clothes': 'Спортни дрехи',
-  'accessories': 'Спортни аксесоари',
-  'protein': 'Протеинови продукти',
-  'supplements': 'Хранителни добавки',
-  'challenges': 'Тренировъчни предизвикателства и оферти',
-};
+// ============================================================================
+// Label Map Type
+// ============================================================================
 
 /**
- * Map box type to display name in Bulgarian
+ * A map of IDs to display labels
  */
-export function getBoxTypeDisplayName(boxType: string): string {
-  return BOX_TYPE_LABELS[boxType] || boxType;
+export type LabelMap = Record<string, string>;
+
+/**
+ * All label maps needed for email generation
+ */
+export interface EmailLabelMaps {
+  boxTypes: LabelMap;
+  sports: LabelMap;
+  flavors: LabelMap;
+  dietary: LabelMap;
+  colors: LabelMap;
+  contents: LabelMap;
+}
+
+// ============================================================================
+// Utility: Format options with "other" value
+// ============================================================================
+
+/**
+ * Format a list of options with "other" value appended if present
+ * @param options - Array of option IDs
+ * @param otherValue - The custom "other" value
+ * @param labelMap - Map of option IDs to labels
+ * @returns Formatted string with labels and optional "other" value
+ */
+export function formatOptionsWithOther(
+  options: string[],
+  otherValue: string | undefined,
+  labelMap: LabelMap
+): string {
+  const labels = options.map(opt => labelMap[opt] ?? opt);
+  const result = labels.join(', ');
+  
+  if (options.includes('other') && otherValue?.trim()) {
+    return `${result} (${otherValue})`;
+  }
+  
+  return result;
+}
+
+// ============================================================================
+// Label Lookup Functions
+// These require label maps to be passed in - no hardcoded fallbacks
+// ============================================================================
+
+/**
+ * Get display name from a label map, returning the key if not found
+ */
+function getLabelOrKey(labelMap: LabelMap, key: string): string {
+  return labelMap[key] ?? key;
 }
 
 /**
- * Map sport value to display name in Bulgarian
+ * Map an array of IDs to display names using a label map
  */
-export function getSportDisplayName(sport: string): string {
-  return SPORT_LABELS[sport] || sport;
-}
-
-/**
- * Map sports array to display names
- */
-export function getSportsDisplayNames(sports: string[]): string[] {
-  return sports.map(getSportDisplayName);
-}
-
-/**
- * Map content value to display name in Bulgarian
- */
-export function getContentDisplayName(content: string): string {
-  return CONTENT_LABELS[content] || content;
-}
-
-/**
- * Map flavor value to display name in Bulgarian
- */
-export function getFlavorDisplayName(flavor: string): string {
-  return FLAVOR_LABELS[flavor] || flavor;
-}
-
-/**
- * Map flavors array to display names
- */
-export function getFlavorsDisplayNames(flavors: string[]): string[] {
-  return flavors.map(getFlavorDisplayName);
-}
-
-/**
- * Map dietary value to display name in Bulgarian
- */
-export function getDietaryDisplayName(dietary: string): string {
-  return DIETARY_LABELS[dietary] || dietary;
-}
-
-/**
- * Map dietary array to display names
- */
-export function getDietaryDisplayNames(dietary: string[]): string[] {
-  return dietary.map(getDietaryDisplayName);
-}
-
-/**
- * Get color display name from hex code
- */
-export function getColorDisplayName(color: string): string {
-  return COLOR_LABELS[color] || color;
+function mapToDisplayNames(items: string[], labelMap: LabelMap): string[] {
+  return items.map(item => getLabelOrKey(labelMap, item));
 }
 
 function printOtherOption(array: string[] | undefined, otherValue: string | undefined): string {
@@ -142,11 +89,11 @@ function printOtherOption(array: string[] | undefined, otherValue: string | unde
 /**
  * Generate color swatches HTML for email
  */
-function generateColorSwatchesHtml(colors: string[]): string {
+function generateColorSwatchesHtml(colors: string[], colorLabels: LabelMap): string {
   if (!colors || colors.length === 0) return '';
   
   const swatches = colors.map(color => {
-    const colorName = getColorDisplayName(color);
+    const colorName = getLabelOrKey(colorLabels, color);
     const borderStyle = color === '#FFFFFF' ? 'border: 1px solid #e0e0e0;' : '';
     return `<span title="${colorName}" style="display: inline-block; width: 24px; height: 24px; background-color: ${color}; border-radius: 4px; margin-right: 6px; ${borderStyle}"></span>`;
   }).join('');
@@ -155,16 +102,11 @@ function generateColorSwatchesHtml(colors: string[]): string {
 }
 
 /**
- * Format price for display
+ * Format price for display (uses shared formatPrice)
  */
 function formatPriceForEmail(price: number): string {
-  return price.toFixed(2);
+  return formatPrice(price);
 }
-
-/**
- * EUR to BGN conversion rate
- */
-const EUR_TO_BGN_RATE = 1.9558;
 
 /**
  * Generate promo code section HTML for email
@@ -200,19 +142,31 @@ function generatePromoCodeSection(data: PreorderEmailData): string {
 
 /**
  * Generate preorder confirmation email HTML
+ * 
+ * @param data - Preorder email data
+ * @param labels - Label maps fetched from database (optional for backward compatibility)
  */
-export function generatePreorderConfirmationEmail(data: PreorderEmailData): string {
+export function generatePreorderConfirmationEmail(
+  data: PreorderEmailData,
+  labels?: Partial<EmailLabelMaps>
+): string {
+  // Use provided labels or empty maps (will fall back to raw IDs)
+  const sportLabels = labels?.sports ?? {};
+  const flavorLabels = labels?.flavors ?? {};
+  const dietaryLabels = labels?.dietary ?? {};
+  const colorLabels = labels?.colors ?? {};
+
   // Convert raw values to display names
-  const sportsDisplay = data.sports?.length ? getSportsDisplayNames(data.sports) : [];
-  const flavorsDisplay = data.flavors?.length ? getFlavorsDisplayNames(data.flavors) : [];
-  const dietaryDisplay = data.dietary?.length ? getDietaryDisplayNames(data.dietary) : [];
+  const sportsDisplay = data.sports?.length ? mapToDisplayNames(data.sports, sportLabels) : [];
+  const flavorsDisplay = data.flavors?.length ? mapToDisplayNames(data.flavors, flavorLabels) : [];
+  const dietaryDisplay = data.dietary?.length ? mapToDisplayNames(data.dietary, dietaryLabels) : [];
 
   const personalizationSection = data.wantsPersonalization
     ? `
       <div style="background-color: #fff4ec; padding: 20px; border-radius: 8px; margin: 20px 0;">
         <h3 style="color: #363636; margin-top: 0;">Твоите предпочитания</h3>
         ${sportsDisplay.length ? `<p><strong>Спортове:</strong> ${sportsDisplay.join(', ')}  ${printOtherOption(data.sports, data.sportOther)}</p>` : ''}
-        ${data.colors?.length ? generateColorSwatchesHtml(data.colors) : ''}
+        ${data.colors?.length ? generateColorSwatchesHtml(data.colors, colorLabels) : ''}
         ${flavorsDisplay.length ? `<p><strong>Вкусове:</strong> ${flavorsDisplay.join(', ')}  ${printOtherOption(data.flavors, data.flavorOther)}</p>` : ''}
         ${data.sizeUpper ? `<p><strong>Размер (горна част):</strong> ${data.sizeUpper}</p>` : ''}
         ${data.sizeLower ? `<p><strong>Размер (долна част):</strong> ${data.sizeLower}</p>` : ''}

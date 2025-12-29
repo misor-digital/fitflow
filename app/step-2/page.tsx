@@ -4,26 +4,22 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFormStore } from '@/store/formStore';
 import Link from 'next/link';
-
-interface OptionItem {
-  id: string;
-  label: string;
-  value?: string | null;
-}
-
-interface ColorItem {
-  id: string;
-  label: string;
-  hex: string;
-}
+import type { CatalogOption, ColorOption, PersonalizationStep } from '@/lib/preorder';
+import { 
+  isPremiumBox, 
+  getActivePersonalizationSteps, 
+  calculatePersonalizationProgress,
+  validatePersonalizationStep,
+  sortWithOtherAtEnd,
+} from '@/lib/preorder';
 
 interface CatalogData {
   options: {
-    sports: OptionItem[];
-    colors: ColorItem[];
-    flavors: OptionItem[];
-    dietary: OptionItem[];
-    sizes: OptionItem[];
+    sports: CatalogOption[];
+    colors: ColorOption[];
+    flavors: CatalogOption[];
+    dietary: CatalogOption[];
+    sizes: CatalogOption[];
   };
   labels: {
     sports: Record<string, string>;
@@ -43,8 +39,8 @@ export default function Step2() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Determine if box is premium
-  const isPremium = store.boxType?.includes('premium') || false;
+  // Determine if box is premium using shared helper
+  const isPremium = isPremiumBox(store.boxType);
   
   // Local state for each step
   const [wantsPersonalization, setWantsPersonalization] = useState<boolean | null>(store.wantsPersonalization);
@@ -82,11 +78,6 @@ export default function Step2() {
     fetchCatalog();
   }, []);
 
-  // Get labels from catalog data or use fallbacks
-  const SPORT_LABELS = catalogData?.labels?.sports || {};
-  const FLAVOR_LABELS = catalogData?.labels?.flavors || {};
-  const DIETARY_LABELS = catalogData?.labels?.dietary || {};
-  
   // Get options from catalog data
   const sportsOptions = catalogData?.options?.sports || [];
   const colorsOptions = catalogData?.options?.colors || [];
@@ -94,37 +85,16 @@ export default function Step2() {
   const dietaryOptions = catalogData?.options?.dietary || [];
   const sizesOptions = catalogData?.options?.sizes || [];
 
-  // Determine active steps based on box type and personalization
-  const getActiveSteps = (personalization: boolean | null, premium: boolean) => {
-    if (personalization === null) {
-      return ['personalization'];
-    }
-    
-    if (premium) {
-      if (personalization) {
-        return ['personalization', 'sport', 'colors', 'flavors', 'size', 'dietary', 'notes'];
-      } else {
-        return ['personalization', 'size'];
-      }
-    } else {
-      // Standard box
-      if (personalization) {
-        return ['personalization', 'sport', 'flavors', 'dietary', 'notes'];
-      } else {
-        return ['personalization'];
-      }
-    }
-  };
-
-  // Compute active steps directly based on dependencies
-  const activeSteps = getActiveSteps(wantsPersonalization, isPremium);
+  // Compute active steps using shared helper
+  const activeSteps = getActivePersonalizationSteps(wantsPersonalization, isPremium);
   const [currentStep, setCurrentStep] = useState(0);
 
   // Ensure current step is within valid range
   const validCurrentStep = Math.min(currentStep, Math.max(0, activeSteps.length - 1));
 
+  // Calculate progress using shared helper
   const progress = wantsPersonalization !== null
-    ? ((currentStep + 1) / activeSteps.length) * 100
+    ? calculatePersonalizationProgress(currentStep, activeSteps.length)
     : 0;
 
   const toggleItem = (array: string[], item: string, setter: (arr: string[]) => void) => {
@@ -135,43 +105,31 @@ export default function Step2() {
     }
   };
 
-  const validateStep = () => {
-    const step = activeSteps[validCurrentStep];
-    switch (step) {
-      case 'personalization':
-        return wantsPersonalization !== null;
-      case 'sport':
-        if (sports.includes('other')) {
-          return sports.length > 0 && sportOther.trim().length > 0;
-        }
-        return sports.length > 0;
-      case 'colors':
-        return colors.length > 0;
-      case 'flavors':
-        if (flavors.includes('other')) {
-          return flavors.length > 0 && flavorOther.trim().length > 0;
-        }
-        return flavors.length > 0;
-      case 'size':
-        return sizeUpper && sizeLower;
-      case 'dietary':
-        if (dietary.includes('other')) {
-          return dietary.length > 0 && dietaryOther.trim().length > 0;
-        }
-        return dietary.length > 0;
-      default:
-        return true;
-    }
+  // Build current input for validation
+  const currentInput = {
+    boxType: store.boxType,
+    wantsPersonalization,
+    sports,
+    sportOther,
+    colors,
+    flavors,
+    flavorOther,
+    sizeUpper,
+    sizeLower,
+    dietary,
+    dietaryOther,
+    additionalNotes: notes,
+    fullName: store.fullName,
+    email: store.email,
+    phone: store.phone,
+    promoCode: store.promoCode,
   };
 
-  // Helper function to sort raw items with 'other' at the end
-  function sortRawWithOtherAtEnd(items: string[]): string[] {
-    return [...items].sort((a, b) => {
-      if (a === 'other') return 1;
-      if (b === 'other') return -1;
-      return 0;
-    });
-  }
+  // Validate current step using shared helper
+  const validateStep = () => {
+    const step = activeSteps[validCurrentStep] as PersonalizationStep;
+    return validatePersonalizationStep(step, currentInput);
+  };
 
   const handleNext = () => {
     if (!validateStep()) return;
@@ -205,15 +163,15 @@ export default function Step2() {
   };
 
   const handleSubmit = () => {
-    // Save all data to store
+    // Save all data to store using shared helper for sorting
     store.setPersonalization(wantsPersonalization!);
-    store.setSports(sortRawWithOtherAtEnd(sports));
+    store.setSports(sortWithOtherAtEnd(sports));
     store.setSportOther(sportOther);
     store.setColors(colors);
-    store.setFlavors(sortRawWithOtherAtEnd(flavors));
+    store.setFlavors(sortWithOtherAtEnd(flavors));
     store.setFlavorOther(flavorOther);
     store.setSizes(sizeUpper, sizeLower);
-    store.setDietary(sortRawWithOtherAtEnd(dietary));
+    store.setDietary(sortWithOtherAtEnd(dietary));
     store.setDietaryOther(dietaryOther);
     store.setAdditionalNotes(notes);
     
@@ -517,77 +475,6 @@ export default function Step2() {
               placeholder="Напиши тук... (по желание)"
               className="w-full p-4 border-2 border-gray-300 rounded-xl focus:border-[#FB7D00] focus:outline-none min-h-[150px] text-[#023047]"
             />
-          </div>
-        );
-
-      case 'summary':
-        return (
-          <div>
-            <h2 className="text-3xl md:text-4xl font-bold text-[#023047] text-center mb-8 relative after:content-[''] after:block after:w-16 after:h-1 after:bg-[#FB7D00] after:mx-auto after:mt-4 after:rounded">
-              Преглед и потвърждение
-            </h2>
-            <div className="bg-white rounded-xl p-6 shadow-lg mb-6 space-y-4">
-              <div className="border-b pb-4">
-                <div className="font-semibold text-[#023047] mb-2">Персонализация:</div>
-                <div className="text-gray-600">
-                  {wantsPersonalization ? 'Да, искам персонализация' : 'Не, оставям избора на вас'}
-                </div>
-              </div>
-              {wantsPersonalization && (
-                <>
-                  <div className="border-b pb-4">
-                    <div className="font-semibold text-[#023047] mb-2">Спорт:</div>
-                    <div className="text-gray-600">
-                      {sports.map(s => SPORT_LABELS[s] || s).join(', ')}
-                      {sportOther && ` (${sportOther})`}
-                    </div>
-                  </div>
-                  {isPremium && colors.length > 0 && (
-                    <div className="border-b pb-4">
-                      <div className="font-semibold text-[#023047] mb-2">Цветове:</div>
-                      <div className="flex gap-2 flex-wrap">
-                        {colors.map(c => (
-                          <div key={c} className="w-6 h-6 rounded border" style={{ backgroundColor: c }} />
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  <div className="border-b pb-4">
-                    <div className="font-semibold text-[#023047] mb-2">Вкусове:</div>
-                    <div className="text-gray-600">
-                      {flavors.map(f => FLAVOR_LABELS[f] || f).join(', ')}
-                      {flavorOther && ` (${flavorOther})`}
-                    </div>
-                  </div>
-                </>
-              )}
-              {isPremium && (
-                <div className="border-b pb-4">
-                  <div className="font-semibold text-[#023047] mb-2">Размер:</div>
-                  <div className="text-gray-600">Горна част: {sizeUpper}, Долна част: {sizeLower}</div>
-                </div>
-              )}
-              {wantsPersonalization && dietary.length > 0 && (
-                <div className="border-b pb-4">
-                  <div className="font-semibold text-[#023047] mb-2">Хранителни ограничения:</div>
-                  <div className="text-gray-600">
-                    {dietary.map(d => DIETARY_LABELS[d] || d).join(', ')}
-                    {dietaryOther && ` (${dietaryOther})`}
-                  </div>
-                </div>
-              )}
-              {notes && notes.trim() && (
-                <div className="pb-4">
-                  <div className="font-semibold text-[#023047] mb-2">Допълнителни бележки:</div>
-                  <div className="text-gray-600">{notes}</div>
-                </div>
-              )}
-            </div>
-            <div className="bg-gradient-to-br from-[#FB7D00]/10 to-[#FB7D00]/5 border-l-4 border-[#FB7D00] p-6 rounded-xl text-center">
-              <p className="text-[#023047] leading-relaxed">
-                Благодарим ти! Използваме тази информация, за да персонализираме твоята спортна кутия. Натисни &apos;Изпрати&apos;, за да запазим предпочитанията ти.
-              </p>
-            </div>
           </div>
         );
 
