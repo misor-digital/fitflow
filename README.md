@@ -16,7 +16,7 @@ A modern subscription box landing page for active women, built with Next.js 15, 
 ## 📁 Project Structure
 
 ```
-fitflow-nextjs/
+fitflow/
 ├── app/
 │   ├── api/
 │   │   └── preorder/
@@ -48,7 +48,7 @@ fitflow-nextjs/
 
 1. Navigate to the project directory:
 ```bash
-cd fitflow-nextjs
+cd fitflow
 ```
 
 2. Install dependencies:
