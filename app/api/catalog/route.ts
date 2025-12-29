@@ -11,8 +11,8 @@ import {
   getColors,
   getOptionLabels,
   getEurToBgnRate,
-  calculatePrice,
-  getDiscountPercent,
+  getAllBoxPricesMap,
+  type PriceInfo,
 } from '@/lib/data';
 import type { OptionSetId } from '@/lib/supabase/database.types';
 
@@ -67,10 +67,11 @@ export async function GET(request: Request) {
       }
 
       case 'prices': {
-        const boxTypes = await getBoxTypes();
-        const eurToBgnRate = await getEurToBgnRate();
-        const discountPercent = promoCode ? await getDiscountPercent(promoCode) : 0;
+        // Use optimized single-query function
+        // const [pricesMap, eurToBgnRate] = await Promise.all([
+        const pricesMap = await getAllBoxPricesMap(promoCode);
         
+        // Transform to expected format
         const prices: Record<string, {
           originalPriceEur: number;
           originalPriceBgn: number;
@@ -81,9 +82,9 @@ export async function GET(request: Request) {
           discountAmountBgn: number;
         }> = {};
 
-        for (const bt of boxTypes) {
-          const priceInfo = await calculatePrice(bt.id, promoCode);
-          prices[bt.id] = {
+        let discountPercent = 0;
+        for (const [boxTypeId, priceInfo] of Object.entries(pricesMap) as [string, PriceInfo][]) {
+          prices[boxTypeId] = {
             originalPriceEur: priceInfo.originalPriceEur,
             originalPriceBgn: priceInfo.originalPriceBgn,
             finalPriceEur: priceInfo.finalPriceEur,
@@ -92,26 +93,21 @@ export async function GET(request: Request) {
             discountAmountEur: priceInfo.discountAmountEur,
             discountAmountBgn: priceInfo.discountAmountBgn,
           };
+          discountPercent = priceInfo.discountPercent;
         }
 
-        return NextResponse.json({ 
-          prices, 
-          eurToBgnRate,
-          promoCode: discountPercent > 0 ? promoCode : null,
-          discountPercent,
-        });
+        return NextResponse.json({ prices });
       }
 
       case 'all':
       default: {
-        const [boxTypes, sports, colors, flavors, dietary, sizes, eurToBgnRate] = await Promise.all([
+        const [boxTypes, sports, colors, flavors, dietary, sizes] = await Promise.all([
           getBoxTypes(),
           getOptions('sports'),
           getColors(),
           getOptions('flavors'),
           getOptions('dietary'),
           getOptions('sizes'),
-          getEurToBgnRate(),
         ]);
 
         // Build label maps
@@ -141,7 +137,6 @@ export async function GET(request: Request) {
             dietary: dietaryLabels,
             sizes: sizeLabels,
           },
-          eurToBgnRate,
         });
       }
     }

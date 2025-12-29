@@ -189,45 +189,75 @@ export interface PriceInfo {
 }
 
 /**
+ * Get all box prices in a single database call using Supabase RPC
+ * This is the optimized version that eliminates multiple round-trips
+ */
+export const getAllBoxPrices = cache(async (promoCode: string | null | undefined): Promise<PriceInfo[]> => {
+  const { data, error } = await supabase.rpc('calculate_box_prices', {
+    p_promo_code: promoCode || null,
+  });
+
+  if (error) {
+    console.error('Error calling calculate_box_prices:', error);
+    throw new Error('Failed to calculate prices. Please try again later.');
+  }
+
+  if (!data || data.length === 0) {
+    throw new Error('No box types configured. Please contact support.');
+  }
+
+  return data.map((row: {
+    box_type_id: string;
+    box_type_name: string;
+    original_price_eur: number;
+    original_price_bgn: number;
+    discount_percent: number;
+    discount_amount_eur: number;
+    discount_amount_bgn: number;
+    final_price_eur: number;
+    final_price_bgn: number;
+  }) => ({
+    boxTypeId: row.box_type_id,
+    boxTypeName: row.box_type_name,
+    originalPriceEur: Number(row.original_price_eur),
+    originalPriceBgn: Number(row.original_price_bgn),
+    discountPercent: row.discount_percent,
+    discountAmountEur: Number(row.discount_amount_eur),
+    discountAmountBgn: Number(row.discount_amount_bgn),
+    finalPriceEur: Number(row.final_price_eur),
+    finalPriceBgn: Number(row.final_price_bgn),
+    promoCode: row.discount_percent > 0 ? (promoCode ?? null) : null,
+  }));
+});
+
+/**
+ * Get all box prices as a map keyed by box type ID
+ */
+export async function getAllBoxPricesMap(promoCode: string | null | undefined): Promise<Record<string, PriceInfo>> {
+  const prices = await getAllBoxPrices(promoCode);
+  return prices.reduce((acc, price) => {
+    acc[price.boxTypeId] = price;
+    return acc;
+  }, {} as Record<string, PriceInfo>);
+}
+
+/**
  * Calculate price for a box type with optional promo code
  * This is the authoritative server-side price calculation
+ * Uses the optimized getAllBoxPrices function
  */
 export async function calculatePrice(
   boxTypeId: string,
   promoCode: string | null | undefined
 ): Promise<PriceInfo> {
-  // Import here to avoid circular dependency
-  const { getDiscountPercent } = await import('./promo');
+  const prices = await getAllBoxPrices(promoCode);
+  const price = prices.find(p => p.boxTypeId === boxTypeId);
   
-  const boxType = await getBoxTypeById(boxTypeId);
-  if (!boxType) {
+  if (!price) {
     throw new Error(`Invalid box type: ${boxTypeId}`);
   }
 
-  const eurToBgnRate = await getEurToBgnRate();
-  const discountPercent = promoCode ? await getDiscountPercent(promoCode) : 0;
-
-  const originalPriceEur = Number(boxType.price_eur);
-  const originalPriceBgn = Math.round(originalPriceEur * eurToBgnRate * 100) / 100;
-
-  const discountAmountEur = Math.round((discountPercent / 100) * originalPriceEur * 100) / 100;
-  const discountAmountBgn = Math.round(discountAmountEur * eurToBgnRate * 100) / 100;
-
-  const finalPriceEur = Math.round((originalPriceEur - discountAmountEur) * 100) / 100;
-  const finalPriceBgn = Math.round(finalPriceEur * eurToBgnRate * 100) / 100;
-
-  return {
-    boxTypeId: boxType.id,
-    boxTypeName: boxType.name,
-    originalPriceEur,
-    originalPriceBgn,
-    discountPercent,
-    discountAmountEur,
-    discountAmountBgn,
-    finalPriceEur,
-    finalPriceBgn,
-    promoCode: discountPercent > 0 ? (promoCode ?? null) : null,
-  };
+  return price;
 }
 
 /**

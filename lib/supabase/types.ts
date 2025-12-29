@@ -36,6 +36,19 @@ export interface Preorder extends PreorderInsert {
   updated_at: string;
 }
 
+// Box price info returned by calculate_box_prices function
+export interface BoxPriceInfo {
+  box_type_id: string;
+  box_type_name: string;
+  original_price_eur: number;
+  original_price_bgn: number;
+  discount_percent: number;
+  discount_amount_eur: number;
+  discount_amount_bgn: number;
+  final_price_eur: number;
+  final_price_bgn: number;
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -47,11 +60,15 @@ export interface Database {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      calculate_box_prices: {
+        Args: { p_promo_code: string | null };
+        Returns: BoxPriceInfo[];
+      };
+    };
     Enums: {
       box_type: BoxType;
     };
     CompositeTypes: Record<string, never>;
   };
-
 }

@@ -15,6 +15,8 @@ export {
   getColorNames,
   getSiteConfig,
   getEurToBgnRate,
+  getAllBoxPrices,
+  getAllBoxPricesMap,
   calculatePrice,
   formatPrice,
   eurToBgn,
