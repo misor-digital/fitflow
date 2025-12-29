@@ -72,7 +72,7 @@ export default function CookieConsentBanner() {
                   🍪 Използваме бисквитки
                 </h3>
                 <p className="text-sm text-gray-600">
-                  Използваме бисквитки за да осигурим правилното функциониране на сайта. 
+                  Използваме бисквитки, за да осигурим правилното функциониране на сайта. 
                   Аналитичните и маркетинговите бисквитки се активират само с Вашето съгласие.{' '}
                   <Link href="/cookies" className="text-[#FB7D00] hover:underline font-medium">
                     Научете повече
@@ -87,12 +87,6 @@ export default function CookieConsentBanner() {
                   className="px-4 py-2 text-sm font-medium text-[#023047] bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
                 >
                   Настройки
-                </button>
-                <button
-                  onClick={rejectNonEssential}
-                  className="px-4 py-2 text-sm font-medium text-[#023047] border border-[#023047] hover:bg-gray-50 rounded-lg transition-colors"
-                >
-                  Само необходими
                 </button>
                 <button
                   onClick={acceptAll}
