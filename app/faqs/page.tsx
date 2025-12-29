@@ -33,29 +33,29 @@ export default function FAQsPage() {
   return (
     <>
       <Navigation />
-      <div className="min-h-screen bg-gradient-to-b from-[#f0f9ff] to-white pt-24 pb-16 px-5">
-        <div className="max-w-4xl mx-auto mt-16">
-          <h1 className="text-3xl md:text-4xl font-bold text-[#023047] text-center mb-12 relative after:content-[''] after:block after:w-16 after:h-1 after:bg-[#FB7D00] after:mx-auto after:mt-4 after:rounded">
+      <div className="min-h-screen bg-gradient-to-b from-[#f0f9ff] to-white pt-20 sm:pt-24 pb-12 sm:pb-16 px-3 sm:px-5">
+        <div className="max-w-4xl mx-auto mt-12 sm:mt-16">
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#023047] text-center mb-8 sm:mb-10 md:mb-12 relative after:content-[''] after:block after:w-12 sm:after:w-16 after:h-1 after:bg-[#FB7D00] after:mx-auto after:mt-3 sm:after:mt-4 after:rounded">
             Често задавани въпроси
           </h1>
 
-          <div className="space-y-5">
+          <div className="space-y-3 sm:space-y-4 md:space-y-5">
             {faqs.map((faq, index) => (
               <div
                 key={index}
-                className={`bg-white rounded-2xl shadow-lg overflow-hidden transition-all ${
+                className={`bg-white rounded-xl sm:rounded-2xl shadow-lg overflow-hidden transition-all ${
                   activeIndex === index ? 'shadow-xl' : ''
                 }`}
               >
                 <button
                   onClick={() => toggleFAQ(index)}
-                  className="w-full text-left p-6 md:p-7 pr-16 relative hover:bg-[#FB7D00]/5 transition-colors"
+                  className="w-full text-left p-4 sm:p-5 md:p-7 pr-12 sm:pr-14 md:pr-16 relative hover:bg-[#FB7D00]/5 transition-colors"
                 >
-                  <h3 className="text-lg md:text-xl font-semibold text-[#023047] pr-8">
+                  <h3 className="text-base sm:text-lg md:text-xl font-semibold text-[#023047] pr-6 sm:pr-8">
                     {faq.question}
                   </h3>
                   <span
-                    className={`absolute right-6 top-1/2 -translate-y-1/2 text-3xl text-[#FB7D00] font-light transition-transform ${
+                    className={`absolute right-4 sm:right-5 md:right-6 top-1/2 -translate-y-1/2 text-2xl sm:text-3xl text-[#FB7D00] font-light transition-transform ${
                       activeIndex === index ? 'rotate-180' : ''
                     }`}
                   >
@@ -67,8 +67,8 @@ export default function FAQsPage() {
                     activeIndex === index ? 'max-h-96' : 'max-h-0'
                   }`}
                 >
-                  <div className="px-6 md:px-7 pb-6 md:pb-7">
-                    <p className="text-base md:text-lg text-gray-600 leading-relaxed">
+                  <div className="px-4 sm:px-5 md:px-7 pb-4 sm:pb-5 md:pb-7">
+                    <p className="text-sm sm:text-base md:text-lg text-gray-600 leading-relaxed">
                       {faq.answer}
                     </p>
                   </div>

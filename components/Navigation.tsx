@@ -39,9 +39,9 @@ export default function Navigation() {
   const isActive = (path: string) => pathname === path;
 
   return (
-    <nav className="fixed top-12 left-0 right-0 bg-white/95 backdrop-blur-sm shadow-md z-40">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-12">
+    <nav className="fixed top-10 sm:top-12 left-0 right-0 bg-white/95 backdrop-blur-sm shadow-md z-40">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-10 sm:h-12">
           {/* Desktop Menu - Left Side */}
           <div className="hidden md:flex items-center space-x-8">
             <Link
@@ -73,11 +73,11 @@ export default function Navigation() {
           {/* Mobile Menu Button - Left Side */}
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="md:hidden p-2 rounded-lg text-[#023047] hover:bg-gray-100 transition-colors"
+            className="md:hidden p-1.5 sm:p-2 rounded-lg text-[#023047] hover:bg-gray-100 transition-colors"
             aria-label="Toggle menu"
           >
             <svg
-              className="w-6 h-6"
+              className="w-5 h-5 sm:w-6 sm:h-6"
               fill="none"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -94,7 +94,7 @@ export default function Navigation() {
           </button>
 
           {/* Logo - Center */}
-          <Link href="/" className="absolute left-1/2 transform -translate-x-1/2 text-2xl md:text-3xl font-extrabold text-[#023047] italic hover:text-[#FB7D00] hover:scale-150 transition-all duration-300">
+          <Link href="/" className="absolute left-1/2 transform -translate-x-1/2 text-xl sm:text-2xl md:text-3xl font-extrabold text-[#023047] italic hover:text-[#FB7D00] hover:scale-150 transition-all duration-300">
             FitFlow
           </Link>
 
@@ -102,11 +102,11 @@ export default function Navigation() {
           <div className="relative">
             <Link
               href="/step-1"
-              className="bg-[#023047] hover:bg-[#FB7D00] px-4 py-2 rounded-lg transition-colors block"
+              className="bg-[#023047] hover:bg-[#FB7D00] px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-colors block"
               aria-label="Запиши предварителна поръчка"
             >
               <svg
-                className="w-5 h-5 md:w-6 md:h-6 text-white"
+                className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white"
                 fill="none"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -125,12 +125,12 @@ export default function Navigation() {
 
         {/* Mobile Menu */}
         {isOpen && (
-          <div className="md:hidden py-4 border-t border-gray-200">
-            <div className="flex flex-col space-y-4">
+          <div className="md:hidden py-3 sm:py-4 border-t border-gray-200">
+            <div className="flex flex-col space-y-3 sm:space-y-4">
               <Link
                 href="/"
                 onClick={() => setIsOpen(false)}
-                className={`font-semibold transition-colors ${
+                className={`text-sm sm:text-base font-semibold transition-colors ${
                   isActive('/') ? 'text-[#FB7D00]' : 'text-[#023047] hover:text-[#FB7D00]'
                 }`}
               >
@@ -139,7 +139,7 @@ export default function Navigation() {
               <Link
                 href="/about"
                 onClick={() => setIsOpen(false)}
-                className={`font-semibold transition-colors ${
+                className={`text-sm sm:text-base font-semibold transition-colors ${
                   isActive('/about') ? 'text-[#FB7D00]' : 'text-[#023047] hover:text-[#FB7D00]'
                 }`}
               >
@@ -148,7 +148,7 @@ export default function Navigation() {
               <Link
                 href="/faqs"
                 onClick={() => setIsOpen(false)}
-                className={`font-semibold transition-colors ${
+                className={`text-sm sm:text-base font-semibold transition-colors ${
                   isActive('/faqs') ? 'text-[#FB7D00]' : 'text-[#023047] hover:text-[#FB7D00]'
                 }`}
               >
