@@ -89,12 +89,6 @@ export default function CookieConsentBanner() {
                   Настройки
                 </button>
                 <button
-                  onClick={rejectNonEssential}
-                  className="px-4 py-2 text-sm font-medium text-[#023047] border border-[#023047] hover:bg-gray-50 rounded-lg transition-colors"
-                >
-                  Само необходими
-                </button>
-                <button
                   onClick={acceptAll}
                   className="px-4 py-2 text-sm font-medium text-white bg-[#FB7D00] hover:bg-[#e06d00] rounded-lg transition-colors"
                 >
