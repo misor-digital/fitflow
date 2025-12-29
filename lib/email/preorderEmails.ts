@@ -4,9 +4,33 @@
  */
 
 import { sendEmail, createOrUpdateContact, addContactToList, EMAIL_CONFIG } from './emailService';
-import { generatePreorderConfirmationEmail, getBoxTypeDisplayName } from './templates';
+import { generatePreorderConfirmationEmail } from './templates';
+import type { EmailLabelMaps } from './templates';
 import type { EmailResult, ContactResult, PreorderEmailData } from './types';
-import type { Preorder } from '@/lib/supabase/types';
+import type { Preorder } from '@/lib/supabase';
+import { getBoxTypeNames, getOptionLabels, getColorNames } from '@/lib/data/catalog';
+
+/**
+ * Fetch all label maps needed for email generation
+ */
+async function fetchEmailLabelMaps(): Promise<EmailLabelMaps> {
+  const [boxTypes, sports, flavors, dietary, colors] = await Promise.all([
+    getBoxTypeNames(),
+    getOptionLabels('sports'),
+    getOptionLabels('flavors'),
+    getOptionLabels('dietary'),
+    getColorNames(),
+  ]);
+  
+  return {
+    boxTypes,
+    sports,
+    flavors,
+    dietary,
+    colors,
+    contents: {}, // Not used in emails currently
+  };
+}
 
 /**
  * Send preorder confirmation email to customer
@@ -14,12 +38,15 @@ import type { Preorder } from '@/lib/supabase/types';
 export async function sendPreorderConfirmationEmail(
   preorder: Preorder
 ): Promise<EmailResult> {
+  // Fetch labels from database
+  const labels = await fetchEmailLabelMaps();
+  
   // Prepare email data
   const emailData: PreorderEmailData = {
     fullName: preorder.full_name,
     email: preorder.email,
     boxType: preorder.box_type,
-    boxTypeDisplay: getBoxTypeDisplayName(preorder.box_type),
+    boxTypeDisplay: labels.boxTypes[preorder.box_type] ?? preorder.box_type,
     wantsPersonalization: preorder.wants_personalization,
     preorderId: preorder.order_id,
     sports: preorder.sports || undefined,
@@ -39,8 +66,8 @@ export async function sendPreorderConfirmationEmail(
     finalPriceEur: preorder.final_price_eur || undefined,
   };
 
-  // Generate email content
-  const htmlContent = generatePreorderConfirmationEmail(emailData);
+  // Generate email content with labels
+  const htmlContent = generatePreorderConfirmationEmail(emailData, labels);
 
   // Send the email
   const result = await sendEmail({

@@ -2,18 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useFormStore } from '@/store/formStore';
+import { useFormStore, usePreorderInput } from '@/store/formStore';
 import Link from 'next/link';
-
-interface PriceInfo {
-  originalPriceEur: number;
-  originalPriceBgn: number;
-  finalPriceEur: number;
-  finalPriceBgn: number;
-  discountPercent: number;
-  discountAmountEur: number;
-  discountAmountBgn: number;
-}
+import type { PriceInfo } from '@/lib/preorder';
+import { 
+  formatPrice, 
+  transformToApiRequest,
+} from '@/lib/preorder';
 
 interface CatalogData {
   boxTypeNames: Record<string, string>;
@@ -25,13 +20,10 @@ interface CatalogData {
   };
 }
 
-function formatPrice(price: number): string {
-  return price.toFixed(2);
-}
-
 export default function Step4() {
   const router = useRouter();
   const store = useFormStore();
+  const userInput = usePreorderInput();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   
@@ -78,12 +70,12 @@ export default function Step4() {
     fetchData();
   }, [store.boxType, store.promoCode]);
 
-  // Get labels from catalog data
-  const BOX_TYPES = catalogData?.boxTypeNames || {};
-  const SPORT_LABELS = catalogData?.labels?.sports || {};
-  const COLOR_NAMES = catalogData?.labels?.colors || {};
-  const FLAVOR_LABELS = catalogData?.labels?.flavors || {};
-  const DIETARY_LABELS = catalogData?.labels?.dietary || {};
+  // Get labels from catalog data (no fallbacks - DB is source of truth)
+  const BOX_TYPES = catalogData?.boxTypeNames ?? {};
+  const sportLabels = catalogData?.labels?.sports ?? {};
+  const colorLabels = catalogData?.labels?.colors ?? {};
+  const flavorLabels = catalogData?.labels?.flavors ?? {};
+  const dietaryLabels = catalogData?.labels?.dietary ?? {};
 
   const hasDiscount = priceInfo && priceInfo.discountPercent > 0;
 
@@ -96,29 +88,8 @@ export default function Step4() {
     setIsSubmitting(true);
 
     try {
-      const formData = {
-        fullName: store.fullName,
-        email: store.email,
-        phone: store.phone,
-        boxType: store.boxType,
-        wantsPersonalization: store.wantsPersonalization,
-        preferences: store.wantsPersonalization ? {
-          sports: store.sports,
-          sportOther: store.sportOther,
-          colors: store.colors,
-          dietary: store.dietary,
-          dietaryOther: store.dietaryOther,
-          flavors: store.flavors,
-          flavorOther: store.flavorOther,
-          additionalNotes: store.additionalNotes,
-        } : null,
-        sizes: {
-          upper: store.sizeUpper,
-          lower: store.sizeLower,
-        },
-        // Include promo code for server-side validation
-        promoCode: store.promoCode,
-      };
+      // Use shared transform function to build API request
+      const formData = transformToApiRequest(userInput);
 
       const response = await fetch('/api/preorder', {
         method: 'POST',
@@ -249,7 +220,7 @@ export default function Step4() {
                   <div>
                     <div className="font-semibold text-[#023047] mb-1">Спорт:</div>
                     <div className="text-gray-600">
-                      {store.sports.map(s => SPORT_LABELS[s] || s).join(', ')}
+                      {store.sports.map(s => sportLabels[s] || s).join(', ')}
                       {store.sports.includes('other') && store.sportOther && ` (${store.sportOther})`}
                     </div>
                   </div>
@@ -259,7 +230,7 @@ export default function Step4() {
                     <div className="font-semibold text-[#023047] mb-2">Цветове:</div>
                     <div className="flex gap-2 flex-wrap">
                       {store.colors.map(c => (
-                        <div key={c} title={COLOR_NAMES[c] || c} className="w-8 h-8 rounded-lg border-2 border-gray-300 shadow-sm" style={{ backgroundColor: c }} />
+                        <div key={c} title={colorLabels[c] || c} className="w-8 h-8 rounded-lg border-2 border-gray-300 shadow-sm" style={{ backgroundColor: c }} />
                       ))}
                     </div>
                   </div>
@@ -268,7 +239,7 @@ export default function Step4() {
                   <div>
                     <div className="font-semibold text-[#023047] mb-1">Вкусове:</div>
                     <div className="text-gray-600">
-                      {store.flavors.map(f => FLAVOR_LABELS[f] || f).join(', ')}
+                      {store.flavors.map(f => flavorLabels[f] || f).join(', ')}
                       {store.flavors.includes('other') && store.flavorOther && ` (${store.flavorOther})`}
                     </div>
                   </div>
@@ -277,7 +248,7 @@ export default function Step4() {
                   <div>
                     <div className="font-semibold text-[#023047] mb-1">Хранителни ограничения:</div>
                     <div className="text-gray-600">
-                      {store.dietary.map(d => DIETARY_LABELS[d] || d).join(', ')}
+                      {store.dietary.map(d => dietaryLabels[d] || d).join(', ')}
                       {store.dietary.includes('other') && store.dietaryOther && ` (${store.dietaryOther})`}
                     </div>
                   </div>

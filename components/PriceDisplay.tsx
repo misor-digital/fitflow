@@ -1,24 +1,10 @@
 'use client';
 
-interface PriceInfo {
-  originalPriceEur: number;
-  originalPriceBgn: number;
-  finalPriceEur: number;
-  finalPriceBgn: number;
-  discountPercent: number;
-  discountAmountEur: number;
-  discountAmountBgn: number;
-}
+import type { PriceDisplayInfo } from '@/lib/preorder';
+import { formatPrice } from '@/lib/preorder';
 
 interface PriceDisplayProps {
-  priceInfo: PriceInfo;
-}
-
-/**
- * Format price with 2 decimal places
- */
-function formatPrice(price: number): string {
-  return price.toFixed(2);
+  priceInfo: PriceDisplayInfo;
 }
 
 /**

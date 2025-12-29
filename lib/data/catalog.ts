@@ -1,11 +1,13 @@
 /**
  * Catalog data access layer
  * Server-only functions for fetching box types, options, and site config from Supabase
+ * 
  */
 
 import { cache } from 'react';
 import { supabase } from '@/lib/supabase/client';
-import type { BoxTypeRow, OptionRow, OptionSetId } from '@/lib/supabase/types';
+import type { BoxTypeRow, OptionRow, OptionSetId } from '@/lib/supabase';
+import type { PriceInfo } from '@/lib/preorder';
 
 // ============================================================================
 // Box Types
@@ -161,32 +163,25 @@ export const getSiteConfig = cache(async (key: string): Promise<string | null> =
 
 /**
  * Get EUR to BGN conversion rate
+ * Throws error if not configured in database
  */
 export const getEurToBgnRate = cache(async (): Promise<number> => {
   const value = await getSiteConfig('EUR_TO_BGN_RATE');
-  if (value) {
-    return parseFloat(value);
+  if (!value) {
+    throw new Error('EUR_TO_BGN_RATE not configured in site_config table');
   }
-  // Fallback to hardcoded value if not in DB
-  return 1.9558;
+  const rate = parseFloat(value);
+  if (isNaN(rate) || rate <= 0) {
+    throw new Error(`Invalid EUR_TO_BGN_RATE value: ${value}`);
+  }
+  return rate;
 });
 
 // ============================================================================
 // Price Calculation (Server-side only)
 // ============================================================================
 
-export interface PriceInfo {
-  boxTypeId: string;
-  boxTypeName: string;
-  originalPriceEur: number;
-  originalPriceBgn: number;
-  discountPercent: number;
-  discountAmountEur: number;
-  discountAmountBgn: number;
-  finalPriceEur: number;
-  finalPriceBgn: number;
-  promoCode: string | null;
-}
+// PriceInfo is now imported from @/lib/preorder/types and re-exported above
 
 interface RpcBoxPriceRow {
   box_type_id: string;
