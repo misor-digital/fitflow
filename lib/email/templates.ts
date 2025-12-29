@@ -1,39 +1,85 @@
 /**
  * Email templates for FitFlow transactional emails
  * These are inline HTML templates. For production, consider using Brevo's template editor.
+ * 
+ * NOTE: These label maps are fallbacks. In production, labels should be fetched from DB.
+ * The maps here ensure emails work even if DB is unavailable.
  */
 
 import type { PreorderEmailData } from './types';
+
+// Fallback label maps - used when DB labels are not available
+// These should match the seeded data in the options table
+
+const BOX_TYPE_LABELS: Record<string, string> = {
+  'monthly-standard': 'Месечен абонамент - Стандартна кутия',
+  'monthly-premium': 'Месечен абонамент - Премиум кутия',
+  'monthly-premium-monthly': 'Месечен абонамент - Премиум (месечно)',
+  'monthly-premium-seasonal': 'Месечен абонамент - Премиум (сезонно)',
+  'onetime-standard': 'Еднократна поръчка - Стандартна кутия',
+  'onetime-premium': 'Еднократна поръчка - Премиум кутия',
+};
+
+const SPORT_LABELS: Record<string, string> = {
+  'fitness': 'Фитнес',
+  'dance': 'Танци',
+  'yoga': 'Йога/пилатес',
+  'running': 'Бягане',
+  'swimming': 'Плуване',
+  'team': 'Отборен спорт',
+  'other': 'Други',
+};
+
+const FLAVOR_LABELS: Record<string, string> = {
+  'chocolate': 'Шоколад',
+  'strawberry': 'Ягода',
+  'vanilla': 'Ванилия',
+  'salted-caramel': 'Солен карамел',
+  'biscuit': 'Бисквита',
+  'other': 'Други',
+};
+
+const DIETARY_LABELS: Record<string, string> = {
+  'none': 'Няма',
+  'lactose': 'Без лактоза',
+  'gluten': 'Без глутен',
+  'vegan': 'Веган',
+  'other': 'Други',
+};
+
+const COLOR_LABELS: Record<string, string> = {
+  '#000000': 'Черно',
+  '#FFFFFF': 'Бяло',
+  '#8A8A8A': 'Сиво',
+  '#0A1A33': 'Тъмно синьо',
+  '#7EC8E3': 'Светло синьо',
+  '#F4C2C2': 'Розово',
+  '#8d010d': 'Бордо',
+  '#B497D6': 'Лилаво',
+  '#556B2F': 'Маслинено зелено',
+  '#FB7D00': 'Оранжево',
+};
+
+const CONTENT_LABELS: Record<string, string> = {
+  'clothes': 'Спортни дрехи',
+  'accessories': 'Спортни аксесоари',
+  'protein': 'Протеинови продукти',
+  'supplements': 'Хранителни добавки',
+  'challenges': 'Тренировъчни предизвикателства и оферти',
+};
 
 /**
  * Map box type to display name in Bulgarian
  */
 export function getBoxTypeDisplayName(boxType: string): string {
-  const boxTypeMap: Record<string, string> = {
-    'monthly-standard': 'Месечен абонамент - Стандартна кутия',
-    'monthly-premium': 'Месечен абонамент - Премиум кутия',
-    'monthly-premium-monthly': 'Месечен абонамент - Премиум (месечно)',
-    'monthly-premium-seasonal': 'Месечен абонамент - Премиум (сезонно)',
-    'onetime-standard': 'Еднократна поръчка - Стандартна кутия',
-    'onetime-premium': 'Еднократна поръчка - Премиум кутия',
-  };
-  return boxTypeMap[boxType] || boxType;
+  return BOX_TYPE_LABELS[boxType] || boxType;
 }
 
 /**
  * Map sport value to display name in Bulgarian
  */
 export function getSportDisplayName(sport: string): string {
-  const sportMap: Record<string, string> = {
-    'fitness': 'Фитнес',
-    'dance': 'Танци',
-    'yoga': 'Йога/пилатес',
-    'running': 'Бягане',
-    'swimming': 'Плуване',
-    'team': 'Отборен спорт',
-    'other': 'Други',
-  };
-  return sportMap[sport] || sport;
+  return SPORT_LABELS[sport] || sport;
 }
 
 /**
@@ -47,30 +93,14 @@ export function getSportsDisplayNames(sports: string[]): string[] {
  * Map content value to display name in Bulgarian
  */
 export function getContentDisplayName(content: string): string {
-  const contentMap: Record<string, string> = {
-    'clothes': 'Спортни дрехи',
-    'accessories': 'Спортни аксесоари',
-    'protein': 'Протеинови продукти',
-    'supplements': 'Хранителни добавки',
-    'challenges': 'Тренировъчни предизвикателства и оферти',
-  };
-  return contentMap[content] || content;
+  return CONTENT_LABELS[content] || content;
 }
-
 
 /**
  * Map flavor value to display name in Bulgarian
  */
 export function getFlavorDisplayName(flavor: string): string {
-  const flavorMap: Record<string, string> = {
-    'chocolate': 'Шоколад',
-    'strawberry': 'Ягода',
-    'vanilla': 'Ванилия',
-    'salted-caramel': 'Солен карамел',
-    'biscuit': 'Бисквита',
-    'other': 'Други',
-  };
-  return flavorMap[flavor] || flavor;
+  return FLAVOR_LABELS[flavor] || flavor;
 }
 
 /**
@@ -84,14 +114,7 @@ export function getFlavorsDisplayNames(flavors: string[]): string[] {
  * Map dietary value to display name in Bulgarian
  */
 export function getDietaryDisplayName(dietary: string): string {
-  const dietaryMap: Record<string, string> = {
-    'none': 'Няма',
-    'lactose': 'Без лактоза',
-    'gluten': 'Без глутен',
-    'vegan': 'Веган',
-    'other': 'Други',
-  };
-  return dietaryMap[dietary] || dietary;
+  return DIETARY_LABELS[dietary] || dietary;
 }
 
 /**
@@ -102,26 +125,10 @@ export function getDietaryDisplayNames(dietary: string[]): string[] {
 }
 
 /**
- * Color name map for hex colors
- */
-const COLOR_NAMES: Record<string, string> = {
-  '#000000': 'Черно',
-  '#FFFFFF': 'Бяло',
-  '#8A8A8A': 'Сиво',
-  '#0A1A33': 'Тъмно синьо',
-  '#7EC8E3': 'Светло синьо',
-  '#F4C2C2': 'Розово',
-  '#8d010d': 'Бордо',
-  '#B497D6': 'Лилаво',
-  '#556B2F': 'Маслинено зелено',
-  '#FB7D00': 'Оранжево'
-};
-
-/**
  * Get color display name from hex code
  */
 export function getColorDisplayName(color: string): string {
-  return COLOR_NAMES[color] || color;
+  return COLOR_LABELS[color] || color;
 }
 
 function printOtherOption(array: string[] | undefined, otherValue: string | undefined): string {

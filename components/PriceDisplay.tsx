@@ -1,7 +1,5 @@
 'use client';
 
-import { formatPrice } from '@/lib/promo';
-
 interface PriceInfo {
   originalPriceEur: number;
   originalPriceBgn: number;
@@ -14,6 +12,13 @@ interface PriceInfo {
 
 interface PriceDisplayProps {
   priceInfo: PriceInfo;
+}
+
+/**
+ * Format price with 2 decimal places
+ */
+function formatPrice(price: number): string {
+  return price.toFixed(2);
 }
 
 /**
