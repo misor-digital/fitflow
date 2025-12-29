@@ -21,17 +21,16 @@ export {
   handlePreorderEmailWorkflow,
 } from './preorderEmails';
 
-// Email templates and display name helpers
+// Email templates and utilities
 export {
   generatePreorderConfirmationEmail,
-  getBoxTypeDisplayName,
-  getSportDisplayName,
-  getSportsDisplayNames,
-  getContentDisplayName,
-  getFlavorDisplayName,
-  getFlavorsDisplayNames,
-  getDietaryDisplayName,
-  getDietaryDisplayNames,
+  formatOptionsWithOther,
+} from './templates';
+
+// Email template types
+export type {
+  LabelMap,
+  EmailLabelMaps,
 } from './templates';
 
 // Types

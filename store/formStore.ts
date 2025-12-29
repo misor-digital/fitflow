@@ -1,34 +1,26 @@
+/**
+ * Form Store
+ * 
+ * Client-side state management for the preorder flow.
+ * Uses Zustand with persistence to maintain state across page navigations.
+ * 
+ * NOTE: This store holds raw user input. Derived state (isPremium, validation, etc.)
+ * should be computed using functions from @/lib/preorder/derived
+ */
+
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import type { BoxTypeId, PreorderUserInput } from '@/lib/preorder';
+import { INITIAL_USER_INPUT } from '@/lib/preorder';
 
-interface FormData {
-  // Step 1
-  boxType: 'monthly-standard' | 'monthly-premium' | 'monthly-premium-monthly' | 'monthly-premium-seasonal' | 'onetime-standard' | 'onetime-premium' | null;
+/**
+ * Form store state and actions
+ */
+interface FormStore extends PreorderUserInput {
+  // Actions for Step 1
+  setBoxType: (boxType: BoxTypeId | null) => void;
   
-  // Step 2
-  wantsPersonalization: boolean | null;
-  sports: string[];
-  sportOther: string;
-  colors: string[];
-  flavors: string[];
-  flavorOther: string;
-  sizeUpper: string;
-  sizeLower: string;
-  dietary: string[];
-  dietaryOther: string;
-  additionalNotes: string;
-  
-  // Step 3
-  fullName: string;
-  email: string;
-  phone: string;
-  
-  // Promo code (from URL query string)
-  promoCode: string | null;
-}
-
-interface FormStore extends FormData {
-  setBoxType: (boxType: FormData['boxType']) => void;
+  // Actions for Step 2
   setPersonalization: (wants: boolean) => void;
   setSports: (sports: string[]) => void;
   setSportOther: (other: string) => void;
@@ -39,37 +31,30 @@ interface FormStore extends FormData {
   setDietary: (dietary: string[]) => void;
   setDietaryOther: (other: string) => void;
   setAdditionalNotes: (notes: string) => void;
+  
+  // Actions for Step 3
   setContactInfo: (name: string, email: string, phone: string) => void;
+  
+  // Promo code
   setPromoCode: (code: string | null) => void;
+  
+  // Reset
   reset: () => void;
 }
 
-const initialState: FormData = {
-  boxType: null,
-  wantsPersonalization: null,
-  sports: [],
-  sportOther: '',
-  colors: [],
-  flavors: [],
-  flavorOther: '',
-  sizeUpper: '',
-  sizeLower: '',
-  dietary: [],
-  dietaryOther: '',
-  additionalNotes: '',
-  fullName: '',
-  email: '',
-  phone: '',
-  promoCode: null,
-};
-
+/**
+ * Create the form store with persistence
+ */
 export const useFormStore = create<FormStore>()(
   persist(
     (set) => ({
-      ...initialState,
+      // Initial state from shared module
+      ...INITIAL_USER_INPUT,
       
+      // Step 1: Box Selection
       setBoxType: (boxType) => set({ boxType }),
       
+      // Step 2: Personalization
       setPersonalization: (wants) => set({ wantsPersonalization: wants }),
       
       setSports: (sports) => set({ sports }),
@@ -90,15 +75,44 @@ export const useFormStore = create<FormStore>()(
       
       setAdditionalNotes: (notes) => set({ additionalNotes: notes }),
       
+      // Step 3: Contact Info
       setContactInfo: (name, email, phone) => 
         set({ fullName: name, email, phone }),
       
+      // Promo code
       setPromoCode: (code) => set({ promoCode: code }),
       
-      reset: () => set(initialState),
+      // Reset to initial state
+      reset: () => set(INITIAL_USER_INPUT),
     }),
     {
       name: 'fitflow-form-storage',
     }
   )
 );
+
+/**
+ * Hook to get user input as PreorderUserInput type
+ * Useful for passing to derived state functions
+ */
+export function usePreorderInput(): PreorderUserInput {
+  const store = useFormStore();
+  return {
+    boxType: store.boxType,
+    wantsPersonalization: store.wantsPersonalization,
+    sports: store.sports,
+    sportOther: store.sportOther,
+    colors: store.colors,
+    flavors: store.flavors,
+    flavorOther: store.flavorOther,
+    sizeUpper: store.sizeUpper,
+    sizeLower: store.sizeLower,
+    dietary: store.dietary,
+    dietaryOther: store.dietaryOther,
+    additionalNotes: store.additionalNotes,
+    fullName: store.fullName,
+    email: store.email,
+    phone: store.phone,
+    promoCode: store.promoCode,
+  };
+}

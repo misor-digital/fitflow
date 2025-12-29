@@ -20,7 +20,6 @@ export {
   calculatePrice,
   formatPrice,
   eurToBgn,
-  type PriceInfo,
 } from './catalog';
 
 // Promo code data

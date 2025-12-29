@@ -11,9 +11,9 @@ import {
   getColors,
   getOptionLabels,
   getAllBoxPricesMap,
-  type PriceInfo,
 } from '@/lib/data';
-import type { OptionSetId } from '@/lib/supabase/types';
+import type { PriceInfo } from '@/lib/preorder';
+import type { OptionSetId } from '@/lib/supabase';
 
 /**
  * GET /api/catalog

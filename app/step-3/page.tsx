@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFormStore } from '@/store/formStore';
 import Link from 'next/link';
+import { isValidEmail, isValidPhone, getEmailError, getPhoneError } from '@/lib/preorder';
 
 export default function Step3() {
   const router = useRouter();
@@ -20,43 +21,35 @@ export default function Step3() {
     router.push('/step-2?returnToSummary=true');
   };
 
-  const validateEmail = (value: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(value);
-  };
-
   const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setEmail(value);
     
     // Only show validation error if user has already tried to submit
     if (hasAttemptedSubmit) {
-      if (value && !validateEmail(value)) {
-        setEmailError('Моля, въведете валиден имейл адрес');
-      } else {
-        setEmailError('');
-      }
+      const error = getEmailError(value);
+      setEmailError(error || '');
     }
   };
 
   const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    // Allow only numbers, +, -, (, ), and spaces
-    const phoneRegex = /^[0-9+\-() ]*$/;
-    if (phoneRegex.test(value)) {
+    // Use shared validation
+    if (isValidPhone(value)) {
       setPhone(value);
       setPhoneError('');
     } else {
-      setPhoneError('Моля, въведете само цифри и символи за форматиране (+, -, (, ), интервал)');
+      const error = getPhoneError(value);
+      setPhoneError(error || '');
     }
   };
 
   const handleContinue = () => {
     setHasAttemptedSubmit(true);
     
-    // Validate email
-    if (email && !validateEmail(email)) {
-      setEmailError('Моля, въведете валиден имейл адрес');
+    // Validate email using shared validation
+    if (email && !isValidEmail(email)) {
+      setEmailError(getEmailError(email) || '');
       return;
     }
     
