@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, Suspense, useState } from 'react';
+import { useEffect, Suspense } from 'react';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { useFormStore } from '@/store/formStore';
@@ -11,14 +11,12 @@ import { useFormStore } from '@/store/formStore';
 function HomeContent() {
   const searchParams = useSearchParams();
   const { setPromoCode } = useFormStore();
-  const [promoValidating, setPromoValidating] = useState(false);
   
   // Extract promo code from URL and validate via API
   useEffect(() => {
     async function validateAndSetPromo() {
       const urlPromoCode = searchParams.get('promocode');
       if (urlPromoCode) {
-        setPromoValidating(true);
         try {
           const response = await fetch(`/api/promo/validate?code=${encodeURIComponent(urlPromoCode)}`);
           if (response.ok) {
@@ -29,8 +27,6 @@ function HomeContent() {
           }
         } catch (err) {
           console.error('Error validating promo code:', err);
-        } finally {
-          setPromoValidating(false);
         }
       }
     }

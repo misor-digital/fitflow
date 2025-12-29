@@ -10,7 +10,6 @@ import {
   getOptions,
   getColors,
   getOptionLabels,
-  getEurToBgnRate,
   getAllBoxPricesMap,
   type PriceInfo,
 } from '@/lib/data';
@@ -82,7 +81,6 @@ export async function GET(request: Request) {
           discountAmountBgn: number;
         }> = {};
 
-        let discountPercent = 0;
         for (const [boxTypeId, priceInfo] of Object.entries(pricesMap) as [string, PriceInfo][]) {
           prices[boxTypeId] = {
             originalPriceEur: priceInfo.originalPriceEur,
@@ -93,7 +91,6 @@ export async function GET(request: Request) {
             discountAmountEur: priceInfo.discountAmountEur,
             discountAmountBgn: priceInfo.discountAmountBgn,
           };
-          discountPercent = priceInfo.discountPercent;
         }
 
         return NextResponse.json({ prices });

@@ -84,7 +84,6 @@ export default function Step2() {
 
   // Get labels from catalog data or use fallbacks
   const SPORT_LABELS = catalogData?.labels?.sports || {};
-  const COLOR_NAMES = catalogData?.labels?.colors || {};
   const FLAVOR_LABELS = catalogData?.labels?.flavors || {};
   const DIETARY_LABELS = catalogData?.labels?.dietary || {};
   
