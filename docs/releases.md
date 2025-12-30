@@ -40,6 +40,28 @@ pnpm changeset
 
 ---
 
+## Changeset Decision Table
+
+Use this table to decide whether a change requires a changeset.
+
+| Change type | Example | User-facing | Package / API change | Versioned artifact | Changeset required |
+|------------|---------|-------------|----------------------|--------------------|--------------------|
+| UI text change | Copy update, disclaimer text | Yes | No | No | No |
+| UI layout / styling | Button order, spacing, colors | Yes | No | No | No |
+| Currency display order | EUR shown before BGN | Yes | No | No | No |
+| Feature inside app | New checkout step, new banner | Yes | No | No | No |
+| Bug fix in app logic | Fix wrong price shown | Yes | No | No | No |
+| Internal refactor | Deduplicate logic, move code | No | No | No | No |
+| Config / content change | Legal text, footer links | Yes | No | No | No |
+| API contract change | Change response shape | Maybe | Yes | Maybe | Yes |
+| Shared library change | Change exported util | Maybe | Yes | Yes | Yes |
+| Breaking change | Remove / rename export | Yes / Maybe | Yes | Yes | Yes |
+| New published package | New `@fitflow/*` package | No | Yes | Yes | Yes |
+| Dependency version bump | Public package bump | No | Yes | Yes | Yes |
+
+
+---
+
 ## Skipping a release
 
 You may skip a release when:
