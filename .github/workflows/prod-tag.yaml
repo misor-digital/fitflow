@@ -1,11 +1,11 @@
-name: Production Release
+name: Production Tag generation
 
 on:
   push:
     branches: [main]
 
 jobs:
-  release:
+  generate-prod-tag:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -46,10 +46,13 @@ jobs:
         shell: bash
         run: |
           set -e
+          VERSION=$(node -p "require('./package.json').version")
+          TAG="v$VERSION"
+
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
           git add -A
-          git commit -m "chore(release): version bump"
+          git commit -m "Update version: bump to $VERSION"
           git push
 
       - name: Tag release (only if new commit happened)
