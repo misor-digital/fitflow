@@ -85,6 +85,33 @@ Each release creates:
 
 ---
 
+## After a release: Sync branches
+
+After each production release, the version bump must be synced back to `stage` and `dev`:
+
+```bash
+# Sync stage with main
+git checkout stage
+git pull origin stage
+git merge origin/main --no-edit
+git push origin stage
+
+# Sync dev with stage
+git checkout dev
+git pull origin dev
+git merge origin/stage --no-edit
+git push origin dev
+```
+
+**This ensures:**
+- All branches have the same version number
+- Git histories stay aligned
+- Future PRs only show new changes (no history conflicts)
+
+See [workflow.md](./workflow.md) for the complete flow.
+
+---
+
 ## Philosophy
 
 > Releases are **cheap but meaningful**.  
