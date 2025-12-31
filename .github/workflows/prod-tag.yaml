@@ -49,8 +49,8 @@ jobs:
           VERSION=$(node -p "require('./package.json').version")
           TAG="v$VERSION"
 
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
+          git config user.name "misor-digital"
+          git config user.email "misor.digital@gmail.com"
           git add -A
           git commit -m "Update version: bump to $VERSION"
           git push
