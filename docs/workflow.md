@@ -22,8 +22,9 @@ Only `main` creates versions.
 6. Validate on staging
 7. (If needed) add a changeset
 8. Open PR `stage` → `main`
-9. Merge → version + tag created automatically
-10. **Sync branches** (see below)
+9. Apply `release` label → version bump is committed to PR
+10. Merge → Git tag created automatically
+11. **Sync branches** (see below)
 
 ---
 
@@ -57,16 +58,23 @@ Only `main` creates versions.
 This is where **gates apply**:
 - CI must pass
 - PR must have a valid label
-- Feature/Bug → changeset required
-- `skip-release` allowed only with approval
+- Changeset required (unless `skip-release` label)
+- Apply `release` label to trigger version bump
 - Use **rebase and merge** for clean history
 
-### 6. Merge to `main`
-- Version is bumped using **Changesets**
-- Git tag is created
+### 6. Version bump (automated)
+When the `release` label is applied:
+- The **Version bump** workflow runs
+- Executes `pnpm changeset version`
+- Commits the version bump to your PR branch
+- Commit message: `chore(release): bump version to X.Y.Z`
+
+### 7. Merge to `main`
+- After version bump commit is pushed, merge the PR
+- The **Production Tag** workflow creates a Git tag (`vX.Y.Z`)
 - This is production
 
-### 7. Sync branches back
+### 8. Sync branches back
 
 After each production release, sync the version bump back to lower branches:
 
@@ -100,6 +108,19 @@ git push origin dev
 | `stage` → `main` | Merge commit | Preserve history for release |
 | `main` → `stage` (sync) | Merge commit | Bring version bump downstream |
 | `stage` → `dev` (sync) | Merge commit | Keep branches aligned |
+
+---
+
+## GitHub Workflows
+
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| **CI** | PR to `dev`, `stage`, `main` | Lint, test, build |
+| **Require Label** | PR opened/labeled | Ensures PR has a valid label |
+| **Require Changeset** | PR to `main` | Blocks merge if no changeset (unless `skip-release`) |
+| **Version bump** | PR to `main` with `release` label | Commits version bump to PR branch |
+| **Production Tag** | Push to `main` | Creates Git tag from `package.json` version |
+| **Remove skip-release** | New commits on PR to `main` | Removes `skip-release` label to force re-confirmation |
 
 ---
 

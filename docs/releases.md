@@ -8,9 +8,46 @@ Versions are created **only on `main`**.
 
 ## When a release happens
 
-A release happens automatically when:
-- A PR is merged into `main`
-- AND a changeset is present (unless explicitly skipped)
+A release happens when:
+1. A PR targeting `main` has the `release` label applied
+2. The **Version bump** workflow runs and commits the version change to the PR branch
+3. The PR is merged into `main`
+4. The **Production Tag** workflow creates a Git tag for the new version
+
+---
+
+## Release workflow
+
+### Step 1: Add a changeset (during development)
+
+From your branch:
+
+```bash
+pnpm changeset
+```
+
+- Select patch / minor / major
+- Write a short, user-facing description
+- Commit the generated file
+
+### Step 2: Apply the `release` label
+
+When your PR is ready for production (targeting `main`):
+- Apply the `release` label to the PR
+- This triggers the **Version bump** workflow
+
+### Step 3: Version bump (automated)
+
+The workflow will:
+- Run `pnpm changeset version`
+- Commit the version bump directly to your PR branch
+- The commit message will be: `chore(release): bump version to X.Y.Z`
+
+### Step 4: Merge to main
+
+After the version bump commit is pushed:
+- Review and merge the PR
+- The **Production Tag** workflow creates a Git tag (`vX.Y.Z`)
 
 ---
 
@@ -23,20 +60,6 @@ A release happens automatically when:
 | Breaking change | Major |
 
 The exact bump is chosen when creating the changeset.
-
----
-
-## How to add a changeset
-
-From your branch:
-
-```bash
-pnpm changeset
-```
-
-- Select patch / minor / major
-- Write a short, user-facing description
-- Commit the generated file
 
 ---
 
@@ -59,7 +82,6 @@ Use this table to decide whether a change requires a changeset.
 | New published package | New `@fitflow/*` package | No | Yes | Yes | Yes |
 | Dependency version bump | Public package bump | No | Yes | Yes | Yes |
 
-
 ---
 
 ## Skipping a release
@@ -69,18 +91,18 @@ You may skip a release when:
 - The change does not affect runtime behavior
 
 To do this:
-- Apply the `skip-release` label
+- Apply the `skip-release` label to the PR
 - At least one approval is required
 
-Pushing new commits will remove `skip-release`, forcing re-confirmation.
+**Note:** Pushing new commits will automatically remove the `skip-release` label, forcing re-confirmation.
 
 ---
 
 ## Release artifacts
 
 Each release creates:
-- A version bump commit
-- A Git tag (`vX.Y.Z`)
+- A version bump commit (on the PR branch, before merge)
+- A Git tag (`vX.Y.Z`) after merge to `main`
 - A traceable production state
 
 ---
@@ -109,6 +131,17 @@ git push origin dev
 - Future PRs only show new changes (no history conflicts)
 
 See [workflow.md](./workflow.md) for the complete flow.
+
+---
+
+## GitHub Workflows
+
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| **Version bump** | PR to `main` with `release` label | Runs `changeset version` and commits the bump |
+| **Production Tag** | Push to `main` | Creates Git tag from `package.json` version |
+| **Require Changeset** | PR to `main` | Blocks merge if no changeset (unless `skip-release`) |
+| **Remove skip-release** | New commits on PR to `main` | Removes `skip-release` label to force re-confirmation |
 
 ---
 
