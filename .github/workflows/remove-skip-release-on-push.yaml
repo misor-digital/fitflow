@@ -13,6 +13,7 @@ jobs:
         with:
           script: |
             const labels = context.payload.pull_request.labels.map(l => l.name);
+            echo "PR labels: $labels"
 
             if (labels.includes('skip-release')) {
               await github.rest.issues.removeLabel({
