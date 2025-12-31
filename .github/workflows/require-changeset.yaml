@@ -7,25 +7,29 @@ on:
 
 jobs:
   check:
+    if: >
+      contains(github.event.pull_request.labels.*.name, 'release')
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
 
       - name: Enforce changeset (unless skipped)
         run: |
           LABELS=$(jq -r '.pull_request.labels[].name' "$GITHUB_EVENT_PATH")
-          echo "PR labels: $LABELS"
+          echo "PR labels:"
+          echo "$LABELS"
 
-          if echo "$LABELS" | grep -qx "^skip-release$"; then
+          if echo "$LABELS" | grep -qx "skip-release"; then
             echo "🟡 skip-release label present, skipping changeset check"
             exit 0
           fi
 
-          FILES=$(ls .changeset/*.md | grep -v README.md || true)
+          FILES=$(ls .changeset/*.md 2>/dev/null | grep -v README.md || true)
 
           echo "Detected changeset files:"
           echo "$FILES"
-          
+
           if [ -n "$FILES" ]; then
             echo "✅ Changeset found"
             exit 0
