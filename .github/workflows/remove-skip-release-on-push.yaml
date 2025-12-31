@@ -2,7 +2,7 @@ name: Remove skip-release on new commits
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, main-test]
     types: [synchronize]
 
 jobs:
