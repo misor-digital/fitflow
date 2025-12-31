@@ -84,8 +84,14 @@ export interface PreorderEmailData {
   dietaryOther?: string;
   additionalNotes?: string;
   // Promo code fields
+  hasPromoCode: boolean;
   promoCode?: string | null;
   discountPercent?: number | null;
+  // Price fields
   originalPriceEur?: number | null;
   finalPriceEur?: number | null;
+  discountAmountEur?: number | null;
+  originalPriceBgn?: number | null;
+  finalPriceBgn?: number | null;
+  discountAmountBgn?: number | null;
 }

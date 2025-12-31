@@ -6,7 +6,8 @@ import { useFormStore, usePreorderInput } from '@/store/formStore';
 import Link from 'next/link';
 import type { PriceInfo } from '@/lib/preorder';
 import { 
-  formatPrice, 
+  formatPriceDual,
+  formatSavings,
   transformToApiRequest,
 } from '@/lib/preorder';
 
@@ -170,15 +171,15 @@ export default function Step4() {
                   {hasDiscount ? (
                     <div className="space-y-0.5 sm:space-y-1">
                       <div className="text-xs sm:text-sm text-gray-400 line-through">
-                        {formatPrice(priceInfo.originalPriceBgn)} лв / {formatPrice(priceInfo.originalPriceEur)} €
+                        {formatPriceDual(priceInfo.originalPriceEur, priceInfo.originalPriceBgn)}
                       </div>
                       <div className="text-xl sm:text-2xl font-bold text-[#FB7D00]">
-                        {formatPrice(priceInfo.finalPriceBgn)} лв / {formatPrice(priceInfo.finalPriceEur)} €
+                        {formatPriceDual(priceInfo.finalPriceEur, priceInfo.finalPriceBgn)}
                       </div>
                     </div>
                   ) : (
                     <div className="text-xl sm:text-2xl font-bold text-[#FB7D00]">
-                      {formatPrice(priceInfo.originalPriceBgn)} лв / {formatPrice(priceInfo.originalPriceEur)} €
+                      {formatPriceDual(priceInfo.originalPriceEur, priceInfo.originalPriceBgn)}
                     </div>
                   )}
                 </div>
@@ -197,7 +198,7 @@ export default function Step4() {
                   </span>
                 </div>
                 <div className="text-xs sm:text-sm text-gray-500 mt-1">
-                  Спестяваш {formatPrice(priceInfo.discountAmountBgn)} лв / {formatPrice(priceInfo.discountAmountEur)} €
+                  {formatSavings(priceInfo.discountAmountEur, priceInfo.discountAmountBgn)}
                 </div>
               </div>
             )}

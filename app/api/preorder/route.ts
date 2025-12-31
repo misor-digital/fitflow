@@ -100,9 +100,9 @@ export async function POST(request: Request) {
     }
 
     // Send confirmation email and add to contacts via Brevo
-    if (preorder) {
+    if (preorder && priceInfo) {
       try {
-        const { emailResult, contactResult } = await handlePreorderEmailWorkflow(preorder);
+        const { emailResult, contactResult } = await handlePreorderEmailWorkflow(preorder, priceInfo);
         
         if (!emailResult.success) {
           console.warn('Failed to send confirmation email:', emailResult.error);

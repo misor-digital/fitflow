@@ -9,6 +9,7 @@ import type { EmailLabelMaps } from './templates';
 import type { EmailResult, ContactResult, PreorderEmailData } from './types';
 import type { Preorder } from '@/lib/supabase';
 import { getBoxTypeNames, getOptionLabels, getColorNames } from '@/lib/data/catalog';
+import { PriceInfo } from '../preorder';
 
 /**
  * Fetch all label maps needed for email generation
@@ -36,7 +37,8 @@ async function fetchEmailLabelMaps(): Promise<EmailLabelMaps> {
  * Send preorder confirmation email to customer
  */
 export async function sendPreorderConfirmationEmail(
-  preorder: Preorder
+  preorder: Preorder,
+  priceInfo: PriceInfo
 ): Promise<EmailResult> {
   // Fetch labels from database
   const labels = await fetchEmailLabelMaps();
@@ -60,10 +62,16 @@ export async function sendPreorderConfirmationEmail(
     dietaryOther: preorder.dietary_other || undefined,
     additionalNotes: preorder.additional_notes || undefined,
     // Promo code fields
+    hasPromoCode: !!preorder.promo_code,
     promoCode: preorder.promo_code || undefined,
     discountPercent: preorder.discount_percent || undefined,
+    // Price fields
     originalPriceEur: preorder.original_price_eur || undefined,
     finalPriceEur: preorder.final_price_eur || undefined,
+    discountAmountEur: priceInfo.discountAmountEur || undefined,
+    originalPriceBgn: priceInfo.originalPriceBgn || undefined,
+    finalPriceBgn: priceInfo.finalPriceBgn || undefined,
+    discountAmountBgn: priceInfo.discountAmountBgn || undefined,
   };
 
   // Generate email content with labels
@@ -154,12 +162,13 @@ export async function addPreorderCustomerToContacts(
  * This is the main function to call after a successful preorder
  */
 export async function handlePreorderEmailWorkflow(
-  preorder: Preorder
+  preorder: Preorder,
+  priceInfo: PriceInfo
 ): Promise<{ emailResult: EmailResult; contactResult: ContactResult }> {
   console.log(`Starting email workflow for preorder ${preorder.id}`);
 
   // Send confirmation email
-  const emailResult = await sendPreorderConfirmationEmail(preorder);
+  const emailResult = await sendPreorderConfirmationEmail(preorder, priceInfo);
 
   // Add to contacts (don't fail the whole workflow if this fails)
   const contactResult = await addPreorderCustomerToContacts(preorder);
