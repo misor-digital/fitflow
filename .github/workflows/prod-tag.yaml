@@ -2,7 +2,7 @@ name: Production Tag
 
 on:
   push:
-    branches: [main]
+    branches: [main, main-test]
 
 jobs:
   tag:
