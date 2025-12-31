@@ -8,8 +8,8 @@
 
 import type { PreorderEmailData } from './types';
 import {
-  formatPrice,
-  EUR_TO_BGN_RATE,
+  formatPriceDual,
+  formatSavings,
 } from '@/lib/preorder';
 
 // ============================================================================
@@ -102,26 +102,10 @@ function generateColorSwatchesHtml(colors: string[], colorLabels: LabelMap): str
 }
 
 /**
- * Format price for display (uses shared formatPrice)
- */
-function formatPriceForEmail(price: number): string {
-  return formatPrice(price);
-}
-
-/**
  * Generate promo code section HTML for email
  */
 function generatePromoCodeSection(data: PreorderEmailData): string {
-  if (!data.promoCode || !data.discountPercent || data.discountPercent <= 0) {
-    return '';
-  }
-
-  const originalPriceEur = data.originalPriceEur || 0;
-  const finalPriceEur = data.finalPriceEur || 0;
-  const discountAmountEur = originalPriceEur - finalPriceEur;
-  const originalPriceBgn = originalPriceEur * EUR_TO_BGN_RATE;
-  const finalPriceBgn = finalPriceEur * EUR_TO_BGN_RATE;
-  const discountAmountBgn = discountAmountEur * EUR_TO_BGN_RATE;
+  if (!data.hasPromoCode) return '';
 
   return `
     <div style="background-color: #d4edda; border: 1px solid #c3e6cb; padding: 15px; border-radius: 8px; margin: 15px 0;">
@@ -129,12 +113,12 @@ function generatePromoCodeSection(data: PreorderEmailData): string {
         ✅ Промо код ${data.promoCode} е приложен – ${data.discountPercent}% отстъпка
       </p>
       <p style="margin: 5px 0; color: #155724;">
-        <span style="text-decoration: line-through; color: #6c757d;">${formatPriceForEmail(originalPriceBgn)} лв / ${formatPriceForEmail(originalPriceEur)} €</span>
+        <span style="text-decoration: line-through; color: #6c757d;">${formatPriceDual(data.originalPriceEur ?? 0, data.originalPriceBgn ?? 0)}</span>
         &nbsp;→&nbsp;
-        <strong>${formatPriceForEmail(finalPriceBgn)} лв / ${formatPriceForEmail(finalPriceEur)} €</strong>
+        <strong>${formatPriceDual(data.finalPriceEur ?? 0, data.finalPriceBgn ?? 0)}</strong>
       </p>
       <p style="margin: 5px 0 0 0; color: #155724; font-size: 14px;">
-        Спестяваш ${formatPriceForEmail(discountAmountBgn)} лв / ${formatPriceForEmail(discountAmountEur)} €
+        ${formatSavings(data.discountAmountEur ?? 0, data.discountAmountBgn ?? 0)}
       </p>
     </div>
   `;
@@ -210,7 +194,7 @@ export function generatePreorderConfirmationEmail(
             <div style="background-color: #fff4ec; padding: 20px; border-radius: 8px; margin: 20px 0;">
               <h3 style="color: #363636; margin-top: 0;">📦 Детайли на поръчката</h3>
               <p style="margin: 5px 0;"><strong>Номер на поръчка:</strong> ${data.preorderId}</p>
-              <p style="margin: 5px 0;"><strong>Избрана кутия:</strong> ${data.boxTypeDisplay}</p>
+              <p style="margin: 5px 0;"><strong>Избрана кутия:</strong> ${data.boxTypeDisplay}${!data.hasPromoCode ? ` (${formatPriceDual(data.originalPriceEur ?? 0, data.originalPriceBgn ?? 0)})` : ''}</p>
               <p style="margin: 5px 0;"><strong>Персонализация:</strong> ${data.wantsPersonalization ? 'Да' : 'Не'}</p>
             </div>
             

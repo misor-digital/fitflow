@@ -40,10 +40,10 @@ export function formatPriceEur(price: number): string {
  * Format a price in both currencies
  * @param priceEur - The price in EUR
  * @param priceBgn - The price in BGN
- * @returns Formatted price string (e.g., "48.70 лв / 24.90 €")
+ * @returns Formatted price string (e.g., "24.90 € / 48.70 лв")
  */
 export function formatPriceDual(priceEur: number, priceBgn: number): string {
-  return `${formatPrice(priceBgn)} лв / ${formatPrice(priceEur)} €`;
+  return `${formatPrice(priceEur)} € / ${formatPrice(priceBgn)} лв`;
 }
 
 /**
@@ -59,10 +59,10 @@ export function formatDiscount(percent: number): string {
  * Format savings amount in both currencies
  * @param amountEur - Savings in EUR
  * @param amountBgn - Savings in BGN
- * @returns Formatted savings string (e.g., "Спестяваш 4.87 лв / 2.49 €")
+ * @returns Formatted savings string (e.g., "Спестяваш 2.49 € / 4.87 лв")
  */
 export function formatSavings(amountEur: number, amountBgn: number): string {
-  return `Спестяваш ${formatPrice(amountBgn)} лв / ${formatPrice(amountEur)} €`;
+  return `Спестяваш ${formatPrice(amountEur)} € / ${formatPrice(amountBgn)} лв`;
 }
 
 // ============================================================================
