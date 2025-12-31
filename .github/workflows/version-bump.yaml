@@ -3,7 +3,7 @@ name: Version bump
 on:
   workflow_dispatch:
   pull_request:
-    branches: [main]
+    branches: [main, main-test]
     types: [opened, synchronize, labeled]
 
 jobs:
