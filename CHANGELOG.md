@@ -1,5 +1,11 @@
 # fitflow
 
+## 0.3.1
+
+### Patch Changes
+
+- 885f931: TEST
+
 ## 0.3.0
 
 ### Minor Changes
