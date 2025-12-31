@@ -9,7 +9,8 @@ on:
 jobs:
   version:
     if: >
-      contains(github.event.pull_request.labels.*.name, 'release')
+      contains(github.event.pull_request.labels.*.name, 'release') &&
+      !contains(github.event.pull_request.labels.*.name, 'skip-release')
     runs-on: ubuntu-latest
 
     steps:
@@ -17,6 +18,7 @@ jobs:
         with:
           ref: ${{ github.head_ref }}
           fetch-depth: 0
+          token: ${{ secrets.RELEASE_PAT }}
 
       - uses: pnpm/action-setup@v4
         with:
@@ -45,6 +47,7 @@ jobs:
           fi
 
       - name: Commit version bump
+        if: steps.version.outputs.changed == 'true'
         run: |
           set -e
           VERSION=$(node -p "require('./package.json').version")
@@ -55,3 +58,4 @@ jobs:
           git add -A
           git commit -m "chore(release): bump version to $VERSION"
           git push origin HEAD
+          echo "Version bumped to $VERSION and pushed to remote."
