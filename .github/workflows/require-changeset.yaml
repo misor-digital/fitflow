@@ -18,8 +18,8 @@ jobs:
             echo "🟡 skip-release label present, skipping changeset check"
             exit 0
           fi
-
-          if ls .changeset/*.md 1> /dev/null 2>&1; then
+          
+          if ls .changeset/*.md | grep -v README.md >/dev/null 2>&1; then
             echo "✅ Changeset found"
             exit 0
           fi
