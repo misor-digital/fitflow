@@ -13,6 +13,7 @@ jobs:
       - name: Enforce changeset (unless skipped)
         run: |
           LABELS=$(jq -r '.pull_request.labels[].name' "$GITHUB_EVENT_PATH")
+          echo "PR labels: $LABELS"
 
           if echo "$LABELS" | grep -q "^skip-release$"; then
             echo "🟡 skip-release label present, skipping changeset check"
