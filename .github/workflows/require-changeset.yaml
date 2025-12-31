@@ -3,7 +3,7 @@ name: Require Changeset
 on:
   pull_request:
     branches: [main, main-test]
-    types: [synchronize]
+    types: [opened, labeled, unlabeled, synchronize]
 
 jobs:
   check:
@@ -16,7 +16,7 @@ jobs:
           LABELS=$(jq -r '.pull_request.labels[].name' "$GITHUB_EVENT_PATH")
           echo "PR labels: $LABELS"
 
-          if echo "$LABELS" | grep -q "^skip-release$"; then
+          if echo "$LABELS" | grep -qx "^skip-release$"; then
             echo "🟡 skip-release label present, skipping changeset check"
             exit 0
           fi
