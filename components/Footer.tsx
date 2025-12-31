@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import packageJson from '../package.json';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -122,7 +123,7 @@ export default function Footer() {
         <div className="border-t border-white/10 pt-5 sm:pt-6 md:pt-8 mt-5 sm:mt-6 md:mt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-3 sm:gap-4">
             <p className="text-gray-400 text-xs sm:text-sm text-center md:text-left">
-              © {currentYear} FitFlow. Всички права запазени.
+              © {currentYear} FitFlow. Всички права запазени. v{packageJson.version}
             </p>
             <div className="flex gap-3 sm:gap-4 md:gap-6 text-xs sm:text-sm">
               <Link href="/terms" className="text-gray-400 hover:text-[#FB7D00] transition-colors">
