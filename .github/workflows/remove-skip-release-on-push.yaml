@@ -8,18 +8,32 @@ on:
 jobs:
   cleanup:
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+
     steps:
       - uses: actions/github-script@v7
         with:
           script: |
-            const labels = context.payload.pull_request.labels.map(l => l.name);
-            echo "PR labels: $labels"
+            const pr = context.payload.pull_request;
+
+            if (!pr) {
+              console.log('No pull request context, skipping');
+              return;
+            }
+
+            const labels = pr.labels.map(l => l.name);
+            console.log('PR labels:', labels);
 
             if (labels.includes('skip-release')) {
+              console.log('Removing skip-release label');
+
               await github.rest.issues.removeLabel({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                issue_number: context.payload.pull_request.number,
+                issue_number: pr.number,
                 name: 'skip-release',
               });
+            } else {
+              console.log('skip-release label not present, nothing to do');
             }
