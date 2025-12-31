@@ -3,6 +3,7 @@ name: Require Changeset
 on:
   pull_request:
     branches: [main, main-test]
+    types: [synchronize]
 
 jobs:
   check:
