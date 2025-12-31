@@ -20,8 +20,13 @@ jobs:
             echo "🟡 skip-release label present, skipping changeset check"
             exit 0
           fi
+
+          FILES=$(ls .changeset/*.md | grep -v README.md || true)
+
+          echo "Detected changeset files:"
+          echo "$FILES"
           
-          if ls .changeset/*.md | grep -v README.md >/dev/null 2>&1; then
+          if [ -n "$FILES" ]; then
             echo "✅ Changeset found"
             exit 0
           fi
