@@ -27,15 +27,13 @@ jobs:
             REQUIRED_PREFIX="[HOTFIX]"
           else
             # ----- Promotion PR rules
-            if [[ "$HEAD" == "dev" && "$BASE" == "stage" ]]; then
+            if [[ "$BASE" == "dev" ]]; then
+              REQUIRED_PREFIX="[DEV]"
+            elif [[ "$HEAD" == "dev" && "$BASE" == "stage" ]]; then
               REQUIRED_PREFIX="[STAGE]"
             elif [[ "$HEAD" == "stage" && "$BASE" == "main" ]]; then
               REQUIRED_PREFIX="[PROD]"
-            elif [[ "$BASE" == "stage" || "$BASE" == "main" ]]; then
-              echo "❌ PRs targeting '$BASE' must be promotion PRs (dev→stage or stage→main)"
-              exit 1
             else
-              # dev or feature PRs → no enforcement
               exit 0
             fi
           fi
