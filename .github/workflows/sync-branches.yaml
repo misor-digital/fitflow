@@ -1,14 +1,15 @@
-name: Sync Version to Lower Branches
+name: Sync Version to Dev
 
 on:
   push:
-    tags:
-      - 'v*'
+    branches: [main, main-test]
+    paths:
+      - 'package.json'
+      - 'CHANGELOG.md'
 
 jobs:
   sync:
     runs-on: ubuntu-latest
-    if: startsWith(github.event.head_commit.message, 'chore(release)')
     
     steps:
       - uses: actions/checkout@v4
@@ -21,25 +22,14 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions@github.com"
 
-      - name: Sync to stage
-        run: |
-          git checkout stage
-          git pull origin stage
-          git merge --ff-only origin/main
-          git push origin stage
-
       - name: Sync to dev
         run: |
           git checkout dev
           git pull origin dev
-          git merge --ff-only origin/stage
+          git merge --ff-only origin/main-test
           git push origin dev
 
       - name: Summary
         run: |
           VERSION=$(node -p "require('./package.json').version")
-          echo "### ✅ Version $VERSION synced to all branches" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- main ✓" >> $GITHUB_STEP_SUMMARY
-          echo "- stage ✓" >> $GITHUB_STEP_SUMMARY
-          echo "- dev ✓" >> $GITHUB_STEP_SUMMARY
+          echo "### ✅ Version $VERSION synced to dev" >> $GITHUB_STEP_SUMMARY
