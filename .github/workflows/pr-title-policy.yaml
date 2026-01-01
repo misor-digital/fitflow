@@ -1,8 +1,8 @@
 name: Enforce PR title policy
 
 on:
-  pull_request_target:
-    types: [opened, edited, reopened, synchronize]
+  pull_request:
+    types: [opened, edited, reopened, synchronize, labeled, unlabeled]
 
 permissions:
   pull-requests: write
@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Resolve prefix rules
+      - name: Resolve required prefix
         id: rules
         run: |
           HEAD="${{ github.event.pull_request.head.ref }}"
@@ -46,38 +46,30 @@ jobs:
           echo "require_any_prefix=$REQUIRE_ANY_PREFIX" >> "$GITHUB_OUTPUT"
           echo "title=$TITLE" >> "$GITHUB_OUTPUT"
 
-      - name: Enforce & auto-fix title
+      - name: Enforce title prefix
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PAT }}
         run: |
           REQUIRED="${{ steps.rules.outputs.required_prefix }}"
           REQUIRE_ANY="${{ steps.rules.outputs.require_any_prefix }}"
           TITLE="${{ steps.rules.outputs.title }}"
-          NUMBER="${{ github.event.pull_request.number }}"
-          REPO="${{ github.repository }}"
 
           # ----- Exact prefix required
           if [[ -n "$REQUIRED" ]]; then
             if [[ "$TITLE" == "$REQUIRED"* ]]; then
-              echo "✅ PR title already correct"
+              echo "✅ PR title is valid"
               exit 0
             fi
 
-            NEW_TITLE="$REQUIRED $TITLE"
-            echo "✏️ Updating PR title → $NEW_TITLE"
-
-            gh api \
-              --method PATCH \
-              "repos/$REPO/pulls/$NUMBER" \
-              -f title="$NEW_TITLE"
-
-            exit 0
+            echo "❌ PR title must start with $REQUIRED"
+            echo "Current title: $TITLE"
+            exit 1
           fi
 
-          # ----- Any prefix required
+          # ----- Any prefix required ([SOMETHING])
           if [[ "$REQUIRE_ANY" == "true" ]]; then
             if [[ "$TITLE" =~ ^\[[A-Z0-9_-]+\]\  ]]; then
-              echo "✅ Custom prefix already present"
+              echo "✅ PR title has a custom prefix"
               exit 0
             fi
 
