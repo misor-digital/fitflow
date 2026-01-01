@@ -1,5 +1,11 @@
 # fitflow
 
+## 0.2.1
+
+### Patch Changes
+
+- CI TEST
+
 ## 0.2.0
 
 ### Minor Changes
