@@ -63,6 +63,7 @@ jobs:
 
             echo "❌ PR title must start with $REQUIRED"
             echo "Current title: $TITLE"
+            echo "Suggested title: $REQUIRED $TITLE"
             exit 1
           fi
 
