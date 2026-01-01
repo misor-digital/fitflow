@@ -1,5 +1,11 @@
 # fitflow
 
+## 0.3.1
+
+### Patch Changes
+
+- Refactor release workflow: remove automated version bump, add manual versioning on stage, and automatic sync to dev after releases
+
 ## 0.3.0
 
 ### Minor Changes
