@@ -9,7 +9,7 @@
  */
 
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import type { BoxTypeId, PreorderUserInput } from '@/lib/preorder';
 import { INITIAL_USER_INPUT } from '@/lib/preorder';
 
@@ -85,9 +85,10 @@ export const useFormStore = create<FormStore>()(
       // Reset to initial state
       reset: () => set(INITIAL_USER_INPUT),
     }),
-    {
-      name: 'fitflow-form-storage',
-    }
+{
+  name: 'fitflow-form-storage',
+  storage: createJSONStorage(() => sessionStorage),
+}
   )
 );
 
