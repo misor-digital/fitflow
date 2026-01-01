@@ -37,7 +37,7 @@ jobs:
           fi
 
           # Pass if CHANGELOG.md was modified in this PR (version already bumped)
-          if git diff --name-only origin/main...HEAD | grep -q "^CHANGELOG.md$"; then
+          if git diff --name-only origin/main-test...HEAD | grep -q "^CHANGELOG.md$"; then
             echo "✅ Version already bumped (CHANGELOG.md modified)"
             exit 0
           fi
