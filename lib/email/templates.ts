@@ -187,8 +187,15 @@ export function generatePreorderConfirmationEmail(
             </h2>
             
             <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
-              Твоята предварителна поръчка беше успешно регистрирана! Радваме се, че избра FitFlow.
+              Твоята предварителна поръчка беше успешно регистрирана! Благодарим ти, че избра FitFlow.
             </p>
+            
+            <!-- Free Delivery Banner -->
+            <div style="background-color: #e8f5e9; border: 2px solid #4caf50; padding: 15px 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
+              <p style="margin: 0; color: #2e7d32; font-size: 18px; font-weight: bold;">
+                🚚 Безплатна доставка за твоята първа кутия!
+              </p>
+            </div>
             
             <!-- Order Details -->
             <div style="background-color: #fff4ec; padding: 20px; border-radius: 8px; margin: 20px 0;">
