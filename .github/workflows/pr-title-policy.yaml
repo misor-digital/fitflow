@@ -27,6 +27,10 @@ jobs:
           if echo "$LABELS" | grep -qx "hotfix"; then
             REQUIRED_PREFIX="[HOTFIX]"
 
+          # ----- RELEASE override
+          elif echo "$LABELS" | grep -qx "release"; then
+            REQUIRED_PREFIX="[RELEASE]"
+
           # ----- Known base branches
           elif [[ "$BASE" == "dev" ]]; then
             REQUIRED_PREFIX="[DEV]"
