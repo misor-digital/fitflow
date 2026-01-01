@@ -24,10 +24,10 @@ jobs:
 
       - name: Sync to dev
         run: |
-          git checkout dev
-          git pull origin dev
+          git checkout dev-test
+          git pull origin dev-test
           git merge --ff-only origin/main-test
-          git push origin dev
+          git push origin dev-test
 
       - name: Summary
         run: |
