@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFormStore } from '@/store/formStore';
-import { trackLead } from '@/lib/analytics';
+import { trackLead, trackGenerateLead, setUserProperties } from '@/lib/analytics';
 
 export default function ThankYou() {
   const router = useRouter();
@@ -15,14 +15,29 @@ export default function ThankYou() {
     router.push('/');
   };
 
-  // Track Lead event on successful form submission (primary conversion)
+  // Track Lead (Meta) and generate_lead (GA4) on successful form submission (primary conversion)
   useEffect(() => {
     // Only track if user completed the form (has email and name)
     if (store.email && store.fullName && !hasTrackedLead.current) {
+      // Meta Pixel - Lead event
       trackLead();
+      
+      // GA4 - generate_lead event (recommended event)
+      trackGenerateLead({
+        currency: 'EUR',
+        value: 0, // No payment yet, just lead
+      });
+      
+      // GA4 - Set user properties for segmentation
+      setUserProperties({
+        box_type: store.boxType || undefined,
+        has_personalization: store.wantsPersonalization ?? undefined,
+        promo_code_used: !!store.promoCode,
+      });
+      
       hasTrackedLead.current = true;
     }
-  }, [store.email, store.fullName]);
+  }, [store.email, store.fullName, store.boxType, store.wantsPersonalization, store.promoCode]);
 
   // Redirect to home if accessed directly without completing the form
   useEffect(() => {

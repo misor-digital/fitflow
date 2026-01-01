@@ -67,7 +67,6 @@ export async function GET(request: Request) {
 
       case 'prices': {
         // Use optimized single-query function
-        // const [pricesMap, eurToBgnRate] = await Promise.all([
         const pricesMap = await getAllBoxPricesMap(promoCode);
         
         // Transform to expected format
@@ -81,6 +80,8 @@ export async function GET(request: Request) {
           discountAmountBgn: number;
         }> = {};
 
+        const boxTypes: Record<string, string> = {};
+
         for (const [boxTypeId, priceInfo] of Object.entries(pricesMap) as [string, PriceInfo][]) {
           prices[boxTypeId] = {
             originalPriceEur: priceInfo.originalPriceEur,
@@ -91,9 +92,10 @@ export async function GET(request: Request) {
             discountAmountEur: priceInfo.discountAmountEur,
             discountAmountBgn: priceInfo.discountAmountBgn,
           };
+          boxTypes[boxTypeId] = priceInfo.boxTypeName;
         }
 
-        return NextResponse.json({ prices });
+        return NextResponse.json({ prices, boxTypes });
       }
 
       case 'all':
