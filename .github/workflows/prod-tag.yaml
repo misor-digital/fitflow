@@ -15,15 +15,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Read version
-        id: version
-        run: |
-          VERSION=$(node -p "require('./package.json').version")
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-
       - name: Create tag (if missing)
         run: |
-          TAG="v${{ steps.version.outputs.version }}"
+          VERSION=$(node -p "require('./package.json').version")
+          TAG="v$VERSION"
 
           if git rev-parse "$TAG" >/dev/null 2>&1; then
             echo "Tag $TAG already exists, skipping"

@@ -20,11 +20,10 @@ Only `main` creates versions.
 4. Merge to `dev`
 5. Open PR `dev` → `stage`
 6. Validate on staging
-7. (If needed) add a changeset
+7. Add a changeset and run version bump on `stage`
 8. Open PR `stage` → `main`
-9. Apply `release` label → version bump is committed to PR
-10. Merge → Git tag created automatically
-11. **Sync branches** (see below)
+9. Merge → Git tag created automatically
+10. **Dev branch synced automatically** (see below)
 
 ---
 
@@ -54,43 +53,48 @@ Only `main` creates versions.
 - No versions are created here
 - Use **rebase and merge** for clean history
 
-### 5. PR → `main`
+### 5. Version bump (manual on stage)
+
+When ready to release, run on the `stage` branch:
+
+```bash
+# Create a changeset (if not already done)
+pnpm changeset
+
+# Apply the version bump
+pnpm changeset version
+
+# Commit the changes
+git add -A
+git commit -m "chore(release): bump version to X.Y.Z"
+git push origin stage
+```
+
+This updates:
+- `package.json` with the new version
+- `CHANGELOG.md` with release notes
+- Deletes consumed changeset files
+
+### 6. PR → `main`
 This is where **gates apply**:
 - CI must pass
 - PR must have a valid label
-- Changeset required (unless `skip-release` label)
-- Apply `release` label to trigger version bump
+- Changeset required (unless `skip-release` label) or version already bumped
 - Use **rebase and merge** for clean history
 
-### 6. Version bump (automated)
-When the `release` label is applied:
-- The **Version bump** workflow runs
-- Executes `pnpm changeset version`
-- Commits the version bump to your PR branch
-- Commit message: `chore(release): bump version to X.Y.Z`
-
 ### 7. Merge to `main`
-- After version bump commit is pushed, merge the PR
+- Merge the PR
 - The **Production Tag** workflow creates a Git tag (`vX.Y.Z`)
+- The **Sync Version to Dev** workflow syncs the version to `dev`
 - This is production
 
-### 8. Sync branches back
+### 8. Automatic sync to dev
 
-After each production release, sync the version bump back to lower branches:
+After merge to `main`, the **Sync Version to Dev** workflow automatically:
+- Merges `main` into `dev` using fast-forward
+- Keeps `dev` in sync with the latest version
 
-```bash
-# Sync stage with main
-git checkout stage
-git pull origin stage
-git merge origin/main --no-edit
-git push origin stage
-
-# Sync dev with stage
-git checkout dev
-git pull origin dev
-git merge origin/stage --no-edit
-git push origin dev
-```
+**Note:** `stage` is already in sync because it was the source of the PR.
 
 **Why this matters:**
 - Keeps version numbers consistent across all branches
@@ -104,10 +108,8 @@ git push origin dev
 | PR Type | Strategy | Reason |
 |---------|----------|--------|
 | Feature → `dev` | Squash and merge | Clean, single commit per feature |
-| `dev` → `stage` | Merge commit | Preserve history for promotion |
-| `stage` → `main` | Merge commit | Preserve history for release |
-| `main` → `stage` (sync) | Merge commit | Bring version bump downstream |
-| `stage` → `dev` (sync) | Merge commit | Keep branches aligned |
+| `dev` → `stage` | Rebase and merge | Linear history for promotion |
+| `stage` → `main` | Rebase and merge | Linear history for release |
 
 ---
 
@@ -116,10 +118,10 @@ git push origin dev
 | Workflow | Trigger | Purpose |
 |----------|---------|---------|
 | **CI** | PR to `dev`, `stage`, `main` | Lint, test, build |
-| **Require Label** | PR opened/labeled | Ensures PR has a valid label |
-| **Require Changeset** | PR to `main` | Blocks merge if no changeset (unless `skip-release`) |
-| **Version bump** | PR to `main` with `release` label | Commits version bump to PR branch |
+| **Require Label** | PR opened/labeled/unlabeled/synchronize | Ensures PR has a valid label |
+| **Require Changeset** | PR to `main` (opened/synchronize/labeled/unlabeled) | Blocks merge if no changeset and version not bumped (unless `skip-release`) |
 | **Production Tag** | Push to `main` | Creates Git tag from `package.json` version |
+| **Sync Version to Dev** | Push to `main` (when `package.json` or `CHANGELOG.md` changes) | Syncs version bump to `dev` branch |
 | **Remove skip-release** | New commits on PR to `main` | Removes `skip-release` label to force re-confirmation |
 
 ---
