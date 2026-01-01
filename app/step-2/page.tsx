@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFormStore } from '@/store/formStore';
+import { trackFunnelStep, trackPersonalizationChoice } from '@/lib/analytics';
 import Link from 'next/link';
 import type { CatalogOption, ColorOption, PersonalizationStep } from '@/lib/preorder';
 import { 
@@ -33,6 +34,15 @@ interface CatalogData {
 export default function Step2() {
   const router = useRouter();
   const store = useFormStore();
+  const hasTrackedStep = useRef(false);
+  
+  // Track funnel step on mount
+  useEffect(() => {
+    if (!hasTrackedStep.current) {
+      trackFunnelStep('personalization', 2);
+      hasTrackedStep.current = true;
+    }
+  }, []);
   
   // Catalog data from API
   const [catalogData, setCatalogData] = useState<CatalogData | null>(null);
@@ -174,6 +184,15 @@ export default function Step2() {
     store.setDietary(sortWithOtherAtEnd(dietary));
     store.setDietaryOther(dietaryOther);
     store.setAdditionalNotes(notes);
+    
+    // Track personalization choice in GA4
+    trackPersonalizationChoice({
+      wants_personalization: wantsPersonalization!,
+      sports: wantsPersonalization ? sports : undefined,
+      colors: wantsPersonalization ? colors : undefined,
+      flavors: wantsPersonalization ? flavors : undefined,
+      dietary: wantsPersonalization ? dietary : undefined,
+    });
     
     router.push('/step-3');
   };

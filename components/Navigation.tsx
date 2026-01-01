@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { useFormStore } from '@/store/formStore';
+import { trackCTAClick } from '@/lib/analytics';
 import PromoDiscountPrompt from './PromoDiscountPrompt';
 
 export default function Navigation() {
@@ -102,6 +103,7 @@ export default function Navigation() {
           <div className="relative">
             <Link
               href="/step-1"
+              onClick={() => trackCTAClick({ cta_text: 'Запиши предварителна поръчка', cta_location: 'navigation', destination: '/step-1' })}
               className="bg-[#023047] hover:bg-[#FB7D00] px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-colors block"
               aria-label="Запиши предварителна поръчка"
             >

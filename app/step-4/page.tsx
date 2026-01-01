@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFormStore, usePreorderInput } from '@/store/formStore';
+import { trackFunnelStep, trackFormSubmit } from '@/lib/analytics';
 import Link from 'next/link';
 import type { PriceInfo } from '@/lib/preorder';
 import { 
@@ -35,11 +36,20 @@ export default function Step4() {
   const userInput = usePreorderInput();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const hasTrackedStep = useRef(false);
   
   // Catalog data from API
   const [catalogData, setCatalogData] = useState<CatalogData | null>(null);
   const [priceInfo, setPriceInfo] = useState<PriceInfo | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Track funnel step on mount
+  useEffect(() => {
+    if (!hasTrackedStep.current) {
+      trackFunnelStep('review_order', 4);
+      hasTrackedStep.current = true;
+    }
+  }, []);
 
   // Preload thank-you page when component mounts
   useEffect(() => {
@@ -118,9 +128,22 @@ export default function Step4() {
         throw new Error('Failed to submit');
       }
 
+      // Track successful form submission in GA4
+      trackFormSubmit({
+        form_name: 'preorder',
+        success: true,
+      });
+
       // Redirect to thank you page on success
       router.push('/thank-you/preorder');
     } catch (err) {
+      // Track failed form submission in GA4
+      trackFormSubmit({
+        form_name: 'preorder',
+        success: false,
+        error_message: 'Failed to submit',
+      });
+      
       setError('Възникна грешка. Моля, опитайте отново.');
       console.error(err);
       setIsSubmitting(false);

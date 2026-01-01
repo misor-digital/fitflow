@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
+import { headers } from 'next/headers';
 import { createPreorder, type PreorderFormData } from '@/lib/supabase';
 import { handlePreorderEmailWorkflow } from '@/lib/email';
 import { calculatePrice, validatePromoCode, incrementPromoCodeUsage } from '@/lib/data';
+import { trackLeadCapi, hashForMeta, generateEventId } from '@/lib/analytics';
 
 export async function POST(request: Request) {
   try {
@@ -117,6 +119,60 @@ export async function POST(request: Request) {
         // Log but don't fail the request - the preorder was saved successfully
         console.error('Error in email workflow:', emailError);
       }
+    }
+
+    // Track Lead event via Meta Conversions API (server-side)
+    // This provides better attribution than browser-only tracking
+    try {
+      const headersList = await headers();
+      const clientIp = headersList.get('x-forwarded-for')?.split(',')[0] || headersList.get('x-real-ip') || '';
+      const userAgent = headersList.get('user-agent') || '';
+      const referer = headersList.get('referer') || '';
+      
+      // Parse name into first and last name
+      const nameParts = data.fullName.trim().split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+      
+      // Hash user data for Meta CAPI
+      const [hashedEmail, hashedPhone, hashedFirstName, hashedLastName] = await Promise.all([
+        hashForMeta(data.email),
+        data.phone ? hashForMeta(data.phone) : Promise.resolve(undefined),
+        firstName ? hashForMeta(firstName) : Promise.resolve(undefined),
+        lastName ? hashForMeta(lastName) : Promise.resolve(undefined),
+      ]);
+      
+      const capiResult = await trackLeadCapi({
+        eventId: generateEventId(),
+        sourceUrl: referer || `${process.env.NEXT_PUBLIC_SITE_URL || 'https://fitflow.bg'}/thank-you/preorder`,
+        userData: {
+          em: hashedEmail,
+          ph: hashedPhone,
+          fn: hashedFirstName,
+          ln: hashedLastName,
+          client_ip_address: clientIp,
+          client_user_agent: userAgent,
+          // fbc and fbp would come from cookies if available
+          fbc: data.fbc,
+          fbp: data.fbp,
+        },
+        customData: {
+          currency: 'EUR',
+          value: priceInfo.finalPriceEur,
+          content_name: data.boxType,
+          content_category: 'preorder',
+          order_id: preorder?.id,
+        },
+      });
+      
+      if (!capiResult.success) {
+        console.warn('Meta CAPI Lead event failed:', capiResult.error);
+      } else {
+        console.log('Meta CAPI Lead event sent successfully');
+      }
+    } catch (capiError) {
+      // Log but don't fail the request
+      console.error('Error sending Meta CAPI event:', capiError);
     }
 
     return NextResponse.json(

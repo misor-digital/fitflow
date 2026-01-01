@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFormStore } from '@/store/formStore';
+import { trackInitiateCheckout, trackBeginCheckout, trackFunnelStep, trackBoxSelection } from '@/lib/analytics';
 import PriceDisplay from '@/components/PriceDisplay';
 import Link from 'next/link';
 import type { PriceInfo, PricesMap, BoxTypeId } from '@/lib/preorder';
@@ -11,9 +12,23 @@ import { getDisplayBoxType, getPremiumFrequency, buildBoxTypeId } from '@/lib/pr
 export default function Step1() {
   const router = useRouter();
   const { boxType, setBoxType, promoCode } = useFormStore();
+  const hasTrackedInitiateCheckout = useRef(false);
   
-  // Prices state - fetched from API
+  // Track InitiateCheckout (Meta) and begin_checkout (GA4) when user starts the form flow
+  useEffect(() => {
+    if (!hasTrackedInitiateCheckout.current) {
+      // Meta Pixel
+      trackInitiateCheckout();
+      // GA4
+      trackBeginCheckout();
+      trackFunnelStep('box_selection', 1);
+      hasTrackedInitiateCheckout.current = true;
+    }
+  }, []);
+  
+  // Prices and box type names state - fetched from API
   const [prices, setPrices] = useState<PricesMap | null>(null);
+  const [boxTypeNames, setBoxTypeNames] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
@@ -25,32 +40,39 @@ export default function Step1() {
     getPremiumFrequency(boxType)
   );
 
-  // Fetch prices from API
+  // Fetch prices and box type names from API
   useEffect(() => {
-    async function fetchPrices() {
+    async function fetchData() {
       try {
         setLoading(true);
-        const url = promoCode 
+        
+        // Fetch prices
+        const pricesUrl = promoCode 
           ? `/api/catalog?type=prices&promoCode=${encodeURIComponent(promoCode)}`
           : '/api/catalog?type=prices';
         
-        const response = await fetch(url);
+        // Fetch box types for names (only once, not dependent on promoCode)
+        const response = await fetch(pricesUrl);
+        
         if (!response.ok) {
           throw new Error('Failed to fetch prices');
         }
         
         const data = await response.json();
         setPrices(data.prices);
+        const boxTypesData = data.boxTypes;
+        setBoxTypeNames(boxTypesData || []);
+        
         setError(null);
       } catch (err) {
-        console.error('Error fetching prices:', err);
+        console.error('Error fetching data:', err);
         setError('Грешка при зареждане на цените. Моля, опитайте отново.');
       } finally {
         setLoading(false);
       }
     }
     
-    fetchPrices();
+    fetchData();
   }, [promoCode]);
 
   // Get price info for a box type
@@ -66,6 +88,11 @@ export default function Step1() {
 
   const hasDiscount = promoCode && monthlyStandardPrice && monthlyStandardPrice.discountPercent > 0;
 
+  // Helper to get box type name for GA4 tracking
+  const getBoxTypeName = (boxTypeId: string): string => {
+    return boxTypeNames[boxTypeId] || boxTypeId;
+  };
+
   const handleSelect = (id: string) => {
     setSelected(id);
     
@@ -73,8 +100,28 @@ export default function Step1() {
     if (id === 'monthly-premium') {
       const finalSelection = buildBoxTypeId(id, premiumFrequency);
       setBoxType(finalSelection);
+      
+      // Track box selection in GA4
+      const priceInfo = getPriceInfo(id);
+      trackBoxSelection({
+        box_type: finalSelection,
+        box_name: getBoxTypeName(finalSelection),
+        price: priceInfo?.finalPriceEur,
+        currency: 'EUR',
+        has_promo: !!promoCode,
+      });
     } else {
       setBoxType(id as BoxTypeId);
+      
+      // Track box selection in GA4
+      const priceInfo = getPriceInfo(id);
+      trackBoxSelection({
+        box_type: id,
+        box_name: getBoxTypeName(id),
+        price: priceInfo?.finalPriceEur,
+        currency: 'EUR',
+        has_promo: !!promoCode,
+      });
     }
   };
 
@@ -85,6 +132,16 @@ export default function Step1() {
     setSelected('monthly-premium');
     const finalSelection = buildBoxTypeId('monthly-premium', frequency);
     setBoxType(finalSelection);
+    
+    // Track frequency selection in GA4
+    const priceInfo = getPriceInfo('monthly-premium');
+    trackBoxSelection({
+      box_type: finalSelection,
+      box_name: getBoxTypeName(finalSelection),
+      price: priceInfo?.finalPriceEur,
+      currency: 'EUR',
+      has_promo: !!promoCode,
+    });
   };
 
   const handleContinue = () => {

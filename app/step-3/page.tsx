@@ -1,14 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFormStore } from '@/store/formStore';
+import { trackFunnelStep, trackFormInteraction } from '@/lib/analytics';
 import Link from 'next/link';
 import { isValidEmail, isValidPhone, getEmailError, getPhoneError } from '@/lib/preorder';
 
 export default function Step3() {
   const router = useRouter();
   const store = useFormStore();
+  const hasTrackedStep = useRef(false);
+  
+  // Track funnel step on mount
+  useEffect(() => {
+    if (!hasTrackedStep.current) {
+      trackFunnelStep('contact_info', 3);
+      hasTrackedStep.current = true;
+    }
+  }, []);
   
   const [fullName, setFullName] = useState(store.fullName);
   const [email, setEmail] = useState(store.email);
@@ -29,6 +39,14 @@ export default function Step3() {
     if (hasAttemptedSubmit) {
       const error = getEmailError(value);
       setEmailError(error || '');
+      if (error) {
+        trackFormInteraction({
+          form_name: 'contact_info',
+          field_name: 'email',
+          interaction_type: 'error',
+          error_message: error,
+        });
+      }
     }
   };
 
@@ -41,6 +59,14 @@ export default function Step3() {
     } else {
       const error = getPhoneError(value);
       setPhoneError(error || '');
+      if (error) {
+        trackFormInteraction({
+          form_name: 'contact_info',
+          field_name: 'phone',
+          interaction_type: 'error',
+          error_message: error,
+        });
+      }
     }
   };
 
@@ -49,7 +75,14 @@ export default function Step3() {
     
     // Validate email using shared validation
     if (email && !isValidEmail(email)) {
-      setEmailError(getEmailError(email) || '');
+      const error = getEmailError(email) || '';
+      setEmailError(error);
+      trackFormInteraction({
+        form_name: 'contact_info',
+        field_name: 'email',
+        interaction_type: 'error',
+        error_message: error,
+      });
       return;
     }
     
