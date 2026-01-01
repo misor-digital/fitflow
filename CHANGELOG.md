@@ -1,5 +1,11 @@
 # fitflow
 
+## 0.3.2
+
+### Patch Changes
+
+- Add free delivery banner to preorder confirmation email
+
 ## 0.3.1
 
 ### Patch Changes
