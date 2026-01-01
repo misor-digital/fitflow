@@ -1,17 +1,28 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFormStore } from '@/store/formStore';
+import { trackLead } from '@/lib/analytics';
 
 export default function ThankYou() {
   const router = useRouter();
   const store = useFormStore();
+  const hasTrackedLead = useRef(false);
 
   const handleGoHome = () => {
     store.reset();
     router.push('/');
   };
+
+  // Track Lead event on successful form submission (primary conversion)
+  useEffect(() => {
+    // Only track if user completed the form (has email and name)
+    if (store.email && store.fullName && !hasTrackedLead.current) {
+      trackLead();
+      hasTrackedLead.current = true;
+    }
+  }, [store.email, store.fullName]);
 
   // Redirect to home if accessed directly without completing the form
   useEffect(() => {

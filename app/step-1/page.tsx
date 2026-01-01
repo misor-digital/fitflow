@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFormStore } from '@/store/formStore';
+import { trackInitiateCheckout } from '@/lib/analytics';
 import PriceDisplay from '@/components/PriceDisplay';
 import Link from 'next/link';
 import type { PriceInfo, PricesMap, BoxTypeId } from '@/lib/preorder';
@@ -11,6 +12,15 @@ import { getDisplayBoxType, getPremiumFrequency, buildBoxTypeId } from '@/lib/pr
 export default function Step1() {
   const router = useRouter();
   const { boxType, setBoxType, promoCode } = useFormStore();
+  const hasTrackedInitiateCheckout = useRef(false);
+  
+  // Track InitiateCheckout event when user starts the form flow
+  useEffect(() => {
+    if (!hasTrackedInitiateCheckout.current) {
+      trackInitiateCheckout();
+      hasTrackedInitiateCheckout.current = true;
+    }
+  }, []);
   
   // Prices state - fetched from API
   const [prices, setPrices] = useState<PricesMap | null>(null);

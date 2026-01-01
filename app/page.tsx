@@ -3,14 +3,24 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, Suspense } from 'react';
+import { useEffect, useRef, Suspense } from 'react';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { useFormStore } from '@/store/formStore';
+import { trackViewContent } from '@/lib/analytics';
 
 function HomeContent() {
   const searchParams = useSearchParams();
   const { setPromoCode } = useFormStore();
+  const hasTrackedViewContent = useRef(false);
+  
+  // Track ViewContent event on landing page load (once)
+  useEffect(() => {
+    if (!hasTrackedViewContent.current) {
+      trackViewContent();
+      hasTrackedViewContent.current = true;
+    }
+  }, []);
   
   // Extract promo code from URL and validate via API
   useEffect(() => {
