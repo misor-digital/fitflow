@@ -54,6 +54,7 @@ jobs:
           REQUIRE_ANY="${{ steps.rules.outputs.require_any_prefix }}"
           TITLE="${{ steps.rules.outputs.title }}"
           NUMBER="${{ github.event.pull_request.number }}"
+          REPO="${{ github.repository }}"
 
           # ----- Exact prefix required
           if [[ -n "$REQUIRED" ]]; then
@@ -64,7 +65,12 @@ jobs:
 
             NEW_TITLE="$REQUIRED $TITLE"
             echo "✏️ Updating PR title → $NEW_TITLE"
-            gh pr edit "$NUMBER" --title "$NEW_TITLE"
+
+            gh api \
+              --method PATCH \
+              "repos/$REPO/pulls/$NUMBER" \
+              -f title="$NEW_TITLE"
+
             exit 0
           fi
 
