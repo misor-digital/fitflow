@@ -2,7 +2,7 @@ name: Require Changeset
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, main-test]
     types: [opened, synchronize, labeled, unlabeled]
 
 jobs:
