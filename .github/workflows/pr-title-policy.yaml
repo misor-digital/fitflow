@@ -21,42 +21,61 @@ jobs:
           LABELS=$(jq -r '.pull_request.labels[].name' "$GITHUB_EVENT_PATH")
 
           REQUIRED_PREFIX=""
+          REQUIRE_ANY_PREFIX="false"
 
           # ----- HOTFIX override
           if echo "$LABELS" | grep -qx "hotfix"; then
             REQUIRED_PREFIX="[HOTFIX]"
+
+          # ----- Known base branches
+          elif [[ "$BASE" == "dev" ]]; then
+            REQUIRED_PREFIX="[DEV]"
+
+          elif [[ "$HEAD" == "dev" && "$BASE" == "stage" ]]; then
+            REQUIRED_PREFIX="[STAGE]"
+
+          elif [[ "$HEAD" == "stage" && "$BASE" == "main" ]]; then
+            REQUIRED_PREFIX="[PROD]"
+
+          # ----- Unknown base branch → must have *some* prefix
           else
-            # ----- Promotion PR rules
-            if [[ "$BASE" == "dev" ]]; then
-              REQUIRED_PREFIX="[DEV]"
-            elif [[ "$HEAD" == "dev" && "$BASE" == "stage" ]]; then
-              REQUIRED_PREFIX="[STAGE]"
-            elif [[ "$HEAD" == "stage" && "$BASE" == "main" ]]; then
-              REQUIRED_PREFIX="[PROD]"
-            else
-              exit 0
-            fi
+            REQUIRE_ANY_PREFIX="true"
           fi
 
           echo "required_prefix=$REQUIRED_PREFIX" >> "$GITHUB_OUTPUT"
+          echo "require_any_prefix=$REQUIRE_ANY_PREFIX" >> "$GITHUB_OUTPUT"
           echo "title=$TITLE" >> "$GITHUB_OUTPUT"
 
-      - name: Enforce title prefix (fail if missing)
+      - name: Enforce title prefix
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PAT }}
         run: |
           REQUIRED="${{ steps.rules.outputs.required_prefix }}"
+          REQUIRE_ANY="${{ steps.rules.outputs.require_any_prefix }}"
           TITLE="${{ steps.rules.outputs.title }}"
 
-          if [[ -z "$REQUIRED" ]]; then
-            exit 0
+          # ----- Exact prefix required
+          if [[ -n "$REQUIRED" ]]; then
+            if [[ "$TITLE" == "$REQUIRED"* ]]; then
+              echo "✅ PR title is valid"
+              exit 0
+            fi
+
+            echo "❌ PR title must start with $REQUIRED"
+            echo "Current title: $TITLE"
+            exit 1
           fi
 
-          if [[ "$TITLE" == "$REQUIRED"* ]]; then
-            echo "✅ PR title is valid"
-            exit 0
+          # ----- Any prefix required ([SOMETHING])
+          if [[ "$REQUIRE_ANY" == "true" ]]; then
+            if [[ "$TITLE" =~ ^\[[A-Z0-9_-]+\]\  ]]; then
+              echo "✅ PR title has a custom prefix"
+              exit 0
+            fi
+
+            echo "❌ PR title must start with a prefix like [TEST], [SPIKE], [POC]"
+            echo "Current title: $TITLE"
+            exit 1
           fi
 
-          echo "❌ PR title must start with $REQUIRED"
-          echo "Current title: $TITLE"
-          exit 1
+          exit 0
