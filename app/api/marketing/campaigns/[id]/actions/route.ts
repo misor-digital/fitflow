@@ -1,6 +1,20 @@
 /**
  * Marketing Campaign Actions API
  * Endpoints for campaign actions (start, pause, resume, cancel)
+ * 
+ * ============================================================================
+ * PRODUCTION SAFETY - DEFENSE IN DEPTH
+ * ============================================================================
+ * 
+ * This API route handles campaign actions that can trigger email sends.
+ * While the internal UI is gated by environment checks, this API provides
+ * an additional layer of protection.
+ * 
+ * In production environments, this API should be protected by:
+ * 1. The MARKETING_RUNNER_SECRET for automated/cron access
+ * 2. Environment checks for UI-triggered actions
+ * 
+ * ============================================================================
  */
 
 import { NextResponse } from 'next/server';
@@ -9,6 +23,7 @@ import {
   pauseCampaign,
   resumeCampaign,
   cancelCampaign,
+  DEFAULT_RUNNER_CONFIG,
 } from '@/lib/marketing';
 
 interface RouteParams {
@@ -41,6 +56,10 @@ export async function POST(request: Request, { params }: RouteParams) {
       case 'start':
         result = await startCampaign(id);
         break;
+      case 'start-dry-run':
+        // Dry-run mode: simulate campaign without sending emails
+        result = await startCampaign(id, { ...DEFAULT_RUNNER_CONFIG, dryRun: true });
+        break;
       case 'pause':
         result = await pauseCampaign(id);
         break;
@@ -52,7 +71,7 @@ export async function POST(request: Request, { params }: RouteParams) {
         break;
       default:
         return NextResponse.json(
-          { error: `Invalid action: ${action}. Valid actions: start, pause, resume, cancel` },
+          { error: `Invalid action: ${action}. Valid actions: start, start-dry-run, pause, resume, cancel` },
           { status: 400 }
         );
     }

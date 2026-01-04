@@ -3,6 +3,7 @@
  */
 
 import { Suspense } from 'react';
+import Link from 'next/link';
 
 function UnsubscribeContent() {
   return (
@@ -41,12 +42,12 @@ function UnsubscribeContent() {
         </div>
         
         <div className="mt-8">
-          <a 
+          <Link 
             href="/"
             className="text-[#9c3b00] hover:underline text-sm"
           >
             ← Обратно към началната страница
-          </a>
+          </Link>
         </div>
       </div>
     </div>

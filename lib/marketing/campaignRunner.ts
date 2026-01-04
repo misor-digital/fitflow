@@ -329,10 +329,8 @@ export async function runCampaignProcessor(
       }
     }
 
-    // Also check for campaigns that are in 'sending' status (resume interrupted)
-    const { data: sendingCampaigns } = await getScheduledCampaignsReadyToSend();
-    // Note: We'd need a separate query for 'sending' status campaigns
-    // For now, the lock mechanism handles this
+    // Note: Campaigns in 'sending' status (interrupted) are handled by the lock mechanism.
+    // A separate query for 'sending' status campaigns could be added here if needed.
 
     return { processed: state.processedCount, errors: state.errorCount };
 
