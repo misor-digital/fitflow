@@ -19,7 +19,8 @@ import {
   acquireCampaignLock,
   releaseCampaignLock,
 } from './campaignService';
-import { createMarketingEmail, renderTemplate } from './campaignTemplates';
+import { generateEmail } from './templates';
+import { escapeHtml } from './templates/base';
 import type {
   MarketingCampaignRow,
   MarketingSendRow,
@@ -101,24 +102,29 @@ async function sendCampaignEmail(
       }
     }
 
-    // Prepare template variables
+    // Prepare template variables - merge campaign template variables with recipient data
+    const templateVars = typeof campaign.template === 'string' 
+      ? JSON.parse(campaign.template) 
+      : campaign.template;
+    
     const variables: TemplateVariables = {
+      ...templateVars,
       email: send.email,
       name: recipientName,
     };
 
-    // Render the email content
-    const htmlContent = createMarketingEmail(
-      campaign.template,
-      variables,
-      {
-        previewText: campaign.preview_text || undefined,
-        campaignId: campaign.id,
-      }
-    );
+    // Get template ID from campaign template data
+    const templateId = templateVars.templateId || 'discount';
+    
+    // Render the email content using template service
+    const htmlContent = generateEmail(templateId, variables, campaign.id);
 
-    // Render subject with variables
-    const subject = renderTemplate(campaign.subject, variables);
+    // Render subject with variables (simple replacement)
+    let subject = campaign.subject;
+    if (recipientName) {
+      subject = subject.replace(/\{\{name\}\}/g, escapeHtml(recipientName));
+    }
+    subject = subject.replace(/\{\{email\}\}/g, escapeHtml(send.email));
 
     // DRY-RUN MODE: Skip actual sending
     if (config.dryRun) {

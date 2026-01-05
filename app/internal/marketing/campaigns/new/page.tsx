@@ -1,7 +1,8 @@
 /**
  * Create Campaign Page
  * 
- * Form for creating new marketing campaigns.
+ * Form for creating new marketing campaigns with template-based system.
+ * Features side-by-side form and live preview layout.
  * 
  * PRODUCTION SAFETY: This page is protected by the parent layout's
  * environment check. It will return 404 in production.
@@ -9,14 +10,27 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { TiptapEditor } from '@/components/TiptapEditor';
+import {
+  getAllTemplates,
+  getTemplate,
+  generateEmailPreview,
+  type TemplateDefinition,
+  type VariableDefinition,
+} from '@/lib/marketing/templates';
+
+// ============================================================================
+// Types
+// ============================================================================
 
 interface CampaignFormData {
   name: string;
   subject: string;
-  template: string;
+  templateId: string;
+  templateVariables: Record<string, string | number | boolean>;
   previewText: string;
   scheduledStartAt: string;
   status: 'draft' | 'scheduled';
@@ -31,7 +45,8 @@ interface CampaignFormData {
 const INITIAL_FORM_DATA: CampaignFormData = {
   name: '',
   subject: '',
-  template: '',
+  templateId: 'discount',
+  templateVariables: {},
   previewText: '',
   scheduledStartAt: '',
   status: 'draft',
@@ -43,37 +58,193 @@ const INITIAL_FORM_DATA: CampaignFormData = {
   },
 };
 
-// Sample template for quick start
-const SAMPLE_TEMPLATE = `<h2 style="color: #333; margin: 0 0 20px 0;">Здравей{{name}}!</h2>
+// ============================================================================
+// Helper Functions
+// ============================================================================
 
-<p style="color: #555; font-size: 16px; line-height: 1.6;">
-  Тук напиши съдържанието на имейла...
-</p>
+function getDefaultVariables(template: TemplateDefinition): Record<string, string | number | boolean> {
+  const defaults: Record<string, string | number | boolean> = {};
+  for (const variable of template.variables) {
+    if (variable.defaultValue !== undefined) {
+      defaults[variable.key] = variable.defaultValue;
+    } else if (variable.type === 'checkbox') {
+      defaults[variable.key] = false;
+    } else if (variable.type === 'number') {
+      defaults[variable.key] = 0;
+    } else {
+      defaults[variable.key] = '';
+    }
+  }
+  return defaults;
+}
 
-<p style="color: #555; font-size: 16px; line-height: 1.6;">
-  Можеш да използваш следните променливи:
-</p>
+// ============================================================================
+// Variable Field Component
+// ============================================================================
 
-<ul style="color: #555; font-size: 14px; line-height: 1.8;">
-  <li><code>{{name}}</code> - Име на получателя</li>
-  <li><code>{{email}}</code> - Имейл на получателя</li>
-  <li><code>{{unsubscribe_url}}</code> - Линк за отписване</li>
-</ul>
+interface VariableFieldProps {
+  variable: VariableDefinition;
+  value: string | number | boolean;
+  onChange: (key: string, value: string | number | boolean) => void;
+}
 
-<p style="margin: 30px 0;">
-  <a href="https://fitflow.bg" style="display: inline-block; background: linear-gradient(135deg, #9c3b00 0%, #ff6a00 100%); color: #ffffff; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600;">
-    Виж повече
-  </a>
-</p>`;
+function VariableField({ variable, value, onChange }: VariableFieldProps) {
+  const { key, label, type, placeholder, helpText, maxLength, required } = variable;
+
+  switch (type) {
+    case 'richtext':
+      return (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            {label} {required && '*'}
+          </label>
+          <TiptapEditor
+            content={String(value || '')}
+            onChange={(html) => onChange(key, html)}
+            placeholder={placeholder}
+          />
+          {helpText && (
+            <p className="mt-1 text-xs text-gray-500">{helpText}</p>
+          )}
+        </div>
+      );
+
+    case 'number':
+      return (
+        <div>
+          <label htmlFor={key} className="block text-sm font-medium text-gray-700 mb-1">
+            {label} {required && '*'}
+          </label>
+          <input
+            type="number"
+            id={key}
+            value={Number(value) || 0}
+            onChange={(e) => onChange(key, Number(e.target.value))}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+            placeholder={placeholder}
+          />
+          {helpText && (
+            <p className="mt-1 text-xs text-gray-500">{helpText}</p>
+          )}
+        </div>
+      );
+
+    case 'checkbox':
+      return (
+        <div>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={Boolean(value)}
+              onChange={(e) => onChange(key, e.target.checked)}
+              className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+            />
+            <span className="text-sm font-medium text-gray-700">{label}</span>
+          </label>
+          {helpText && (
+            <p className="mt-1 text-xs text-gray-500 ml-6">{helpText}</p>
+          )}
+        </div>
+      );
+
+    case 'url':
+    case 'text':
+    default:
+      return (
+        <div>
+          <label htmlFor={key} className="block text-sm font-medium text-gray-700 mb-1">
+            {label} {required && '*'}
+          </label>
+          <input
+            type={type === 'url' ? 'url' : 'text'}
+            id={key}
+            value={String(value || '')}
+            onChange={(e) => onChange(key, e.target.value)}
+            maxLength={maxLength}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-500 text-gray-900"
+            placeholder={placeholder}
+          />
+          {helpText && (
+            <p className="mt-1 text-xs text-gray-500">{helpText}</p>
+          )}
+        </div>
+      );
+  }
+}
+
+// ============================================================================
+// Main Component
+// ============================================================================
 
 export default function CreateCampaignPage() {
   const router = useRouter();
-  const [formData, setFormData] = useState<CampaignFormData>(INITIAL_FORM_DATA);
+  const templates = getAllTemplates();
+  
+  const [formData, setFormData] = useState<CampaignFormData>(() => {
+    const initial = { ...INITIAL_FORM_DATA };
+    const defaultTemplate = getTemplate('discount');
+    if (defaultTemplate) {
+      initial.templateVariables = getDefaultVariables(defaultTemplate);
+    }
+    return initial;
+  });
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [tagsInput, setTagsInput] = useState('');
   const [tagsAnyInput, setTagsAnyInput] = useState('');
   const [excludeTagsInput, setExcludeTagsInput] = useState('');
+  const [previewZoom, setPreviewZoom] = useState(100);
+  const [useSampleData, setUseSampleData] = useState(true);
+
+  // Get current template
+  const currentTemplate = useMemo(() => {
+    return getTemplate(formData.templateId);
+  }, [formData.templateId]);
+
+  // Generate preview HTML
+  const previewHtml = useMemo(() => {
+    if (!currentTemplate) return '';
+    try {
+      const previewVars = useSampleData 
+        ? {
+            email: 'preview@example.com',
+            name: 'Иван Иванов',
+            ...formData.templateVariables,
+          }
+        : {
+            email: '{{email}}',
+            name: '{{name}}',
+            ...formData.templateVariables,
+          };
+      return generateEmailPreview(formData.templateId, previewVars);
+    } catch {
+      return '<p>Error generating preview</p>';
+    }
+  }, [formData.templateId, formData.templateVariables, currentTemplate, useSampleData]);
+
+  // Handle template change
+  const handleTemplateChange = (templateId: string) => {
+    const template = getTemplate(templateId);
+    if (template) {
+      setFormData(prev => ({
+        ...prev,
+        templateId,
+        templateVariables: getDefaultVariables(template),
+      }));
+    }
+  };
+
+  // Handle variable change
+  const handleVariableChange = (key: string, value: string | number | boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      templateVariables: {
+        ...prev.templateVariables,
+        [key]: value,
+      },
+    }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,13 +265,19 @@ export default function CreateCampaignPage() {
       }
       recipientFilter.subscribedOnly = formData.recipientFilter.subscribedOnly;
 
+      // Store template variables as JSON in the template field
+      const templateData = JSON.stringify({
+        templateId: formData.templateId,
+        ...formData.templateVariables,
+      });
+
       const response = await fetch('/api/marketing/campaigns', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: formData.name,
           subject: formData.subject,
-          template: formData.template,
+          template: templateData,
           previewText: formData.previewText || null,
           scheduledStartAt: formData.scheduledStartAt 
             ? new Date(formData.scheduledStartAt).toISOString() 
@@ -136,13 +313,6 @@ export default function CreateCampaignPage() {
     }));
   };
 
-  const loadSampleTemplate = () => {
-    setFormData(prev => ({
-      ...prev,
-      template: SAMPLE_TEMPLATE,
-    }));
-  };
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -158,7 +328,7 @@ export default function CreateCampaignPage() {
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Create Campaign</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Create a new marketing email campaign
+            Create a new marketing email campaign using templates
           </p>
         </div>
       </div>
@@ -172,231 +342,322 @@ export default function CreateCampaignPage() {
       )}
 
       {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Basic Info */}
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Campaign Details</h2>
-          
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-                Campaign Name *
-              </label>
-              <input
-                type="text"
-                id="name"
-                required
-                value={formData.name}
-                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-500 text-gray-900"
-                placeholder="e.g., January Newsletter"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-1">
-                Email Subject *
-              </label>
-              <input
-                type="text"
-                id="subject"
-                required
-                value={formData.subject}
-                onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-500 text-gray-900"
-                placeholder="e.g., 🎉 Специална оферта само за теб!"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="previewText" className="block text-sm font-medium text-gray-700 mb-1">
-                Preview Text
-              </label>
-              <input
-                type="text"
-                id="previewText"
-                value={formData.previewText}
-                onChange={(e) => setFormData(prev => ({ ...prev, previewText: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-500 text-gray-900"
-                placeholder="Text shown in email preview (optional)"
-              />
-              <p className="mt-1 text-xs text-gray-500">
-                This text appears in the inbox preview, after the subject line
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Template */}
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Email Template</h2>
-            <button
-              type="button"
-              onClick={loadSampleTemplate}
-              className="text-sm text-blue-600 hover:text-blue-800"
-            >
-              Load Sample Template
-            </button>
-          </div>
-          
-          <div>
-            <label htmlFor="template" className="block text-sm font-medium text-gray-700 mb-1">
-              HTML Content *
-            </label>
-            <textarea
-              id="template"
-              required
-              rows={15}
-              value={formData.template}
-              onChange={(e) => setFormData(prev => ({ ...prev, template: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 font-mono text-sm placeholder:text-gray-500 text-gray-900"
-              placeholder="<h2>Hello {{name}}!</h2>..."
-            />
-            <p className="mt-1 text-xs text-gray-500">
-              Use {'{{name}}'}, {'{{email}}'}, {'{{unsubscribe_url}}'} for dynamic content. 
-              The template will be wrapped in the FitFlow email layout.
-            </p>
-          </div>
-        </div>
-
-        {/* Scheduling */}
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Scheduling</h2>
-          
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Campaign Status
-              </label>
-              <div className="flex gap-4">
-                <label className="flex items-center">
+      <form onSubmit={handleSubmit}>
+        {/* Campaign Settings Section (Full Width) */}
+        <div className="space-y-6 mb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Campaign Details Card */}
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Campaign Details</h2>
+              
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                    Campaign Name *
+                  </label>
                   <input
-                    type="radio"
-                    name="status"
-                    value="draft"
-                    checked={formData.status === 'draft'}
-                    onChange={() => setFormData(prev => ({ ...prev, status: 'draft' }))}
-                    className="mr-2"
+                    type="text"
+                    id="name"
+                    required
+                    value={formData.name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-500 text-gray-900"
+                    placeholder="e.g., January Newsletter"
                   />
-                  <span className="text-sm text-gray-700">Draft</span>
-                </label>
-                <label className="flex items-center">
+                </div>
+
+                <div>
+                  <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-1">
+                    Email Subject *
+                  </label>
                   <input
-                    type="radio"
-                    name="status"
-                    value="scheduled"
-                    checked={formData.status === 'scheduled'}
-                    onChange={() => setFormData(prev => ({ ...prev, status: 'scheduled' }))}
-                    className="mr-2"
+                    type="text"
+                    id="subject"
+                    required
+                    value={formData.subject}
+                    onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-500 text-gray-900"
+                    placeholder="e.g., 🎉 Специална оферта само за теб!"
                   />
-                  <span className="text-sm text-gray-700">Scheduled</span>
-                </label>
+                </div>
+
+                <div>
+                  <label htmlFor="previewText" className="block text-sm font-medium text-gray-700 mb-1">
+                    Preview Text
+                  </label>
+                  <input
+                    type="text"
+                    id="previewText"
+                    value={formData.previewText}
+                    onChange={(e) => setFormData(prev => ({ ...prev, previewText: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-500 text-gray-900"
+                    placeholder="Text shown in email preview (optional)"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    This text appears in the inbox preview, after the subject line
+                  </p>
+                </div>
               </div>
             </div>
 
-            {formData.status === 'scheduled' && (
-              <div>
-                <label htmlFor="scheduledStartAt" className="block text-sm font-medium text-gray-700 mb-1">
-                  Scheduled Start Time *
-                </label>
-                <input
-                  type="datetime-local"
-                  id="scheduledStartAt"
-                  required={formData.status === 'scheduled'}
-                  value={formData.scheduledStartAt}
-                  onChange={(e) => setFormData(prev => ({ ...prev, scheduledStartAt: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-                />
-                <p className="mt-1 text-xs text-gray-500">
-                  Campaign will start sending at this time (server timezone)
-                </p>
+            {/* Scheduling Card */}
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Scheduling</h2>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Campaign Status
+                  </label>
+                  <div className="flex gap-4">
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        name="status"
+                        value="draft"
+                        checked={formData.status === 'draft'}
+                        onChange={() => setFormData(prev => ({ ...prev, status: 'draft' }))}
+                        className="mr-2"
+                      />
+                      <span className="text-sm text-gray-700">Draft</span>
+                    </label>
+                    <label className="flex items-center">
+                      <input
+                        type="radio"
+                        name="status"
+                        value="scheduled"
+                        checked={formData.status === 'scheduled'}
+                        onChange={() => setFormData(prev => ({ ...prev, status: 'scheduled' }))}
+                        className="mr-2"
+                      />
+                      <span className="text-sm text-gray-700">Scheduled</span>
+                    </label>
+                  </div>
+                </div>
+
+                {formData.status === 'scheduled' && (
+                  <div>
+                    <label htmlFor="scheduledStartAt" className="block text-sm font-medium text-gray-700 mb-1">
+                      Scheduled Start Time *
+                    </label>
+                    <input
+                      type="datetime-local"
+                      id="scheduledStartAt"
+                      required={formData.status === 'scheduled'}
+                      value={formData.scheduledStartAt}
+                      onChange={(e) => setFormData(prev => ({ ...prev, scheduledStartAt: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Campaign will start sending at this time (server timezone)
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Recipient Filter Card */}
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Recipient Filter</h2>
+              
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="tags" className="block text-sm font-medium text-gray-700 mb-1">
+                    Required Tags (must have ALL)
+                  </label>
+                  <input
+                    type="text"
+                    id="tags"
+                    value={tagsInput}
+                    onChange={(e) => {
+                      setTagsInput(e.target.value);
+                      handleTagsChange('tags', e.target.value);
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-500 text-gray-900"
+                    placeholder="e.g., preorder, vip"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="tagsAny" className="block text-sm font-medium text-gray-700 mb-1">
+                    Any Tags (must have ANY)
+                  </label>
+                  <input
+                    type="text"
+                    id="tagsAny"
+                    value={tagsAnyInput}
+                    onChange={(e) => {
+                      setTagsAnyInput(e.target.value);
+                      handleTagsChange('tagsAny', e.target.value);
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-500 text-gray-900"
+                    placeholder="e.g., newsletter, updates"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="excludeTags" className="block text-sm font-medium text-gray-700 mb-1">
+                    Exclude Tags
+                  </label>
+                  <input
+                    type="text"
+                    id="excludeTags"
+                    value={excludeTagsInput}
+                    onChange={(e) => {
+                      setExcludeTagsInput(e.target.value);
+                      handleTagsChange('excludeTags', e.target.value);
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-500 text-gray-900"
+                    placeholder="e.g., bounced, complained"
+                  />
+                </div>
+
+                <div>
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={formData.recipientFilter.subscribedOnly}
+                      onChange={(e) => setFormData(prev => ({
+                        ...prev,
+                        recipientFilter: {
+                          ...prev.recipientFilter,
+                          subscribedOnly: e.target.checked,
+                        },
+                      }))}
+                      className="mr-2"
+                    />
+                    <span className="text-sm text-gray-700">Only subscribed recipients</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div className="border-t border-gray-200 mb-8"></div>
+
+        {/* Email Content Section (Side-by-Side: 33% form, 66% preview) */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Left: Email Template & Content */}
+          <div className="space-y-6">
+            {/* Template Selection Card */}
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">Email Template</h2>
+              
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="template" className="block text-sm font-medium text-gray-700 mb-1">
+                    Select Template *
+                  </label>
+                  <select
+                    id="template"
+                    value={formData.templateId}
+                    onChange={(e) => handleTemplateChange(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
+                  >
+                    {templates.map((template) => (
+                      <option key={template.id} value={template.id}>
+                        {template.name}
+                      </option>
+                    ))}
+                  </select>
+                  {currentTemplate && (
+                    <p className="mt-1 text-xs text-gray-500">{currentTemplate.description}</p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Template Variables Card */}
+            {currentTemplate && currentTemplate.variables.length > 0 && (
+              <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Template Content</h2>
+                
+                <div className="space-y-4">
+                  {currentTemplate.variables.map((variable) => (
+                    <VariableField
+                      key={variable.key}
+                      variable={variable}
+                      value={formData.templateVariables[variable.key] ?? variable.defaultValue ?? ''}
+                      onChange={handleVariableChange}
+                    />
+                  ))}
+                </div>
               </div>
             )}
           </div>
-        </div>
 
-        {/* Recipient Filter */}
-        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Recipient Filter</h2>
-          <p className="text-sm text-gray-500 mb-4">
-            Define which recipients should receive this campaign. Leave empty to send to all subscribed recipients.
-          </p>
-          
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="tags" className="block text-sm font-medium text-gray-700 mb-1">
-                Required Tags (must have ALL)
-              </label>
-              <input
-                type="text"
-                id="tags"
-                value={tagsInput}
-                onChange={(e) => {
-                  setTagsInput(e.target.value);
-                  handleTagsChange('tags', e.target.value);
-                }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-500 text-gray-900"
-                placeholder="e.g., preorder, vip (comma-separated)"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="tagsAny" className="block text-sm font-medium text-gray-700 mb-1">
-                Any Tags (must have ANY)
-              </label>
-              <input
-                type="text"
-                id="tagsAny"
-                value={tagsAnyInput}
-                onChange={(e) => {
-                  setTagsAnyInput(e.target.value);
-                  handleTagsChange('tagsAny', e.target.value);
-                }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-500 text-gray-900"
-                placeholder="e.g., newsletter, updates (comma-separated)"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="excludeTags" className="block text-sm font-medium text-gray-700 mb-1">
-                Exclude Tags (must NOT have)
-              </label>
-              <input
-                type="text"
-                id="excludeTags"
-                value={excludeTagsInput}
-                onChange={(e) => {
-                  setExcludeTagsInput(e.target.value);
-                  handleTagsChange('excludeTags', e.target.value);
-                }}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-500 text-gray-900"
-                placeholder="e.g., bounced, complained (comma-separated)"
-              />
-            </div>
-
-            <div>
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={formData.recipientFilter.subscribedOnly}
-                  onChange={(e) => setFormData(prev => ({
-                    ...prev,
-                    recipientFilter: {
-                      ...prev.recipientFilter,
-                      subscribedOnly: e.target.checked,
-                    },
-                  }))}
-                  className="mr-2"
-                />
-                <span className="text-sm text-gray-700">Only send to subscribed recipients</span>
-              </label>
+          {/* Right: Live Preview (sticky) - spans 2 columns for 66% width on desktop */}
+          <div className="lg:col-span-2 lg:sticky lg:top-6 lg:h-[calc(100vh-3rem)]">
+            <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden h-[500px] lg:h-full flex flex-col">
+              <div className="bg-gray-100 px-4 py-2 border-b border-gray-200 flex-shrink-0 flex items-center justify-between flex-wrap gap-2">
+                <div className="flex items-center gap-3">
+                  <span className="font-medium text-gray-700">Email Preview</span>
+                  <label className="flex items-center gap-1.5 text-sm cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={useSampleData}
+                      onChange={(e) => setUseSampleData(e.target.checked)}
+                      className="w-3.5 h-3.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                    />
+                    <span className="text-gray-600">Sample data</span>
+                  </label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPreviewZoom(Math.max(50, previewZoom - 25))}
+                    disabled={previewZoom <= 50}
+                    className="px-2.5 py-1 text-sm font-medium bg-gray-200 text-gray-700 border border-gray-400 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Zoom out"
+                  >
+                    −
+                  </button>
+                  <span className="text-sm font-medium text-gray-700 min-w-[3rem] text-center">{previewZoom}%</span>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewZoom(Math.min(150, previewZoom + 25))}
+                    disabled={previewZoom >= 150}
+                    className="px-2.5 py-1 text-sm font-medium bg-gray-200 text-gray-700 border border-gray-400 rounded hover:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Zoom in"
+                  >
+                    +
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewZoom(100)}
+                    className="px-2 py-1 text-xs font-medium bg-gray-200 text-gray-700 border border-gray-400 rounded hover:bg-gray-300"
+                    title="Reset zoom"
+                  >
+                    Reset
+                  </button>
+                </div>
+              </div>
+              <div className="flex-1 overflow-auto bg-gray-50">
+                <div 
+                  style={{ 
+                    transform: `scale(${previewZoom / 100})`,
+                    transformOrigin: 'top left',
+                    width: `${100 / (previewZoom / 100)}%`,
+                    height: `${100 / (previewZoom / 100)}%`,
+                  }}
+                >
+                  <iframe
+                    srcDoc={previewHtml}
+                    className="w-full h-full min-h-[450px] border-0 bg-white"
+                    title="Email Preview"
+                    sandbox="allow-same-origin"
+                    style={{ minWidth: '100%', maxWidth: '100%' }}
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Actions */}
-        <div className="flex items-center justify-end gap-4">
+        <div className="flex items-center justify-end gap-4 mt-8 pt-6 border-t border-gray-200">
           <Link
             href="/internal/marketing/campaigns"
             className="px-4 py-2 text-gray-700 hover:text-gray-900"

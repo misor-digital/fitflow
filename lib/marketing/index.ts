@@ -54,15 +54,24 @@ export {
   releaseCampaignLock,
 } from './campaignService';
 
-// Campaign Templates
+// Template Service (new)
 export {
-  renderTemplate,
-  generateUnsubscribeUrl,
+  getAllTemplates,
+  getTemplate,
+  getTemplateVariables,
+  generateEmail,
+  generateEmailPreview,
+  escapeHtml,
   wrapEmailContent,
-  createMarketingEmail,
-  extractTemplateVariables,
-  validateTemplateVariables,
-} from './campaignTemplates';
+  discountTemplate,
+} from './templates';
+
+export type {
+  TemplateDefinition,
+  VariableDefinition,
+  VariableType,
+  DiscountCampaignVariables,
+} from './templates';
 
 // Campaign Runner
 export {
