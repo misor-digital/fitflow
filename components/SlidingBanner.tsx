@@ -6,8 +6,8 @@ export default function SlidingBanner() {
   const pathname = usePathname();
   const text = 'БЕЗПЛАТНА доставка на всички предварителни поръчки';
   
-  // Hide banner on thank-you/preorder page
-  if (pathname === '/thank-you/preorder') {
+  // Hide banner on thank-you/preorder page and internal pages
+  if (pathname === '/thank-you/preorder' || pathname?.startsWith('/internal')) {
     return null;
   }
   

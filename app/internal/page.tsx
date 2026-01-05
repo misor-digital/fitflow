@@ -75,23 +75,31 @@ export default function InternalDashboardPage() {
           </div>
         </Link>
 
-        {/* Runner Status */}
-        <div className="p-6 bg-white rounded-lg border border-gray-200 shadow-sm opacity-75">
+        {/* Scheduler Control (DEV ONLY) */}
+        <Link 
+          href="/internal/marketing/scheduler"
+          className="block p-6 bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md hover:border-purple-300 transition-all"
+        >
           <div className="flex items-center gap-4">
             <div className="flex-shrink-0 w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
               <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">Runner Status</h2>
-              <p className="text-sm text-gray-500">Campaign processor status</p>
+              <h2 className="text-lg font-semibold text-gray-900">Scheduler</h2>
+              <p className="text-sm text-gray-500">Run campaign scheduler (DEV)</p>
             </div>
           </div>
-          <div className="mt-4 text-sm text-gray-500">
-            <p>View runner status from the campaign detail page.</p>
+          <div className="mt-4 text-sm text-gray-600">
+            <ul className="space-y-1">
+              <li>• Manual trigger for testing</li>
+              <li>• Auto-run with interval</li>
+              <li>• View run history</li>
+              <li>• DEV environment only</li>
+            </ul>
           </div>
-        </div>
+        </Link>
       </div>
 
       {/* Quick Info */}

@@ -75,7 +75,7 @@ export function generateRunnerId(): string {
 
 /**
  * Send a single campaign email to a recipient
- * Checks subscription status and handles dry-run mode
+ * Respects campaign's subscribedOnly filter setting
  */
 async function sendCampaignEmail(
   campaign: MarketingCampaignRow,
@@ -85,23 +85,20 @@ async function sendCampaignEmail(
   try {
     // Get recipient details if we have recipient_id
     let recipientName: string | undefined;
-    let isSubscribed = true;
     
     if (send.recipient_id) {
       const { data: recipient } = await getRecipientByEmail(send.email);
       if (recipient) {
-        // Check if unsubscribed - CRITICAL: never send to unsubscribed recipients
-        if (!recipient.subscribed) {
+        recipientName = recipient.name || undefined;
+        
+        // Check subscription status only if campaign filter requires it
+        const filter = campaign.recipient_filter as RecipientFilter | null;
+        const subscribedOnly = filter?.subscribedOnly !== false; // Default to true
+        
+        if (subscribedOnly && !recipient.subscribed) {
           return { success: false, error: 'Recipient unsubscribed', skipped: true };
         }
-        recipientName = recipient.name || undefined;
-        isSubscribed = recipient.subscribed;
       }
-    }
-
-    // Double-check subscription status
-    if (!isSubscribed) {
-      return { success: false, error: 'Recipient unsubscribed', skipped: true };
     }
 
     // Prepare template variables
@@ -180,8 +177,39 @@ async function processCampaign(
   }
 
   try {
-    // Update campaign status to sending
+    // For scheduled campaigns, create send records if they don't exist yet
     if (campaign.status === 'scheduled') {
+      // Check if sends already exist
+      const { data: existingSends } = await getPendingSends(campaign.id, 1);
+      
+      if (!existingSends || existingSends.length === 0) {
+        console.log(`[Campaign Runner] Creating send records for scheduled campaign ${campaign.id}`);
+        
+        // Get recipients based on filter
+        const filter: RecipientFilter = campaign.recipient_filter || { subscribedOnly: true };
+        const { data: recipients, error: recipientError } = await getRecipientsByFilter(filter);
+        
+        if (recipientError || !recipients || recipients.length === 0) {
+          console.log(`[Campaign Runner] No recipients found for campaign ${campaign.id}`);
+          await updateCampaign(campaign.id, { status: 'completed', completed_at: new Date().toISOString() });
+          return stats;
+        }
+        
+        console.log(`[Campaign Runner] Creating sends for ${recipients.length} recipients`);
+        
+        // Create send records
+        const { created, error: createError } = await createSendsForCampaign(campaign.id, recipients);
+        
+        if (createError) {
+          console.error(`[Campaign Runner] Failed to create sends: ${createError.message}`);
+          return stats;
+        }
+        
+        // Update total recipients
+        await updateCampaign(campaign.id, { total_recipients: created });
+      }
+      
+      // Update campaign status to sending
       await updateCampaign(campaign.id, {
         status: 'sending',
         started_at: new Date().toISOString(),

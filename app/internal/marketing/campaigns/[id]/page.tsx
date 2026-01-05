@@ -100,6 +100,84 @@ function ProgressStats({ progress }: { progress: CampaignProgress | null }) {
   );
 }
 
+interface RecipientFilter {
+  tags?: string[];
+  tagsAny?: string[];
+  excludeTags?: string[];
+  subscribedOnly?: boolean;
+}
+
+function RecipientFilterDisplay({ filter }: { filter: RecipientFilter | null }) {
+  if (!filter) {
+    return <span className="text-gray-500">All subscribed recipients</span>;
+  }
+
+  const parts: React.ReactNode[] = [];
+
+  // Subscribed only
+  if (filter.subscribedOnly !== false) {
+    parts.push(
+      <span key="subscribed" className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-700 mr-1">
+        ✓ Subscribed only
+      </span>
+    );
+  } else {
+    parts.push(
+      <span key="all" className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-700 mr-1">
+        All recipients
+      </span>
+    );
+  }
+
+  // Required tags (must have ALL)
+  if (filter.tags && filter.tags.length > 0) {
+    parts.push(
+      <div key="tags" className="mt-1">
+        <span className="text-xs text-gray-500">Must have ALL: </span>
+        {filter.tags.map(tag => (
+          <span key={tag} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700 mr-1">
+            {tag}
+          </span>
+        ))}
+      </div>
+    );
+  }
+
+  // Any tags (must have ANY)
+  if (filter.tagsAny && filter.tagsAny.length > 0) {
+    parts.push(
+      <div key="tagsAny" className="mt-1">
+        <span className="text-xs text-gray-500">Must have ANY: </span>
+        {filter.tagsAny.map(tag => (
+          <span key={tag} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700 mr-1">
+            {tag}
+          </span>
+        ))}
+      </div>
+    );
+  }
+
+  // Exclude tags
+  if (filter.excludeTags && filter.excludeTags.length > 0) {
+    parts.push(
+      <div key="excludeTags" className="mt-1">
+        <span className="text-xs text-gray-500">Exclude: </span>
+        {filter.excludeTags.map(tag => (
+          <span key={tag} className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-700 mr-1">
+            ✗ {tag}
+          </span>
+        ))}
+      </div>
+    );
+  }
+
+  if (parts.length === 0) {
+    return <span className="text-gray-500">All subscribed recipients</span>;
+  }
+
+  return <div className="space-y-1">{parts}</div>;
+}
+
 function ProgressBar({ progress }: { progress: CampaignProgress | null }) {
   if (!progress || progress.total === 0) {
     return null;
@@ -187,6 +265,17 @@ export default async function CampaignDetailPage({ params }: PageProps) {
           <p className="mt-1 text-gray-500">{campaign.subject}</p>
         </div>
         <div className="flex items-center gap-3">
+          {(campaign.status === 'draft' || campaign.status === 'scheduled') && (
+            <Link
+              href={`/internal/marketing/campaigns/${campaign.id}/edit`}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium text-sm flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              Edit
+            </Link>
+          )}
           <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${statusConfig.bgColor} ${statusConfig.color}`}>
             {campaign.status === 'sending' && (
               <span className="w-2 h-2 mr-2 bg-amber-500 rounded-full animate-pulse" />
@@ -202,6 +291,25 @@ export default async function CampaignDetailPage({ params }: PageProps) {
           <strong>Status:</strong> {statusConfig.description}
         </p>
       </div>
+
+      {/* Warning: Sends to unsubscribed recipients */}
+      {campaign.recipient_filter?.subscribedOnly === false && (
+        <div className="bg-red-50 border border-red-300 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <svg className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <div>
+              <h3 className="text-sm font-semibold text-red-800">⚠️ Sends to Unsubscribed Recipients</h3>
+              <p className="text-sm text-red-700 mt-1">
+                This campaign is configured to send to <strong>ALL recipients</strong>, including those who have unsubscribed. 
+                This may violate GDPR, CAN-SPAM, or other email marketing regulations. 
+                Only use this for mandatory transactional communications.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Progress Section */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
@@ -247,8 +355,8 @@ export default async function CampaignDetailPage({ params }: PageProps) {
           </div>
           <div>
             <dt className="text-sm font-medium text-gray-500">Recipient Filter</dt>
-            <dd className="mt-1 text-sm text-gray-900 font-mono text-xs">
-              {campaign.recipient_filter ? JSON.stringify(campaign.recipient_filter, null, 2) : '—'}
+            <dd className="mt-1 text-sm text-gray-900">
+              <RecipientFilterDisplay filter={campaign.recipient_filter} />
             </dd>
           </div>
         </dl>
