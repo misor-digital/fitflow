@@ -21,7 +21,7 @@ import type { CampaignStatus, CampaignProgress } from '@/lib/marketing';
 import { CampaignActions } from './CampaignActions';
 import { SendHistorySection } from './SendHistorySection';
 import { EmailPreviewSection } from './EmailPreviewSection';
-import { RecipientListSection } from './RecipientListSection';
+import { RecipientsView } from '@/components/RecipientsView';
 
 // Status badge colors and labels
 const STATUS_CONFIG: Record<CampaignStatus, { label: string; color: string; bgColor: string; description: string }> = {
@@ -366,7 +366,16 @@ export default async function CampaignDetailPage({ params }: PageProps) {
       </div>
 
       {/* Recipient List */}
-      <RecipientListSection filter={campaign.recipient_filter} />
+      <RecipientsView
+        filter={campaign.recipient_filter}
+        title="Recipient List"
+        showSearch={true}
+        showUnsubscribedToggle={false}
+        showEmailsToggle={false}
+        showTagFilters={false}
+        collapsible={true}
+        defaultExpanded={false}
+      />
 
       {/* Email Preview */}
       <EmailPreviewSection templateData={campaign.template} />
