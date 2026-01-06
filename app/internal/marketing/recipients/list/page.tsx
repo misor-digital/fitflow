@@ -52,7 +52,8 @@ export default function RecipientsListPage() {
   
   // Filters
   const [showUnsubscribed, setShowUnsubscribed] = useState(false);
-  const [tagFilter, setTagFilter] = useState('');
+  const [includeTags, setIncludeTags] = useState<string[]>([]);
+  const [excludeTags, setExcludeTags] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [showFullEmails, setShowFullEmails] = useState(false);
   
@@ -68,8 +69,12 @@ export default function RecipientsListPage() {
       const params = new URLSearchParams();
       params.set('subscribedOnly', showUnsubscribed ? 'false' : 'true');
       
-      if (tagFilter.trim()) {
-        params.set('tagsAny', tagFilter.trim());
+      if (includeTags.length > 0) {
+        params.set('tagsAny', includeTags.join(','));
+      }
+      
+      if (excludeTags.length > 0) {
+        params.set('excludeTags', excludeTags.join(','));
       }
 
       const response = await fetch(`/api/marketing/recipients?${params.toString()}`);
@@ -85,7 +90,7 @@ export default function RecipientsListPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [showUnsubscribed, tagFilter]);
+  }, [showUnsubscribed, includeTags, excludeTags]);
 
   useEffect(() => {
     fetchRecipients();
@@ -161,26 +166,6 @@ export default function RecipientsListPage() {
             />
           </div>
           
-          <div className="min-w-[150px]">
-            <label htmlFor="tagFilter" className="block text-sm font-medium text-gray-700 mb-1">
-              Filter by Tag
-            </label>
-            <select
-              id="tagFilter"
-              value={tagFilter}
-              onChange={(e) => {
-                setTagFilter(e.target.value);
-                setPage(1);
-              }}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900"
-            >
-              <option value="">All tags</option>
-              {allTags.map(tag => (
-                <option key={tag} value={tag}>{tag}</option>
-              ))}
-            </select>
-          </div>
-
           <button
             onClick={() => {
               setShowUnsubscribed(!showUnsubscribed);
@@ -209,7 +194,8 @@ export default function RecipientsListPage() {
           <button
             onClick={() => {
               setSearchQuery('');
-              setTagFilter('');
+              setIncludeTags([]);
+              setExcludeTags([]);
               setShowUnsubscribed(false);
               setShowFullEmails(false);
               setPage(1);
@@ -219,6 +205,105 @@ export default function RecipientsListPage() {
             Clear filters
           </button>
         </div>
+
+        {/* Tag Filters */}
+        {allTags.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-gray-200">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Include Tags */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Include Tags <span className="text-gray-400 font-normal">(match any)</span>
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {allTags.map(tag => {
+                    const isSelected = includeTags.includes(tag);
+                    const isExcluded = excludeTags.includes(tag);
+                    return (
+                      <button
+                        key={tag}
+                        onClick={() => {
+                          if (isSelected) {
+                            setIncludeTags(includeTags.filter(t => t !== tag));
+                          } else {
+                            setIncludeTags([...includeTags, tag]);
+                            // Remove from exclude if adding to include
+                            if (isExcluded) {
+                              setExcludeTags(excludeTags.filter(t => t !== tag));
+                            }
+                          }
+                          setPage(1);
+                        }}
+                        className={`px-2.5 py-1 text-xs font-medium rounded-full transition-colors ${
+                          isSelected
+                            ? 'bg-green-100 text-green-700 border border-green-300'
+                            : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'
+                        }`}
+                      >
+                        {isSelected && '✓ '}{tag}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Exclude Tags */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Exclude Tags
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {allTags.map(tag => {
+                    const isSelected = excludeTags.includes(tag);
+                    const isIncluded = includeTags.includes(tag);
+                    return (
+                      <button
+                        key={tag}
+                        onClick={() => {
+                          if (isSelected) {
+                            setExcludeTags(excludeTags.filter(t => t !== tag));
+                          } else {
+                            setExcludeTags([...excludeTags, tag]);
+                            // Remove from include if adding to exclude
+                            if (isIncluded) {
+                              setIncludeTags(includeTags.filter(t => t !== tag));
+                            }
+                          }
+                          setPage(1);
+                        }}
+                        className={`px-2.5 py-1 text-xs font-medium rounded-full transition-colors ${
+                          isSelected
+                            ? 'bg-red-100 text-red-700 border border-red-300'
+                            : 'bg-gray-100 text-gray-600 border border-gray-200 hover:bg-gray-200'
+                        }`}
+                      >
+                        {isSelected && '✗ '}{tag}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+
+            {/* Active Filters Summary */}
+            {(includeTags.length > 0 || excludeTags.length > 0) && (
+              <div className="mt-3 pt-3 border-t border-gray-100 text-sm text-gray-600">
+                <span className="font-medium">Active filters: </span>
+                {includeTags.length > 0 && (
+                  <span className="text-green-700">
+                    Include: {includeTags.join(', ')}
+                  </span>
+                )}
+                {includeTags.length > 0 && excludeTags.length > 0 && ' | '}
+                {excludeTags.length > 0 && (
+                  <span className="text-red-700">
+                    Exclude: {excludeTags.join(', ')}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Error */}

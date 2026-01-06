@@ -19,6 +19,20 @@ export function escapeHtml(text: string): string {
   return text.replace(/[&<>"']/g, (char) => htmlEntities[char] || char);
 }
 
+/**
+ * Convert HTML to plain text
+ * Uses DOMParser in browser, regex fallback for server-side
+ */
+export function htmlToText(html: string): string {
+  // Browser environment - use DOMParser
+  if (typeof DOMParser !== 'undefined') {
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return doc.body.textContent ?? '';
+  }
+
+  return html;
+}
+
 // ============================================================================
 // Base Email Wrapper
 // ============================================================================

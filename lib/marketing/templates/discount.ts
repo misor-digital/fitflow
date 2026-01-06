@@ -10,7 +10,7 @@
  */
 
 import type { TemplateDefinition, DiscountCampaignVariables, VariableDefinition } from './types';
-import { wrapEmailContent, escapeHtml } from './base';
+import { wrapEmailContent, escapeHtml, htmlToText } from './base';
 
 // ============================================================================
 // Template Variables Definition
@@ -68,7 +68,7 @@ export const discountTemplateVariables: VariableDefinition[] = [
 function generatePromoCodeUrl(discountPercent: number): string {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://fitflow.bg';
   const promoCode = `FITFLOW${discountPercent}`;
-  return `${baseUrl}/step-1?promocode=${promoCode}`;
+  return `${baseUrl}/?promocode=${promoCode}`;
 }
 
 // ============================================================================
@@ -92,28 +92,29 @@ function generateDiscountContent(
   } = variables;
 
   // Greeting with name fallback
-  const greeting = name ? `Здравей, ${escapeHtml(name)}!` : 'Здравей!';
+  const greeting = name ? `Здравей, ${escapeHtml(name)}!` : '';
 
   // Generate promo code URL
   const ctaUrl = generatePromoCodeUrl(discountPercent);
 
   // Section 1: Greeting
-  const greetingHtml = `
-    <h2 style="color: #363636; margin: 0 0 20px 0; font-size: 24px;">${greeting}</h2>
-  `;
+  const greetingHtml = greeting ? `
+    <h2 style="text-align: center; color: #363636; margin: 0 0 20px 0; font-size: 24px;">${greeting}</h2>
+  ` : '';
 
   // Section 2: Discount Heading (FitFlow in italics with orange shade)
-  const discountHeadingHtml = `
+  const discountHeadingHtml = discountPercent === 0 ? '' : `
     <div style="text-align: center; margin-bottom: 25px;">
-      <p style="margin: 0; color: #e65c00; font-size: 28px; font-weight: bold;">
-        <em style="font-style: italic;">FitFlow</em> – <span style="color: #ff6a00;">${discountPercent}%</span> отстъпка за твоята първа кутия!
+      <p style="margin: 0; color: #363636; font-size: 28px; font-weight: bold;">
+        ${discountPercent}% отстъпка <br/>
+        за твоята първа <em style="font-style: italic; color: #e65c00;">FitFlow</em> кутия!
       </p>
     </div>
   `;
 
   // Section 3: Main Content (styled like Order Details from preorder template)
-  const mainContentHtml = main ? `
-    <div style="background-color: #fff4ec; padding: 20px; border-radius: 8px; margin: 20px 0;">
+  const mainContentHtml = main && htmlToText(main) !== '' ? `
+    <div style="background-color: #fff4ec; padding: 5px 20px; border-radius: 8px; margin: 20px 0;">
       <div style="color: #4a5568; font-size: 16px; line-height: 1.6;">
         ${main}
       </div>
@@ -130,7 +131,7 @@ function generateDiscountContent(
   ` : '';
 
   // Section 5: Steps Section (orange left border style)
-  const stepsHtml = steps ? `
+  const stepsHtml = steps && htmlToText(steps) !== '' ? `
     <div style="border-left: 4px solid #ff6a00; padding-left: 20px; margin: 25px 0;">
       <div style="color: #4a5568; font-size: 15px; line-height: 1.7;">
         ${steps}
@@ -139,19 +140,19 @@ function generateDiscountContent(
   ` : '';
 
   // Section 6: CTA Button
-  const ctaButtonHtml = `
+  const ctaButtonHtml = discountPercent === 0 ? '' : `
     <div style="text-align: center; margin: 30px 0 20px 0;">
       <a href="${isPreview ? '#' : ctaUrl}" style="display: inline-block; background: linear-gradient(135deg, #9c3b00 0%, #ff6a00 100%); color: #ffffff; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 18px;">
         ${escapeHtml(buttonLabel.slice(0, 30))}
       </a>
       <p style="margin: 12px 0 0 0; color: #6c757d; font-size: 12px;">
-        ${isPreview ? `Промо код: FITFLOW${discountPercent}` : `Отстъпката е валидна само чрез този бутон`}
+        Отстъпката е валидна само чрез този бутон
       </p>
     </div>
   `;
 
   return `
-${greetingHtml}
+${greetingHtml}  
 ${discountHeadingHtml}
 ${mainContentHtml}
 ${freeDeliveryHtml}

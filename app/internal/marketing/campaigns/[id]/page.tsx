@@ -7,7 +7,8 @@
  * - Live progress counters
  * - Action buttons (dry-run, pause, resume)
  * - Send history summary
- * - Template preview (read-only)
+ * - Email preview (rendered HTML)
+ * - Template source (read-only)
  * 
  * PRODUCTION SAFETY: This page is protected by the parent layout's
  * environment check. It will return 404 in production.
@@ -19,6 +20,8 @@ import { getCampaignById, getCampaignProgress } from '@/lib/marketing';
 import type { CampaignStatus, CampaignProgress } from '@/lib/marketing';
 import { CampaignActions } from './CampaignActions';
 import { SendHistorySection } from './SendHistorySection';
+import { EmailPreviewSection } from './EmailPreviewSection';
+import { RecipientListSection } from './RecipientListSection';
 
 // Status badge colors and labels
 const STATUS_CONFIG: Record<CampaignStatus, { label: string; color: string; bgColor: string; description: string }> = {
@@ -362,21 +365,11 @@ export default async function CampaignDetailPage({ params }: PageProps) {
         </dl>
       </div>
 
-      {/* Template Preview */}
-      <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Template Preview</h2>
-        <p className="text-sm text-gray-500 mb-4">
-          Read-only preview of the email template. Variables like {'{{name}}'} will be replaced with recipient data.
-        </p>
-        <div className="border border-gray-200 rounded-lg overflow-hidden">
-          <div className="bg-gray-50 px-4 py-2 border-b border-gray-200">
-            <span className="text-xs font-medium text-gray-500">HTML Template</span>
-          </div>
-          <pre className="p-4 text-xs text-gray-700 overflow-x-auto max-h-96 bg-gray-50">
-            {campaign.template}
-          </pre>
-        </div>
-      </div>
+      {/* Recipient List */}
+      <RecipientListSection filter={campaign.recipient_filter} />
+
+      {/* Email Preview */}
+      <EmailPreviewSection templateData={campaign.template} />
 
       {/* Send History */}
       <SendHistorySection campaignId={campaign.id} />
