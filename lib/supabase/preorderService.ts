@@ -28,6 +28,14 @@ export interface PreorderFormData {
   discountPercent?: number | null;
   originalPriceEur?: number | null;
   finalPriceEur?: number | null;
+  
+  // Marketing attribution (resolved server-side from click token)
+  marketingCampaignId?: string | null;
+  marketingRecipientId?: string | null;
+  marketingClickId?: string | null;
+  utmSource?: string | null;
+  utmMedium?: string | null;
+  utmCampaign?: string | null;
 }
 
 /**
@@ -55,6 +63,13 @@ function transformFormDataToInsert(data: PreorderFormData): PreorderInsert {
     discount_percent: data.discountPercent || null,
     original_price_eur: data.originalPriceEur || null,
     final_price_eur: data.finalPriceEur || null,
+    // Marketing attribution fields (written once, never updated)
+    marketing_campaign_id: data.marketingCampaignId || null,
+    marketing_recipient_id: data.marketingRecipientId || null,
+    marketing_click_id: data.marketingClickId || null,
+    utm_source: data.utmSource || null,
+    utm_medium: data.utmMedium || null,
+    utm_campaign: data.utmCampaign || null,
   };
 }
 

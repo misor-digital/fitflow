@@ -4,6 +4,17 @@ import { createPreorder, type PreorderFormData } from '@/lib/supabase';
 import { handlePreorderEmailWorkflow } from '@/lib/email';
 import { calculatePrice, validatePromoCode, incrementPromoCodeUsage } from '@/lib/data';
 import { trackLeadCapi, hashForMeta, generateEventId } from '@/lib/analytics';
+import { resolveClickToken } from '@/lib/marketing';
+
+/**
+ * Attribution data passed from client
+ */
+interface AttributionData {
+  mc?: string;           // Marketing click token
+  utm_source?: string;
+  utm_medium?: string;
+  utm_campaign?: string;
+}
 
 export async function POST(request: Request) {
   try {
@@ -41,7 +52,51 @@ export async function POST(request: Request) {
       priceInfo,
     });
 
-    // Prepare the preorder data with server-validated prices
+    // =========================================================================
+    // Marketing Attribution Resolution (Best-Effort, Never Blocking)
+    // =========================================================================
+    let marketingCampaignId: string | null = null;
+    let marketingRecipientId: string | null = null;
+    let marketingClickId: string | null = null;
+    let utmSource: string | null = null;
+    let utmMedium: string | null = null;
+    let utmCampaign: string | null = null;
+
+    const attribution: AttributionData | undefined = data.attribution;
+
+    if (attribution) {
+      // Capture UTM parameters directly (always available)
+      utmSource = attribution.utm_source || null;
+      utmMedium = attribution.utm_medium || null;
+      utmCampaign = attribution.utm_campaign || null;
+
+      // Resolve click token to get campaign/recipient IDs
+      if (attribution.mc) {
+        try {
+          const clickData = await resolveClickToken(attribution.mc);
+          if (clickData) {
+            marketingCampaignId = clickData.campaignId;
+            marketingRecipientId = clickData.recipientId;
+            marketingClickId = clickData.clickId;
+            // Use UTM values from click record if not provided directly
+            utmSource = utmSource || clickData.utmSource;
+            utmMedium = utmMedium || clickData.utmMedium;
+            utmCampaign = utmCampaign || clickData.utmCampaign;
+            
+            console.log('Marketing attribution resolved:', {
+              campaignId: marketingCampaignId,
+              recipientId: marketingRecipientId,
+              clickId: marketingClickId,
+            });
+          }
+        } catch (attrError) {
+          // Attribution resolution failed - log but don't block preorder
+          console.warn('Failed to resolve marketing attribution:', attrError);
+        }
+      }
+    }
+
+    // Prepare the preorder data with server-validated prices and attribution
     const preorderData: PreorderFormData = {
       boxType: data.boxType,
       wantsPersonalization: data.wantsPersonalization ?? false,
@@ -64,6 +119,13 @@ export async function POST(request: Request) {
       discountPercent: priceInfo.discountPercent || null,
       originalPriceEur: priceInfo.originalPriceEur,
       finalPriceEur: priceInfo.finalPriceEur,
+      // Marketing attribution (resolved server-side)
+      marketingCampaignId,
+      marketingRecipientId,
+      marketingClickId,
+      utmSource,
+      utmMedium,
+      utmCampaign,
     };
 
     console.log('Transformed preorder data:', JSON.stringify(preorderData, null, 2));
@@ -88,6 +150,9 @@ export async function POST(request: Request) {
       discountPercent: preorder?.discount_percent,
       originalPriceEur: preorder?.original_price_eur,
       finalPriceEur: preorder?.final_price_eur,
+      marketingCampaignId: preorder?.marketing_campaign_id,
+      marketingRecipientId: preorder?.marketing_recipient_id,
+      utmCampaign: preorder?.utm_campaign,
       timestamp: preorder?.created_at,
     });
 

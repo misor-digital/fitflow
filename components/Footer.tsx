@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import packageJson from '../package.json';
+import { InternalNavLink, InternalEnvironmentBadge } from './InternalNavLink';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -122,9 +123,12 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="border-t border-white/10 pt-5 sm:pt-6 md:pt-8 mt-5 sm:mt-6 md:mt-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-3 sm:gap-4">
-            <p className="text-gray-400 text-xs sm:text-sm text-center md:text-left">
-              © {currentYear} FitFlow. Всички права запазени. v{packageJson.version}
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="text-gray-400 text-xs sm:text-sm text-center md:text-left">
+                © {currentYear} FitFlow. Всички права запазени. v{packageJson.version}
+              </p>
+              <InternalEnvironmentBadge />
+            </div>
             <div className="flex gap-3 sm:gap-4 md:gap-6 text-xs sm:text-sm">
               <Link href="/terms" className="text-gray-400 hover:text-[#FB7D00] transition-colors">
                 Условия
@@ -135,6 +139,17 @@ export default function Footer() {
               <Link href="/cookies" className="text-gray-400 hover:text-[#FB7D00] transition-colors">
                 Бисквитки
               </Link>
+              {/* Internal Tools Link - Only visible in non-production */}
+              <InternalNavLink 
+                href="/internal" 
+                className="text-amber-400 hover:text-amber-300 transition-colors flex items-center gap-1"
+              >
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                Internal
+              </InternalNavLink>
             </div>
           </div>
         </div>

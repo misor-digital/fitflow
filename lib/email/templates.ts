@@ -234,7 +234,23 @@ export function generatePreorderConfirmationEmail(
           <td style="background-color: #fdf6f1; padding: 30px; text-align: center; border-radius: 0 0 12px 12px;">
             <p style="color: #7a4a2a; font-size: 14px; margin: 0 0 10px 0;">
               С любов към спорта,<br>
-              <strong>Екипът на FitFlow</strong> 💪
+              <strong>Екипът на FitFlow</strong>
+            </p>
+            <p style="color: #7a4a2a; font-size: 14px; margin: 0 0 10px 0;">
+              <a href="mailto:info@fitflow.bg" style="color: #9c3b00; text-decoration: none; font-weight: 600;">info@fitflow.bg</a>
+              &nbsp;|&nbsp;
+              <a href="tel:+359879447845" style="color: #9c3b00; text-decoration: none; font-weight: 600;">+359 879 447 845</a>
+            </p>
+            <p style="margin: 15px 0;">
+              <a href="https://www.facebook.com/people/FitFlow/61584666749010/" style="display: inline-block; margin: 0 8px; text-decoration: none;">
+                <img src="https://cdn-icons-png.flaticon.com/24/733/733547.png" alt="Facebook" width="24" height="24" style="vertical-align: middle;" />
+              </a>
+              <a href="https://www.instagram.com/fitflowbg" style="display: inline-block; margin: 0 8px; text-decoration: none;">
+                <img src="https://cdn-icons-png.flaticon.com/24/2111/2111463.png" alt="Instagram" width="24" height="24" style="vertical-align: middle;" />
+              </a>
+              <a href="https://www.tiktok.com/@fitflow.bg" style="display: inline-block; margin: 0 8px; text-decoration: none;">
+                <img src="https://cdn-icons-png.flaticon.com/24/3046/3046121.png" alt="TikTok" width="24" height="24" style="vertical-align: middle;" />
+              </a>
             </p>
             <p style="color: #b08968; font-size: 12px; margin: 0;">
               © ${new Date().getFullYear()} FitFlow. Всички права запазени.

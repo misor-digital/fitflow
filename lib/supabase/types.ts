@@ -37,6 +37,13 @@ export interface PreorderInsert {
   discount_percent?: number | null;
   original_price_eur?: number | null;
   final_price_eur?: number | null;
+  // Marketing attribution fields (written once at creation, never updated)
+  marketing_campaign_id?: string | null;
+  marketing_recipient_id?: string | null;
+  marketing_click_id?: string | null;
+  utm_source?: string | null;
+  utm_medium?: string | null;
+  utm_campaign?: string | null;
 }
 
 export interface Preorder extends PreorderInsert {

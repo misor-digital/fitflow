@@ -62,6 +62,27 @@ function HomeContent() {
     validateAndSetPromo();
   }, [searchParams, setPromoCode]);
 
+  // Capture marketing attribution from URL parameters (mc, utm_*)
+  // This is stored once per session and sent with the preorder request
+  const { setAttribution } = useFormStore();
+  
+  useEffect(() => {
+    const mc = searchParams.get('mc');
+    const utm_source = searchParams.get('utm_source');
+    const utm_medium = searchParams.get('utm_medium');
+    const utm_campaign = searchParams.get('utm_campaign');
+    
+    // Only set attribution if we have at least one parameter
+    if (mc || utm_source || utm_medium || utm_campaign) {
+      setAttribution({
+        mc: mc || undefined,
+        utm_source: utm_source || undefined,
+        utm_medium: utm_medium || undefined,
+        utm_campaign: utm_campaign || undefined,
+      });
+    }
+  }, [searchParams, setAttribution]);
+
   return (
     <>
       <Navigation />
