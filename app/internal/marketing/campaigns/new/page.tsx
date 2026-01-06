@@ -10,7 +10,7 @@
 
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { TiptapEditor } from '@/components/TiptapEditor';
@@ -185,7 +185,8 @@ interface FollowUpState {
   windowHours: number;
 }
 
-export default function CreateCampaignPage() {
+// Inner component that uses useSearchParams
+function CreateCampaignContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const templates = getAllTemplates();
@@ -778,5 +779,34 @@ export default function CreateCampaignPage() {
         </div>
       </form>
     </div>
+  );
+}
+
+// Loading fallback for Suspense
+function CreateCampaignLoading() {
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="h-4 w-32 bg-gray-200 rounded animate-pulse mb-2"></div>
+          <div className="h-8 w-48 bg-gray-200 rounded animate-pulse"></div>
+          <div className="h-4 w-64 bg-gray-200 rounded animate-pulse mt-2"></div>
+        </div>
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6 h-64 animate-pulse"></div>
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6 h-64 animate-pulse"></div>
+        <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6 h-64 animate-pulse"></div>
+      </div>
+    </div>
+  );
+}
+
+// Default export wraps content in Suspense for useSearchParams
+export default function CreateCampaignPage() {
+  return (
+    <Suspense fallback={<CreateCampaignLoading />}>
+      <CreateCampaignContent />
+    </Suspense>
   );
 }
