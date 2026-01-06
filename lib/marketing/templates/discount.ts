@@ -125,7 +125,8 @@ function generateDiscountContent(
   const freeDeliveryHtml = showFreeDelivery ? `
     <div style="background-color: #e8f5e9; border: 2px solid #4caf50; padding: 15px 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
       <p style="margin: 0; color: #2e7d32; font-size: 16px; font-weight: bold;">
-        🚚 Безплатна доставка за твоята поръчка!
+        🚚 Получаваш и <br/>
+        безплатна доставка за твоята първа кутия!
       </p>
     </div>
   ` : '';
