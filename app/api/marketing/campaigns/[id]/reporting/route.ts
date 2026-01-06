@@ -2,11 +2,11 @@
  * Marketing Campaign Reporting API
  * Server-side aggregation endpoint for campaign reporting
  * 
- * PRODUCTION SAFETY: Returns 404 in production environments
+ * AUTHENTICATION: Requires admin user
  */
 
 import { NextResponse } from 'next/server';
-import { isInternalEnvironment } from '@/lib/internal';
+import { requireAdminAuth } from '@/lib/auth';
 import { getCampaignReportingData } from '@/lib/marketing/reportingService';
 
 interface RouteParams {
@@ -18,10 +18,9 @@ interface RouteParams {
  * Get comprehensive reporting data for a campaign
  */
 export async function GET(request: Request, { params }: RouteParams) {
-  // PRODUCTION SAFETY: Block in production
-  if (!isInternalEnvironment()) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  }
+  // Require admin authentication
+  const { error: authError } = await requireAdminAuth();
+  if (authError) return authError;
 
   try {
     const { id } = await params;

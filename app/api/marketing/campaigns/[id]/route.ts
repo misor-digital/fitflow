@@ -1,9 +1,13 @@
 /**
  * Marketing Campaign API - Single Campaign Operations
  * Endpoints for managing a specific campaign
+ * 
+ * AUTHENTICATION: Requires admin user
  */
 
 import { NextResponse } from 'next/server';
+import { requireAdminAuth } from '@/lib/auth';
+import { logCampaignAction } from '@/lib/audit';
 import {
   getCampaignById,
   updateCampaign,
@@ -20,6 +24,10 @@ interface RouteParams {
  * Get a single campaign with progress
  */
 export async function GET(request: Request, { params }: RouteParams) {
+  // Require admin authentication
+  const { error: authError } = await requireAdminAuth();
+  if (authError) return authError;
+
   try {
     const { id } = await params;
     
@@ -64,6 +72,10 @@ export async function GET(request: Request, { params }: RouteParams) {
  * Update a campaign
  */
 export async function PATCH(request: Request, { params }: RouteParams) {
+  // Require admin authentication
+  const { user, error: authError } = await requireAdminAuth();
+  if (authError) return authError;
+
   try {
     const { id } = await params;
     const body = await request.json();
@@ -87,6 +99,16 @@ export async function PATCH(request: Request, { params }: RouteParams) {
         { status: 500 }
       );
     }
+
+    // Audit log: campaign updated
+    await logCampaignAction(
+      user!.id,
+      user!.email,
+      'campaign.update',
+      id,
+      { updatedFields: Object.keys(updateData) },
+      request
+    );
 
     return NextResponse.json({
       success: true,

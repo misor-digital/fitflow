@@ -1,9 +1,12 @@
 /**
  * Marketing Recipients API
  * Endpoints for managing marketing recipients
+ * 
+ * AUTHENTICATION: Requires admin user
  */
 
 import { NextResponse } from 'next/server';
+import { requireAdminAuth } from '@/lib/auth';
 import {
   upsertRecipient,
   getRecipientsByFilter,
@@ -23,6 +26,10 @@ import {
  * - subscribedOnly: 'true' or 'false' (default: true)
  */
 export async function GET(request: Request) {
+  // Require admin authentication
+  const { error: authError } = await requireAdminAuth();
+  if (authError) return authError;
+
   try {
     const { searchParams } = new URL(request.url);
     
@@ -77,6 +84,10 @@ export async function GET(request: Request) {
  * Bulk: { recipients: [{ email, name?, tags?, source? }, ...] }
  */
 export async function POST(request: Request) {
+  // Require admin authentication
+  const { error: authError } = await requireAdminAuth();
+  if (authError) return authError;
+
   try {
     const body = await request.json();
 

@@ -2,11 +2,12 @@
  * Marketing Campaign Follow-Up API
  * Endpoints for creating and managing follow-up campaigns
  * 
- * PRODUCTION SAFETY: Returns 404 in production environments
+ * AUTHENTICATION: Requires admin user
  */
 
 import { NextResponse } from 'next/server';
-import { isInternalEnvironment } from '@/lib/internal';
+import { requireAdminAuth } from '@/lib/auth';
+import { logFollowUpCreation } from '@/lib/audit';
 import {
   createFollowUpCampaign,
   countNonConvertedRecipients,
@@ -22,10 +23,9 @@ interface RouteParams {
  * Get eligible recipient count for follow-up
  */
 export async function GET(request: Request, { params }: RouteParams) {
-  // PRODUCTION SAFETY: Block in production
-  if (!isInternalEnvironment()) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  }
+  // Require admin authentication
+  const { error: authError } = await requireAdminAuth();
+  if (authError) return authError;
 
   try {
     const { id } = await params;
@@ -70,10 +70,9 @@ export async function GET(request: Request, { params }: RouteParams) {
  * }
  */
 export async function POST(request: Request, { params }: RouteParams) {
-  // PRODUCTION SAFETY: Block in production
-  if (!isInternalEnvironment()) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  }
+  // Require admin authentication
+  const { user, error: authError } = await requireAdminAuth();
+  if (authError) return authError;
 
   try {
     const { id } = await params;
@@ -112,6 +111,17 @@ export async function POST(request: Request, { params }: RouteParams) {
         console.warn('Error populating sends:', sendsError);
       }
       sendsCreated = created;
+    }
+
+    // Audit log: follow-up created
+    if (campaign) {
+      await logFollowUpCreation(
+        user!.id,
+        user!.email,
+        campaign.id,
+        id,
+        request
+      );
     }
 
     return NextResponse.json({

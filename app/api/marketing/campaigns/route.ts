@@ -1,9 +1,13 @@
 /**
  * Marketing Campaigns API
  * Endpoints for managing marketing campaigns
+ * 
+ * AUTHENTICATION: Requires admin user
  */
 
 import { NextResponse } from 'next/server';
+import { requireAdminAuth } from '@/lib/auth';
+import { logCampaignAction } from '@/lib/audit';
 import {
   createCampaign,
   getAllCampaigns,
@@ -16,6 +20,10 @@ import {
  * List all campaigns with progress stats
  */
 export async function GET() {
+  // Require admin authentication
+  const { error: authError } = await requireAdminAuth();
+  if (authError) return authError;
+
   try {
     const { data: campaigns, error } = await getAllCampaigns();
 
@@ -56,6 +64,10 @@ export async function GET() {
  * Create a new campaign
  */
 export async function POST(request: Request) {
+  // Require admin authentication
+  const { user, error: authError } = await requireAdminAuth();
+  if (authError) return authError;
+
   try {
     const body = await request.json();
 
@@ -97,6 +109,16 @@ export async function POST(request: Request) {
         { status: 500 }
       );
     }
+
+    // Audit log: campaign created
+    await logCampaignAction(
+      user!.id,
+      user!.email,
+      'campaign.create',
+      campaign!.id,
+      { name: body.name, subject: body.subject },
+      request
+    );
 
     return NextResponse.json({
       success: true,
