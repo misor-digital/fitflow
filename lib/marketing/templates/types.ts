@@ -32,8 +32,8 @@ export interface TemplateDefinition {
   description: string;
   /** Variable definitions for form generation */
   variables: VariableDefinition[];
-  /** Generate HTML for server-side sending (includes unsubscribe URL) */
-  generate: (variables: TemplateVariables) => string;
+  /** Generate HTML for server-side sending (includes unsubscribe URL and attribution) */
+  generate: (variables: TemplateVariables, campaignId?: string, recipientId?: string) => string;
   /** Generate HTML for client-side preview (placeholder for unsubscribe) */
   generatePreview: (variables: TemplateVariables) => string;
 }
@@ -68,4 +68,6 @@ export interface DiscountCampaignVariables extends TemplateVariables {
   buttonLabel?: string;
   /** Show free delivery banner */
   showFreeDelivery?: boolean;
+  /** Campaign name for UTM parameter */
+  campaignName?: string;
 }

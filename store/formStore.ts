@@ -14,9 +14,27 @@ import type { BoxTypeId, PreorderUserInput } from '@/lib/preorder';
 import { INITIAL_USER_INPUT } from '@/lib/preorder';
 
 /**
+ * Marketing attribution data captured from URL parameters
+ * Stored in sessionStorage and sent with preorder request
+ */
+export interface AttributionData {
+  /** Marketing click token (mc parameter) */
+  mc?: string;
+  /** UTM source parameter */
+  utm_source?: string;
+  /** UTM medium parameter */
+  utm_medium?: string;
+  /** UTM campaign parameter */
+  utm_campaign?: string;
+}
+
+/**
  * Form store state and actions
  */
 interface FormStore extends PreorderUserInput {
+  // Marketing attribution
+  attribution: AttributionData | null;
+  
   // Actions for Step 1
   setBoxType: (boxType: BoxTypeId | null) => void;
   
@@ -38,6 +56,9 @@ interface FormStore extends PreorderUserInput {
   // Promo code
   setPromoCode: (code: string | null) => void;
   
+  // Marketing attribution
+  setAttribution: (attribution: AttributionData | null) => void;
+  
   // Reset
   reset: () => void;
 }
@@ -50,6 +71,9 @@ export const useFormStore = create<FormStore>()(
     (set) => ({
       // Initial state from shared module
       ...INITIAL_USER_INPUT,
+      
+      // Marketing attribution (initially null)
+      attribution: null,
       
       // Step 1: Box Selection
       setBoxType: (boxType) => set({ boxType }),
@@ -82,13 +106,23 @@ export const useFormStore = create<FormStore>()(
       // Promo code
       setPromoCode: (code) => set({ promoCode: code }),
       
+      // Marketing attribution
+      // Only set once per session, never overwrite existing attribution
+      setAttribution: (attribution) => set((state) => {
+        // Don't overwrite existing attribution
+        if (state.attribution !== null) {
+          return state;
+        }
+        return { attribution };
+      }),
+      
       // Reset to initial state
-      reset: () => set(INITIAL_USER_INPUT),
+      reset: () => set({ ...INITIAL_USER_INPUT, attribution: null }),
     }),
-{
-  name: 'fitflow-form-storage',
-  storage: createJSONStorage(() => sessionStorage),
-}
+    {
+      name: 'fitflow-form-storage',
+      storage: createJSONStorage(() => sessionStorage),
+    }
   )
 );
 
@@ -116,4 +150,11 @@ export function usePreorderInput(): PreorderUserInput {
     phone: store.phone,
     promoCode: store.promoCode,
   };
+}
+
+/**
+ * Hook to get attribution data for preorder submission
+ */
+export function useAttribution(): AttributionData | null {
+  return useFormStore((state) => state.attribution);
 }

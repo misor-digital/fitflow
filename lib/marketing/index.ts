@@ -90,3 +90,18 @@ export {
   verifyUnsubscribeToken,
   generateSignedUnsubscribeUrl,
 } from './unsubscribeToken';
+
+// Click Token (Marketing Attribution)
+export {
+  generateClickToken,
+  verifyClickToken,
+  resolveClickToken,
+  generateCampaignCtaUrl,
+  generateRecipientCtaUrl,
+} from './clickToken';
+
+export type {
+  ClickTokenPayload,
+  ResolvedClickToken,
+  MarketingClickRow,
+} from './clickToken';

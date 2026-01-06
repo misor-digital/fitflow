@@ -6,11 +6,12 @@
  * - Main content section (rich text)
  * - Free delivery banner (optional)
  * - Steps section (rich text)
- * - CTA button with auto-generated promo code URL
+ * - CTA button with click token for attribution
  */
 
 import type { TemplateDefinition, DiscountCampaignVariables, VariableDefinition } from './types';
 import { wrapEmailContent, escapeHtml, htmlToText } from './base';
+import { generateClickToken } from '../clickToken';
 
 // ============================================================================
 // Template Variables Definition
@@ -63,12 +64,46 @@ export const discountTemplateVariables: VariableDefinition[] = [
 // ============================================================================
 
 /**
- * Generate promo code URL based on discount percentage
+ * Generate CTA URL with click token for attribution tracking
+ * 
+ * @param discountPercent - Discount percentage for promo code
+ * @param campaignId - Campaign UUID (optional, for attribution)
+ * @param recipientId - Recipient UUID (optional, for attribution)
+ * @param campaignName - Campaign name for UTM (optional)
+ * @param isPreview - Whether this is a preview (no real token)
  */
-function generatePromoCodeUrl(discountPercent: number): string {
+function generateCtaUrl(
+  discountPercent: number,
+  campaignId?: string,
+  recipientId?: string,
+  campaignName?: string,
+  isPreview: boolean = false
+): string {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://fitflow.bg';
   const promoCode = `FITFLOW${discountPercent}`;
-  return `${baseUrl}/?promocode=${promoCode}`;
+  
+  // For preview mode, return simple URL without attribution
+  if (isPreview || !campaignId) {
+    return `${baseUrl}/?promocode=${promoCode}`;
+  }
+  
+  // Generate UTM campaign identifier from campaign name
+  const utmCampaign = campaignName 
+    ? campaignName.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_-]/g, '')
+    : `campaign_${campaignId.substring(0, 8)}`;
+  
+  // Generate signed click token for attribution
+  const clickToken = generateClickToken(campaignId, recipientId || null, utmCampaign);
+  
+  // Build URL with all attribution parameters
+  const params = new URLSearchParams();
+  params.set('mc', clickToken);
+  params.set('utm_source', 'email');
+  params.set('utm_medium', 'campaign');
+  params.set('utm_campaign', utmCampaign);
+  params.set('promocode', promoCode);
+  
+  return `${baseUrl}/?${params.toString()}`;
 }
 
 // ============================================================================
@@ -80,7 +115,9 @@ function generatePromoCodeUrl(discountPercent: number): string {
  */
 function generateDiscountContent(
   variables: DiscountCampaignVariables,
-  isPreview: boolean = false
+  isPreview: boolean = false,
+  campaignId?: string,
+  recipientId?: string
 ): string {
   const {
     discountPercent = 10,
@@ -89,13 +126,20 @@ function generateDiscountContent(
     buttonLabel = 'Вземи отстъпката',
     showFreeDelivery = true,
     name,
+    campaignName,
   } = variables;
 
   // Greeting with name fallback
   const greeting = name ? `Здравей, ${escapeHtml(name)}!` : '';
 
-  // Generate promo code URL
-  const ctaUrl = generatePromoCodeUrl(discountPercent);
+  // Generate CTA URL with attribution
+  const ctaUrl = generateCtaUrl(
+    discountPercent,
+    campaignId,
+    recipientId,
+    campaignName,
+    isPreview
+  );
 
   // Section 1: Greeting
   const greetingHtml = greeting ? `
@@ -174,10 +218,14 @@ export const discountTemplate: TemplateDefinition = {
   
   /**
    * Generate HTML for server-side sending
-   * Includes actual unsubscribe URL
+   * Includes actual unsubscribe URL and click token for attribution
+   * 
+   * @param variables - Template variables including email, campaignId, recipientId
+   * @param campaignId - Campaign UUID for attribution
+   * @param recipientId - Recipient UUID for attribution
    */
-  generate(variables: DiscountCampaignVariables): string {
-    const content = generateDiscountContent(variables, false);
+  generate(variables: DiscountCampaignVariables, campaignId?: string, recipientId?: string): string {
+    const content = generateDiscountContent(variables, false, campaignId, recipientId);
     return wrapEmailContent(content, {
       unsubscribeUrl: variables.unsubscribe_url,
       isPreview: false,
@@ -186,7 +234,7 @@ export const discountTemplate: TemplateDefinition = {
   
   /**
    * Generate HTML for client-side preview
-   * Shows placeholder for unsubscribe link
+   * Shows placeholder for unsubscribe link, no attribution token
    */
   generatePreview(variables: DiscountCampaignVariables): string {
     const content = generateDiscountContent(variables, true);

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useFormStore, usePreorderInput } from '@/store/formStore';
+import { useFormStore, usePreorderInput, useAttribution } from '@/store/formStore';
 import { trackFunnelStep, trackFormSubmit } from '@/lib/analytics';
 import Link from 'next/link';
 import type { PriceInfo } from '@/lib/preorder';
@@ -108,6 +108,9 @@ export default function Step4() {
     router.push('/step-3');
   };
 
+  // Get attribution data from store
+  const attribution = useAttribution();
+
   const handleFinalSubmit = async () => {
     setError('');
     setIsSubmitting(true);
@@ -115,13 +118,19 @@ export default function Step4() {
     try {
       // Use shared transform function to build API request
       const formData = transformToApiRequest(userInput);
+      
+      // Add attribution data if available (for marketing campaign tracking)
+      const requestData = {
+        ...formData,
+        attribution: attribution || undefined,
+      };
 
       const response = await fetch('/api/preorder', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(requestData),
       });
 
       if (!response.ok) {

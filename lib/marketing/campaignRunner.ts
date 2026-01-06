@@ -116,8 +116,8 @@ async function sendCampaignEmail(
     // Get template ID from campaign template data
     const templateId = templateVars.templateId || 'discount';
     
-    // Render the email content using template service
-    const htmlContent = generateEmail(templateId, variables, campaign.id);
+    // Render the email content using template service (with attribution)
+    const htmlContent = generateEmail(templateId, variables, campaign.id, send.recipient_id || undefined);
 
     // Render subject with variables (simple replacement)
     let subject = campaign.subject;

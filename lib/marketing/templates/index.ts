@@ -60,17 +60,19 @@ export function getTemplateVariables(templateId: string): VariableDefinition[] {
 
 /**
  * Generate email HTML for server-side sending
- * Automatically adds signed unsubscribe URL
+ * Automatically adds signed unsubscribe URL and click token for attribution
  * 
  * @param templateId - Template identifier
  * @param variables - Template variables (must include email)
- * @param campaignId - Campaign ID for tracking
+ * @param campaignId - Campaign ID for tracking and attribution
+ * @param recipientId - Recipient ID for attribution (optional)
  * @returns Generated HTML string
  */
 export function generateEmail(
   templateId: string,
   variables: TemplateVariables,
-  campaignId?: string
+  campaignId?: string,
+  recipientId?: string
 ): string {
   const template = getTemplate(templateId);
   if (!template) {
@@ -86,7 +88,8 @@ export function generateEmail(
     unsubscribe_url: unsubscribeUrl,
   };
 
-  return template.generate(variablesWithUnsubscribe);
+  // Pass campaignId and recipientId for click token generation
+  return template.generate(variablesWithUnsubscribe, campaignId, recipientId);
 }
 
 /**
