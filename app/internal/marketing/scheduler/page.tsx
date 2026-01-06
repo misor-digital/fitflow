@@ -11,7 +11,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 
 // Only show in development
@@ -33,19 +33,7 @@ export default function SchedulerPage() {
   const [autoRun, setAutoRun] = useState(false);
   const [autoRunInterval, setAutoRunInterval] = useState(60); // seconds
 
-  // Don't render if not in dev
-  if (!IS_DEV) {
-    return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-8 text-center">
-        <h2 className="text-red-800 font-medium text-lg">Not Available</h2>
-        <p className="text-red-600 mt-2">
-          The scheduler control panel is only available in development environment.
-        </p>
-      </div>
-    );
-  }
-
-  const runScheduler = async () => {
+  const runScheduler = useCallback(async () => {
     if (isRunning) return;
     
     setIsRunning(true);
@@ -77,7 +65,7 @@ export default function SchedulerPage() {
     } finally {
       setIsRunning(false);
     }
-  };
+  }, [isRunning]);
 
   // Auto-run effect
   useEffect(() => {
@@ -88,7 +76,19 @@ export default function SchedulerPage() {
     }, autoRunInterval * 1000);
     
     return () => clearInterval(interval);
-  }, [autoRun, autoRunInterval]);
+  }, [autoRun, autoRunInterval, runScheduler]);
+
+  // Don't render if not in dev
+  if (!IS_DEV) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-8 text-center">
+        <h2 className="text-red-800 font-medium text-lg">Not Available</h2>
+        <p className="text-red-600 mt-2">
+          The scheduler control panel is only available in development environment.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -198,7 +198,7 @@ export default function SchedulerPage() {
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Run History</h2>
         
         {results.length === 0 ? (
-          <p className="text-sm text-gray-500">No runs yet. Click "Run Scheduler Now" to start.</p>
+          <p className="text-sm text-gray-500">No runs yet. Click &quot;Run Scheduler Now&quot; to start.</p>
         ) : (
           <div className="space-y-2">
             {results.map((result, index) => (
@@ -233,10 +233,10 @@ export default function SchedulerPage() {
       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
         <h3 className="text-sm font-medium text-blue-800">How the Scheduler Works</h3>
         <ul className="mt-2 text-sm text-blue-700 space-y-1">
-          <li>1. Finds campaigns with status "scheduled" and scheduled_start_at ≤ now</li>
+          <li>1. Finds campaigns with status &quot;scheduled&quot; and scheduled_start_at ≤ now</li>
           <li>2. Creates send records for recipients matching the campaign filter</li>
           <li>3. Sends emails in batches with rate limiting</li>
-          <li>4. Updates campaign status to "completed" when done</li>
+          <li>4. Updates campaign status to &quot;completed&quot; when done</li>
         </ul>
       </div>
     </div>

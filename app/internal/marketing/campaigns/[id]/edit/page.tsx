@@ -162,7 +162,8 @@ export default function EditCampaignPage() {
         try {
           const templateData = JSON.parse(campaign.template);
           templateId = templateData.templateId || 'discount';
-          const { templateId: _, ...vars } = templateData;
+          const { templateId: _templateId, ...vars } = templateData;
+          void _templateId; // Suppress unused variable warning
           templateVariables = vars;
         } catch {
           const defaultTemplate = getTemplate('discount');
@@ -207,7 +208,7 @@ export default function EditCampaignPage() {
   const currentTemplate = useMemo(() => {
     if (!formData) return null;
     return getTemplate(formData.templateId);
-  }, [formData?.templateId]);
+  }, [formData]);
 
   const previewHtml = useMemo(() => {
     if (!currentTemplate || !formData) return '';
@@ -219,7 +220,7 @@ export default function EditCampaignPage() {
     } catch {
       return '<p>Error generating preview</p>';
     }
-  }, [formData?.templateId, formData?.templateVariables, currentTemplate, useSampleData]);
+  }, [formData, currentTemplate, useSampleData]);
 
   const handleTemplateChange = (templateId: string) => {
     const template = getTemplate(templateId);
@@ -285,7 +286,7 @@ export default function EditCampaignPage() {
       excludeTags: formData.recipientFilter.excludeTags,
       subscribedOnly: formData.recipientFilter.subscribedOnly,
     };
-  }, [formData?.recipientFilter]);
+  }, [formData]);
 
   if (isLoading) {
     return (
