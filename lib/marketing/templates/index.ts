@@ -3,11 +3,13 @@
  * 
  * Central registry for all email templates.
  * Provides functions to get templates and generate emails.
+ * 
+ * NOTE: This module is designed to be safe for client-side imports.
+ * Server-only functions (generateEmail) use dynamic imports for crypto/supabase.
  */
 
 import type { TemplateDefinition, TemplateVariables, VariableDefinition } from './types';
 import { discountTemplate } from './discount';
-import { generateSignedUnsubscribeUrl } from '../unsubscribeToken';
 
 // ============================================================================
 // Template Registry
@@ -29,7 +31,7 @@ const TEMPLATE_MAP = new Map<string, TemplateDefinition>(
 );
 
 // ============================================================================
-// Registry Functions
+// Registry Functions (Client-Safe)
 // ============================================================================
 
 /**
@@ -62,22 +64,27 @@ export function getTemplateVariables(templateId: string): VariableDefinition[] {
  * Generate email HTML for server-side sending
  * Automatically adds signed unsubscribe URL and click token for attribution
  * 
+ * NOTE: This function should only be called server-side as it uses crypto
+ * 
  * @param templateId - Template identifier
  * @param variables - Template variables (must include email)
  * @param campaignId - Campaign ID for tracking and attribution
  * @param recipientId - Recipient ID for attribution (optional)
  * @returns Generated HTML string
  */
-export function generateEmail(
+export async function generateEmail(
   templateId: string,
   variables: TemplateVariables,
   campaignId?: string,
   recipientId?: string
-): string {
+): Promise<string> {
   const template = getTemplate(templateId);
   if (!template) {
     throw new Error(`Template not found: ${templateId}`);
   }
+
+  // Dynamically import server-only module to avoid client-side issues
+  const { generateSignedUnsubscribeUrl } = await import('../unsubscribeToken');
 
   // Generate signed unsubscribe URL
   const unsubscribeUrl = generateSignedUnsubscribeUrl(variables.email, campaignId);
@@ -95,6 +102,7 @@ export function generateEmail(
 /**
  * Generate email HTML for client-side preview
  * Does not include actual unsubscribe URL (shows placeholder)
+ * Safe to call from client components
  * 
  * @param templateId - Template identifier
  * @param variables - Template variables

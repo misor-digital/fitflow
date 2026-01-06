@@ -11,7 +11,7 @@
 'use client';
 
 import { useState, useMemo, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { TiptapEditor } from '@/components/TiptapEditor';
 import { RecipientsView } from '@/components/RecipientsView';
@@ -177,15 +177,37 @@ function VariableField({ variable, value, onChange }: VariableFieldProps) {
 // Main Component
 // ============================================================================
 
+// Follow-up campaign state
+interface FollowUpState {
+  isFollowUp: boolean;
+  parentCampaignId: string | null;
+  parentCampaignName: string | null;
+  windowHours: number;
+}
+
 export default function CreateCampaignPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const templates = getAllTemplates();
+  
+  // Parse follow-up params from URL
+  const followUpState: FollowUpState = useMemo(() => ({
+    isFollowUp: searchParams.get('followUp') === 'true',
+    parentCampaignId: searchParams.get('parentCampaignId'),
+    parentCampaignName: searchParams.get('parentCampaignName'),
+    windowHours: parseInt(searchParams.get('windowHours') || '48', 10),
+  }), [searchParams]);
   
   const [formData, setFormData] = useState<CampaignFormData>(() => {
     const initial = { ...INITIAL_FORM_DATA };
     const defaultTemplate = getTemplate('discount');
     if (defaultTemplate) {
       initial.templateVariables = getDefaultVariables(defaultTemplate);
+    }
+    // Prefill name from URL params (for follow-up)
+    const nameFromUrl = searchParams.get('name');
+    if (nameFromUrl) {
+      initial.name = nameFromUrl;
     }
     return initial;
   });
@@ -273,20 +295,30 @@ export default function CreateCampaignPage() {
         ...formData.templateVariables,
       });
 
+      // Build request body - include follow-up fields if applicable
+      const requestBody: Record<string, unknown> = {
+        name: formData.name,
+        subject: formData.subject,
+        template: templateData,
+        previewText: formData.previewText || null,
+        scheduledStartAt: formData.scheduledStartAt 
+          ? new Date(formData.scheduledStartAt).toISOString() 
+          : null,
+        status: formData.status,
+        recipientFilter: Object.keys(recipientFilter).length > 1 ? recipientFilter : null,
+      };
+
+      // Add follow-up fields if this is a follow-up campaign
+      if (followUpState.isFollowUp && followUpState.parentCampaignId) {
+        requestBody.parentCampaignId = followUpState.parentCampaignId;
+        requestBody.campaignType = 'follow_up';
+        requestBody.followUpWindowHours = followUpState.windowHours;
+      }
+
       const response = await fetch('/api/marketing/campaigns', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: formData.name,
-          subject: formData.subject,
-          template: templateData,
-          previewText: formData.previewText || null,
-          scheduledStartAt: formData.scheduledStartAt 
-            ? new Date(formData.scheduledStartAt).toISOString() 
-            : null,
-          status: formData.status,
-          recipientFilter: Object.keys(recipientFilter).length > 1 ? recipientFilter : null,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       const data = await response.json();
@@ -335,18 +367,47 @@ export default function CreateCampaignPage() {
         <div>
           <div className="flex items-center gap-3 mb-2">
             <Link 
-              href="/internal/marketing/campaigns"
+              href={followUpState.isFollowUp && followUpState.parentCampaignId 
+                ? `/internal/marketing/campaigns/${followUpState.parentCampaignId}`
+                : "/internal/marketing/campaigns"
+              }
               className="text-gray-500 hover:text-gray-700"
             >
-              ← Back to Campaigns
+              ← {followUpState.isFollowUp ? 'Back to Parent Campaign' : 'Back to Campaigns'}
             </Link>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Create Campaign</h1>
+          <h1 className="text-2xl font-bold text-gray-900">
+            {followUpState.isFollowUp ? 'Create Follow-Up Campaign' : 'Create Campaign'}
+          </h1>
           <p className="mt-1 text-sm text-gray-500">
-            Create a new marketing email campaign using templates
+            {followUpState.isFollowUp 
+              ? `Follow-up for: ${followUpState.parentCampaignName}`
+              : 'Create a new marketing email campaign using templates'
+            }
           </p>
         </div>
       </div>
+
+      {/* Follow-Up Info Banner */}
+      {followUpState.isFollowUp && (
+        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <svg className="w-5 h-5 text-purple-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <div>
+              <h3 className="text-sm font-semibold text-purple-800">Follow-Up Campaign</h3>
+              <p className="text-sm text-purple-700 mt-1">
+                This campaign will target recipients from <strong>{followUpState.parentCampaignName}</strong> who 
+                did not convert to a lead within {followUpState.windowHours} hours.
+              </p>
+              <p className="text-xs text-purple-600 mt-2">
+                Recipients who unsubscribed or already received a follow-up will be excluded.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Error Message */}
       {error && (

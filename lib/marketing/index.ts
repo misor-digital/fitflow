@@ -105,3 +105,28 @@ export type {
   ResolvedClickToken,
   MarketingClickRow,
 } from './clickToken';
+
+// Reporting Service (Campaign → Lead Conversion)
+export {
+  getCampaignReportingStats,
+  getCampaignReportingData,
+  getLeadsByBoxType,
+  getLeadsByPromo,
+  getFollowUpCampaigns,
+  getNonConvertedRecipients,
+  countNonConvertedRecipients,
+  createFollowUpCampaign,
+  populateFollowUpSends,
+  getParentCampaign,
+} from './reportingService';
+
+export type {
+  CampaignType,
+  CampaignReportingStats,
+  CampaignReportingData,
+  LeadsByBoxType,
+  LeadsByPromo,
+  FollowUpCampaignSummary,
+  NonConvertedRecipient,
+  CreateFollowUpOptions,
+} from './reportingService';

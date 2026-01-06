@@ -5,7 +5,8 @@
  * - Full campaign metadata
  * - Current status with visual indicators
  * - Live progress counters
- * - Action buttons (dry-run, pause, resume)
+ * - Action buttons (dry-run, pause, resume, follow-up)
+ * - Campaign reporting (leads, conversions)
  * - Send history summary
  * - Email preview (rendered HTML)
  * - Template source (read-only)
@@ -21,6 +22,8 @@ import type { CampaignStatus, CampaignProgress } from '@/lib/marketing';
 import { CampaignActions } from './CampaignActions';
 import { SendHistorySection } from './SendHistorySection';
 import { EmailPreviewSection } from './EmailPreviewSection';
+import { CampaignReportingSection } from './CampaignReportingSection';
+import { CampaignFollowUpSection } from './CampaignFollowUpSection';
 import { RecipientsView } from '@/components/RecipientsView';
 
 // Status badge colors and labels
@@ -251,6 +254,10 @@ export default async function CampaignDetailPage({ params }: PageProps) {
 
   const statusConfig = STATUS_CONFIG[campaign.status] || STATUS_CONFIG.draft;
 
+  // Check if this is a follow-up campaign (has parent_campaign_id)
+  const isFollowUp = !!(campaign as { parent_campaign_id?: string }).parent_campaign_id;
+  const campaignType = (campaign as { campaign_type?: string }).campaign_type || 'primary';
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -264,7 +271,14 @@ export default async function CampaignDetailPage({ params }: PageProps) {
               ← Back to Campaigns
             </Link>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">{campaign.name}</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-gray-900">{campaign.name}</h1>
+            {isFollowUp && (
+              <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-700">
+                Follow-up
+              </span>
+            )}
+          </div>
           <p className="mt-1 text-gray-500">{campaign.subject}</p>
         </div>
         <div className="flex items-center gap-3">
@@ -287,6 +301,26 @@ export default async function CampaignDetailPage({ params }: PageProps) {
           </span>
         </div>
       </div>
+
+      {/* Parent Campaign Link (for follow-ups) */}
+      {isFollowUp && (
+        <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+          <div className="flex items-center gap-2">
+            <svg className="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16l-4-4m0 0l4-4m-4 4h18" />
+            </svg>
+            <span className="text-sm text-purple-700">
+              This is a follow-up campaign. 
+              <Link 
+                href={`/internal/marketing/campaigns/${(campaign as { parent_campaign_id?: string }).parent_campaign_id}`}
+                className="font-medium underline ml-1 hover:text-purple-900"
+              >
+                View parent campaign →
+              </Link>
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Status Description */}
       <div className={`${statusConfig.bgColor} border rounded-lg p-4`}>
@@ -324,6 +358,18 @@ export default async function CampaignDetailPage({ params }: PageProps) {
       {/* Actions Section */}
       <CampaignActions campaign={campaign} />
 
+      {/* Campaign Reporting (for campaigns that have started) */}
+      <CampaignReportingSection campaignId={campaign.id} campaignStatus={campaign.status} />
+
+      {/* Follow-Up Section (for primary campaigns that are completed/sending) */}
+      {campaignType === 'primary' && (
+        <CampaignFollowUpSection 
+          campaignId={campaign.id} 
+          campaignName={campaign.name}
+          campaignStatus={campaign.status} 
+        />
+      )}
+
       {/* Campaign Details */}
       <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Campaign Details</h2>
@@ -335,6 +381,10 @@ export default async function CampaignDetailPage({ params }: PageProps) {
           <div>
             <dt className="text-sm font-medium text-gray-500">Status</dt>
             <dd className="mt-1 text-sm text-gray-900">{statusConfig.label}</dd>
+          </div>
+          <div>
+            <dt className="text-sm font-medium text-gray-500">Campaign Type</dt>
+            <dd className="mt-1 text-sm text-gray-900 capitalize">{campaignType}</dd>
           </div>
           <div>
             <dt className="text-sm font-medium text-gray-500">Created</dt>
@@ -356,7 +406,7 @@ export default async function CampaignDetailPage({ params }: PageProps) {
             <dt className="text-sm font-medium text-gray-500">Preview Text</dt>
             <dd className="mt-1 text-sm text-gray-900">{campaign.preview_text || '—'}</dd>
           </div>
-          <div>
+          <div className="sm:col-span-2">
             <dt className="text-sm font-medium text-gray-500">Recipient Filter</dt>
             <dd className="mt-1 text-sm text-gray-900">
               <RecipientFilterDisplay filter={campaign.recipient_filter} />

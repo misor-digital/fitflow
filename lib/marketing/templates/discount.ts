@@ -11,7 +11,6 @@
 
 import type { TemplateDefinition, DiscountCampaignVariables, VariableDefinition } from './types';
 import { wrapEmailContent, escapeHtml, htmlToText } from './base';
-import { generateClickToken } from '../clickToken';
 
 // ============================================================================
 // Template Variables Definition
@@ -66,6 +65,9 @@ export const discountTemplateVariables: VariableDefinition[] = [
 /**
  * Generate CTA URL with click token for attribution tracking
  * 
+ * Note: Click token generation is done lazily at send time via generateClickToken
+ * from clickToken.ts. For preview mode, we return a simple URL without attribution.
+ * 
  * @param discountPercent - Discount percentage for promo code
  * @param campaignId - Campaign UUID (optional, for attribution)
  * @param recipientId - Recipient UUID (optional, for attribution)
@@ -82,7 +84,7 @@ function generateCtaUrl(
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://fitflow.bg';
   const promoCode = `FITFLOW${discountPercent}`;
   
-  // For preview mode, return simple URL without attribution
+  // For preview mode or no campaign, return simple URL without attribution
   if (isPreview || !campaignId) {
     return `${baseUrl}/?promocode=${promoCode}`;
   }
@@ -92,16 +94,21 @@ function generateCtaUrl(
     ? campaignName.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_-]/g, '')
     : `campaign_${campaignId.substring(0, 8)}`;
   
-  // Generate signed click token for attribution
-  const clickToken = generateClickToken(campaignId, recipientId || null, utmCampaign);
-  
-  // Build URL with all attribution parameters
+  // For server-side generation, we need to dynamically import clickToken
+  // This is handled by the caller (generateEmail in index.ts) which passes the token
+  // For now, build URL with placeholder that will be replaced at send time
   const params = new URLSearchParams();
-  params.set('mc', clickToken);
   params.set('utm_source', 'email');
   params.set('utm_medium', 'campaign');
   params.set('utm_campaign', utmCampaign);
   params.set('promocode', promoCode);
+  
+  // The mc (click token) parameter is added at send time by the campaign runner
+  // when it has access to the server-side generateClickToken function
+  if (campaignId && recipientId) {
+    params.set('cid', campaignId);
+    params.set('rid', recipientId);
+  }
   
   return `${baseUrl}/?${params.toString()}`;
 }

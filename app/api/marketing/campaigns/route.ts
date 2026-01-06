@@ -67,7 +67,12 @@ export async function POST(request: Request) {
       );
     }
 
-    const campaignData: MarketingCampaignInsert = {
+    // Build campaign data with optional follow-up fields
+    const campaignData: MarketingCampaignInsert & {
+      parent_campaign_id?: string;
+      campaign_type?: 'primary' | 'follow_up';
+      follow_up_window_hours?: number;
+    } = {
       name: body.name,
       subject: body.subject,
       template: body.template,
@@ -76,6 +81,13 @@ export async function POST(request: Request) {
       status: body.status || 'draft',
       recipient_filter: body.recipientFilter || null,
     };
+
+    // Add follow-up fields if provided
+    if (body.parentCampaignId) {
+      campaignData.parent_campaign_id = body.parentCampaignId;
+      campaignData.campaign_type = body.campaignType || 'follow_up';
+      campaignData.follow_up_window_hours = body.followUpWindowHours || 48;
+    }
 
     const { data: campaign, error } = await createCampaign(campaignData);
 
