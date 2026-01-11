@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@getbrevo/brevo": "^3.0.1",
+    "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.88.0",
     "@tiptap/extension-color": "^3.15.0",
     "@tiptap/extension-dropcursor": "^3.15.0",

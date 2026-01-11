@@ -220,6 +220,50 @@ export interface BoxPriceInfo {
 }
 
 // ============================================================================
+// User Roles Table
+// ============================================================================
+
+export interface UserRoleRow {
+  id: string;
+  user_id: string;
+  role: 'admin' | 'ops' | 'marketing';
+  created_at: string;
+  created_by: string | null;
+}
+
+export interface UserRoleInsert {
+  user_id: string;
+  role: 'admin' | 'ops' | 'marketing';
+  created_by?: string | null;
+}
+
+// ============================================================================
+// Audit Logs Table
+// ============================================================================
+
+export interface AuditLogRow {
+  id: string;
+  user_id: string;
+  action: string;
+  entity_type: string;
+  entity_id: string | null;
+  metadata: Record<string, any> | null;
+  ip_address: string | null;
+  user_agent: string | null;
+  created_at: string;
+}
+
+export interface AuditLogInsert {
+  user_id: string;
+  action: string;
+  entity_type: string;
+  entity_id?: string | null;
+  metadata?: Record<string, any> | null;
+  ip_address?: string | null;
+  user_agent?: string | null;
+}
+
+// ============================================================================
 // Database Schema Type (for Supabase client)
 // ============================================================================
 
@@ -256,12 +300,44 @@ export interface Database {
         Update: SiteConfigUpdate;
         Relationships: [];
       };
+      user_roles: {
+        Row: UserRoleRow;
+        Insert: UserRoleInsert;
+        Update: Partial<UserRoleInsert>;
+        Relationships: [];
+      };
+      audit_logs: {
+        Row: AuditLogRow;
+        Insert: AuditLogInsert;
+        Update: never;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
       calculate_box_prices: {
         Args: { p_promo_code: string | null };
         Returns: BoxPriceInfo[];
+      };
+      has_role: {
+        Args: { p_user_id: string; p_role: string };
+        Returns: boolean;
+      };
+      get_user_roles: {
+        Args: { p_user_id: string };
+        Returns: string[];
+      };
+      create_audit_log: {
+        Args: {
+          p_user_id: string;
+          p_action: string;
+          p_entity_type: string;
+          p_entity_id?: string | null;
+          p_metadata?: string | null;
+          p_ip_address?: string | null;
+          p_user_agent?: string | null;
+        };
+        Returns: string;
       };
     };
     Enums: {

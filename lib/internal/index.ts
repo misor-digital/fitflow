@@ -1,22 +1,11 @@
 /**
  * Internal-only utilities module
  * 
- * This module exports utilities for internal-only features that must
- * NEVER be accessible in production environments.
+ * This module is deprecated. Authentication and authorization are now handled
+ * by the auth system in lib/auth/.
  * 
- * See environment.ts for detailed documentation on production safety.
+ * Environment-based gating has been removed in favor of proper authentication.
  */
 
-export {
-  // Environment detection
-  getCurrentEnvironment,
-  isInternalEnvironment,
-  isProductionEnvironment,
-  getEnvironmentLabel,
-  assertInternalEnvironment,
-  getEnvironmentInfo,
-  // Types
-  type AllowedEnvironment,
-  type BlockedEnvironment,
-  type EnvironmentInfo,
-} from './environment';
+// This file is kept for backwards compatibility but exports nothing
+// All internal access control is now handled by middleware and auth utilities

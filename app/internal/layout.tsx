@@ -2,39 +2,22 @@
  * Internal-only layout for marketing and ops tools
  * 
  * ============================================================================
- * PRODUCTION SAFETY - CRITICAL
+ * AUTHENTICATION REQUIRED
  * ============================================================================
  * 
  * This layout wraps all internal-only routes under /internal.
- * It provides environment gating at the layout level, ensuring that:
+ * Access is controlled by authentication and admin role authorization.
  * 
- * 1. In production: Returns 404 (route not found)
- * 2. In non-production: Renders children with internal UI chrome
+ * The middleware handles:
+ * - Authentication check (redirects to /login if not authenticated)
+ * - Admin role verification (returns 403 if not admin)
  * 
- * INTENDED ENVIRONMENTS:
- * - feat (feature branches)
- * - dev (development)
- * - stage (staging/pre-production)
- * 
- * BLOCKED ENVIRONMENTS:
- * - production
- * - prod
- * - (any unknown/missing value)
- * 
- * WHY THIS EXISTS:
- * Internal tools like the marketing campaign UI are for QA, ops, and
- * marketing teams only. This layout ensures the entire /internal
- * route tree is inaccessible in production.
- * 
- * ROLLBACK:
- * If this UI causes issues, the entire /internal directory can be
- * deleted without affecting any production functionality.
+ * This layout provides the UI chrome for authenticated admin users.
  * 
  * ============================================================================
  */
 
-import { isInternalEnvironment, getEnvironmentLabel } from '@/lib/internal';
-import { notFound } from 'next/navigation';
+import { getSession } from '@/lib/auth/server';
 import Link from 'next/link';
 
 export default async function InternalLayout({
@@ -42,23 +25,18 @@ export default async function InternalLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // PRODUCTION SAFETY: Block access in production environments
-  if (!isInternalEnvironment()) {
-    notFound();
-  }
-
-  const envLabel = getEnvironmentLabel();
+  // Get current session (middleware already verified admin role)
+  const session = await getSession();
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Internal Environment Banner */}
-      <div className="bg-amber-500 text-amber-950 px-4 py-2 text-center text-sm font-medium">
+      {/* Admin Header */}
+      <div className="bg-blue-600 text-white px-4 py-2 text-center text-sm font-medium">
         <span className="inline-flex items-center gap-2">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
           </svg>
-          Internal Only — {envLabel} Environment
-          <span className="text-amber-800 text-xs">(Not visible in production)</span>
+          Admin Tools — Logged in as {session.user?.email}
         </span>
       </div>
 
@@ -93,8 +71,25 @@ export default async function InternalLayout({
               </div>
             </div>
 
-            {/* Back to Main Site */}
-            <div className="flex items-center">
+            {/* User Menu */}
+            <div className="flex items-center gap-4">
+              <Link 
+                href="/account/change-password"
+                className="text-gray-500 hover:text-gray-700 text-sm transition-colors"
+              >
+                Change Password
+              </Link>
+              <form action="/api/auth/logout" method="POST">
+                <button
+                  type="submit"
+                  className="text-gray-500 hover:text-gray-700 text-sm flex items-center gap-1 transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  Logout
+                </button>
+              </form>
               <Link 
                 href="/"
                 className="text-gray-500 hover:text-gray-700 text-sm flex items-center gap-1 transition-colors"
@@ -102,7 +97,7 @@ export default async function InternalLayout({
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
-                Back to Site
+                Main Site
               </Link>
             </div>
           </div>
@@ -118,8 +113,8 @@ export default async function InternalLayout({
       <footer className="border-t border-gray-200 bg-white mt-auto">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <p className="text-center text-xs text-gray-500">
-            Internal tools for QA, ops, and marketing. 
-            <span className="text-amber-600 font-medium"> Not accessible in production.</span>
+            Internal tools for admin users. 
+            <span className="text-blue-600 font-medium"> Secure access via authentication.</span>
           </p>
         </div>
       </footer>
