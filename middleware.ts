@@ -18,12 +18,13 @@
 import { createServerClient } from '@supabase/ssr';
 import { supabase as adminClient } from '@/lib/supabase/client';
 import { NextResponse, type NextRequest } from 'next/server';
+import { UserRoleRow } from './lib/supabase/types';
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Create a response object that we can modify
-  let response = NextResponse.next({
+  const response = NextResponse.next({
     request: {
       headers: request.headers,
     },
@@ -82,9 +83,10 @@ export async function middleware(request: NextRequest) {
   if (requiresAdmin && user) {
     // Fetch user roles from database using admin client to bypass RLS
     const { data: roles, error } = await adminClient
-      .from('user_roles' as any)
+      .from('user_roles')
       .select('role')
-      .eq('user_id', user.id);
+      .eq('user_id', user.id)
+      .returns<Pick<UserRoleRow, 'role'>[]>();
 
     if (error) {
       console.error('Error fetching user roles:', error);
@@ -101,7 +103,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/login', request.url));
     }
 
-    const userRoles = (roles || []).map((r: any) => r.role);
+    const userRoles = roles?.map(r => r.role) ?? [];
     const isAdmin = userRoles.includes('admin');
 
     // If user is not admin, deny access

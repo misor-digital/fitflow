@@ -247,7 +247,7 @@ export interface AuditLogRow {
   action: string;
   entity_type: string;
   entity_id: string | null;
-  metadata: Record<string, any> | null;
+  metadata: Record<string, unknown> | null;
   ip_address: string | null;
   user_agent: string | null;
   created_at: string;
@@ -258,7 +258,7 @@ export interface AuditLogInsert {
   action: string;
   entity_type: string;
   entity_id?: string | null;
-  metadata?: Record<string, any> | null;
+  metadata?: Record<string, unknown> | null;
   ip_address?: string | null;
   user_agent?: string | null;
 }
@@ -313,7 +313,15 @@ export interface Database {
         Relationships: [];
       };
     };
-    Views: Record<string, never>;
+    Views: Record<
+      string,
+      {
+        Row: Record<string, unknown>
+        Insert: Record<string, unknown>
+        Update: Record<string, unknown>
+        Relationships: unknown[]
+      }
+    >;
     Functions: {
       calculate_box_prices: {
         Args: { p_promo_code: string | null };
@@ -332,10 +340,10 @@ export interface Database {
           p_user_id: string;
           p_action: string;
           p_entity_type: string;
-          p_entity_id?: string | null;
-          p_metadata?: string | null;
-          p_ip_address?: string | null;
-          p_user_agent?: string | null;
+          p_entity_id: string | null;
+          p_metadata: string | null;
+          p_ip_address: string | null;
+          p_user_agent: string | null;
         };
         Returns: string;
       };
@@ -343,6 +351,6 @@ export interface Database {
     Enums: {
       box_type: BoxType;
     };
-    CompositeTypes: Record<string, never>;
+    CompositeTypes: Record<string, Record<string, unknown>>;
   };
 }

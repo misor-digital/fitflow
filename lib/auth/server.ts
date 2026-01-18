@@ -46,7 +46,7 @@ export async function createClient() {
  */
 async function getUserRoles(userId: string): Promise<UserRole[]> {
   const { data, error } = await adminClient
-    .from('user_roles' as any)
+    .from('user_roles')
     .select('role')
     .eq('user_id', userId);
 
@@ -55,7 +55,7 @@ async function getUserRoles(userId: string): Promise<UserRole[]> {
     return [];
   }
 
-  return (data || []).map((row: any) => row.role as UserRole);
+  return (data || []).map((row: { role: UserRole }) => row.role);
 }
 
 /**

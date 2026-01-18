@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -12,9 +12,8 @@ if (!supabaseUrl || !supabaseSecretKey) {
 }
 
 // Server-side client with secret key (bypasses RLS)
-export const supabase = createClient<Database>(supabaseUrl, supabaseSecretKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false
-  }
-});
+export const supabase: SupabaseClient<Database> = createClient<Database>(
+  supabaseUrl,
+  supabaseSecretKey,
+  { auth: { autoRefreshToken: false, persistSession: false } }
+);

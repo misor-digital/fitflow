@@ -11,7 +11,7 @@ export interface AuditLog {
   action: string;
   entity_type: string;
   entity_id: string | null;
-  metadata: Record<string, any> | null;
+  metadata: Record<string, unknown> | null;
   ip_address: string | null;
   user_agent: string | null;
   created_at: string;
@@ -25,7 +25,7 @@ export interface AuditLogInsert {
   action: string;
   entity_type: string;
   entity_id?: string | null;
-  metadata?: Record<string, any> | null;
+  metadata?: Record<string, unknown> | null;
   ip_address?: string | null;
   user_agent?: string | null;
 }

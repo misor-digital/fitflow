@@ -22,16 +22,16 @@ export async function createAuditLog(data: AuditLogInsert): Promise<string | nul
     const ipAddress = data.ip_address || headersList.get('x-forwarded-for') || headersList.get('x-real-ip') || null;
     const userAgent = data.user_agent || headersList.get('user-agent') || null;
 
-    const { data: result, error } = await supabase
-      .rpc('create_audit_log', {
-        p_user_id: data.user_id,
-        p_action: data.action,
-        p_entity_type: data.entity_type,
-        p_entity_id: data.entity_id || null,
-        p_metadata: data.metadata ? JSON.stringify(data.metadata) : null,
-        p_ip_address: ipAddress,
-        p_user_agent: userAgent,
-      });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: result, error } = await (supabase as any).rpc('create_audit_log', {
+      p_user_id: data.user_id,
+      p_action: data.action,
+      p_entity_type: data.entity_type,
+      p_entity_id: data.entity_id || null,
+      p_metadata: data.metadata ? JSON.stringify(data.metadata) : null,
+      p_ip_address: ipAddress,
+      p_user_agent: userAgent,
+    });
 
     if (error) {
       console.error('Error creating audit log:', error);
@@ -52,7 +52,7 @@ export async function logCampaignAction(
   userId: string,
   action: string,
   campaignId: string,
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 ): Promise<void> {
   await createAuditLog({
     user_id: userId,
@@ -70,7 +70,7 @@ export async function logFollowUpAction(
   userId: string,
   action: string,
   followUpId: string,
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 ): Promise<void> {
   await createAuditLog({
     user_id: userId,
@@ -88,7 +88,7 @@ export async function logRecipientAction(
   userId: string,
   action: string,
   recipientId: string,
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 ): Promise<void> {
   await createAuditLog({
     user_id: userId,
@@ -105,7 +105,7 @@ export async function logRecipientAction(
 export async function logUserAction(
   userId: string,
   action: string,
-  metadata?: Record<string, any>
+  metadata?: Record<string, unknown>
 ): Promise<void> {
   await createAuditLog({
     user_id: userId,
@@ -123,10 +123,10 @@ export async function getAuditLogs(
   entityType: string,
   entityId: string,
   limit: number = 50
-): Promise<any[]> {
+): Promise<unknown[]> {
   try {
     const { data, error } = await supabase
-      .from('audit_logs' as any)
+      .from('audit_logs')
       .select('*')
       .eq('entity_type', entityType)
       .eq('entity_id', entityId)
@@ -151,10 +151,10 @@ export async function getAuditLogs(
 export async function getUserAuditLogs(
   userId: string,
   limit: number = 50
-): Promise<any[]> {
+): Promise<unknown[]> {
   try {
     const { data, error } = await supabase
-      .from('audit_logs' as any)
+      .from('audit_logs')
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false })

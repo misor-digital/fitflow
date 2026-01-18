@@ -9,7 +9,7 @@ import { NextResponse } from 'next/server';
 import { logUserAction } from '@/lib/audit/logger';
 import { AUDIT_ACTIONS } from '@/lib/audit/types';
 
-export async function POST(request: Request) {
+export async function POST() {
   try {
     const supabase = await createClient();
     
