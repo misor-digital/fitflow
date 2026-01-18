@@ -16,7 +16,6 @@
  */
 
 import { createServerClient } from '@supabase/ssr';
-import { supabase as adminClient } from '@/lib/supabase/client';
 import { NextResponse, type NextRequest } from 'next/server';
 import { UserRoleRow } from './lib/supabase/types';
 
@@ -33,7 +32,7 @@ export async function middleware(request: NextRequest) {
   // Create Supabase client with middleware cookie handling
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SECRET_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     {
       cookies: {
         getAll() {
@@ -81,12 +80,12 @@ export async function middleware(request: NextRequest) {
 
   // If route requires admin role, check user roles
   if (requiresAdmin && user) {
-    // Fetch user roles from database using admin client to bypass RLS
-    const { data: roles, error } = await adminClient
+    // Fetch user roles from database using session client
+    // RLS policy allows authenticated users to read their own roles
+    const { data: roles, error } = await supabase
       .from('user_roles')
       .select('role')
-      .eq('user_id', user.id)
-      .returns<Pick<UserRoleRow, 'role'>[]>();
+      .eq('user_id', user.id);
 
     if (error) {
       console.error('Error fetching user roles:', error);

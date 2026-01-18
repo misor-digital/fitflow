@@ -9,7 +9,6 @@ import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { cache } from 'react';
 import type { UserRole, UserWithRoles, SessionInfo } from './types';
-import { supabase as adminClient } from '@/lib/supabase/client';
 
 /**
  * Create a Supabase client for server-side use with cookie-based sessions
@@ -19,7 +18,7 @@ export async function createClient() {
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SECRET_KEY!,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     {
       cookies: {
         getAll() {
@@ -43,9 +42,12 @@ export async function createClient() {
 
 /**
  * Get user roles from the database
+ * Uses session client with RLS policy allowing users to read their own roles
  */
 async function getUserRoles(userId: string): Promise<UserRole[]> {
-  const { data, error } = await adminClient
+  const supabase = await createClient();
+  
+  const { data, error } = await supabase
     .from('user_roles')
     .select('role')
     .eq('user_id', userId);
