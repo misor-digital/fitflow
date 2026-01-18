@@ -1,12 +1,9 @@
 /**
  * Marketing Campaign Follow-Up API
  * Endpoints for creating and managing follow-up campaigns
- * 
- * PRODUCTION SAFETY: Returns 404 in production environments
  */
 
 import { NextResponse } from 'next/server';
-import { isInternalEnvironment } from '@/lib/internal';
 import {
   createFollowUpCampaign,
   countNonConvertedRecipients,
@@ -22,11 +19,6 @@ interface RouteParams {
  * Get eligible recipient count for follow-up
  */
 export async function GET(request: Request, { params }: RouteParams) {
-  // PRODUCTION SAFETY: Block in production
-  if (!isInternalEnvironment()) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  }
-
   try {
     const { id } = await params;
     const { searchParams } = new URL(request.url);
@@ -70,11 +62,6 @@ export async function GET(request: Request, { params }: RouteParams) {
  * }
  */
 export async function POST(request: Request, { params }: RouteParams) {
-  // PRODUCTION SAFETY: Block in production
-  if (!isInternalEnvironment()) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  }
-
   try {
     const { id } = await params;
     const body = await request.json();

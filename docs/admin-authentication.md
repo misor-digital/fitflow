@@ -405,20 +405,6 @@ WHERE created_at < NOW() - INTERVAL '1 year';
 
 If authentication system causes issues:
 
-### Quick Rollback (Temporary)
-
-1. **Disable middleware temporarily**
-   ```typescript
-   // In middleware.ts, comment out the entire middleware function
-   // and return NextResponse.next() immediately
-   ```
-
-2. **Restore environment gating**
-   ```typescript
-   // In app/internal/layout.tsx
-   // Temporarily add back isInternalEnvironment() check
-   ```
-
 ### Full Rollback
 
 1. **Revert code changes**
