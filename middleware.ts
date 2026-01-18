@@ -16,6 +16,7 @@
  */
 
 import { createServerClient } from '@supabase/ssr';
+import { supabase as adminClient } from '@/lib/supabase/client';
 import { NextResponse, type NextRequest } from 'next/server';
 
 export async function middleware(request: NextRequest) {
@@ -79,8 +80,8 @@ export async function middleware(request: NextRequest) {
 
   // If route requires admin role, check user roles
   if (requiresAdmin && user) {
-    // Fetch user roles from database
-    const { data: roles, error } = await supabase
+    // Fetch user roles from database using admin client to bypass RLS
+    const { data: roles, error } = await adminClient
       .from('user_roles' as any)
       .select('role')
       .eq('user_id', user.id);
