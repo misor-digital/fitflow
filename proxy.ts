@@ -17,7 +17,6 @@
 
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
-import { UserRoleRow } from './lib/supabase/types';
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
