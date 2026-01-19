@@ -5,7 +5,7 @@
  */
 
 import { cache } from 'react';
-import { supabase } from '@/lib/supabase/client';
+import { adminClient as supabase } from '@/lib/supabase/adminClient';
 import type { BoxTypeRow, OptionRow, OptionSetId } from '@/lib/supabase';
 import type { PriceInfo } from '@/lib/preorder';
 
