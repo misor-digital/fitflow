@@ -3,7 +3,7 @@
  * Server-only functions for validating and managing promo codes
  */
 
-import { adminClient as supabase } from '@/lib/supabase/adminClient';
+import { adminClient as supabase } from '@/lib/supabase';
 import type { PromoCodeRow } from '@/lib/supabase';
 
 /**

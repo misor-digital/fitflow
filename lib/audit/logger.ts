@@ -5,7 +5,7 @@
  * All critical internal actions should be logged for compliance and debugging.
  */
 
-import { adminClient as supabase } from '@/lib/supabase/adminClient';
+import { adminClient as supabase } from '@/lib/supabase';
 import type { AuditLogInsert } from './types';
 import { headers } from 'next/headers';
 

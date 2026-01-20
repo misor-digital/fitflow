@@ -1,4 +1,4 @@
-import { supabase } from './client';
+import { adminClient } from '.';
 import type { PreorderInsert, Preorder } from './types';
 
 export interface PreorderFormData {
@@ -80,7 +80,7 @@ export async function createPreorder(data: PreorderFormData): Promise<{ data: Pr
   try {
     const insertData = transformFormDataToInsert(data);
     
-    const { data: preorder, error } = await supabase
+    const { data: preorder, error } = await adminClient
       .from('preorders')
       .insert(insertData as never)
       .select()
@@ -103,7 +103,7 @@ export async function createPreorder(data: PreorderFormData): Promise<{ data: Pr
  */
 export async function getPreorderById(id: string): Promise<{ data: Preorder | null; error: Error | null }> {
   try {
-    const { data: preorder, error } = await supabase
+    const { data: preorder, error } = await adminClient
       .from('preorders')
       .select('*')
       .eq('id', id)
@@ -126,7 +126,7 @@ export async function getPreorderById(id: string): Promise<{ data: Preorder | nu
  */
 export async function getPreorderByOrderId(orderId: string): Promise<{ data: Preorder | null; error: Error | null }> {
   try {
-    const { data: preorder, error } = await supabase
+    const { data: preorder, error } = await adminClient
       .from('preorders')
       .select('*')
       .eq('order_id', orderId)
@@ -149,7 +149,7 @@ export async function getPreorderByOrderId(orderId: string): Promise<{ data: Pre
  */
 export async function getPreorderByEmail(email: string): Promise<{ data: Preorder[] | null; error: Error | null }> {
   try {
-    const { data: preorders, error } = await supabase
+    const { data: preorders, error } = await adminClient
       .from('preorders')
       .select('*')
       .eq('email', email)
@@ -172,7 +172,7 @@ export async function getPreorderByEmail(email: string): Promise<{ data: Preorde
  */
 export async function getAllPreorders(): Promise<{ data: Preorder[] | null; error: Error | null }> {
   try {
-    const { data: preorders, error } = await supabase
+    const { data: preorders, error } = await adminClient
       .from('preorders')
       .select('*')
       .order('created_at', { ascending: false });

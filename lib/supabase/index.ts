@@ -1,5 +1,5 @@
 // Supabase client
-export { supabase } from './client';
+export { adminClient } from './adminClient';
 
 // Types
 export type {
