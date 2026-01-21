@@ -8,7 +8,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@supabase/supabase-js';
 
 interface StaffUser {
   full_name: string;
@@ -30,70 +29,41 @@ export default function StaffDashboardPage() {
 
   const checkAuth = async () => {
     try {
-      const supabase = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-      );
-
-      const { data: { user } } = await supabase.auth.getUser();
-
-      if (!user) {
+      // Get session from localStorage
+      const sessionData = localStorage.getItem('supabase.auth.token');
+      if (!sessionData) {
         router.push('/staff/login');
         return;
       }
 
-      // Get staff user with roles
-      const { data: staff } = await supabase
-        .from('staff_users')
-        .select(`
-          id,
-          full_name,
-          email,
-          is_active
-        `)
-        .eq('user_id', user.id)
-        .single();
-
-      if (!staff || !staff.is_active) {
-        await supabase.auth.signOut();
-        router.push('/staff/login');
-        return;
-      }
-
-      // Get roles
-      const { data: roleAssignments } = await supabase
-        .from('staff_role_assignments')
-        .select(`
-          roles (
-            name,
-            description
-          )
-        `)
-        .eq('staff_user_id', staff.id);
-
-      const roles = (roleAssignments || []).map((assignment: any) => ({
-        name: assignment.roles.name,
-        description: assignment.roles.description,
-      }));
-
-      setStaffUser({
-        full_name: staff.full_name,
-        email: staff.email,
-        roles,
+      const session = JSON.parse(sessionData);
+      
+      // Call API to get staff data
+      const response = await fetch('/api/staff/dashboard', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+        },
       });
+
+      if (!response.ok) {
+        localStorage.removeItem('supabase.auth.token');
+        router.push('/staff/login');
+        return;
+      }
+
+      const data = await response.json();
+      
+      setStaffUser(data.staffUser);
       setLoading(false);
     } catch (err) {
       console.error('Auth error:', err);
+      localStorage.removeItem('supabase.auth.token');
       router.push('/staff/login');
     }
   };
 
   const handleLogout = async () => {
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
-    await supabase.auth.signOut();
+    localStorage.removeItem('supabase.auth.token');
     router.push('/staff/login');
   };
 
