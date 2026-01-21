@@ -37,6 +37,9 @@ export interface PreorderInsert {
   discount_percent?: number | null;
   original_price_eur?: number | null;
   final_price_eur?: number | null;
+  // Audit fields
+  ip_address?: string | null;
+  user_agent?: string | null;
 }
 
 export interface Preorder extends PreorderInsert {
@@ -44,6 +47,8 @@ export interface Preorder extends PreorderInsert {
   order_id: string;
   created_at: string;
   updated_at: string;
+  last_edited_at?: string | null;
+  edit_count?: number;
 }
 
 // ============================================================================
@@ -197,6 +202,87 @@ export interface SiteConfigUpdate {
 }
 
 // ============================================================================
+// Preorder Edit Tokens Table
+// ============================================================================
+
+export interface PreorderEditTokenRow {
+  id: string;
+  preorder_id: string;
+  token: string;
+  purpose: 'edit' | 'cancel';
+  expires_at: string;
+  used_at: string | null;
+  created_at: string;
+}
+
+export interface PreorderEditTokenInsert {
+  preorder_id: string;
+  purpose: 'edit' | 'cancel';
+  expires_at: string;
+  token?: string;
+}
+
+// ============================================================================
+// Newsletter Subscriptions Table
+// ============================================================================
+
+export type SubscriptionStatus = 'pending' | 'subscribed' | 'unsubscribed';
+
+export interface NewsletterSubscriptionRow {
+  id: string;
+  email: string;
+  status: SubscriptionStatus;
+  confirmation_token: string;
+  confirmed_at: string | null;
+  unsubscribe_token: string;
+  source: string | null;
+  ip_address: string | null;
+  user_agent: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NewsletterSubscriptionInsert {
+  email: string;
+  status?: SubscriptionStatus;
+  source?: string | null;
+  ip_address?: string | null;
+  user_agent?: string | null;
+}
+
+// ============================================================================
+// Audit Logs Table
+// ============================================================================
+
+export type ActorType = 'staff' | 'customer' | 'system' | 'anonymous';
+
+export interface AuditLogRow {
+  id: string;
+  actor_type: ActorType;
+  actor_id: string | null;
+  actor_email: string | null;
+  action: string;
+  resource_type: string;
+  resource_id: string | null;
+  metadata: Record<string, any> | null;
+  ip_address: string | null;
+  user_agent: string | null;
+  created_at: string;
+}
+
+export interface AuditLogInsert {
+  actor_type: ActorType;
+  actor_id?: string | null;
+  actor_email?: string | null;
+  action: string;
+  resource_type: string;
+  resource_id?: string | null;
+  metadata?: Record<string, any> | null;
+  ip_address?: string | null;
+  user_agent?: string | null;
+}
+
+// ============================================================================
 // RPC Function Return Types
 // ============================================================================
 
@@ -249,6 +335,31 @@ export interface Database {
         Update: SiteConfigUpdate;
         Relationships: [];
       };
+      preorder_edit_tokens: {
+        Row: PreorderEditTokenRow;
+        Insert: PreorderEditTokenInsert;
+        Update: Partial<PreorderEditTokenInsert>;
+        Relationships: [
+          {
+            foreignKeyName: 'preorder_edit_tokens_preorder_id_fkey';
+            columns: ['preorder_id'];
+            referencedRelation: 'preorders';
+            referencedColumns: ['id'];
+          }
+        ];
+      };
+      newsletter_subscriptions: {
+        Row: NewsletterSubscriptionRow;
+        Insert: NewsletterSubscriptionInsert;
+        Update: Partial<NewsletterSubscriptionInsert>;
+        Relationships: [];
+      };
+      audit_logs: {
+        Row: AuditLogRow;
+        Insert: AuditLogInsert;
+        Update: Partial<AuditLogInsert>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -256,9 +367,25 @@ export interface Database {
         Args: { p_promo_code: string | null };
         Returns: BoxPriceInfo[];
       };
+      create_audit_log: {
+        Args: {
+          p_actor_type: ActorType;
+          p_actor_id: string | null;
+          p_actor_email: string | null;
+          p_action: string;
+          p_resource_type: string;
+          p_resource_id: string | null;
+          p_metadata?: Record<string, any> | null;
+          p_ip_address?: string | null;
+          p_user_agent?: string | null;
+        };
+        Returns: string;
+      };
     };
     Enums: {
       box_type: BoxType;
+      subscription_status: SubscriptionStatus;
+      actor_type: ActorType;
     };
     CompositeTypes: Record<string, never>;
   };
