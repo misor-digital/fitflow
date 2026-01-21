@@ -283,6 +283,92 @@ export interface AuditLogInsert {
 }
 
 // ============================================================================
+// Customers Table
+// ============================================================================
+
+export interface CustomerRow {
+  id: string;
+  user_id: string;
+  full_name: string;
+  phone: string | null;
+  preferred_language: string;
+  marketing_consent: boolean;
+  marketing_consent_date: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CustomerInsert {
+  user_id: string;
+  full_name: string;
+  phone?: string | null;
+  preferred_language?: string;
+  marketing_consent?: boolean;
+  marketing_consent_date?: string | null;
+}
+
+// ============================================================================
+// Roles Table
+// ============================================================================
+
+export interface RoleRow {
+  id: string;
+  name: string;
+  description: string | null;
+  is_system: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RoleInsert {
+  name: string;
+  description?: string | null;
+  is_system?: boolean;
+}
+
+// ============================================================================
+// Staff Users Table
+// ============================================================================
+
+export interface StaffUserRow {
+  id: string;
+  user_id: string;
+  full_name: string;
+  email: string;
+  is_active: boolean;
+  requires_password_reset: boolean;
+  last_login_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface StaffUserInsert {
+  user_id: string;
+  full_name: string;
+  email: string;
+  is_active?: boolean;
+  requires_password_reset?: boolean;
+}
+
+// ============================================================================
+// Staff Role Assignments Table
+// ============================================================================
+
+export interface StaffRoleAssignmentRow {
+  id: string;
+  staff_user_id: string;
+  role_id: string;
+  assigned_by: string | null;
+  assigned_at: string;
+}
+
+export interface StaffRoleAssignmentInsert {
+  staff_user_id: string;
+  role_id: string;
+  assigned_by?: string | null;
+}
+
+// ============================================================================
 // RPC Function Return Types
 // ============================================================================
 
@@ -360,6 +446,57 @@ export interface Database {
         Update: Partial<AuditLogInsert>;
         Relationships: [];
       };
+      customers: {
+        Row: CustomerRow;
+        Insert: CustomerInsert;
+        Update: Partial<CustomerInsert>;
+        Relationships: [
+          {
+            foreignKeyName: 'customers_user_id_fkey';
+            columns: ['user_id'];
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          }
+        ];
+      };
+      roles: {
+        Row: RoleRow;
+        Insert: RoleInsert;
+        Update: Partial<RoleInsert>;
+        Relationships: [];
+      };
+      staff_users: {
+        Row: StaffUserRow;
+        Insert: StaffUserInsert;
+        Update: Partial<StaffUserInsert>;
+        Relationships: [
+          {
+            foreignKeyName: 'staff_users_user_id_fkey';
+            columns: ['user_id'];
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          }
+        ];
+      };
+      staff_role_assignments: {
+        Row: StaffRoleAssignmentRow;
+        Insert: StaffRoleAssignmentInsert;
+        Update: Partial<StaffRoleAssignmentInsert>;
+        Relationships: [
+          {
+            foreignKeyName: 'staff_role_assignments_staff_user_id_fkey';
+            columns: ['staff_user_id'];
+            referencedRelation: 'staff_users';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'staff_role_assignments_role_id_fkey';
+            columns: ['role_id'];
+            referencedRelation: 'roles';
+            referencedColumns: ['id'];
+          }
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -380,6 +517,26 @@ export interface Database {
           p_user_agent?: string | null;
         };
         Returns: string;
+      };
+      has_role: {
+        Args: {
+          p_user_id: string;
+          p_role_name: string;
+        };
+        Returns: boolean;
+      };
+      has_any_role: {
+        Args: {
+          p_user_id: string;
+          p_role_names: string[];
+        };
+        Returns: boolean;
+      };
+      is_staff_user: {
+        Args: {
+          p_user_id: string;
+        };
+        Returns: boolean;
       };
     };
     Enums: {
