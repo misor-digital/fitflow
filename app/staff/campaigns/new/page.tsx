@@ -128,7 +128,7 @@ export default function NewCampaignPage() {
                 id="subject"
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent text-gray-900"
                 placeholder="Напр: Нови продукти в FitFlow"
                 required
               />
@@ -144,7 +144,7 @@ export default function NewCampaignPage() {
                 value={htmlContent}
                 onChange={(e) => setHtmlContent(e.target.value)}
                 rows={12}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent font-mono text-sm"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent font-mono text-sm text-gray-900"
                 placeholder="<html>...</html>"
                 required
               />
@@ -172,7 +172,7 @@ export default function NewCampaignPage() {
                 value={textContent}
                 onChange={(e) => setTextContent(e.target.value)}
                 rows={8}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent text-gray-900"
                 placeholder="Текстова версия на имейла за клиенти без HTML поддръжка"
                 required
               />

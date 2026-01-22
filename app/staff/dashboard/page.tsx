@@ -192,12 +192,12 @@ export default function StaffDashboardPage() {
           )}
 
           {/* Catalog Manager */}
-          {hasRole('catalog_manager') && (
+          {(hasRole('catalog_manager') || hasRole('admin_ops') || hasRole('super_admin')) && (
             <DashboardCard
               title="Каталог"
               description="Управление на продукти и опции"
               icon="🏷️"
-              href="/staff/catalog"
+              href="/staff/catalog/box-types"
               color="indigo"
             />
           )}
@@ -246,10 +246,9 @@ export default function StaffDashboardPage() {
         </div>
 
         {/* Info Notice */}
-        <div className="mt-8 p-4 bg-blue-50 rounded-lg border border-blue-200">
-          <p className="text-sm text-blue-800">
-            <strong>Забележка:</strong> Някои секции са в процес на разработка (Phase 3). 
-            Основните функции за управление на поръчки и абонати са достъпни.
+        <div className="mt-8 p-4 bg-green-50 rounded-lg border border-green-200">
+          <p className="text-sm text-green-800">
+            <strong>✓ Phase 3 Week 1 Complete:</strong> Marketing tools (campaigns & subscribers) are now available!
           </p>
         </div>
       </main>
