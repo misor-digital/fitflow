@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "prepare": "husky"
+    "prepare": "husky",
+    "supabase:types": "dotenv -e .env.local -- node scripts/gen-supabase-types.mjs",
+    "supabase:types:check": "dotenv -e .env.local -- node scripts/gen-supabase-types.mjs && git diff --exit-code -- lib/supabase/types.ts"
   },
   "dependencies": {
     "@getbrevo/brevo": "^3.0.1",
