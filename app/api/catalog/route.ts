@@ -100,14 +100,18 @@ export async function GET(request: Request) {
 
       case 'all':
       default: {
-        const [boxTypes, sports, colors, flavors, dietary, sizes] = await Promise.all([
+        const [boxTypes, sports, colors, flavors, dietary, sizesUpper, sizesLower] = await Promise.all([
           getBoxTypes(),
           getOptions('sports'),
           getColors(),
           getOptions('flavors'),
           getOptions('dietary'),
-          getOptions('sizes'),
+          getOptions('sizes-upper'),
+          getOptions('sizes-lower'),
         ]);
+        
+        // Combine sizes
+        const sizes = [...sizesUpper, ...sizesLower];
 
         // Build label maps
         const sportLabels = sports.reduce((acc, o) => { acc[o.id] = o.label; return acc; }, {} as Record<string, string>);

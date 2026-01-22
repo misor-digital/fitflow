@@ -6,6 +6,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
+import type { BoxTypeRow, OptionRow } from '@/lib/domain';
 
 // Server-side Supabase client with service role
 const getServiceClient = () => {
@@ -15,28 +16,9 @@ const getServiceClient = () => {
   return createClient<Database>(supabaseUrl, supabaseServiceKey);
 };
 
-export interface BoxType {
-  id: string;
-  name: string;
-  description: string;
-  base_price: number;
-  is_active: boolean;
-  sort_order: number;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface Option {
-  id: string;
-  set_id: string;
-  value: string;
-  label: string;
-  price_modifier: number;
-  is_active: boolean;
-  sort_order: number;
-  created_at: string;
-  updated_at: string;
-}
+// Legacy type aliases - use domain types instead
+export type BoxType = BoxTypeRow;
+export type Option = OptionRow;
 
 export interface SiteConfig {
   key: string;
@@ -253,7 +235,7 @@ export async function toggleBoxType(
     // Get current status
     const { data: current } = await supabase
       .from('box_types')
-      .select('is_active')
+      .select('is_enabled')
       .eq('id', id)
       .single();
     
@@ -263,7 +245,7 @@ export async function toggleBoxType(
     
     const { data: boxType, error } = await supabase
       .from('box_types')
-      .update({ is_active: !current.is_active } as any)
+      .update({ is_enabled: !current.is_enabled } as any)
       .eq('id', id)
       .select()
       .single();
@@ -281,7 +263,7 @@ export async function toggleBoxType(
       p_action: 'box_type.toggled',
       p_resource_type: 'box_type',
       p_resource_id: id,
-      p_metadata: { is_active: !current.is_active },
+      p_metadata: { is_enabled: !current.is_enabled },
       p_ip_address: null,
       p_user_agent: null,
     } as any);

@@ -1,4 +1,10 @@
-'supabase' is not recognized as an internal or external command,
-operable program or batch file.
-undefined
-ΓÇëERR_PNPM_RECURSIVE_EXEC_FIRST_FAILΓÇë Command "supabase" not found
+/**
+ * This file is a placeholder for Supabase generated types.
+ * 
+ * The actual types are located in lib/supabase/types.ts
+ * This file exists for backwards compatibility.
+ * 
+ * To regenerate types, run: pnpm gen:types
+ */
+
+export type { Database, Tables, TablesInsert, TablesUpdate, Enums, CompositeTypes } from './types';

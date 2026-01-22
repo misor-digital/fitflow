@@ -6,6 +6,7 @@
 
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
+import type { PromoCodeRow } from '@/lib/domain';
 
 // Server-side Supabase client with service role
 const getServiceClient = () => {
@@ -15,19 +16,8 @@ const getServiceClient = () => {
   return createClient<Database>(supabaseUrl, supabaseServiceKey);
 };
 
-export interface PromoCode {
-  id: string;
-  code: string;
-  discount_type: 'percentage' | 'fixed';
-  discount_value: number;
-  is_active: boolean;
-  valid_from: string | null;
-  valid_until: string | null;
-  usage_limit: number | null;
-  usage_count: number;
-  created_at: string;
-  updated_at: string;
-}
+// Legacy type alias - use domain types instead
+export type PromoCode = PromoCodeRow;
 
 export interface ServiceResult<T = any> {
   success: boolean;

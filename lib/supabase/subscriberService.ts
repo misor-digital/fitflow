@@ -310,7 +310,7 @@ export async function getSubscriberStats(): Promise<{
     // Count by source
     const sourceMap = new Map<string, number>();
     allSubscribers?.forEach(sub => {
-      if (sub.status === 'subscribed') {
+      if (sub.status === 'subscribed' && sub.source) {
         const count = sourceMap.get(sub.source) || 0;
         sourceMap.set(sub.source, count + 1);
       }
@@ -361,7 +361,7 @@ export async function getSubscriberSources(): Promise<{
       return { success: false, error: error.message };
     }
     
-    const sources = [...new Set(data?.map(s => s.source) || [])];
+    const sources = [...new Set(data?.map(s => s.source).filter((s): s is string => s !== null) || [])];
     
     return {
       success: true,

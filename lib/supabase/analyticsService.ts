@@ -21,27 +21,7 @@ export interface ServiceResult<T = unknown> {
   data?: T;
 }
 
-interface OrderData {
-  total_price: number;
-  created_at: string;
-  status: string;
-  box_type_id?: string;
-  promo_code_id?: string;
-  discount_amount?: number;
-  customer_email?: string;
-}
-
-interface BoxTypeData {
-  id: string;
-  name: string;
-}
-
-interface PromoCodeData {
-  id: string;
-  code: string;
-  discount_type: string;
-  discount_value: number;
-}
+// Note: These interfaces are not used - analytics queries use actual DB columns
 
 export interface RevenueStats {
   totalRevenue: number;
@@ -173,9 +153,10 @@ export async function getRevenueByBoxType(): Promise<ServiceResult<ProductStats[
   const supabase = getServiceClient();
   
   try {
+    // Note: preorders table uses box_type (enum), not box_type_id (foreign key)
     const { data: orders, error } = await supabase
       .from('preorders')
-      .select('box_type_id, total_price');
+      .select('box_type, final_price_eur');
     
     if (error) {
       console.error('Failed to get revenue by box type:', error);
@@ -194,23 +175,24 @@ export async function getRevenueByBoxType(): Promise<ServiceResult<ProductStats[
     });
     
     // Group by box type
-    const stats = orders?.reduce((acc: ProductStats[], order: { box_type_id?: string; total_price?: number }) => {
-      const boxTypeId = order.box_type_id;
+    const stats = orders?.reduce((acc: ProductStats[], order) => {
+      const boxTypeId = order.box_type;
       if (!boxTypeId) return acc;
       
       const existing = acc.find(item => item.boxTypeId === boxTypeId);
+      const price = order.final_price_eur ?? 0;
       
       if (existing) {
         existing.totalOrders += 1;
-        existing.totalRevenue += order.total_price || 0;
+        existing.totalRevenue += price;
         existing.averagePrice = existing.totalRevenue / existing.totalOrders;
       } else {
         acc.push({
           boxTypeId,
           boxTypeName: boxTypeMap.get(boxTypeId) || 'Unknown',
           totalOrders: 1,
-          totalRevenue: order.total_price || 0,
-          averagePrice: order.total_price || 0,
+          totalRevenue: price,
+          averagePrice: price,
         });
       }
       
@@ -219,7 +201,7 @@ export async function getRevenueByBoxType(): Promise<ServiceResult<ProductStats[
     
     return {
       success: true,
-      data: stats.sort((a, b) => b.totalRevenue - a.totalRevenue),
+      data: stats.sort((a: ProductStats, b: ProductStats) => b.totalRevenue - a.totalRevenue),
     };
   } catch (error) {
     console.error('Error getting revenue by box type:', error);
@@ -247,15 +229,15 @@ export async function getPromoCodeUsage(): Promise<ServiceResult<any[]>> {
       return { success: false, error: error.message };
     }
     
-    // Get promo codes
+    // Get promo codes - Note: promo_codes table uses discount_percent, not discount_type/discount_value
     const { data: promoCodes } = await supabase
       .from('promo_codes')
-      .select('id, code, discount_type, discount_value');
+      .select('id, code, discount_percent');
     
     // Create a map for faster lookup
-    const promoCodeMap = new Map<string, { code: string; discount_type: string; discount_value: number }>();
-    promoCodes?.forEach((pc: { id: string; code: string; discount_type: string; discount_value: number }) => {
-      promoCodeMap.set(pc.id, { code: pc.code, discount_type: pc.discount_type, discount_value: pc.discount_value });
+    const promoCodeMap = new Map<string, { code: string; discount_percent: number }>();
+    promoCodes?.forEach((pc) => {
+      promoCodeMap.set(pc.id, { code: pc.code, discount_percent: pc.discount_percent });
     });
     
     // Group by promo code
@@ -273,8 +255,7 @@ export async function getPromoCodeUsage(): Promise<ServiceResult<any[]>> {
         acc.push({
           promoCodeId,
           code: promoCode?.code || 'Unknown',
-          discountType: promoCode?.discount_type || 'unknown',
-          discountValue: promoCode?.discount_value || 0,
+          discountPercent: promoCode?.discount_percent || 0,
           usageCount: 1,
           totalDiscount: order.discount_amount || 0,
         });

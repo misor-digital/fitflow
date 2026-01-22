@@ -1,5 +1,8 @@
 import { supabase } from './client';
-import type { PreorderInsert, Preorder } from './types';
+import type { PreorderRow, PreorderInsert } from '@/lib/domain';
+
+// Legacy type alias
+export type Preorder = PreorderRow;
 
 export interface PreorderFormData {
   // Step 1

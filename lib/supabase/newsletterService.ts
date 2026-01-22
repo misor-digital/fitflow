@@ -5,7 +5,8 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
-import type { Database, SubscriptionStatus } from './types';
+import type { Database } from './types';
+import type { SubscriptionStatus } from '@/lib/domain';
 
 // Server-side Supabase client with service role
 const getServiceClient = () => {

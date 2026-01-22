@@ -13,16 +13,16 @@
 // Box Types
 // ============================================================================
 
-// Import the canonical BoxType from Supabase types (matches DB enum)
+// Import the canonical BoxType from domain layer (matches DB enum)
 // and re-export as BoxTypeId for semantic clarity in preorder domain
-import type { BoxType as SupabaseBoxType } from '@/lib/supabase/types';
+import type { BoxType as DomainBoxType } from '@/lib/domain';
 
 /**
  * All valid box type identifiers
- * This is an alias for the Supabase BoxType enum to maintain consistency
+ * This is an alias for the domain BoxType enum to maintain consistency
  * with the database schema while providing semantic clarity in the preorder domain.
  */
-export type BoxTypeId = SupabaseBoxType;
+export type BoxTypeId = DomainBoxType;
 
 /**
  * Box type configuration from database

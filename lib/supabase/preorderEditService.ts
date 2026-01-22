@@ -19,7 +19,7 @@ export interface PreorderEditToken {
   id: string;
   preorder_id: string;
   token: string;
-  purpose: 'edit' | 'cancel';
+  purpose: string; // Database stores as string, not enum
   expires_at: string;
   used_at: string | null;
   created_at: string;
