@@ -329,12 +329,20 @@ export default function OptionsPage() {
                           {formatPrice(option.price_modifier)}
                         </td>
                         <td className="px-6 py-4 text-right text-sm">
-                          <button
-                            onClick={() => handleDeleteOption(option.id, option.label)}
-                            className="text-red-600 hover:text-red-900"
-                          >
-                            Изтрий
-                          </button>
+                          <div className="flex justify-end gap-2">
+                            <Link
+                              href={`/staff/catalog/options/${option.id}/edit`}
+                              className="text-purple-600 hover:text-purple-900"
+                            >
+                              Редактирай
+                            </Link>
+                            <button
+                              onClick={() => handleDeleteOption(option.id, option.label)}
+                              className="text-red-600 hover:text-red-900"
+                            >
+                              Изтрий
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}

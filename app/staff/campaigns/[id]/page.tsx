@@ -257,6 +257,21 @@ export default function CampaignDetailsPage() {
           </div>
         )}
 
+        {/* Campaign Stats Link */}
+        {campaign.status === 'sent' && (
+          <div className="mb-6">
+            <Link
+              href={`/staff/campaigns/${campaignId}/stats`}
+              className="inline-flex items-center gap-2 text-purple-600 hover:text-purple-800 font-semibold"
+            >
+              📊 Виж подробна статистика
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Campaign Details */}
           <div className="lg:col-span-2 space-y-6">
