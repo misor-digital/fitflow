@@ -11,8 +11,9 @@ import { getCampaign, deleteCampaign } from '@/lib/supabase/campaignService';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     // Get authenticated user
     const supabase = createClient(
@@ -55,7 +56,7 @@ export async function GET(
     }
 
     // Get campaign
-    const result = await getCampaign(params.id);
+    const result = await getCampaign(id);
 
     if (!result.success) {
       return NextResponse.json(
@@ -79,8 +80,9 @@ export async function GET(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     // Get authenticated user
     const supabase = createClient(
@@ -122,7 +124,7 @@ export async function DELETE(
     }
 
     // Delete campaign
-    const result = await deleteCampaign(params.id, user.id);
+    const result = await deleteCampaign(id, user.id);
 
     if (!result.success) {
       return NextResponse.json(

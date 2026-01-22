@@ -24,13 +24,11 @@ function StaffOnboardContent() {
 
   useEffect(() => {
     if (!token) {
-      setError('Невалиден линк за настройка');
       setLoading(false);
-      return;
+    } else {
+      // Just set loading to false - token will be verified on submit
+      setLoading(false);
     }
-
-    // Just set loading to false - token will be verified on submit
-    setLoading(false);
   }, [token]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -73,7 +71,7 @@ function StaffOnboardContent() {
 
       // Redirect to login
       router.push('/staff/login?message=password_set');
-    } catch (err) {
+    } catch {
       setError('Грешка при задаване на парола');
       setSaving(false);
     }
@@ -90,13 +88,13 @@ function StaffOnboardContent() {
     );
   }
 
-  if (error && !token) {
+  if (!token) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
         <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
           <div className="text-red-500 text-5xl mb-4">⚠️</div>
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Грешка</h1>
-          <p className="text-gray-600 mb-6">{error}</p>
+          <p className="text-gray-600 mb-6">Невалиден линк за настройка</p>
           <a
             href="/staff/login"
             className="inline-block bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition"

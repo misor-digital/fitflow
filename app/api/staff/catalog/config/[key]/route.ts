@@ -10,8 +10,9 @@ import { updateSiteConfig } from '@/lib/supabase/catalogService';
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { key: string } }
+  { params }: { params: Promise<{ key: string }> }
 ) {
+  const { key } = await params;
   try {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -45,7 +46,7 @@ export async function PUT(
       );
     }
 
-    const result = await updateSiteConfig(params.key, value.toString(), user.id);
+    const result = await updateSiteConfig(key, value.toString(), user.id);
 
     if (!result.success) {
       return NextResponse.json({ error: result.error }, { status: 400 });

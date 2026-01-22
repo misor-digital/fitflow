@@ -12,8 +12,9 @@ import { getBoxType, updateBoxType, deleteBoxType } from '@/lib/supabase/catalog
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -37,7 +38,7 @@ export async function GET(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const result = await getBoxType(params.id);
+    const result = await getBoxType(id);
     if (!result.success) {
       return NextResponse.json({ error: result.error }, { status: 404 });
     }
@@ -51,8 +52,9 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -80,7 +82,7 @@ export async function PUT(
     const { name, description, basePrice } = body;
 
     const result = await updateBoxType(
-      params.id,
+      id,
       { name, description, basePrice },
       user.id
     );
@@ -102,8 +104,9 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -127,7 +130,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const result = await deleteBoxType(params.id, user.id);
+    const result = await deleteBoxType(id, user.id);
 
     if (!result.success) {
       return NextResponse.json({ error: result.error }, { status: 400 });

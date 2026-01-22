@@ -1,0 +1,4 @@
+'supabase' is not recognized as an internal or external command,
+operable program or batch file.
+undefined
+ΓÇëERR_PNPM_RECURSIVE_EXEC_FIRST_FAILΓÇë Command "supabase" not found

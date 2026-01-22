@@ -6,8 +6,9 @@
 
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, Suspense, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 interface PreorderData {
   id: string;
@@ -43,17 +44,7 @@ function PreorderEditContent() {
   // Form state
   const [formData, setFormData] = useState<Partial<PreorderData>>({});
 
-  useEffect(() => {
-    if (!token) {
-      setError('Невалиден линк за редакция');
-      setLoading(false);
-      return;
-    }
-
-    fetchPreorder();
-  }, [token]);
-
-  const fetchPreorder = async () => {
+  const fetchPreorder = useCallback(async () => {
     try {
       const response = await fetch(`/api/preorder/edit?token=${token}`);
       const data = await response.json();
@@ -67,11 +58,21 @@ function PreorderEditContent() {
       setPreorder(data.preorder);
       setFormData(data.preorder);
       setLoading(false);
-    } catch (err) {
+    } catch {
       setError('Грешка при зареждане на поръчката');
       setLoading(false);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    if (!token) {
+      setError('Невалиден линк за редакция');
+      setLoading(false);
+      return;
+    }
+
+    fetchPreorder();
+  }, [token, fetchPreorder]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,7 +98,7 @@ function PreorderEditContent() {
       setTimeout(() => {
         router.push('/');
       }, 3000);
-    } catch (err) {
+    } catch {
       setError('Грешка при запазване');
       setSaving(false);
     }
@@ -121,12 +122,12 @@ function PreorderEditContent() {
           <div className="text-red-500 text-5xl mb-4">⚠️</div>
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Грешка</h1>
           <p className="text-gray-600 mb-6">{error}</p>
-          <a
+          <Link
             href="/"
             className="inline-block bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition"
           >
             Към началната страница
-          </a>
+          </Link>
         </div>
       </div>
     );
@@ -250,12 +251,12 @@ function PreorderEditContent() {
               >
                 {saving ? 'Запазване...' : 'Запази промените'}
               </button>
-              <a
+              <Link
                 href="/"
                 className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition"
               >
                 Отказ
-              </a>
+              </Link>
             </div>
           </form>
 

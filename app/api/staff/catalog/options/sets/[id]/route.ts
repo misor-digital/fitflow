@@ -1,7 +1,7 @@
 /**
- * API Route: Options Management
- * GET /api/staff/catalog/options/[setId] - List options for a set
- * POST /api/staff/catalog/options/[setId] - Create new option
+ * API Route: Options Management by Set
+ * GET /api/staff/catalog/options/sets/[id] - List options for a set
+ * POST /api/staff/catalog/options/sets/[id] - Create new option
  */
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -11,8 +11,9 @@ import { listOptions, createOption } from '@/lib/supabase/catalogService';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { setId: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id: setId } = await params;
   try {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -36,7 +37,7 @@ export async function GET(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const result = await listOptions(params.setId);
+    const result = await listOptions(setId);
 
     if (!result.success) {
       return NextResponse.json({ error: result.error }, { status: 400 });
@@ -51,8 +52,9 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { setId: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id: setId } = await params;
   try {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -87,7 +89,7 @@ export async function POST(
     }
 
     const result = await createOption(
-      params.setId,
+      setId,
       { value: value.trim(), label: label.trim(), priceModifier },
       user.id
     );

@@ -6,8 +6,9 @@
 
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, Suspense, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 
 function NewsletterUnsubscribeContent() {
   const searchParams = useSearchParams();
@@ -17,17 +18,7 @@ function NewsletterUnsubscribeContent() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  useEffect(() => {
-    if (!token) {
-      setError('Невалиден линк за отписване');
-      setLoading(false);
-      return;
-    }
-
-    unsubscribe();
-  }, [token]);
-
-  const unsubscribe = async () => {
+  const unsubscribe = useCallback(async () => {
     try {
       const response = await fetch(`/api/newsletter/unsubscribe?token=${token}`);
       const data = await response.json();
@@ -40,11 +31,21 @@ function NewsletterUnsubscribeContent() {
 
       setSuccess(true);
       setLoading(false);
-    } catch (err) {
+    } catch {
       setError('Грешка при отписване');
       setLoading(false);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    if (!token) {
+      setError('Невалиден линк за отписване');
+      setLoading(false);
+      return;
+    }
+
+    unsubscribe();
+  }, [token, unsubscribe]);
 
   if (loading) {
     return (
@@ -64,12 +65,12 @@ function NewsletterUnsubscribeContent() {
           <div className="text-red-500 text-5xl mb-4">⚠️</div>
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Грешка</h1>
           <p className="text-gray-600 mb-6">{error}</p>
-          <a
+          <Link
             href="/"
             className="inline-block bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition"
           >
             Към началната страница
-          </a>
+          </Link>
         </div>
       </div>
     );
@@ -95,12 +96,12 @@ function NewsletterUnsubscribeContent() {
             </p>
           </div>
           <div className="flex flex-col gap-3">
-            <a
+            <Link
               href="/"
               className="inline-block bg-gradient-to-r from-purple-600 to-purple-800 text-white px-8 py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-purple-900 transition"
             >
               Към началната страница
-            </a>
+            </Link>
             <button
               onClick={() => window.location.href = '/#newsletter'}
               className="text-purple-600 hover:text-purple-700 text-sm font-medium"

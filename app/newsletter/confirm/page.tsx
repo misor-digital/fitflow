@@ -6,8 +6,9 @@
 
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, Suspense, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 
 function NewsletterConfirmContent() {
   const searchParams = useSearchParams();
@@ -17,17 +18,7 @@ function NewsletterConfirmContent() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
-  useEffect(() => {
-    if (!token) {
-      setError('Невалиден линк за потвърждение');
-      setLoading(false);
-      return;
-    }
-
-    confirmSubscription();
-  }, [token]);
-
-  const confirmSubscription = async () => {
+  const confirmSubscription = useCallback(async () => {
     try {
       const response = await fetch(`/api/newsletter/confirm?token=${token}`);
       const data = await response.json();
@@ -40,11 +31,21 @@ function NewsletterConfirmContent() {
 
       setSuccess(true);
       setLoading(false);
-    } catch (err) {
+    } catch {
       setError('Грешка при потвърждение');
       setLoading(false);
     }
-  };
+  }, [token]);
+
+  useEffect(() => {
+    if (!token) {
+      setError('Невалиден линк за потвърждение');
+      setLoading(false);
+      return;
+    }
+
+    confirmSubscription();
+  }, [token, confirmSubscription]);
 
   if (loading) {
     return (
@@ -64,12 +65,12 @@ function NewsletterConfirmContent() {
           <div className="text-red-500 text-5xl mb-4">⚠️</div>
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Грешка</h1>
           <p className="text-gray-600 mb-6">{error}</p>
-          <a
+          <Link
             href="/"
             className="inline-block bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition"
           >
             Към началната страница
-          </a>
+          </Link>
         </div>
       </div>
     );
@@ -91,12 +92,12 @@ function NewsletterConfirmContent() {
               Ще получаваш новини, специални оферти и съвети за фитнес директно в пощенската си кутия.
             </p>
           </div>
-          <a
+          <Link
             href="/"
             className="inline-block bg-gradient-to-r from-purple-600 to-purple-800 text-white px-8 py-3 rounded-lg font-semibold hover:from-purple-700 hover:to-purple-900 transition"
           >
             Към началната страница
-          </a>
+          </Link>
         </div>
       </div>
     );

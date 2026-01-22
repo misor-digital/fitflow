@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -27,13 +27,8 @@ export default function CampaignsPage() {
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
 
-  useEffect(() => {
-    checkAuthAndLoadCampaigns();
-  }, [page]);
-
-  const checkAuthAndLoadCampaigns = async () => {
+  const checkAuthAndLoadCampaigns = useCallback(async () => {
     try {
       const sessionData = localStorage.getItem('supabase.auth.token');
       if (!sessionData) {
@@ -61,14 +56,17 @@ export default function CampaignsPage() {
 
       const data = await response.json();
       setCampaigns(data.campaigns || []);
-      setTotal(data.total || 0);
       setTotalPages(data.totalPages || 1);
       setLoading(false);
     } catch (err) {
       console.error('Error loading campaigns:', err);
       setLoading(false);
     }
-  };
+  }, [page, router]);
+
+  useEffect(() => {
+    checkAuthAndLoadCampaigns();
+  }, [checkAuthAndLoadCampaigns]);
 
   const handleDelete = async (campaignId: string) => {
     if (!confirm('Сигурни ли сте, че искате да изтриете тази кампания?')) {
@@ -174,7 +172,7 @@ export default function CampaignsPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white rounded-lg shadow p-6">
             <p className="text-sm text-gray-600 mb-1">Общо кампании</p>
-            <p className="text-3xl font-bold text-gray-900">{total}</p>
+            <p className="text-3xl font-bold text-gray-900">{campaigns.length}</p>
           </div>
           <div className="bg-white rounded-lg shadow p-6">
             <p className="text-sm text-gray-600 mb-1">Чернови</p>

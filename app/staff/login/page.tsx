@@ -8,6 +8,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function StaffLoginPage() {
   const router = useRouter();
@@ -55,7 +56,7 @@ export default function StaffLoginPage() {
 
       // Successful login - redirect to dashboard
       router.push('/staff/dashboard');
-    } catch (err) {
+    } catch {
       setError('Грешка при влизане');
       setLoading(false);
     }
@@ -163,12 +164,12 @@ export default function StaffLoginPage() {
 
         {/* Back to Home */}
         <div className="text-center mt-6">
-          <a
+          <Link
             href="/"
             className="text-purple-200 hover:text-white text-sm transition"
           >
             ← Към началната страница
-          </a>
+          </Link>
         </div>
       </div>
     </div>

@@ -6,8 +6,9 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 interface StaffUser {
   full_name: string;
@@ -23,11 +24,7 @@ export default function StaffDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [staffUser, setStaffUser] = useState<StaffUser | null>(null);
 
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     try {
       // Get session from localStorage
       const sessionData = localStorage.getItem('supabase.auth.token');
@@ -60,7 +57,11 @@ export default function StaffDashboardPage() {
       localStorage.removeItem('supabase.auth.token');
       router.push('/staff/login');
     }
-  };
+  }, [router]);
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
   const handleLogout = async () => {
     localStorage.removeItem('supabase.auth.token');
@@ -93,10 +94,13 @@ export default function StaffDashboardPage() {
               <p className="text-sm text-gray-600">Вътрешна система</p>
             </div>
             <div className="flex items-center gap-4">
-              <div className="text-right">
+              <Link
+                href="/staff/profile"
+                className="text-right hover:bg-gray-50 px-3 py-2 rounded-lg transition"
+              >
                 <p className="text-sm font-medium text-gray-900">{staffUser?.full_name}</p>
                 <p className="text-xs text-gray-500">{staffUser?.email}</p>
-              </div>
+              </Link>
               <button
                 onClick={handleLogout}
                 className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50 transition"
@@ -118,24 +122,6 @@ export default function StaffDashboardPage() {
           <p className="text-purple-100">
             Това е твоят служебен панел. Избери секция от менюто по-долу.
           </p>
-        </div>
-
-        {/* Roles Section */}
-        <div className="bg-white rounded-lg shadow p-6 mb-8">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Твоите роли</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {staffUser?.roles.map((role) => (
-              <div
-                key={role.name}
-                className="p-4 border border-purple-200 rounded-lg bg-purple-50"
-              >
-                <h4 className="font-semibold text-purple-900 mb-1">
-                  {role.name.replace(/_/g, ' ').toUpperCase()}
-                </h4>
-                <p className="text-sm text-purple-700">{role.description}</p>
-              </div>
-            ))}
-          </div>
         </div>
 
         {/* Quick Actions */}
@@ -203,14 +189,21 @@ export default function StaffDashboardPage() {
           )}
 
           {/* Finance */}
-          {hasRole('finance') && (
+          {(hasRole('finance') || hasRole('admin_ops') || hasRole('super_admin')) && (
             <>
               <DashboardCard
-                title="Финанси"
-                description="Приходи и аналитика"
+                title="Приходи"
+                description="Анализ на приходите"
                 icon="💰"
-                href="/staff/analytics"
+                href="/staff/analytics/revenue"
                 color="green"
+              />
+              <DashboardCard
+                title="Поръчки"
+                description="Анализ на поръчките"
+                icon="📊"
+                href="/staff/analytics/orders"
+                color="blue"
               />
               <DashboardCard
                 title="Промо кодове"
@@ -223,12 +216,12 @@ export default function StaffDashboardPage() {
           )}
 
           {/* Developer */}
-          {hasRole('developer') && (
+          {(hasRole('developer') || hasRole('admin_ops') || hasRole('super_admin')) && (
             <DashboardCard
               title="Система"
               description="Системно здраве и логове"
               icon="⚙️"
-              href="/staff/system"
+              href="/staff/system/health"
               color="gray"
             />
           )}
@@ -244,13 +237,7 @@ export default function StaffDashboardPage() {
             />
           )}
         </div>
-
-        {/* Info Notice */}
-        <div className="mt-8 p-4 bg-green-50 rounded-lg border border-green-200">
-          <p className="text-sm text-green-800">
-            <strong>✓ Phase 3 Week 1 Complete:</strong> Marketing tools (campaigns & subscribers) are now available!
-          </p>
-        </div>
+        
       </main>
     </div>
   );

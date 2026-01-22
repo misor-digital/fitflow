@@ -11,8 +11,9 @@ import { updateOption, deleteOption } from '@/lib/supabase/catalogService';
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -40,7 +41,7 @@ export async function PUT(
     const { value, label, priceModifier } = body;
 
     const result = await updateOption(
-      params.id,
+      id,
       { value, label, priceModifier },
       user.id
     );
@@ -62,8 +63,9 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -87,7 +89,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const result = await deleteOption(params.id, user.id);
+    const result = await deleteOption(id, user.id);
 
     if (!result.success) {
       return NextResponse.json({ error: result.error }, { status: 400 });

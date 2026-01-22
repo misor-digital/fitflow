@@ -51,7 +51,7 @@ export default function OptionsPage() {
 
       const session = JSON.parse(sessionData);
       
-      const response = await fetch(`/api/staff/catalog/options/${activeTab}`, {
+      const response = await fetch(`/api/staff/catalog/options/sets/${activeTab}`, {
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
         },
@@ -92,7 +92,7 @@ export default function OptionsPage() {
         return;
       }
 
-      const response = await fetch(`/api/staff/catalog/options/${activeTab}`, {
+      const response = await fetch(`/api/staff/catalog/options/sets/${activeTab}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,

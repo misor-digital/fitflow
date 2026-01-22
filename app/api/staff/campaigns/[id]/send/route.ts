@@ -11,8 +11,9 @@ import { sendCampaign } from '@/lib/supabase/campaignService';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     // Get authenticated user
     const supabase = createClient(
@@ -55,7 +56,7 @@ export async function POST(
     }
 
     // Send campaign
-    const result = await sendCampaign(params.id, user.id);
+    const result = await sendCampaign(id, user.id);
 
     if (!result.success) {
       return NextResponse.json(

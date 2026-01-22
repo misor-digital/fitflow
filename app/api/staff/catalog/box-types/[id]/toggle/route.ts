@@ -10,8 +10,9 @@ import { toggleBoxType } from '@/lib/supabase/catalogService';
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -35,7 +36,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const result = await toggleBoxType(params.id, user.id);
+    const result = await toggleBoxType(id, user.id);
 
     if (!result.success) {
       return NextResponse.json({ error: result.error }, { status: 400 });

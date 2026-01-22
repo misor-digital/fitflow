@@ -35,10 +35,6 @@ export default function CampaignDetailsPage() {
   const [error, setError] = useState('');
   const [showPreview, setShowPreview] = useState(false);
 
-  useEffect(() => {
-    checkAuthAndLoadCampaign();
-  }, [campaignId]);
-
   const checkAuthAndLoadCampaign = async () => {
     try {
       const sessionData = localStorage.getItem('supabase.auth.token');
@@ -74,6 +70,10 @@ export default function CampaignDetailsPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    checkAuthAndLoadCampaign();
+  }, [checkAuthAndLoadCampaign, campaignId]);
 
   const handleSend = async () => {
     if (!confirm('Сигурни ли сте, че искате да изпратите тази кампания до всички абонати?')) {

@@ -79,15 +79,17 @@ export async function createCampaign(
   
   try {
     // Get staff_user_id from user_id
-    const { data: staffUser } = await supabase
+    const { data: staffUserData, error: staffError } = await supabase
       .from('staff_users')
       .select('id')
       .eq('user_id', params.createdBy)
-      .single();
+      .maybeSingle();
     
-    if (!staffUser) {
+    if (staffError || !staffUserData) {
       return { success: false, error: 'Staff user not found' };
     }
+    
+    const staffUserId = (staffUserData as { id: string }).id;
     
     // Create campaign
     const { data, error } = await supabase
@@ -97,7 +99,7 @@ export async function createCampaign(
         html_content: params.htmlContent,
         text_content: params.textContent,
         status: 'draft',
-        created_by: staffUser.id,
+        created_by: staffUserId,
         total_recipients: 0,
         successful_sends: 0,
         failed_sends: 0,
@@ -110,6 +112,8 @@ export async function createCampaign(
       return { success: false, error: error?.message || 'Failed to create campaign' };
     }
     
+    const campaignData = data as Campaign;
+    
     // Log campaign creation
     await supabase.rpc('create_audit_log', {
       p_actor_type: 'staff',
@@ -117,7 +121,7 @@ export async function createCampaign(
       p_actor_email: null,
       p_action: 'campaign.created',
       p_resource_type: 'campaign',
-      p_resource_id: data.id,
+      p_resource_id: campaignData.id,
       p_metadata: { subject: params.subject, status: 'draft' },
       p_ip_address: null,
       p_user_agent: null,
@@ -125,7 +129,7 @@ export async function createCampaign(
     
     return {
       success: true,
-      campaign: data as Campaign,
+      campaign: campaignData,
     };
   } catch (error) {
     console.error('Error creating campaign:', error);
@@ -147,15 +151,17 @@ export async function sendCampaign(
   
   try {
     // Get campaign
-    const { data: campaign, error: campaignError } = await supabase
+    const { data: campaignData, error: campaignError } = await supabase
       .from('campaigns')
       .select('*')
       .eq('id', campaignId)
-      .single();
+      .maybeSingle();
     
-    if (campaignError || !campaign) {
+    if (campaignError || !campaignData) {
       return { success: false, error: 'Campaign not found' };
     }
+    
+    const campaign = campaignData as Campaign;
     
     // Check if campaign is in draft status
     if (campaign.status !== 'draft') {
@@ -173,10 +179,11 @@ export async function sendCampaign(
     }
     
     // Update campaign status to sending
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await supabase
       .from('campaigns')
       .update({
-        status: 'sending',
+        status: 'sending' as const,
         total_recipients: subscribers.length,
       } as any)
       .eq('id', campaignId);
@@ -191,10 +198,11 @@ export async function sendCampaign(
     successfulSends = subscribers.length;
     
     // Update campaign status to sent
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await supabase
       .from('campaigns')
       .update({
-        status: 'sent',
+        status: 'sent' as const,
         sent_at: new Date().toISOString(),
         successful_sends: successfulSends,
         failed_sends: failedSends,
@@ -229,9 +237,10 @@ export async function sendCampaign(
     console.error('Error sending campaign:', error);
     
     // Update campaign status to failed
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await supabase
       .from('campaigns')
-      .update({ status: 'failed' } as any)
+      .update({ status: 'failed' as const } as any)
       .eq('id', campaignId);
     
     return {
@@ -359,15 +368,17 @@ export async function deleteCampaign(
   
   try {
     // Get campaign
-    const { data: campaign } = await supabase
+    const { data: campaignData, error: campaignError } = await supabase
       .from('campaigns')
       .select('status, subject')
       .eq('id', campaignId)
-      .single();
+      .maybeSingle();
     
-    if (!campaign) {
+    if (campaignError || !campaignData) {
       return { success: false, error: 'Campaign not found' };
     }
+    
+    const campaign = campaignData as { status: string; subject: string };
     
     // Only allow deleting drafts
     if (campaign.status !== 'draft') {

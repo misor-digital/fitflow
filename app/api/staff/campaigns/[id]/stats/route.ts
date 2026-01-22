@@ -11,8 +11,9 @@ import { getCampaignStats } from '@/lib/supabase/campaignService';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     // Get authenticated user
     const supabase = createClient(
@@ -55,7 +56,7 @@ export async function GET(
     }
 
     // Get campaign stats
-    const result = await getCampaignStats(params.id);
+    const result = await getCampaignStats(id);
 
     if (!result.success) {
       return NextResponse.json(

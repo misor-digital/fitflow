@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -18,16 +18,16 @@ export default function NewBoxTypePage() {
   const [basePrice, setBasePrice] = useState('');
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    checkAuth();
-  }, []);
-
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     const sessionData = localStorage.getItem('supabase.auth.token');
     if (!sessionData) {
       router.push('/staff/login');
     }
-  };
+  }, [router]);
+
+  useEffect(() => {
+    checkAuth();
+  }, [checkAuth]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
