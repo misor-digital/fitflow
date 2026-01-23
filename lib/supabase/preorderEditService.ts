@@ -28,7 +28,7 @@ export interface PreorderEditToken {
 export interface TokenValidationResult {
   valid: boolean;
   error?: 'not_found' | 'expired' | 'already_used' | 'invalid';
-  preorder?: any;
+  preorder?: Database['public']['Tables']['preorders']['Row'];
   token?: PreorderEditToken;
 }
 
@@ -132,10 +132,10 @@ export async function validateEditToken(
  */
 export async function updatePreorderWithToken(
   token: string,
-  updates: Partial<any>,
+  updates: Partial<Database['public']['Tables']['preorders']['Update']>,
   ipAddress?: string,
   userAgent?: string
-): Promise<{ success: boolean; error?: string; preorder?: any }> {
+): Promise<{ success: boolean; error?: string; preorder?: Database['public']['Tables']['preorders']['Row'] }> {
   const supabase = getServiceClient();
   
   // Validate token first
@@ -146,6 +146,10 @@ export async function updatePreorderWithToken(
   
   const { preorder, token: tokenData } = validation;
   
+  if (!preorder || !tokenData) {
+    return { success: false, error: 'invalid' };
+  }
+  
   // Update preorder
   const { data: updatedPreorder, error: updateError } = await supabase
     .from('preorders')
@@ -155,7 +159,7 @@ export async function updatePreorderWithToken(
       edit_count: (preorder.edit_count || 0) + 1,
       ip_address: ipAddress || preorder.ip_address,
       user_agent: userAgent || preorder.user_agent,
-    } as any)
+    })
     .eq('id', preorder.id)
     .select()
     .single();
@@ -168,8 +172,8 @@ export async function updatePreorderWithToken(
   // Mark token as used
   await supabase
     .from('preorder_edit_tokens')
-    .update({ used_at: new Date().toISOString() } as any)
-    .eq('id', tokenData!.id);
+    .update({ used_at: new Date().toISOString() })
+    .eq('id', tokenData.id);
   
   return { success: true, preorder: updatedPreorder };
 }
@@ -192,6 +196,10 @@ export async function cancelPreorderWithToken(
   
   const { preorder, token: tokenData } = validation;
   
+  if (!preorder || !tokenData) {
+    return { success: false, error: 'invalid' };
+  }
+  
   // In a real system, you might soft-delete or mark as cancelled
   // For now, we'll just delete the preorder
   const { error: deleteError } = await supabase
@@ -207,21 +215,21 @@ export async function cancelPreorderWithToken(
   // Mark token as used
   await supabase
     .from('preorder_edit_tokens')
-    .update({ used_at: new Date().toISOString() } as any)
-    .eq('id', tokenData!.id);
+    .update({ used_at: new Date().toISOString() })
+    .eq('id', tokenData.id);
   
   // Log cancellation
   await supabase.rpc('create_audit_log', {
-    p_actor_type: 'anonymous' as any,
-    p_actor_id: null,
+    p_actor_type: 'anonymous',
+    p_actor_id: '',
     p_actor_email: preorder.email,
     p_action: 'preorder.cancelled',
     p_resource_type: 'preorder',
     p_resource_id: preorder.id,
     p_metadata: { order_id: preorder.order_id },
-    p_ip_address: ipAddress,
-    p_user_agent: userAgent,
-  } as any);
+    p_ip_address: ipAddress || null,
+    p_user_agent: userAgent || '',
+  });
   
   return { success: true };
 }

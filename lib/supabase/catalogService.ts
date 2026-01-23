@@ -27,7 +27,7 @@ export interface SiteConfig {
   updated_at: string;
 }
 
-export interface ServiceResult<T = any> {
+export interface ServiceResult<T = unknown> {
   success: boolean;
   error?: string;
   data?: T;
@@ -129,7 +129,7 @@ export async function createBoxType(
         base_price: data.basePrice,
         is_active: true,
         sort_order: nextOrder,
-      } as any)
+      } as unknown as Database['public']['Tables']['box_types']['Insert'])
       .select()
       .single();
     
@@ -142,14 +142,14 @@ export async function createBoxType(
     await supabase.rpc('create_audit_log', {
       p_actor_type: 'staff',
       p_actor_id: createdBy,
-      p_actor_email: null,
+      p_actor_email: '',
       p_action: 'box_type.created',
       p_resource_type: 'box_type',
       p_resource_id: boxType.id,
       p_metadata: { name: data.name, base_price: data.basePrice },
       p_ip_address: null,
-      p_user_agent: null,
-    } as any);
+      p_user_agent: '',
+    });
     
     return {
       success: true,
@@ -179,7 +179,7 @@ export async function updateBoxType(
   const supabase = getServiceClient();
   
   try {
-    const updateData: any = {};
+    const updateData: Record<string, string | number> = {};
     if (data.name !== undefined) updateData.name = data.name;
     if (data.description !== undefined) updateData.description = data.description;
     if (data.basePrice !== undefined) updateData.base_price = data.basePrice;
@@ -200,14 +200,14 @@ export async function updateBoxType(
     await supabase.rpc('create_audit_log', {
       p_actor_type: 'staff',
       p_actor_id: updatedBy,
-      p_actor_email: null,
+      p_actor_email: '',
       p_action: 'box_type.updated',
       p_resource_type: 'box_type',
       p_resource_id: id,
       p_metadata: updateData,
       p_ip_address: null,
-      p_user_agent: null,
-    } as any);
+      p_user_agent: '',
+    });
     
     return {
       success: true,
@@ -245,7 +245,7 @@ export async function toggleBoxType(
     
     const { data: boxType, error } = await supabase
       .from('box_types')
-      .update({ is_enabled: !current.is_enabled } as any)
+      .update({ is_enabled: !current.is_enabled })
       .eq('id', id)
       .select()
       .single();
@@ -259,14 +259,14 @@ export async function toggleBoxType(
     await supabase.rpc('create_audit_log', {
       p_actor_type: 'staff',
       p_actor_id: updatedBy,
-      p_actor_email: null,
+      p_actor_email: '',
       p_action: 'box_type.toggled',
       p_resource_type: 'box_type',
       p_resource_id: id,
       p_metadata: { is_enabled: !current.is_enabled },
       p_ip_address: null,
-      p_user_agent: null,
-    } as any);
+      p_user_agent: '',
+    });
     
     return {
       success: true,
@@ -295,7 +295,7 @@ export async function reorderBoxTypes(
     for (let i = 0; i < order.length; i++) {
       await supabase
         .from('box_types')
-        .update({ sort_order: i + 1 } as any)
+        .update({ sort_order: i + 1 })
         .eq('id', order[i]);
     }
     
@@ -303,14 +303,14 @@ export async function reorderBoxTypes(
     await supabase.rpc('create_audit_log', {
       p_actor_type: 'staff',
       p_actor_id: updatedBy,
-      p_actor_email: null,
+      p_actor_email: '',
       p_action: 'box_types.reordered',
       p_resource_type: 'box_type',
-      p_resource_id: null,
+      p_resource_id: '',
       p_metadata: { order },
       p_ip_address: null,
-      p_user_agent: null,
-    } as any);
+      p_user_agent: '',
+    });
     
     return { success: true };
   } catch (error) {
@@ -353,14 +353,14 @@ export async function deleteBoxType(
     await supabase.rpc('create_audit_log', {
       p_actor_type: 'staff',
       p_actor_id: deletedBy,
-      p_actor_email: null,
+      p_actor_email: '',
       p_action: 'box_type.deleted',
       p_resource_type: 'box_type',
       p_resource_id: id,
       p_metadata: { name: boxType?.name },
       p_ip_address: null,
-      p_user_agent: null,
-    } as any);
+      p_user_agent: '',
+    });
     
     return { success: true };
   } catch (error) {
@@ -386,7 +386,7 @@ export async function listOptions(setId: string): Promise<ServiceResult<Option[]
     const { data, error } = await supabase
       .from('options')
       .select('*')
-      .eq('set_id', setId)
+      .eq('option_set_id', setId)
       .order('sort_order', { ascending: true });
     
     if (error) {
@@ -426,7 +426,7 @@ export async function createOption(
     const { data: maxOrder } = await supabase
       .from('options')
       .select('sort_order')
-      .eq('set_id', setId)
+      .eq('option_set_id', setId)
       .order('sort_order', { ascending: false })
       .limit(1)
       .single();
@@ -436,13 +436,13 @@ export async function createOption(
     const { data: option, error } = await supabase
       .from('options')
       .insert({
-        set_id: setId,
+        id: crypto.randomUUID(),
+        option_set_id: setId,
         value: data.value,
         label: data.label,
-        price_modifier: data.priceModifier,
-        is_active: true,
+        is_enabled: true,
         sort_order: nextOrder,
-      } as any)
+      })
       .select()
       .single();
     
@@ -455,14 +455,14 @@ export async function createOption(
     await supabase.rpc('create_audit_log', {
       p_actor_type: 'staff',
       p_actor_id: createdBy,
-      p_actor_email: null,
+      p_actor_email: '',
       p_action: 'option.created',
       p_resource_type: 'option',
       p_resource_id: option.id,
       p_metadata: { set_id: setId, value: data.value, label: data.label },
       p_ip_address: null,
-      p_user_agent: null,
-    } as any);
+      p_user_agent: '',
+    });
     
     return {
       success: true,
@@ -492,7 +492,7 @@ export async function updateOption(
   const supabase = getServiceClient();
   
   try {
-    const updateData: any = {};
+    const updateData: Record<string, string | number> = {};
     if (data.value !== undefined) updateData.value = data.value;
     if (data.label !== undefined) updateData.label = data.label;
     if (data.priceModifier !== undefined) updateData.price_modifier = data.priceModifier;
@@ -513,14 +513,14 @@ export async function updateOption(
     await supabase.rpc('create_audit_log', {
       p_actor_type: 'staff',
       p_actor_id: updatedBy,
-      p_actor_email: null,
+      p_actor_email: '',
       p_action: 'option.updated',
       p_resource_type: 'option',
       p_resource_id: id,
       p_metadata: updateData,
       p_ip_address: null,
-      p_user_agent: null,
-    } as any);
+      p_user_agent: '',
+    });
     
     return {
       success: true,
@@ -548,7 +548,7 @@ export async function deleteOption(
     // Get option details for logging
     const { data: option } = await supabase
       .from('options')
-      .select('set_id, value, label')
+      .select('option_set_id, value, label')
       .eq('id', id)
       .single();
     
@@ -566,14 +566,14 @@ export async function deleteOption(
     await supabase.rpc('create_audit_log', {
       p_actor_type: 'staff',
       p_actor_id: deletedBy,
-      p_actor_email: null,
+      p_actor_email: '',
       p_action: 'option.deleted',
       p_resource_type: 'option',
       p_resource_id: id,
       p_metadata: option,
       p_ip_address: null,
-      p_user_agent: null,
-    } as any);
+      p_user_agent: '',
+    });
     
     return { success: true };
   } catch (error) {
@@ -662,7 +662,7 @@ export async function updateSiteConfig(
   try {
     const { data: config, error } = await supabase
       .from('site_config')
-      .update({ value } as any)
+      .update({ value })
       .eq('key', key)
       .select()
       .single();
@@ -676,14 +676,14 @@ export async function updateSiteConfig(
     await supabase.rpc('create_audit_log', {
       p_actor_type: 'staff',
       p_actor_id: updatedBy,
-      p_actor_email: null,
+      p_actor_email: '',
       p_action: 'site_config.updated',
       p_resource_type: 'site_config',
       p_resource_id: key,
       p_metadata: { key, value },
       p_ip_address: null,
-      p_user_agent: null,
-    } as any);
+      p_user_agent: '',
+    });
     
     return {
       success: true,

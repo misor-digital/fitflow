@@ -103,7 +103,7 @@ export async function createCampaign(
         total_recipients: 0,
         successful_sends: 0,
         failed_sends: 0,
-      } as any)
+      })
       .select()
       .single();
     
@@ -118,14 +118,14 @@ export async function createCampaign(
     await supabase.rpc('create_audit_log', {
       p_actor_type: 'staff',
       p_actor_id: params.createdBy,
-      p_actor_email: null,
+      p_actor_email: '',
       p_action: 'campaign.created',
       p_resource_type: 'campaign',
       p_resource_id: campaignData.id,
       p_metadata: { subject: params.subject, status: 'draft' },
       p_ip_address: null,
-      p_user_agent: null,
-    } as any);
+      p_user_agent: '',
+    });
     
     return {
       success: true,
@@ -179,41 +179,39 @@ export async function sendCampaign(
     }
     
     // Update campaign status to sending
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await supabase
       .from('campaigns')
       .update({
-        status: 'sending' as const,
+        status: 'sending',
         total_recipients: subscribers.length,
-      } as any)
+      })
       .eq('id', campaignId);
     
     // Send emails (this would integrate with email service)
     // For now, we'll simulate the sending and track results
     let successfulSends = 0;
-    let failedSends = 0;
+    const failedSends = 0;
     
     // In production, this would be done via a background job/queue
     // For now, we'll just mark as sent
     successfulSends = subscribers.length;
     
     // Update campaign status to sent
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await supabase
       .from('campaigns')
       .update({
-        status: 'sent' as const,
+        status: 'sent',
         sent_at: new Date().toISOString(),
         successful_sends: successfulSends,
         failed_sends: failedSends,
-      } as any)
+      })
       .eq('id', campaignId);
     
     // Log campaign send
     await supabase.rpc('create_audit_log', {
       p_actor_type: 'staff',
       p_actor_id: sentBy,
-      p_actor_email: null,
+      p_actor_email: '',
       p_action: 'campaign.sent',
       p_resource_type: 'campaign',
       p_resource_id: campaignId,
@@ -224,8 +222,8 @@ export async function sendCampaign(
         failed_sends: failedSends,
       },
       p_ip_address: null,
-      p_user_agent: null,
-    } as any);
+      p_user_agent: '',
+    });
     
     return {
       success: true,
@@ -237,10 +235,9 @@ export async function sendCampaign(
     console.error('Error sending campaign:', error);
     
     // Update campaign status to failed
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await supabase
       .from('campaigns')
-      .update({ status: 'failed' as const } as any)
+      .update({ status: 'failed' })
       .eq('id', campaignId);
     
     return {
@@ -400,14 +397,14 @@ export async function deleteCampaign(
     await supabase.rpc('create_audit_log', {
       p_actor_type: 'staff',
       p_actor_id: deletedBy,
-      p_actor_email: null,
+      p_actor_email: '',
       p_action: 'campaign.deleted',
       p_resource_type: 'campaign',
       p_resource_id: campaignId,
       p_metadata: { subject: campaign.subject },
       p_ip_address: null,
-      p_user_agent: null,
-    } as any);
+      p_user_agent: '',
+    });
     
     return { success: true };
   } catch (error) {

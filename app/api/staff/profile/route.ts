@@ -91,7 +91,7 @@ export async function PUT(request: NextRequest) {
     // Update staff_users table
     const { error: updateError } = await supabase
       .from('staff_users')
-      .update({ full_name: fullName.trim() } as any)
+      .update({ full_name: fullName.trim() })
       .eq('user_id', user.id);
     
     if (updateError) {

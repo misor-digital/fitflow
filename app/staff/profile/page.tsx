@@ -32,7 +32,7 @@ interface ActivityLog {
   action: string;
   resource_type: string;
   resource_id: string;
-  metadata: any;
+  metadata: Record<string, unknown>;
   created_at: string;
 }
 
@@ -41,7 +41,7 @@ export default function StaffProfilePage() {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
-  const [activityPage, setActivityPage] = useState(1);
+  const [activityPage] = useState(1);
   const [activityTotal, setActivityTotal] = useState(0);
   const [error, setError] = useState('');
   
@@ -471,7 +471,7 @@ export default function StaffProfilePage() {
                 </form>
               ) : (
                 <p className="text-sm text-gray-600">
-                  Кликнете "Смени парола" за да промените текущата си парола
+                  Кликнете &quot;Смени парола&quot; за да промените текущата си парола
                 </p>
               )}
             </div>

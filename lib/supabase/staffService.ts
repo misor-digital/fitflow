@@ -25,8 +25,8 @@ export interface CreateStaffUserParams {
 export interface CreateStaffUserResult {
   success: boolean;
   error?: string;
-  staffUser?: any;
-  authUser?: any;
+  staffUser?: Database['public']['Tables']['staff_users']['Row'];
+  authUser?: { id: string; email?: string };
   onboardingToken?: string;
 }
 
@@ -48,7 +48,7 @@ export interface StaffUserWithRoles {
   roles: Array<{
     id: string;
     name: string;
-    description: string;
+    description: string | null;
     assigned_at: string;
   }>;
 }
@@ -87,7 +87,7 @@ export async function createStaffUser(
         email: params.email,
         is_active: true,
         requires_password_reset: true,
-      } as any)
+      })
       .select()
       .single();
     
@@ -132,7 +132,7 @@ export async function createStaffUser(
           staff_user_id: staffData.id,
           role_id: role.id,
           assigned_by: assignedByStaffId,
-        } as any);
+        });
       
       if (assignError) {
         roleAssignmentErrors.push(`Failed to assign role ${roleName}: ${assignError.message}`);
@@ -194,7 +194,7 @@ export async function getStaffUserWithRoles(
     `)
     .eq('staff_user_id', staffUser.id);
   
-  const roles = (roleAssignments || []).map((assignment: any) => ({
+  const roles = (roleAssignments || []).map((assignment) => ({
     id: assignment.roles.id,
     name: assignment.roles.name,
     description: assignment.roles.description,
@@ -258,7 +258,7 @@ export async function assignRoleToStaffUser(
       staff_user_id: staffUser.id,
       role_id: role.id,
       assigned_by: assignedByStaffId,
-    } as any);
+    });
   
   if (assignError) {
     // Check if it's a duplicate
@@ -326,7 +326,7 @@ export async function disableStaffUser(
   
   const { error } = await supabase
     .from('staff_users')
-    .update({ is_active: false } as any)
+    .update({ is_active: false })
     .eq('user_id', staffUserId);
   
   if (error) {
@@ -346,7 +346,7 @@ export async function enableStaffUser(
   
   const { error } = await supabase
     .from('staff_users')
-    .update({ is_active: true } as any)
+    .update({ is_active: true })
     .eq('user_id', staffUserId);
   
   if (error) {
@@ -385,7 +385,7 @@ export async function listAllStaffUsers(): Promise<StaffUserWithRoles[]> {
         `)
         .eq('staff_user_id', user.id);
       
-      const roles = (roleAssignments || []).map((assignment: any) => ({
+      const roles = (roleAssignments || []).map((assignment) => ({
         id: assignment.roles.id,
         name: assignment.roles.name,
         description: assignment.roles.description,
@@ -411,7 +411,7 @@ export async function isSuperAdmin(userId: string): Promise<boolean> {
   const { data } = await supabase.rpc('has_role', {
     p_user_id: userId,
     p_role_name: 'super_admin',
-  } as any);
+  });
   
   return data === true;
 }
@@ -425,7 +425,7 @@ export async function hasAnyRole(userId: string, roleNames: string[]): Promise<b
   const { data } = await supabase.rpc('has_any_role', {
     p_user_id: userId,
     p_role_names: roleNames,
-  } as any);
+  });
   
   return data === true;
 }

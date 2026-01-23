@@ -84,11 +84,13 @@ export async function PUT(request: NextRequest) {
     }
 
     // Send confirmation email
-    await sendPreorderUpdateConfirmation(
-      result.preorder.email,
-      result.preorder.full_name,
-      result.preorder.order_id
-    );
+    if (result.preorder) {
+      await sendPreorderUpdateConfirmation(
+        result.preorder.email,
+        result.preorder.full_name,
+        result.preorder.order_id
+      );
+    }
 
     return NextResponse.json({
       success: true,

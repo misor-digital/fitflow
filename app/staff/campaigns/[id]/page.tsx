@@ -35,7 +35,7 @@ export default function CampaignDetailsPage() {
   const [error, setError] = useState('');
   const [showPreview, setShowPreview] = useState(false);
 
-  const checkAuthAndLoadCampaign = async () => {
+  const loadCampaign = async () => {
     try {
       const sessionData = localStorage.getItem('supabase.auth.token');
       if (!sessionData) {
@@ -72,8 +72,8 @@ export default function CampaignDetailsPage() {
   };
 
   useEffect(() => {
-    checkAuthAndLoadCampaign();
-  }, [checkAuthAndLoadCampaign, campaignId]);
+    loadCampaign();
+  }, [campaignId, router]);
 
   const handleSend = async () => {
     if (!confirm('Сигурни ли сте, че искате да изпратите тази кампания до всички абонати?')) {
@@ -105,7 +105,7 @@ export default function CampaignDetailsPage() {
       }
 
       // Reload campaign
-      await checkAuthAndLoadCampaign();
+      await loadCampaign();
       setSending(false);
       alert(`Кампанията е изпратена успешно до ${data.totalRecipients} абонати!`);
     } catch (err) {
@@ -329,7 +329,7 @@ export default function CampaignDetailsPage() {
                   </div>
                 </div>
               ) : (
-                <p className="text-sm text-gray-500">Кликнете "Покажи преглед" за да видите съдържанието</p>
+                <p className="text-sm text-gray-500">Кликнете &quot;Покажи преглед&quot; за да видите съдържанието</p>
               )}
             </div>
           </div>

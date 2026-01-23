@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useEffect, useState, Suspense, useCallback } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
@@ -14,38 +14,51 @@ function NewsletterUnsubscribeContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
-
-  const unsubscribe = useCallback(async () => {
-    try {
-      const response = await fetch(`/api/newsletter/unsubscribe?token=${token}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.message || 'Грешка при отписване');
-        setLoading(false);
-        return;
-      }
-
-      setSuccess(true);
-      setLoading(false);
-    } catch {
-      setError('Грешка при отписване');
-      setLoading(false);
-    }
-  }, [token]);
+  const [state, setState] = useState<{
+    loading: boolean;
+    error: string | null;
+    success: boolean;
+  }>({
+    loading: !token ? false : true,
+    error: !token ? 'Невалиден линк за отписване' : null,
+    success: false,
+  });
 
   useEffect(() => {
-    if (!token) {
-      setError('Невалиден линк за отписване');
-      setLoading(false);
-      return;
-    }
+    if (!token) return;
+
+    const unsubscribe = async () => {
+      try {
+        const response = await fetch(`/api/newsletter/unsubscribe?token=${token}`);
+        const data = await response.json();
+
+        if (!response.ok) {
+          setState({
+            loading: false,
+            error: data.message || 'Грешка при отписване',
+            success: false,
+          });
+          return;
+        }
+
+        setState({
+          loading: false,
+          error: null,
+          success: true,
+        });
+      } catch {
+        setState({
+          loading: false,
+          error: 'Грешка при отписване',
+          success: false,
+        });
+      }
+    };
 
     unsubscribe();
-  }, [token, unsubscribe]);
+  }, [token]);
+
+  const { loading, error, success } = state;
 
   if (loading) {
     return (

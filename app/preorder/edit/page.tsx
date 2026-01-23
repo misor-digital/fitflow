@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useEffect, useState, Suspense, useCallback } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -35,49 +35,63 @@ function PreorderEditContent() {
   const router = useRouter();
   const token = searchParams.get('token');
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [preorder, setPreorder] = useState<PreorderData | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [state, setState] = useState<{
+    loading: boolean;
+    error: string | null;
+    preorder: PreorderData | null;
+    saving: boolean;
+    success: boolean;
+  }>({
+    loading: !token ? false : true,
+    error: !token ? 'Невалиден линк за редакция' : null,
+    preorder: null,
+    saving: false,
+    success: false,
+  });
 
   // Form state
   const [formData, setFormData] = useState<Partial<PreorderData>>({});
 
-  const fetchPreorder = useCallback(async () => {
-    try {
-      const response = await fetch(`/api/preorder/edit?token=${token}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.message || 'Грешка при зареждане на поръчката');
-        setLoading(false);
-        return;
-      }
-
-      setPreorder(data.preorder);
-      setFormData(data.preorder);
-      setLoading(false);
-    } catch {
-      setError('Грешка при зареждане на поръчката');
-      setLoading(false);
-    }
-  }, [token]);
-
   useEffect(() => {
-    if (!token) {
-      setError('Невалиден линк за редакция');
-      setLoading(false);
-      return;
-    }
+    if (!token) return;
+
+    const fetchPreorder = async () => {
+      try {
+        const response = await fetch(`/api/preorder/edit?token=${token}`);
+        const data = await response.json();
+
+        if (!response.ok) {
+          setState(prev => ({
+            ...prev,
+            loading: false,
+            error: data.message || 'Грешка при зареждане на поръчката',
+          }));
+          return;
+        }
+
+        setState(prev => ({
+          ...prev,
+          loading: false,
+          preorder: data.preorder,
+        }));
+        setFormData(data.preorder);
+      } catch {
+        setState(prev => ({
+          ...prev,
+          loading: false,
+          error: 'Грешка при зареждане на поръчката',
+        }));
+      }
+    };
 
     fetchPreorder();
-  }, [token, fetchPreorder]);
+  }, [token]);
+
+  const { loading, error, preorder, saving, success } = state;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaving(true);
-    setError(null);
+    setState(prev => ({ ...prev, saving: true, error: null }));
 
     try {
       const response = await fetch('/api/preorder/edit', {
@@ -89,18 +103,24 @@ function PreorderEditContent() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.message || 'Грешка при запазване');
-        setSaving(false);
+        setState(prev => ({
+          ...prev,
+          saving: false,
+          error: data.message || 'Грешка при запазване',
+        }));
         return;
       }
 
-      setSuccess(true);
+      setState(prev => ({ ...prev, success: true }));
       setTimeout(() => {
         router.push('/');
       }, 3000);
     } catch {
-      setError('Грешка при запазване');
-      setSaving(false);
+      setState(prev => ({
+        ...prev,
+        saving: false,
+        error: 'Грешка при запазване',
+      }));
     }
   };
 

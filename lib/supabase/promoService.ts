@@ -19,7 +19,7 @@ const getServiceClient = () => {
 // Legacy type alias - use domain types instead
 export type PromoCode = PromoCodeRow;
 
-export interface ServiceResult<T = any> {
+export interface ServiceResult<T = unknown> {
   success: boolean;
   error?: string;
   data?: T;
@@ -121,14 +121,13 @@ export async function createPromoCode(
       .from('promo_codes')
       .insert({
         code: data.code.toUpperCase(),
-        discount_type: data.discountType,
-        discount_value: data.discountValue,
-        is_active: true,
-        valid_from: data.validFrom || null,
-        valid_until: data.validUntil || null,
-        usage_limit: data.usageLimit || null,
-        usage_count: 0,
-      } as any)
+        discount_percent: data.discountValue,
+        is_enabled: true,
+        starts_at: data.validFrom || null,
+        ends_at: data.validUntil || null,
+        max_uses: data.usageLimit || null,
+        current_uses: 0,
+      })
       .select()
       .single();
     
@@ -141,14 +140,14 @@ export async function createPromoCode(
     await supabase.rpc('create_audit_log', {
       p_actor_type: 'staff',
       p_actor_id: createdBy,
-      p_actor_email: null,
+      p_actor_email: '',
       p_action: 'promo_code.created',
       p_resource_type: 'promo_code',
-      p_resource_id: (promoCode as any).id,
+      p_resource_id: (promoCode).id,
       p_metadata: { code: data.code, discount_type: data.discountType, discount_value: data.discountValue },
       p_ip_address: null,
-      p_user_agent: null,
-    } as any);
+      p_user_agent: '',
+    });
     
     return {
       success: true,
@@ -181,7 +180,7 @@ export async function updatePromoCode(
   const supabase = getServiceClient();
   
   try {
-    const updateData: any = {};
+    const updateData: Record<string, string | number | null> = {};
     if (data.code !== undefined) updateData.code = data.code.toUpperCase();
     if (data.discountType !== undefined) updateData.discount_type = data.discountType;
     if (data.discountValue !== undefined) updateData.discount_value = data.discountValue;
@@ -205,14 +204,14 @@ export async function updatePromoCode(
     await supabase.rpc('create_audit_log', {
       p_actor_type: 'staff',
       p_actor_id: updatedBy,
-      p_actor_email: null,
+      p_actor_email: '',
       p_action: 'promo_code.updated',
       p_resource_type: 'promo_code',
       p_resource_id: id,
       p_metadata: updateData,
       p_ip_address: null,
-      p_user_agent: null,
-    } as any);
+      p_user_agent: '',
+    });
     
     return {
       success: true,
@@ -240,7 +239,7 @@ export async function togglePromoCode(
     // Get current status
     const { data: current } = await supabase
       .from('promo_codes')
-      .select('is_active')
+      .select('is_enabled')
       .eq('id', id)
       .single();
     
@@ -248,11 +247,11 @@ export async function togglePromoCode(
       return { success: false, error: 'Promo code not found' };
     }
     
-    const currentStatus = (current as any).is_active;
+    const currentStatus = current.is_enabled;
     
     const { data: promoCode, error } = await supabase
       .from('promo_codes')
-      .update({ is_active: !currentStatus } as any)
+      .update({ is_enabled: !currentStatus })
       .eq('id', id)
       .select()
       .single();
@@ -266,14 +265,14 @@ export async function togglePromoCode(
     await supabase.rpc('create_audit_log', {
       p_actor_type: 'staff',
       p_actor_id: updatedBy,
-      p_actor_email: null,
+      p_actor_email: '',
       p_action: 'promo_code.toggled',
       p_resource_type: 'promo_code',
       p_resource_id: id,
       p_metadata: { is_active: !currentStatus },
       p_ip_address: null,
-      p_user_agent: null,
-    } as any);
+      p_user_agent: '',
+    });
     
     return {
       success: true,
@@ -319,14 +318,14 @@ export async function deletePromoCode(
     await supabase.rpc('create_audit_log', {
       p_actor_type: 'staff',
       p_actor_id: deletedBy,
-      p_actor_email: null,
+      p_actor_email: '',
       p_action: 'promo_code.deleted',
       p_resource_type: 'promo_code',
       p_resource_id: id,
-      p_metadata: { code: (promoCode as any)?.code },
+      p_metadata: { code: promoCode?.code },
       p_ip_address: null,
-      p_user_agent: null,
-    } as any);
+      p_user_agent: '',
+    });
     
     return { success: true };
   } catch (error) {
@@ -341,7 +340,17 @@ export async function deletePromoCode(
 /**
  * Get promo code usage statistics
  */
-export async function getPromoCodeStats(id: string): Promise<ServiceResult<any>> {
+export async function getPromoCodeStats(id: string): Promise<ServiceResult<{
+  code: string;
+  discountType: string;
+  discountValue: number;
+  isActive: boolean;
+  usageLimit: number | null;
+  totalUsage: number;
+  totalDiscount: number;
+  totalRevenue: number;
+  recentOrders: Array<{ discount_percent: number | null; final_price_eur: number | null; created_at: string }>;
+}>> {
   const supabase = getServiceClient();
   
   try {
@@ -359,8 +368,8 @@ export async function getPromoCodeStats(id: string): Promise<ServiceResult<any>>
     // Get usage from orders
     const { data: orders, error: ordersError } = await supabase
       .from('preorders')
-      .select('discount_amount, total_price, created_at')
-      .eq('promo_code_id', id);
+      .select('discount_percent, final_price_eur, created_at')
+      .eq('promo_code', promoCode.code);
     
     if (ordersError) {
       console.error('Failed to get promo code stats:', ordersError);
@@ -368,19 +377,23 @@ export async function getPromoCodeStats(id: string): Promise<ServiceResult<any>>
     }
     
     const totalUsage = orders?.length || 0;
-    const totalDiscount = orders?.reduce((sum: number, order: any) => sum + (order.discount_amount || 0), 0) || 0;
-    const totalRevenue = orders?.reduce((sum: number, order: any) => sum + (order.total_price || 0), 0) || 0;
+    const totalDiscount = orders?.reduce((sum, order) => {
+      const originalPrice = order.final_price_eur || 0;
+      const discountPercent = order.discount_percent || 0;
+      return sum + (originalPrice * discountPercent / 100);
+    }, 0) || 0;
+    const totalRevenue = orders?.reduce((sum, order) => sum + (order.final_price_eur || 0), 0) || 0;
     
-    const pc = promoCode as any;
+    const pc = promoCode;
     
     return {
       success: true,
       data: {
         code: pc.code,
-        discountType: pc.discount_type,
-        discountValue: pc.discount_value,
-        isActive: pc.is_active,
-        usageLimit: pc.usage_limit,
+        discountType: 'percentage',
+        discountValue: pc.discount_percent,
+        isActive: pc.is_enabled,
+        usageLimit: pc.max_uses,
         totalUsage,
         totalDiscount,
         totalRevenue,

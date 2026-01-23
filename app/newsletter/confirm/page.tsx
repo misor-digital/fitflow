@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useEffect, useState, Suspense, useCallback } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
@@ -14,38 +14,51 @@ function NewsletterConfirmContent() {
   const searchParams = useSearchParams();
   const token = searchParams.get('token');
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
-
-  const confirmSubscription = useCallback(async () => {
-    try {
-      const response = await fetch(`/api/newsletter/confirm?token=${token}`);
-      const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.message || 'Грешка при потвърждение');
-        setLoading(false);
-        return;
-      }
-
-      setSuccess(true);
-      setLoading(false);
-    } catch {
-      setError('Грешка при потвърждение');
-      setLoading(false);
-    }
-  }, [token]);
+  const [state, setState] = useState<{
+    loading: boolean;
+    error: string | null;
+    success: boolean;
+  }>({
+    loading: !token ? false : true,
+    error: !token ? 'Невалиден линк за потвърждение' : null,
+    success: false,
+  });
 
   useEffect(() => {
-    if (!token) {
-      setError('Невалиден линк за потвърждение');
-      setLoading(false);
-      return;
-    }
+    if (!token) return;
+
+    const confirmSubscription = async () => {
+      try {
+        const response = await fetch(`/api/newsletter/confirm?token=${token}`);
+        const data = await response.json();
+
+        if (!response.ok) {
+          setState({
+            loading: false,
+            error: data.message || 'Грешка при потвърждение',
+            success: false,
+          });
+          return;
+        }
+
+        setState({
+          loading: false,
+          error: null,
+          success: true,
+        });
+      } catch {
+        setState({
+          loading: false,
+          error: 'Грешка при потвърждение',
+          success: false,
+        });
+      }
+    };
 
     confirmSubscription();
-  }, [token, confirmSubscription]);
+  }, [token]);
+
+  const { loading, error, success } = state;
 
   if (loading) {
     return (

@@ -38,7 +38,6 @@ const AVAILABLE_ROLES = [
 export default function StaffUsersPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [users, setUsers] = useState<StaffUser[]>([]);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState('');
@@ -49,10 +48,28 @@ export default function StaffUsersPage() {
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
 
   useEffect(() => {
-    checkAuthAndLoadUsers();
-  }, []);
+    const checkAuthAndLoadUsers = async () => {
+      try {
+        const sessionData = localStorage.getItem('supabase.auth.token');
+        if (!sessionData) {
+          router.push('/staff/login');
+          return;
+        }
 
-  const checkAuthAndLoadUsers = async () => {
+        // Note: We would need a list endpoint for staff users
+        // For now, we'll just show the create form
+        setLoading(false);
+      } catch (err) {
+        console.error('Error loading users:', err);
+        setError('Грешка при зареждане на потребителите');
+        setLoading(false);
+      }
+    };
+
+    checkAuthAndLoadUsers();
+  }, [router]);
+
+  const reloadUsers = async () => {
     try {
       const sessionData = localStorage.getItem('supabase.auth.token');
       if (!sessionData) {
@@ -60,8 +77,6 @@ export default function StaffUsersPage() {
         return;
       }
 
-      const session = JSON.parse(sessionData);
-      
       // Note: We would need a list endpoint for staff users
       // For now, we'll just show the create form
       setLoading(false);
@@ -125,7 +140,7 @@ export default function StaffUsersPage() {
       setCreating(false);
       
       // Reload users list
-      checkAuthAndLoadUsers();
+      reloadUsers();
     } catch (err) {
       console.error('Error creating user:', err);
       setError('Грешка при създаване на потребител');

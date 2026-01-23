@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
       p_metadata: { status: status || 'all' },
       p_ip_address: null,
       p_user_agent: null,
-    } as any);
+    });
 
     // Return CSV file
     return new NextResponse(result.csv, {

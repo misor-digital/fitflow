@@ -34,7 +34,7 @@ export interface AuditLog {
   action: string;
   resource_type: string;
   resource_id: string;
-  metadata: any;
+  metadata: Record<string, unknown> | null;
   created_at: string;
 }
 
@@ -275,7 +275,7 @@ export async function exportAuditLogs(
     ]);
 
     // Escape CSV values
-    const escapeCsvValue = (value: any): string => {
+    const escapeCsvValue = (value: unknown): string => {
       const str = String(value || '');
       if (str.includes(',') || str.includes('"') || str.includes('\n')) {
         return `"${str.replace(/"/g, '""')}"`;

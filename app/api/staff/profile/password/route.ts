@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
     // Clear requires_password_reset flag if set
     await supabase
       .from('staff_users')
-      .update({ requires_password_reset: false } as any)
+      .update({ requires_password_reset: false })
       .eq('user_id', user.id);
     
     return NextResponse.json({ success: true });

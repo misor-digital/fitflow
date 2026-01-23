@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -21,47 +21,56 @@ interface StaffUser {
 
 export default function StaffDashboardPage() {
   const router = useRouter();
-  const [loading, setLoading] = useState(true);
-  const [staffUser, setStaffUser] = useState<StaffUser | null>(null);
-
-  const checkAuth = useCallback(async () => {
-    try {
-      // Get session from localStorage
-      const sessionData = localStorage.getItem('supabase.auth.token');
-      if (!sessionData) {
-        router.push('/staff/login');
-        return;
-      }
-
-      const session = JSON.parse(sessionData);
-      
-      // Call API to get staff data
-      const response = await fetch('/api/staff/dashboard', {
-        headers: {
-          'Authorization': `Bearer ${session.access_token}`,
-        },
-      });
-
-      if (!response.ok) {
-        localStorage.removeItem('supabase.auth.token');
-        router.push('/staff/login');
-        return;
-      }
-
-      const data = await response.json();
-      
-      setStaffUser(data.staffUser);
-      setLoading(false);
-    } catch (err) {
-      console.error('Auth error:', err);
-      localStorage.removeItem('supabase.auth.token');
-      router.push('/staff/login');
-    }
-  }, [router]);
+  const [state, setState] = useState<{
+    loading: boolean;
+    staffUser: StaffUser | null;
+  }>({
+    loading: true,
+    staffUser: null,
+  });
 
   useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        // Get session from localStorage
+        const sessionData = localStorage.getItem('supabase.auth.token');
+        if (!sessionData) {
+          router.push('/staff/login');
+          return;
+        }
+
+        const session = JSON.parse(sessionData);
+        
+        // Call API to get staff data
+        const response = await fetch('/api/staff/dashboard', {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+        });
+
+        if (!response.ok) {
+          localStorage.removeItem('supabase.auth.token');
+          router.push('/staff/login');
+          return;
+        }
+
+        const data = await response.json();
+        
+        setState({
+          loading: false,
+          staffUser: data.staffUser,
+        });
+      } catch (err) {
+        console.error('Auth error:', err);
+        localStorage.removeItem('supabase.auth.token');
+        router.push('/staff/login');
+      }
+    };
+
     checkAuth();
-  }, [checkAuth]);
+  }, [router]);
+
+  const { loading, staffUser } = state;
 
   const handleLogout = async () => {
     localStorage.removeItem('supabase.auth.token');

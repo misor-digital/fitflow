@@ -100,12 +100,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       message: 'Staff user created successfully',
-      staffUser: {
+      staffUser: result.staffUser ? {
         id: result.staffUser.id,
         email: result.staffUser.email,
         fullName: result.staffUser.full_name,
         roles: roleNames,
-      },
+      } : undefined,
     });
   } catch (error) {
     console.error('Error in staff create:', error);

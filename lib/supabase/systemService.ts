@@ -47,7 +47,7 @@ export async function getSystemHealth(): Promise<ServiceResult<SystemHealth>> {
 
   try {
     // Test database connection with a simple query
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from('preorders')
       .select('id', { count: 'exact', head: true });
 

@@ -68,11 +68,11 @@ export async function subscribeToNewsletter(
     .from('newsletter_subscriptions')
     .insert({
       email: normalizedEmail,
-      status: 'pending' as any,
+      status: 'pending',
       source: source || 'unknown',
       ip_address: ipAddress,
       user_agent: userAgent,
-    } as any)
+    })
     .select('confirmation_token')
     .single();
   
@@ -83,16 +83,16 @@ export async function subscribeToNewsletter(
   
   // Log subscription request
   await supabase.rpc('create_audit_log', {
-    p_actor_type: 'anonymous' as any,
-    p_actor_id: null,
+    p_actor_type: 'anonymous',
+    p_actor_id: '',
     p_actor_email: normalizedEmail,
     p_action: 'newsletter.subscribe_requested',
     p_resource_type: 'newsletter_subscription',
-    p_resource_id: null,
+    p_resource_id: '',
     p_metadata: { source, status: 'pending' },
     p_ip_address: ipAddress,
     p_user_agent: userAgent,
-  } as any);
+  });
   
   return {
     success: true,
@@ -139,9 +139,9 @@ export async function confirmNewsletterSubscription(
   const { error: updateError } = await supabase
     .from('newsletter_subscriptions')
     .update({
-      status: 'subscribed' as any,
+      status: 'subscribed',
       confirmed_at: new Date().toISOString(),
-    } as any)
+    })
     .eq('id', subscription.id);
   
   if (updateError) {
@@ -151,8 +151,8 @@ export async function confirmNewsletterSubscription(
   
   // Log confirmation
   await supabase.rpc('create_audit_log', {
-    p_actor_type: 'anonymous' as any,
-    p_actor_id: null,
+    p_actor_type: 'anonymous',
+    p_actor_id: '',
     p_actor_email: subscription.email,
     p_action: 'newsletter.confirmed',
     p_resource_type: 'newsletter_subscription',
@@ -160,7 +160,7 @@ export async function confirmNewsletterSubscription(
     p_metadata: { source: subscription.source },
     p_ip_address: ipAddress,
     p_user_agent: userAgent,
-  } as any);
+  });
   
   return { success: true };
 }
@@ -195,8 +195,8 @@ export async function unsubscribeFromNewsletter(
   const { error: updateError } = await supabase
     .from('newsletter_subscriptions')
     .update({
-      status: 'unsubscribed' as any,
-    } as any)
+      status: 'unsubscribed',
+    })
     .eq('id', subscription.id);
   
   if (updateError) {
@@ -206,8 +206,8 @@ export async function unsubscribeFromNewsletter(
   
   // Log unsubscribe
   await supabase.rpc('create_audit_log', {
-    p_actor_type: 'anonymous' as any,
-    p_actor_id: null,
+    p_actor_type: 'anonymous',
+    p_actor_id: '',
     p_actor_email: subscription.email,
     p_action: 'newsletter.unsubscribed',
     p_resource_type: 'newsletter_subscription',
@@ -215,7 +215,7 @@ export async function unsubscribeFromNewsletter(
     p_metadata: { previous_status: subscription.status },
     p_ip_address: ipAddress,
     p_user_agent: userAgent,
-  } as any);
+  });
   
   return { success: true };
 }

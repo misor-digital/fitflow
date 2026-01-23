@@ -6,7 +6,7 @@
 
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 
 function StaffOnboardContent() {
@@ -14,22 +14,13 @@ function StaffOnboardContent() {
   const router = useRouter();
   const token = searchParams.get('token');
 
-  const [loading, setLoading] = useState(true);
+  const [loading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [saving, setSaving] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-
-  useEffect(() => {
-    if (!token) {
-      setLoading(false);
-    } else {
-      // Just set loading to false - token will be verified on submit
-      setLoading(false);
-    }
-  }, [token]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

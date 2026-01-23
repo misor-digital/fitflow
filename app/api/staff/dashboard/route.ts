@@ -70,10 +70,22 @@ export async function GET(request: NextRequest) {
       `)
       .eq('staff_user_id', staffUser.id);
 
-    const roles = (roleAssignments || []).map((assignment: any) => ({
-      name: assignment.roles.name,
-      description: assignment.roles.description,
-    }));
+    interface RoleData {
+      name: string;
+      description: string;
+    }
+
+    interface RoleAssignment {
+      roles: RoleData | RoleData[];
+    }
+
+    const roles = (roleAssignments as RoleAssignment[] || []).map((assignment) => {
+      const roleData = Array.isArray(assignment.roles) ? assignment.roles[0] : assignment.roles;
+      return {
+        name: roleData.name,
+        description: roleData.description,
+      };
+    });
 
     return NextResponse.json({
       success: true,

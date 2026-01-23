@@ -68,7 +68,7 @@ export async function getRevenueStats(
     // Build query
     let query = supabase
       .from('preorders')
-      .select('total_price, created_at, status');
+      .select('final_price_eur, created_at');
     
     if (fromDate) {
       query = query.gte('created_at', fromDate);
@@ -86,7 +86,7 @@ export async function getRevenueStats(
     
     // Calculate stats
     const totalOrders = orders?.length || 0;
-    const totalRevenue = orders?.reduce((sum: number, order: any) => sum + (order.total_price || 0), 0) || 0;
+    const totalRevenue = orders?.reduce((sum: number, order) => sum + (order.final_price_eur || 0), 0) || 0;
     const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
     
     // Calculate growth rate (compare to previous period)
@@ -99,27 +99,27 @@ export async function getRevenueStats(
     
     const { data: previousOrders } = await supabase
       .from('preorders')
-      .select('total_price')
+      .select('final_price_eur')
       .gte('created_at', previousFromDate)
       .lte('created_at', previousToDate);
     
-    const previousRevenue = previousOrders?.reduce((sum: number, order: any) => sum + (order.total_price || 0), 0) || 0;
+    const previousRevenue = previousOrders?.reduce((sum: number, order) => sum + (order.final_price_eur || 0), 0) || 0;
     const growthRate = previousRevenue > 0 
       ? ((totalRevenue - previousRevenue) / previousRevenue) * 100 
       : 0;
     
     // Group by date for period revenue
-    const periodRevenue = orders?.reduce((acc: any[], order: any) => {
+    const periodRevenue = orders?.reduce((acc: Array<{ date: string; revenue: number; orders: number }>, order) => {
       const date = new Date(order.created_at).toISOString().split('T')[0];
       const existing = acc.find(item => item.date === date);
       
       if (existing) {
-        existing.revenue += order.total_price || 0;
+        existing.revenue += order.final_price_eur || 0;
         existing.orders += 1;
       } else {
         acc.push({
           date,
-          revenue: order.total_price || 0,
+          revenue: order.final_price_eur || 0,
           orders: 1,
         });
       }
@@ -215,14 +215,20 @@ export async function getRevenueByBoxType(): Promise<ServiceResult<ProductStats[
 /**
  * Get promo code usage statistics
  */
-export async function getPromoCodeUsage(): Promise<ServiceResult<any[]>> {
+export async function getPromoCodeUsage(): Promise<ServiceResult<Array<{
+  promoCodeId: string;
+  code: string;
+  discountPercent: number;
+  usageCount: number;
+  totalDiscount: number;
+}>>> {
   const supabase = getServiceClient();
   
   try {
     const { data: orders, error } = await supabase
       .from('preorders')
-      .select('promo_code_id, discount_amount')
-      .not('promo_code_id', 'is', null);
+      .select('promo_code, discount_percent')
+      .not('promo_code', 'is', null);
     
     if (error) {
       console.error('Failed to get promo code usage:', error);
@@ -241,28 +247,34 @@ export async function getPromoCodeUsage(): Promise<ServiceResult<any[]>> {
     });
     
     // Group by promo code
-    const usage = orders?.reduce((acc: any[], order: any) => {
-      const promoCodeId = order.promo_code_id;
-      if (!promoCodeId) return acc;
+    const usage = orders?.reduce((acc: Array<{
+      promoCodeId: string;
+      code: string;
+      discountPercent: number;
+      usageCount: number;
+      totalDiscount: number;
+    }>, order) => {
+      const promoCode = order.promo_code;
+      if (!promoCode) return acc;
       
-      const existing = acc.find(item => item.promoCodeId === promoCodeId);
+      const existing = acc.find(item => item.code === promoCode);
       
       if (existing) {
         existing.usageCount += 1;
-        existing.totalDiscount += order.discount_amount || 0;
+        existing.totalDiscount += order.discount_percent || 0;
       } else {
-        const promoCode = promoCodeMap.get(promoCodeId);
+        const promoCodeData = promoCodeMap.get(promoCode);
         acc.push({
-          promoCodeId,
-          code: promoCode?.code || 'Unknown',
-          discountPercent: promoCode?.discount_percent || 0,
+          promoCodeId: promoCodeData?.code || promoCode,
+          code: promoCode,
+          discountPercent: order.discount_percent || 0,
           usageCount: 1,
-          totalDiscount: order.discount_amount || 0,
+          totalDiscount: order.discount_percent || 0,
         });
       }
       
       return acc;
-    }, [] as any[]) || [];
+    }, []) || [];
     
     return {
       success: true,
@@ -283,6 +295,7 @@ export async function getPromoCodeUsage(): Promise<ServiceResult<any[]>> {
 
 /**
  * Get order statistics
+ * Note: preorders table doesn't have a status column, so we return basic stats
  */
 export async function getOrderStats(): Promise<ServiceResult<OrderStats>> {
   const supabase = getServiceClient();
@@ -290,7 +303,7 @@ export async function getOrderStats(): Promise<ServiceResult<OrderStats>> {
   try {
     const { data: orders, error } = await supabase
       .from('preorders')
-      .select('status');
+      .select('id');
     
     if (error) {
       console.error('Failed to get order stats:', error);
@@ -298,21 +311,17 @@ export async function getOrderStats(): Promise<ServiceResult<OrderStats>> {
     }
     
     const total = orders?.length || 0;
-    const pending = orders?.filter((o: any) => o.status === 'pending').length || 0;
-    const fulfilled = orders?.filter((o: any) => o.status === 'fulfilled').length || 0;
-    const cancelled = orders?.filter((o: any) => o.status === 'cancelled').length || 0;
     
-    // Calculate conversion rate (fulfilled / total)
-    const conversionRate = total > 0 ? (fulfilled / total) * 100 : 0;
-    
+    // Note: preorders table doesn't have status field yet
+    // All preorders are considered pending for now
     return {
       success: true,
       data: {
         total,
-        pending,
-        fulfilled,
-        cancelled,
-        conversionRate,
+        pending: total,
+        fulfilled: 0,
+        cancelled: 0,
+        conversionRate: 0,
       },
     };
   } catch (error) {
@@ -343,13 +352,22 @@ export async function getTopProducts(limit: number = 10): Promise<ServiceResult<
 /**
  * Get customer lifetime value analytics
  */
-export async function getCustomerLifetimeValue(): Promise<ServiceResult<any>> {
+export async function getCustomerLifetimeValue(): Promise<ServiceResult<{
+  totalCustomers: number;
+  averageCLV: number;
+  topCustomers: Array<{
+    email: string;
+    orderCount: number;
+    totalSpent: number;
+    averageOrderValue: number;
+  }>;
+}>> {
   const supabase = getServiceClient();
   
   try {
     const { data: orders, error } = await supabase
       .from('preorders')
-      .select('customer_email, total_price');
+      .select('email, final_price_eur');
     
     if (error) {
       console.error('Failed to get CLV:', error);
@@ -357,27 +375,32 @@ export async function getCustomerLifetimeValue(): Promise<ServiceResult<any>> {
     }
     
     // Group by customer
-    const customerStats = orders?.reduce((acc: any[], order: any) => {
-      const email = order.customer_email;
+    const customerStats = orders?.reduce((acc: Array<{
+      email: string;
+      orderCount: number;
+      totalSpent: number;
+      averageOrderValue: number;
+    }>, order) => {
+      const email = order.email;
       if (!email) return acc;
       
       const existing = acc.find(item => item.email === email);
       
       if (existing) {
         existing.orderCount += 1;
-        existing.totalSpent += order.total_price || 0;
+        existing.totalSpent += order.final_price_eur || 0;
         existing.averageOrderValue = existing.totalSpent / existing.orderCount;
       } else {
         acc.push({
           email,
           orderCount: 1,
-          totalSpent: order.total_price || 0,
-          averageOrderValue: order.total_price || 0,
+          totalSpent: order.final_price_eur || 0,
+          averageOrderValue: order.final_price_eur || 0,
         });
       }
       
       return acc;
-    }, [] as any[]) || [];
+    }, []) || [];
     
     // Calculate overall CLV
     const totalCustomers = customerStats.length;

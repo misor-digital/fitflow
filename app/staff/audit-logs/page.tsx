@@ -18,7 +18,7 @@ interface AuditLog {
   action: string;
   resource_type: string;
   resource_id: string;
-  metadata: any;
+  metadata: Record<string, unknown>;
   created_at: string;
 }
 

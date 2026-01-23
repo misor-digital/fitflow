@@ -272,7 +272,7 @@ export default function SubscribersPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => {
-                  setStatusFilter(e.target.value as any);
+                  setStatusFilter(e.target.value as 'all' | 'pending' | 'subscribed' | 'unsubscribed');
                   setPage(1);
                 }}
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-600 focus:border-transparent"
