@@ -306,6 +306,7 @@ export type Database = {
           box_type: Database["public"]["Enums"]["box_type"]
           colors: string[] | null
           created_at: string
+          customer_user_id: string | null
           dietary: string[] | null
           dietary_other: string | null
           discount_percent: number | null
@@ -335,6 +336,7 @@ export type Database = {
           box_type: Database["public"]["Enums"]["box_type"]
           colors?: string[] | null
           created_at?: string
+          customer_user_id?: string | null
           dietary?: string[] | null
           dietary_other?: string | null
           discount_percent?: number | null
@@ -364,6 +366,7 @@ export type Database = {
           box_type?: Database["public"]["Enums"]["box_type"]
           colors?: string[] | null
           created_at?: string
+          customer_user_id?: string | null
           dietary?: string[] | null
           dietary_other?: string | null
           discount_percent?: number | null
@@ -597,6 +600,10 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      claim_preorder_by_email: {
+        Args: { p_email: string; p_preorder_id: string; p_user_id: string }
+        Returns: boolean
       }
       cleanup_expired_newsletter_pending: { Args: never; Returns: number }
       cleanup_expired_preorder_tokens: { Args: never; Returns: number }

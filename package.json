@@ -9,10 +9,12 @@
     "lint": "eslint",
     "prepare": "husky",
     "supabase:types": "dotenv -e .env.local -- node scripts/gen-supabase-types.mjs",
-    "supabase:types:check": "dotenv -e .env.local -- node scripts/gen-supabase-types.mjs && git diff --exit-code -- lib/supabase/types.ts"
+    "supabase:types:check": "dotenv -e .env.local -- node scripts/gen-supabase-types.mjs && git diff --exit-code -- lib/supabase/types.ts",
+    "supabase:push": "dotenv -e .env.local -- pnpm dlx supabase db push"
   },
   "dependencies": {
     "@getbrevo/brevo": "^3.0.1",
+    "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.88.0",
     "gray-matter": "^4.0.3",
     "next": "16.0.10",
@@ -20,6 +22,7 @@
     "react-dom": "19.2.3",
     "remark": "^15.0.1",
     "remark-html": "^16.0.1",
+    "zod": "^4.3.6",
     "zustand": "^5.0.8"
   },
   "devDependencies": {
@@ -31,6 +34,8 @@
     "@types/react-dom": "^19",
     "babel-plugin-react-compiler": "1.0.0",
     "baseline-browser-mapping": "^2.9.7",
+    "dotenv": "^17.2.3",
+    "dotenv-cli": "^11.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.0.3",
     "husky": "^9.1.7",

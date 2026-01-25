@@ -7,7 +7,12 @@ export default function SlidingBanner() {
   const text = 'БЕЗПЛАТНА доставка на всички предварителни поръчки';
   
   // Hide banner on thank-you/preorder page
-  if (pathname === '/thank-you/preorder' || pathname.includes('staff')) {
+  if (
+    pathname === '/thank-you/preorder' ||
+    pathname.includes('staff') ||
+    pathname.includes('account') ||
+    pathname.includes('preorder')
+  ) {
     return null;
   }
   
