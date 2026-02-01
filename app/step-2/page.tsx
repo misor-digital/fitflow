@@ -234,12 +234,12 @@ export default function Step2() {
         return (
           <div>
             <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#023047] text-center mb-8 sm:mb-10 md:mb-12 relative after:content-[''] after:block after:w-12 sm:after:w-16 after:h-1 after:bg-[#FB7D00] after:mx-auto after:mt-3 sm:after:mt-4 after:rounded">
-              Персонализация
+              Предпочитания
             </h2>
             <div className="space-y-3 sm:space-y-4 md:space-y-5">
               {[
-                { value: true, title: 'Да, искам персонализация', desc: 'Включва няколко въпроса, които ни помагат по-добре да разберем твоите предпочитания и нужди' },
-                { value: false, title: 'Не, оставям избора на вас', desc: null }
+                { value: true, title: 'Да, ще споделя моите предпочитания', desc: 'Включва няколко въпроса, които ни помагат по-добре да разберем твоите предпочитания и нужди' },
+                { value: false, title: 'Не, оставам загадка за вас', desc: null }
               ].map((option) => (
                 <div
                   key={String(option.value)}
@@ -315,7 +315,7 @@ export default function Step2() {
         return (
           <div>
             <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#023047] text-center mb-6 sm:mb-8 md:mb-10">
-              В какви цветове предпочиташ да са твоите спортни дрехи?
+              Какви цветове обичаш да носиш?
             </h2>
             <div className="grid grid-cols-5 gap-2 sm:gap-3 md:gap-4">
               {colorsOptions.map((color) => (
@@ -337,7 +337,7 @@ export default function Step2() {
         return (
           <div>
             <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-[#023047] text-center mb-6 sm:mb-8 md:mb-10">
-              Кои вкусове предпочиташ?
+              Кои вкусове ти допадат?
             </h2>
             <div className="space-y-2 sm:space-y-3 md:space-y-4">
               {flavorsOptions.map((flavor) => (
@@ -508,7 +508,7 @@ export default function Step2() {
         {/* Header */}
         <div className="flex justify-between items-center mb-6 sm:mb-10">
           <div className="text-base sm:text-lg md:text-xl font-semibold text-[#023047]">
-            Стъпка 2 от 4 - Персонализация
+            Стъпка 2 от 4 - Предпочитания
           </div>
           <Link href="/" className="text-xl sm:text-2xl md:text-3xl font-extrabold text-[#023047] italic hover:text-[#FB7D00] hover:scale-150 transition-all duration-300">
             FitFlow

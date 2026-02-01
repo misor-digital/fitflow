@@ -86,7 +86,7 @@ function HomeContent() {
             ПРЕДВАРИТЕЛНА ПОРЪЧКА
           </p>
           <p className="text-sm sm:text-base md:text-xl text-white mb-6 md:mb-8 drop-shadow-md text-left">
-            Спортно облекло, аксесоари, протеинови продукти, добавки и мотивация на едно място
+            Спортно облекло, аксесоари, протеинови продукти, здравословни снакове, хранителни добавки и мотивация на едно място
           </p>
           <Link href="/step-1" onClick={() => trackCTAClick({ cta_text: 'Запиши се сега', cta_location: 'hero', destination: '/step-1' })}>
             <button className="bg-[#FB7D00] text-white px-10 py-4 rounded-full text-lg font-semibold uppercase tracking-wide shadow-lg hover:bg-[#e67100] transition-all hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0">
@@ -104,7 +104,7 @@ function HomeContent() {
         <div className="max-w-lg mx-auto space-y-6 sm:space-y-8">
           {[
             { num: 1, title: 'Избери честота', desc: 'Избери колко често искаш да получаваш своята кутия' },
-            { num: 2, title: 'Персонализирай', desc: 'Отговори на въпросник за персонализация или остави изненадата на нас' },
+            { num: 2, title: 'Кажи ни предпочитанията си', desc: 'Отговори на кратък въпросник, за да те опознаем по-добре. (по желание)' },
             { num: 3, title: 'Завърши', desc: 'Попълни личните си данни и се присъедини към списъка с предварителни поръчки' }
           ].map((step) => (
             <div key={step.num} className="relative bg-white p-5 sm:p-6 md:p-8 rounded-2xl shadow-lg border-l-4 border-[#FB7D00] hover:-translate-y-1 hover:shadow-xl transition-all">

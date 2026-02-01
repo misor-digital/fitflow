@@ -82,11 +82,11 @@ export default function ThankYou() {
 
           {/* Message */}
           <p className="text-gray-600 text-base sm:text-lg mb-3 sm:mb-4 leading-relaxed">
-            Твоята предварителна поръчка беше направена успешно.
+            Твоята поръчка беше успешно направена.
           </p>
 
           <p className="text-gray-600 text-base sm:text-lg mb-5 sm:mb-6 md:mb-8 leading-relaxed">
-            Ще получиш потвърждение на имейла си и скоро ще се свържем с теб с повече информация.
+            Скоро ще получиш имейл с потвърждение.
           </p>
 
           {/* Divider */}
