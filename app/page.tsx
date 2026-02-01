@@ -67,7 +67,7 @@ function HomeContent() {
       <Navigation />
       <div className="min-h-screen">
         {/* Hero Section */}
-        <section className="relative flex flex-col justify-center items-center text-center px-4 sm:px-5 overflow-hidden mt-20 sm:mt-24 h-[calc(100vh-5rem)] sm:h-[calc(100vh-6rem)]">
+        <section className="relative flex flex-col justify-center items-center text-center px-4 sm:px-5 overflow-hidden h-[calc(100vh-5rem)] sm:h-[calc(100vh-6rem)]">
         <Image
           src="/storage/hero.jpg"
           alt="FitFlow активна жена"

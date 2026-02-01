@@ -504,7 +504,7 @@ export default function Step2() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#f0f9ff] to-white py-4 sm:py-5 px-3 sm:px-5 pb-28 sm:pb-32">
-      <div className="max-w-3xl mx-auto mt-12 sm:mt-16">
+      <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="flex justify-between items-center mb-6 sm:mb-10">
           <div className="text-base sm:text-lg md:text-xl font-semibold text-[#023047]">
