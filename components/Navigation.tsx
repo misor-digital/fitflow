@@ -40,7 +40,7 @@ export default function Navigation() {
   const isActive = (path: string) => pathname === path;
 
   return (
-    <nav className="fixed top-10 sm:top-12 left-0 right-0 bg-white/95 backdrop-blur-sm shadow-md z-40">
+    <nav className="fixed left-0 right-0 bg-white/95 backdrop-blur-sm shadow-md z-40">
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
         <div className="flex justify-between items-center h-10 sm:h-12">
           {/* Desktop Menu - Left Side */}
@@ -103,9 +103,9 @@ export default function Navigation() {
           <div className="relative">
             <Link
               href="/step-1"
-              onClick={() => trackCTAClick({ cta_text: 'Запиши предварителна поръчка', cta_location: 'navigation', destination: '/step-1' })}
+              onClick={() => trackCTAClick({ cta_text: 'Запиши поръчка', cta_location: 'navigation', destination: '/step-1' })}
               className="bg-[#023047] hover:bg-[#FB7D00] px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-colors block"
-              aria-label="Запиши предварителна поръчка"
+              aria-label="Запиши поръчка"
             >
               <svg
                 className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white"

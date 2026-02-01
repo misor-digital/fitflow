@@ -4,7 +4,7 @@
  */
 
 import { sendEmail, createOrUpdateContact, addContactToList, EMAIL_CONFIG } from './emailService';
-import { generatePreorderConfirmationEmail } from './templates';
+import { generateOrderConfirmationEmail } from './templates';
 import type { EmailLabelMaps } from './templates';
 import type { EmailResult, ContactResult, PreorderEmailData } from './types';
 import type { Preorder } from '@/lib/supabase';
@@ -75,7 +75,7 @@ export async function sendPreorderConfirmationEmail(
   };
 
   // Generate email content with labels
-  const htmlContent = generatePreorderConfirmationEmail(emailData, labels);
+  const htmlContent = generateOrderConfirmationEmail(emailData, labels);
 
   // Send the email
   const result = await sendEmail({
@@ -83,7 +83,7 @@ export async function sendPreorderConfirmationEmail(
       email: preorder.email,
       name: preorder.full_name,
     },
-    subject: `FitFlow - Потвърждение на предварителна поръчка ${preorder.order_id}`,
+    subject: `FitFlow - Потвърждение на поръчка ${preorder.order_id}`,
     htmlContent,
     tags: [EMAIL_CONFIG.tags.preorder, EMAIL_CONFIG.tags.confirmation, EMAIL_CONFIG.tags.transactional],
   });

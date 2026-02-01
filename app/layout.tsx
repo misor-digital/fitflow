@@ -24,7 +24,6 @@ export default function RootLayout({
   return (
     <html lang="bg">
       <body className="antialiased">
-        <SlidingBanner />
         {children}
         <CookieConsentBanner />
         <ConditionalScripts 
