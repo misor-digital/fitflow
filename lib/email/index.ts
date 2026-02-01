@@ -24,6 +24,7 @@ export {
 // Email templates and utilities
 export {
   generatePreorderConfirmationEmail,
+  generateOrderConfirmationEmail,
   formatOptionsWithOther,
 } from './templates';
 

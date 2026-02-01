@@ -94,7 +94,7 @@ export default function Step3() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#f0f9ff] to-white py-4 sm:py-5 px-3 sm:px-5 pb-28 sm:pb-32">
-      <div className="max-w-2xl mx-auto mt-12 sm:mt-16">
+      <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="flex justify-between items-center mb-10 sm:mb-16">
           <div className="text-base sm:text-lg md:text-xl font-semibold text-[#023047]">Стъпка 3 от 4 - Лични данни</div>
@@ -109,7 +109,7 @@ export default function Step3() {
             Почти e готово!
           </p>
           <p className="text-sm sm:text-base md:text-lg text-[#023047] leading-relaxed text-center">
-            Попълни личните си данни, за да завършиш предварителната поръчка. Ще получиш потвърждение на имейла си.
+            Попълни личните си данни, за да завършиш поръчка си. Ще получиш потвърждение на имейла си.
           </p>
         </div>
 

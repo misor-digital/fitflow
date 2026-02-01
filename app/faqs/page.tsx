@@ -33,7 +33,7 @@ export default function FAQsPage() {
   return (
     <>
       <Navigation />
-      <div className="min-h-screen bg-gradient-to-b from-[#f0f9ff] to-white pt-20 sm:pt-24 pb-12 sm:pb-16 px-3 sm:px-5">
+      <div className="min-h-screen bg-gradient-to-b from-[#f0f9ff] to-white pt-8 sm:pt-10 pb-12 sm:pb-16 px-3 sm:px-5">
         <div className="max-w-4xl mx-auto mt-12 sm:mt-16">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#023047] text-center mb-8 sm:mb-10 md:mb-12 relative after:content-[''] after:block after:w-12 sm:after:w-16 after:h-1 after:bg-[#FB7D00] after:mx-auto after:mt-3 sm:after:mt-4 after:rounded">
             Често задавани въпроси
