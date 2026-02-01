@@ -91,6 +91,57 @@ export const claimPreorderSchema = z.object({
 export type ClaimPreorderInput = z.infer<typeof claimPreorderSchema>;
 
 /**
+ * Magic link sign in validation schema
+ */
+export const magicLinkSignInSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  redirect: z
+    .string()
+    .optional()
+    .refine(
+      (url) => {
+        if (!url) return true;
+        // Only allow relative URLs or URLs to the same origin
+        return url.startsWith('/') && !url.startsWith('//');
+      },
+      { message: 'Invalid redirect URL' }
+    ),
+});
+
+export type MagicLinkSignInInput = z.infer<typeof magicLinkSignInSchema>;
+
+/**
+ * Magic link sign up validation schema
+ */
+export const magicLinkSignUpSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  fullName: z
+    .string()
+    .min(2, 'Full name must be at least 2 characters')
+    .max(100, 'Full name must be less than 100 characters'),
+  phone: z
+    .string()
+    .regex(/^\+?[0-9\s\-()]+$/, 'Invalid phone number')
+    .optional()
+    .or(z.literal('')),
+  preferredLanguage: z.enum(['bg', 'en']).optional(),
+  marketingConsent: z.boolean().optional(),
+  redirect: z
+    .string()
+    .optional()
+    .refine(
+      (url) => {
+        if (!url) return true;
+        // Only allow relative URLs or URLs to the same origin
+        return url.startsWith('/') && !url.startsWith('//');
+      },
+      { message: 'Invalid redirect URL' }
+    ),
+});
+
+export type MagicLinkSignUpInput = z.infer<typeof magicLinkSignUpSchema>;
+
+/**
  * Safe redirect URL validation
  * Prevents open redirect vulnerabilities
  */

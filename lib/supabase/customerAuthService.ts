@@ -255,3 +255,157 @@ export async function resendVerificationEmail(email: string) {
     error: null,
   };
 }
+
+/**
+ * Request magic link for sign in (passwordless)
+ */
+export async function requestMagicLinkSignIn(email: string, redirectTo?: string) {
+  const supabase = await createClient();
+
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      emailRedirectTo: redirectTo || `${process.env.NEXT_PUBLIC_SITE_URL}/account/auth/callback`,
+    },
+  });
+
+  if (error) {
+    return {
+      success: false,
+      error,
+    };
+  }
+
+  return {
+    success: true,
+    error: null,
+  };
+}
+
+/**
+ * Request magic link for sign up (passwordless)
+ */
+export async function requestMagicLinkSignUp(
+  email: string,
+  fullName: string,
+  phone?: string,
+  preferredLanguage?: 'bg' | 'en',
+  marketingConsent?: boolean,
+  redirectTo?: string
+) {
+  const supabase = await createClient();
+
+  const { error } = await supabase.auth.signInWithOtp({
+    email,
+    options: {
+      emailRedirectTo: redirectTo || `${process.env.NEXT_PUBLIC_SITE_URL}/account/auth/callback`,
+      data: {
+        full_name: fullName,
+        phone: phone || null,
+        preferred_language: preferredLanguage || 'bg',
+        marketing_consent: marketingConsent || false,
+      },
+    },
+  });
+
+  if (error) {
+    return {
+      success: false,
+      error,
+    };
+  }
+
+  return {
+    success: true,
+    error: null,
+  };
+}
+
+/**
+ * Ensure customer profile exists for authenticated user
+ * Creates customer record if missing (for magic link users)
+ */
+export async function ensureCustomerProfile(
+  userId: string,
+  fullName: string,
+  phone?: string,
+  preferredLanguage?: 'bg' | 'en',
+  marketingConsent?: boolean
+) {
+  // Check if customer profile exists
+  const supabase = await createClient();
+  const { data: existing } = await supabase
+    .from('customers')
+    .select('id')
+    .eq('user_id', userId)
+    .single();
+
+  if (existing) {
+    return {
+      success: true,
+      error: null,
+    };
+  }
+
+  // Create customer profile using admin client (bypasses RLS)
+  const customerData: CustomerInsert = {
+    user_id: userId,
+    full_name: fullName,
+    phone: phone || null,
+    preferred_language: preferredLanguage || 'bg',
+    marketing_consent: marketingConsent || false,
+    marketing_consent_date: marketingConsent ? new Date().toISOString() : null,
+  };
+
+  const { error } = await adminClient
+    .from('customers')
+    .insert(customerData);
+
+  if (error) {
+    return {
+      success: false,
+      error,
+    };
+  }
+
+  return {
+    success: true,
+    error: null,
+  };
+}
+
+/**
+ * Check if email belongs to a staff user
+ * Returns true if email is @fitflow.bg and exists in staff_users table
+ */
+export async function isStaffEmail(email: string): Promise<boolean> {
+  // Only check if email is @fitflow.bg domain
+  if (!email.toLowerCase().endsWith('@fitflow.bg')) {
+    return false;
+  }
+
+  try {
+    // Query staff_users table by email (staff_users stores email in auth.users)
+    // We need to join with auth.users to get the email
+    const { data: staffUsers, error: staffError } = await adminClient
+      .from('staff_users')
+      .select('user_id')
+      .limit(100);
+
+    if (staffError || !staffUsers) {
+      return false;
+    }
+
+    // For each staff user, check if their auth email matches
+    for (const staffUser of staffUsers) {
+      const { data: authUser } = await adminClient.auth.admin.getUserById(staffUser.user_id);
+      if (authUser?.user?.email?.toLowerCase() === email.toLowerCase()) {
+        return true;
+      }
+    }
+
+    return false;
+  } catch {
+    return false;
+  }
+}

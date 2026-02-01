@@ -22,6 +22,20 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validatedData = signInSchema.parse(body);
 
+    // Check if email belongs to staff user
+    const { isStaffEmail } = await import('@/lib/supabase/customerAuthService');
+    const isStaff = await isStaffEmail(validatedData.email);
+
+    if (isStaff) {
+      // Redirect staff users to staff login page
+      return successResponse({
+        user: {
+          email: validatedData.email,
+        },
+        redirectTo: '/staff/login',
+      });
+    }
+
     // Authenticate customer
     const { data, error } = await signIn({
       email: validatedData.email,
@@ -54,6 +68,25 @@ export async function POST(request: NextRequest) {
         'Грешка при влизане. Моля, опитайте отново.',
         400
       );
+    }
+
+    // Check if user is staff (for password login routing)
+    const { supabase: adminClient } = await import('@/lib/supabase/client');
+    const { data: staffUser } = await adminClient
+      .from('staff_users')
+      .select('id, is_active')
+      .eq('user_id', data.user.id)
+      .single();
+
+    // If staff user logged in with password, redirect to staff dashboard
+    if (staffUser && staffUser.is_active) {
+      return successResponse({
+        user: {
+          id: data.user.id,
+          email: data.user.email,
+        },
+        redirectTo: '/staff/dashboard',
+      });
     }
 
     // Return success (session is set in cookies automatically)
