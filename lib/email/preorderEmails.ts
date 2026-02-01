@@ -4,7 +4,7 @@
  */
 
 import { sendEmail, createOrUpdateContact, addContactToList, EMAIL_CONFIG } from './emailService';
-import { generateОrderConfirmationEmail } from './templates';
+import { generateOrderConfirmationEmail } from './templates';
 import type { EmailLabelMaps } from './templates';
 import type { EmailResult, ContactResult, PreorderEmailData } from './types';
 import type { Preorder } from '@/lib/supabase';
@@ -75,7 +75,7 @@ export async function sendPreorderConfirmationEmail(
   };
 
   // Generate email content with labels
-  const htmlContent = generateОrderConfirmationEmail(emailData, labels);
+  const htmlContent = generateOrderConfirmationEmail(emailData, labels);
 
   // Send the email
   const result = await sendEmail({
