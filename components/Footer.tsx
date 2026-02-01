@@ -37,7 +37,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link href="/step-1" className="text-gray-300 hover:text-[#FB7D00] transition-colors text-xs sm:text-sm">
-                  Предварителна поръчка
+                  Направи поръчка
                 </Link>
               </li>
             </ul>

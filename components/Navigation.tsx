@@ -103,9 +103,9 @@ export default function Navigation() {
           <div className="relative">
             <Link
               href="/step-1"
-              onClick={() => trackCTAClick({ cta_text: 'Запиши предварителна поръчка', cta_location: 'navigation', destination: '/step-1' })}
+              onClick={() => trackCTAClick({ cta_text: 'Запиши поръчка', cta_location: 'navigation', destination: '/step-1' })}
               className="bg-[#023047] hover:bg-[#FB7D00] px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-colors block"
-              aria-label="Запиши предварителна поръчка"
+              aria-label="Запиши поръчка"
             >
               <svg
                 className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white"
