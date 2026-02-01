@@ -185,7 +185,7 @@ export default function Step1() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#f0f9ff] to-white py-4 sm:py-5 px-3 sm:px-5 pb-28 sm:pb-32">
-      <div className="max-w-[900px] mx-auto mt-12 sm:mt-16">
+      <div className="max-w-[900px] mx-auto">
         {/* Header */}
         <div className="flex justify-between items-center mb-10 sm:mb-16">
           <div className="text-base sm:text-lg md:text-xl font-semibold text-[#023047]">Стъпка 1 от 4 - Кутия</div>
@@ -237,7 +237,7 @@ export default function Step1() {
                 
                 <h4 className="text-lg sm:text-xl md:text-2xl font-bold text-[#023047] mb-2 sm:mb-3 md:mb-4">Стандартна</h4>
                 <p className="text-xs sm:text-sm text-gray-600 leading-relaxed mb-3 sm:mb-4">
-                  Получаваш кутия с 4-6 продукта, включително протеинови продукти, хранителни добавки и спортни аксесоари
+                  Получаваш кутия с 4-6 продукта, включително протеинови продукти, здравословни снакове, хранителни добавки и спортни аксесоари
                 </p>
                 {monthlyStandardPrice && <PriceDisplay priceInfo={monthlyStandardPrice} />}
               </div>
@@ -338,7 +338,7 @@ export default function Step1() {
                 
                 <h4 className="text-lg sm:text-xl md:text-2xl font-bold text-[#023047] mb-2 sm:mb-3 md:mb-4">Стандартна</h4>
                 <p className="text-xs sm:text-sm text-gray-600 leading-relaxed mb-3 sm:mb-4">
-                  Получаваш кутия с 4-6 продукта, включително протеинови продукти, хранителни добавки и спортни аксесоари
+                  Получаваш кутия с 4-6 продукта, включително протеинови продукти, здравословни снакове, хранителни добавки и спортни аксесоари
                 </p>
                 {onetimeStandardPrice && <PriceDisplay priceInfo={onetimeStandardPrice} />}
               </div>

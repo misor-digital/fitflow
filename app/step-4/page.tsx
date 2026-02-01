@@ -164,7 +164,7 @@ export default function Step4() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#f0f9ff] to-white py-4 sm:py-5 px-3 sm:px-5 pb-28 sm:pb-32">
-      <div className="max-w-3xl mx-auto mt-12 sm:mt-16">
+      <div className="max-w-3xl mx-auto">
         {/* Header */}
         <div className="flex justify-between items-center mb-10 sm:mb-16">
           <div className="text-base sm:text-lg md:text-xl font-semibold text-[#023047]">Стъпка 4 от 4 - Финализиране</div>
@@ -298,7 +298,7 @@ export default function Step4() {
                 )}
               </div>
               <p className="text-xs text-gray-400 mt-4 pt-3 border-t border-gray-100">
-                Персонализацията е насочена към твоите нужди, но не гарантира 100% съвпадение.
+                Предпочитанията ти ни помагат да разберем какво харесваш, но не гарантират 100% съвпадение.
               </p>
             </div>
           ) : (
@@ -328,7 +328,7 @@ export default function Step4() {
         {/* Confirmation Message */}
         <div className="bg-gradient-to-br from-[#FB7D00]/10 to-[#FB7D00]/5 border-l-4 border-[#FB7D00] p-4 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl shadow-lg mb-6 sm:mb-8 md:mb-10">
           <p className="text-sm sm:text-base md:text-lg text-[#023047] leading-relaxed text-center font-semibold">
-            Моля, прегледай внимателно информацията по-горе. След натискане на &quot;Потвърди и изпрати&quot;, твоята предварителна поръчка ще бъде записана и ще получиш потвърждение на имейла си.
+            Моля, прегледай внимателно информацията по-горе. След натискане на &quot;Потвърди и изпрати&quot;, твоята поръчка ще бъде записана и ще получиш потвърждение на имейла си.
           </p>
         </div>
 

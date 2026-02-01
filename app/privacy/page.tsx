@@ -22,7 +22,7 @@ export default async function PrivacyPage() {
   return (
     <>
       <Navigation />
-      <div className="min-h-screen bg-gradient-to-b from-[#f8fafc] to-white pt-24 pb-16 px-5">
+      <div className="min-h-screen bg-gradient-to-b from-[#f8fafc] to-white pt-8 sm:pt-10 px-5">
         <div className="max-w-4xl mx-auto mt-8">
           {/* Breadcrumb */}
           <nav className="text-sm text-gray-500 mb-6">
