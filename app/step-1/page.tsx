@@ -237,7 +237,7 @@ export default function Step1() {
                 
                 <h4 className="text-lg sm:text-xl md:text-2xl font-bold text-[#023047] mb-2 sm:mb-3 md:mb-4">Стандартна</h4>
                 <p className="text-xs sm:text-sm text-gray-600 leading-relaxed mb-3 sm:mb-4">
-                  Получаваш кутия с 4-6 продукта, включително протеинови продукти, здравословни снакове, хранителни добавки и спортни аксесоари
+                  Получаваш кутия с 5-7 продукта, включително протеинови продукти, здравословни снакове, хранителни добавки и спортни аксесоари
                 </p>
                 {monthlyStandardPrice && <PriceDisplay priceInfo={monthlyStandardPrice} />}
               </div>
@@ -338,7 +338,7 @@ export default function Step1() {
                 
                 <h4 className="text-lg sm:text-xl md:text-2xl font-bold text-[#023047] mb-2 sm:mb-3 md:mb-4">Стандартна</h4>
                 <p className="text-xs sm:text-sm text-gray-600 leading-relaxed mb-3 sm:mb-4">
-                  Получаваш кутия с 4-6 продукта, включително протеинови продукти, здравословни снакове, хранителни добавки и спортни аксесоари
+                  Получаваш кутия с 5-7 продукта, включително протеинови продукти, здравословни снакове, хранителни добавки и спортни аксесоари
                 </p>
                 {onetimeStandardPrice && <PriceDisplay priceInfo={onetimeStandardPrice} />}
               </div>

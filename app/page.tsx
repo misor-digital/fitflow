@@ -102,7 +102,7 @@ function HomeContent() {
           {[
             { num: 1, title: 'Избери честота', desc: 'Избери колко често искаш да получаваш своята кутия' },
             { num: 2, title: 'Кажи ни предпочитанията си', desc: 'Отговори на кратък въпросник, за да те опознаем по-добре (по желание)' },
-            { num: 3, title: 'Завърши', desc: 'Попълни личните си данни и се присъедини към списъка с поръчки' }
+            { num: 3, title: 'Завърши', desc: 'Попълни личните си данни и поръчай' }
           ].map((step) => (
             <div key={step.num} className="relative bg-white p-5 sm:p-6 md:p-8 rounded-2xl shadow-lg border-l-4 border-[#FB7D00] hover:-translate-y-1 hover:shadow-xl transition-all">
               <div className="absolute -top-3 sm:-top-4 left-4 sm:left-5 w-10 h-10 sm:w-12 sm:h-12 bg-[#FB7D00] text-white rounded-full flex items-center justify-center text-lg sm:text-xl font-bold shadow-lg">
