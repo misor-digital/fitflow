@@ -1,5 +1,11 @@
 # fitflow
 
+## 0.3.3
+
+### Patch Changes
+
+- Remove preorder content and free delivery banner, clean up layout, and align box type definitions
+
 ## 0.3.2
 
 ### Patch Changes
