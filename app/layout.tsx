@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import SlidingBanner from "@/components/SlidingBanner";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
 import ConditionalScripts from "@/components/ConditionalScripts";
 

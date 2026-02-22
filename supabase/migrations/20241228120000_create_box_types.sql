@@ -70,11 +70,11 @@ GRANT ALL ON box_types TO service_role;
 
 -- Seed initial data (matching current hardcoded values)
 INSERT INTO box_types (id, name, description, price_eur, is_subscription, is_premium, frequency, sort_order) VALUES
-  ('monthly-standard', 'Месечна - Стандартна', 'Получаваш кутия с 4-6 продукта, включително протеинови продукти, хранителни добавки и спортни аксесоари', 24.90, true, false, 'monthly', 1),
+  ('monthly-standard', 'Месечна - Стандартна', 'Получаваш кутия с 5-7 продукта, включително протеинови продукти, хранителни добавки и спортни аксесоари', 24.90, true, false, 'monthly', 1),
   ('monthly-premium', 'Месечна - Премиум', 'Получаваш всичко от стандартната кутия плюс спортно облекло', 34.90, true, true, 'monthly', 2),
   ('monthly-premium-monthly', 'Месечна - Премиум (всеки месец)', 'Получаваш всичко от стандартната кутия плюс спортно облекло - доставка всеки месец', 34.90, true, true, 'monthly', 3),
   ('monthly-premium-seasonal', 'Месечна - Премиум (всеки 3 месеца)', 'Получаваш всичко от стандартната кутия плюс спортно облекло - доставка на всеки 3 месеца', 34.90, true, true, 'seasonal', 4),
-  ('onetime-standard', 'Еднократна - Стандартна', 'Получаваш кутия с 4-6 продукта, включително протеинови продукти, хранителни добавки и спортни аксесоари', 29.90, false, false, NULL, 5),
+  ('onetime-standard', 'Еднократна - Стандартна', 'Получаваш кутия с 5-7 продукта, включително протеинови продукти, хранителни добавки и спортни аксесоари', 29.90, false, false, NULL, 5),
   ('onetime-premium', 'Еднократна - Премиум', 'Получаваш всичко от стандартната кутия плюс спортно облекло', 39.90, false, true, NULL, 6)
 ON CONFLICT (id) DO UPDATE SET
   name = EXCLUDED.name,
