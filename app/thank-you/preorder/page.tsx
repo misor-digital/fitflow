@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFormStore } from '@/store/formStore';
 import { trackLead, trackGenerateLead, setUserProperties } from '@/lib/analytics';
+import PreorderLinkBanner from '@/components/PreorderLinkBanner';
 
 export default function ThankYou() {
   const router = useRouter();
@@ -74,6 +75,8 @@ export default function ThankYou() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#f0f9ff] to-white flex items-center justify-center p-3 sm:p-5">
       <div className="max-w-lg w-full">
+        <PreorderLinkBanner />
+
         {/* Card */}
         <div className="bg-white rounded-2xl sm:rounded-3xl p-5 sm:p-8 md:p-12 shadow-2xl text-center">
           {/* Success Icon */}

@@ -74,25 +74,17 @@ export async function isValidPromoCode(code: string | null | undefined): Promise
 }
 
 /**
- * Increment the usage count for a promo code
- * Call this after a successful order
+ * Atomically increment the usage count for a promo code.
+ * Uses an RPC function to avoid read-then-write race conditions.
  */
 export async function incrementPromoCodeUsage(code: string): Promise<void> {
-  const normalizedCode = code.trim().toUpperCase();
-  
-  // Get current usage count
-  const { data } = await supabaseAdmin
-    .from('promo_codes')
-    .select('current_uses')
-    .ilike('code', normalizedCode)
-    .single();
+  const { error } = await supabaseAdmin.rpc('increment_promo_usage', {
+    p_code: code.trim().toUpperCase(),
+  });
 
-  if (data) {
-    const newCount = data.current_uses + 1;
-    await supabaseAdmin
-      .from('promo_codes')
-      .update({ current_uses: newCount })
-      .ilike('code', normalizedCode);
+  if (error) {
+    console.error('Error incrementing promo code usage:', error);
+    throw new Error('Failed to increment promo code usage');
   }
 }
 

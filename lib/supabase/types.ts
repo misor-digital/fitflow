@@ -37,6 +37,8 @@ export interface PreorderInsert {
   discount_percent?: number | null;
   original_price_eur?: number | null;
   final_price_eur?: number | null;
+  // Linking
+  user_id?: string | null;
 }
 
 export interface Preorder extends PreorderInsert {
@@ -326,6 +328,10 @@ export interface Database {
       check_rate_limit: {
         Args: { p_key: string; p_max_requests: number; p_window_seconds: number };
         Returns: boolean;
+      };
+      increment_promo_usage: {
+        Args: { p_code: string };
+        Returns: void;
       };
     };
     Enums: {

@@ -6,6 +6,8 @@ import { calculatePrice, validatePromoCode, incrementPromoCodeUsage } from '@/li
 import { trackLeadCapi, hashForMeta, generateEventId } from '@/lib/analytics';
 import { EMAIL_REGEX } from '@/lib/preorder/validation';
 import { checkRateLimit } from '@/lib/utils/rateLimit';
+import { verifySession } from '@/lib/auth';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 
 // Input length limits
 const MAX_NAME = 100;
@@ -143,6 +145,15 @@ export async function POST(request: Request): Promise<NextResponse> {
       finalPriceEur: preorder?.final_price_eur,
       timestamp: preorder?.created_at,
     });
+
+    // Auto-link if user is authenticated
+    const session = await verifySession();
+    if (session && preorder) {
+      await supabaseAdmin
+        .from('preorders')
+        .update({ user_id: session.userId })
+        .eq('id', preorder.id);
+    }
 
     // Increment promo code usage if one was applied
     if (validatedPromo?.code) {
