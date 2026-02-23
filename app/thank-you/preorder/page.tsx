@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFormStore } from '@/store/formStore';
 import { trackLead, trackGenerateLead, setUserProperties } from '@/lib/analytics';
@@ -9,16 +9,40 @@ export default function ThankYou() {
   const router = useRouter();
   const store = useFormStore();
   const hasTrackedLead = useRef(false);
+  const [ready, setReady] = useState(false);
 
   const handleGoHome = () => {
     store.reset();
     router.push('/');
   };
 
+  // Wait for Zustand hydration, then check data
+  useEffect(() => {
+    const unsubscribe = useFormStore.persist.onFinishHydration(() => {
+      const state = useFormStore.getState();
+      if (!state.email || !state.fullName) {
+        router.replace('/');
+      } else {
+        setReady(true);
+      }
+    });
+
+    // If already hydrated
+    if (useFormStore.persist.hasHydrated()) {
+      if (!store.email || !store.fullName) {
+        router.replace('/');
+      } else {
+        setReady(true);
+      }
+    }
+
+    return () => unsubscribe?.();
+  }, [router, store.email, store.fullName]);
+
   // Track Lead (Meta) and generate_lead (GA4) on successful form submission (primary conversion)
   useEffect(() => {
-    // Only track if user completed the form (has email and name)
-    if (store.email && store.fullName && !hasTrackedLead.current) {
+    // Only track if user completed the form (has email and name) and page is ready
+    if (ready && store.email && store.fullName && !hasTrackedLead.current) {
       // Meta Pixel - Lead event
       trackLead();
       
@@ -37,14 +61,15 @@ export default function ThankYou() {
       
       hasTrackedLead.current = true;
     }
-  }, [store.email, store.fullName, store.boxType, store.wantsPersonalization, store.promoCode]);
+  }, [ready, store.email, store.fullName, store.boxType, store.wantsPersonalization, store.promoCode]);
 
-  // Redirect to home if accessed directly without completing the form
-  useEffect(() => {
-    if (!store.email || !store.fullName) {
-      router.push('/');
-    }
-  }, [store.email, store.fullName, router]);
+  if (!ready) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin w-8 h-8 border-4 border-[var(--color-brand-orange)] border-t-transparent rounded-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#f0f9ff] to-white flex items-center justify-center p-3 sm:p-5">
