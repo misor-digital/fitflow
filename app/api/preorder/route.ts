@@ -166,22 +166,45 @@ export async function POST(request: Request): Promise<NextResponse> {
     }
 
     // Send confirmation email and add to contacts via Brevo
+    let emailResult: { success: boolean; error?: string } | undefined;
+    let contactResult: { success: boolean; error?: string } | undefined;
+
     if (preorder && priceInfo) {
       try {
-        const { emailResult, contactResult } = await handlePreorderEmailWorkflow(preorder, priceInfo);
+        const workflowResult = await handlePreorderEmailWorkflow(preorder, priceInfo);
+        emailResult = workflowResult.emailResult;
+        contactResult = workflowResult.contactResult;
         
         if (!emailResult.success) {
-          console.warn('Failed to send confirmation email:', emailResult.error);
-          // Don't fail the request - preorder was saved successfully
+          console.error(JSON.stringify({
+            level: 'error',
+            event: 'email_send_failed',
+            preorderId: preorder?.id,
+            email: preorder?.email,
+            error: emailResult.error,
+            timestamp: new Date().toISOString(),
+          }));
         }
         
         if (!contactResult.success) {
-          console.warn('Failed to add contact to Brevo:', contactResult.error);
-          // Don't fail the request - this is not critical
+          console.error(JSON.stringify({
+            level: 'error',
+            event: 'contact_add_failed',
+            preorderId: preorder?.id,
+            email: preorder?.email,
+            error: contactResult.error,
+            timestamp: new Date().toISOString(),
+          }));
         }
       } catch (emailError) {
         // Log but don't fail the request - the preorder was saved successfully
-        console.error('Error in email workflow:', emailError);
+        console.error(JSON.stringify({
+          level: 'error',
+          event: 'email_workflow_exception',
+          preorderId: preorder?.id,
+          error: emailError instanceof Error ? emailError.message : String(emailError),
+          timestamp: new Date().toISOString(),
+        }));
       }
     }
 
@@ -243,7 +266,11 @@ export async function POST(request: Request): Promise<NextResponse> {
       { 
         success: true,
         message: 'Pre-order submitted successfully',
-        preorderId: preorder?.id
+        preorderId: preorder?.id,
+        _meta: {
+          emailSent: emailResult?.success ?? false,
+          contactAdded: contactResult?.success ?? false,
+        },
       },
       { status: 200 }
     );
