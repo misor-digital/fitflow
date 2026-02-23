@@ -265,43 +265,50 @@ export interface BoxPriceInfo {
 // Database Schema Type (for Supabase client)
 // ============================================================================
 
+/**
+ * Converts an interface to a plain mapped type so it satisfies
+ * Record<string, unknown> in TypeScript 5.9+.
+ * (TS 5.9 no longer considers interfaces assignable to index-signature types.)
+ */
+type ToRecord<T> = { [K in keyof T]: T[K] };
+
 export interface Database {
   public: {
     Tables: {
       preorders: {
-        Row: Preorder;
-        Insert: PreorderInsert;
-        Update: Partial<PreorderInsert>;
+        Row: ToRecord<Preorder>;
+        Insert: ToRecord<PreorderInsert>;
+        Update: ToRecord<Partial<PreorderInsert>>;
         Relationships: [];
       };
       box_types: {
-        Row: BoxTypeRow;
-        Insert: BoxTypeInsert;
-        Update: BoxTypeUpdate;
+        Row: ToRecord<BoxTypeRow>;
+        Insert: ToRecord<BoxTypeInsert>;
+        Update: ToRecord<BoxTypeUpdate>;
         Relationships: [];
       };
       promo_codes: {
-        Row: PromoCodeRow;
-        Insert: PromoCodeInsert;
-        Update: PromoCodeUpdate;
+        Row: ToRecord<PromoCodeRow>;
+        Insert: ToRecord<PromoCodeInsert>;
+        Update: ToRecord<PromoCodeUpdate>;
         Relationships: [];
       };
       options: {
-        Row: OptionRow;
-        Insert: OptionInsert;
-        Update: OptionUpdate;
+        Row: ToRecord<OptionRow>;
+        Insert: ToRecord<OptionInsert>;
+        Update: ToRecord<OptionUpdate>;
         Relationships: [];
       };
       site_config: {
-        Row: SiteConfigRow;
-        Insert: SiteConfigInsert;
-        Update: SiteConfigUpdate;
+        Row: ToRecord<SiteConfigRow>;
+        Insert: ToRecord<SiteConfigInsert>;
+        Update: ToRecord<SiteConfigUpdate>;
         Relationships: [];
       };
       user_profiles: {
-        Row: UserProfileRow;
-        Insert: UserProfileInsert;
-        Update: UserProfileUpdate;
+        Row: ToRecord<UserProfileRow>;
+        Insert: ToRecord<UserProfileInsert>;
+        Update: ToRecord<UserProfileUpdate>;
         Relationships: [{
           foreignKeyName: 'user_profiles_id_fkey';
           columns: ['id'];

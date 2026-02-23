@@ -1,4 +1,4 @@
-import { supabase } from './client';
+import { supabaseAdmin } from './admin';
 import type { PreorderInsert, Preorder } from './types';
 import { transformToPersistedFormat } from '@/lib/preorder/transform';
 import type { PreorderUserInput, PriceInfo } from '@/lib/preorder/types';
@@ -76,11 +76,11 @@ export async function createPreorder(data: PreorderFormData): Promise<{ data: Pr
           promoCode: data.promoCode ?? null,
         }
       : null;
-    const insertData = transformToPersistedFormat(userInput, priceInfo) as PreorderInsert;
+    const insertData = transformToPersistedFormat(userInput, priceInfo) satisfies PreorderInsert;
     
-    const { data: preorder, error } = await supabase
+    const { data: preorder, error } = await supabaseAdmin
       .from('preorders')
-      .insert(insertData as never)
+      .insert(insertData)
       .select()
       .single();
 
@@ -89,7 +89,7 @@ export async function createPreorder(data: PreorderFormData): Promise<{ data: Pr
       return { data: null, error: new Error(error.message) };
     }
 
-    return { data: preorder as Preorder, error: null };
+    return { data: preorder, error: null };
   } catch (err) {
     console.error('Error creating preorder:', err);
     return { data: null, error: err instanceof Error ? err : new Error('Unknown error') };
@@ -101,7 +101,7 @@ export async function createPreorder(data: PreorderFormData): Promise<{ data: Pr
  */
 export async function getPreorderById(id: string): Promise<{ data: Preorder | null; error: Error | null }> {
   try {
-    const { data: preorder, error } = await supabase
+    const { data: preorder, error } = await supabaseAdmin
       .from('preorders')
       .select('*')
       .eq('id', id)
@@ -112,7 +112,7 @@ export async function getPreorderById(id: string): Promise<{ data: Preorder | nu
       return { data: null, error: new Error(error.message) };
     }
 
-    return { data: preorder as Preorder, error: null };
+    return { data: preorder, error: null };
   } catch (err) {
     console.error('Error fetching preorder:', err);
     return { data: null, error: err instanceof Error ? err : new Error('Unknown error') };
@@ -124,7 +124,7 @@ export async function getPreorderById(id: string): Promise<{ data: Preorder | nu
  */
 export async function getPreorderByOrderId(orderId: string): Promise<{ data: Preorder | null; error: Error | null }> {
   try {
-    const { data: preorder, error } = await supabase
+    const { data: preorder, error } = await supabaseAdmin
       .from('preorders')
       .select('*')
       .eq('order_id', orderId)
@@ -135,7 +135,7 @@ export async function getPreorderByOrderId(orderId: string): Promise<{ data: Pre
       return { data: null, error: new Error(error.message) };
     }
 
-    return { data: preorder as Preorder, error: null };
+    return { data: preorder, error: null };
   } catch (err) {
     console.error('Error fetching preorder by order_id:', err);
     return { data: null, error: err instanceof Error ? err : new Error('Unknown error') };
@@ -147,7 +147,7 @@ export async function getPreorderByOrderId(orderId: string): Promise<{ data: Pre
  */
 export async function getPreorderByEmail(email: string): Promise<{ data: Preorder[] | null; error: Error | null }> {
   try {
-    const { data: preorders, error } = await supabase
+    const { data: preorders, error } = await supabaseAdmin
       .from('preorders')
       .select('*')
       .eq('email', email)
@@ -158,7 +158,7 @@ export async function getPreorderByEmail(email: string): Promise<{ data: Preorde
       return { data: null, error: new Error(error.message) };
     }
 
-    return { data: preorders as Preorder[], error: null };
+    return { data: preorders, error: null };
   } catch (err) {
     console.error('Error fetching preorders by email:', err);
     return { data: null, error: err instanceof Error ? err : new Error('Unknown error') };
@@ -170,7 +170,7 @@ export async function getPreorderByEmail(email: string): Promise<{ data: Preorde
  */
 export async function getAllPreorders(): Promise<{ data: Preorder[] | null; error: Error | null }> {
   try {
-    const { data: preorders, error } = await supabase
+    const { data: preorders, error } = await supabaseAdmin
       .from('preorders')
       .select('*')
       .order('created_at', { ascending: false });
@@ -180,7 +180,7 @@ export async function getAllPreorders(): Promise<{ data: Preorder[] | null; erro
       return { data: null, error: new Error(error.message) };
     }
 
-    return { data: preorders as Preorder[], error: null };
+    return { data: preorders, error: null };
   } catch (err) {
     console.error('Error fetching all preorders:', err);
     return { data: null, error: err instanceof Error ? err : new Error('Unknown error') };

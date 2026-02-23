@@ -3,7 +3,7 @@
  * Server-only functions for validating and managing promo codes
  */
 
-import { supabase } from '@/lib/supabase/client';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 import type { PromoCodeRow } from '@/lib/supabase';
 
 /**
@@ -20,7 +20,7 @@ export async function validatePromoCode(code: string | null | undefined): Promis
     return null;
   }
 
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('promo_codes')
     .select('*')
     .ilike('code', normalizedCode)
@@ -31,8 +31,7 @@ export async function validatePromoCode(code: string | null | undefined): Promis
     return null;
   }
 
-  // Cast to PromoCodeRow for type safety
-  const promo = data as unknown as PromoCodeRow;
+  const promo = data;
 
   // Check date range
   const now = new Date();
@@ -82,18 +81,17 @@ export async function incrementPromoCodeUsage(code: string): Promise<void> {
   const normalizedCode = code.trim().toUpperCase();
   
   // Get current usage count
-  const { data } = await supabase
+  const { data } = await supabaseAdmin
     .from('promo_codes')
     .select('current_uses')
     .ilike('code', normalizedCode)
     .single();
 
   if (data) {
-    const promoData = data as unknown as { current_uses: number };
-    const newCount = promoData.current_uses + 1;
-    await supabase
+    const newCount = data.current_uses + 1;
+    await supabaseAdmin
       .from('promo_codes')
-      .update({ current_uses: newCount } as never)
+      .update({ current_uses: newCount })
       .ilike('code', normalizedCode);
   }
 }

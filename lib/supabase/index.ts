@@ -1,5 +1,7 @@
-// Supabase client
-export { supabase } from './client';
+// Clients
+export { createClient as createBrowserClient } from './browser';
+export { createClient as createServerClient } from './server';
+export { supabaseAdmin } from './admin';
 
 // Types
 export type {
