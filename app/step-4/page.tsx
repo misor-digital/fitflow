@@ -59,12 +59,14 @@ export default function Step4() {
 
   // Fetch catalog data and prices from API
   useEffect(() => {
+    const controller = new AbortController();
+
     async function fetchData() {
       try {
         setLoading(true);
         
         // Fetch catalog data
-        const catalogResponse = await fetch('/api/catalog?type=all');
+        const catalogResponse = await fetch('/api/catalog?type=all', { signal: controller.signal });
         if (!catalogResponse.ok) {
           throw new Error('Failed to fetch catalog');
         }
@@ -77,7 +79,7 @@ export default function Step4() {
             ? `/api/catalog?type=prices&promoCode=${encodeURIComponent(store.promoCode)}`
             : '/api/catalog?type=prices';
           
-          const priceResponse = await fetch(priceUrl);
+          const priceResponse = await fetch(priceUrl, { signal: controller.signal });
           if (priceResponse.ok) {
             const priceData = await priceResponse.json();
             if (priceData.prices && priceData.prices[store.boxType]) {
@@ -86,6 +88,7 @@ export default function Step4() {
           }
         }
       } catch (err) {
+        if (err instanceof DOMException && err.name === 'AbortError') return;
         console.error('Error fetching data:', err);
       } finally {
         setLoading(false);
@@ -93,6 +96,7 @@ export default function Step4() {
     }
     
     fetchData();
+    return () => controller.abort();
   }, [store.boxType, store.promoCode]);
 
   // Get labels from catalog data (no fallbacks - DB is source of truth)

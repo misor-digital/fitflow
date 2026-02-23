@@ -1,41 +1,69 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
-import { usePathname } from 'next/navigation';
+import { useState, useEffect, useCallback } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import { useFormStore } from '@/store/formStore';
+import { useAuthStore } from '@/store/authStore';
+import { createClient } from '@/lib/supabase/browser';
 import { trackCTAClick } from '@/lib/analytics';
 import PromoDiscountPrompt from './PromoDiscountPrompt';
 
 export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
   const { promoCode } = useFormStore();
-  
-  // Fetch discount percent from API
+  const { user, isLoading } = useAuthStore();
+
+  // ---- Fix P2: Cache discount in state, only fetch when promoCode changes ----
   const [discountPercent, setDiscountPercent] = useState(0);
-  
+  const [lastValidatedCode, setLastValidatedCode] = useState<string | null>(null);
+
   useEffect(() => {
+    // Skip if same code was already validated
+    if (promoCode === lastValidatedCode) return;
+    if (!promoCode) {
+      setDiscountPercent(0);
+      setLastValidatedCode(null);
+      return;
+    }
+
+    // Fix ST8: AbortController for cleanup
+    const controller = new AbortController();
+
     async function fetchDiscount() {
-      if (!promoCode) {
-        setDiscountPercent(0);
-        return;
-      }
-      
       try {
-        const response = await fetch(`/api/promo/validate?code=${encodeURIComponent(promoCode)}`);
+        const response = await fetch(
+          `/api/promo/validate?code=${encodeURIComponent(promoCode!)}`,
+          { signal: controller.signal }
+        );
         if (response.ok) {
           const data = await response.json();
           setDiscountPercent(data.valid ? data.discountPercent : 0);
+          setLastValidatedCode(promoCode);
         }
       } catch (err) {
+        if (err instanceof DOMException && err.name === 'AbortError') return;
         console.error('Error fetching discount:', err);
         setDiscountPercent(0);
       }
     }
-    
+
     fetchDiscount();
-  }, [promoCode]);
+
+    return () => controller.abort();
+  }, [promoCode, lastValidatedCode]);
+
+  // ---- Logout handler ----
+  const handleLogout = useCallback(async () => {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    setUserMenuOpen(false);
+    router.push('/');
+    router.refresh();
+  }, [router]);
 
   const isActive = (path: string) => pathname === path;
 
@@ -99,8 +127,76 @@ export default function Navigation() {
             FitFlow
           </Link>
 
-          {/* CTA Button with Promo Prompt - Right Side */}
-          <div className="relative">
+          {/* Right Side: Auth + CTA */}
+          <div className="flex items-center gap-3">
+            {/* Auth UI */}
+            {!isLoading && (
+              <>
+                {user ? (
+                  <div className="relative">
+                    <button
+                      onClick={() => setUserMenuOpen(!userMenuOpen)}
+                      className="flex items-center gap-2 text-sm text-[var(--color-brand-navy)] hover:text-[var(--color-brand-orange)] transition-colors"
+                    >
+                      <span className="hidden sm:inline font-medium">
+                        {user.fullName || user.email}
+                      </span>
+                      {/* User avatar or initials circle */}
+                      <div className="w-8 h-8 rounded-full bg-[var(--color-brand-navy)] text-white flex items-center justify-center text-xs font-bold">
+                        {(user.fullName?.[0] ?? user.email[0]).toUpperCase()}
+                      </div>
+                    </button>
+
+                    {/* Dropdown menu */}
+                    {userMenuOpen && (
+                      <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border py-2 z-50">
+                        <Link
+                          href="/account"
+                          onClick={() => setUserMenuOpen(false)}
+                          className="block px-4 py-2 text-sm hover:bg-gray-50"
+                        >
+                          Моят профил
+                        </Link>
+                        {user.userType === 'staff' && (
+                          <Link
+                            href="/admin"
+                            onClick={() => setUserMenuOpen(false)}
+                            className="block px-4 py-2 text-sm hover:bg-gray-50"
+                          >
+                            Админ панел
+                          </Link>
+                        )}
+                        <hr className="my-1" />
+                        <button
+                          onClick={handleLogout}
+                          className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                        >
+                          Изход
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="hidden sm:flex items-center gap-2">
+                    <Link
+                      href="/login"
+                      className="text-sm font-medium text-[var(--color-brand-navy)] hover:text-[var(--color-brand-orange)] transition-colors"
+                    >
+                      Вписване
+                    </Link>
+                    <Link
+                      href="/register"
+                      className="text-sm font-medium bg-[var(--color-brand-orange)] text-white px-3 py-1.5 rounded-lg hover:opacity-90 transition-opacity"
+                    >
+                      Регистрация
+                    </Link>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* CTA Button with Promo Prompt */}
+            <div className="relative">
             <Link
               href="/step-1"
               onClick={() => trackCTAClick({ cta_text: 'Запиши поръчка', cta_location: 'navigation', destination: '/step-1' })}
@@ -122,6 +218,7 @@ export default function Navigation() {
             
             {/* Promo Discount Prompt - Below CTA with arrow pointing up */}
             <PromoDiscountPrompt discountPercent={discountPercent} />
+            </div>
           </div>
         </div>
 
@@ -156,6 +253,20 @@ export default function Navigation() {
               >
                 Въпроси
               </Link>
+
+              {/* Mobile auth links */}
+              {!isLoading && !user && (
+                <>
+                  <Link href="/login" onClick={() => setIsOpen(false)}
+                    className="text-sm font-semibold text-[var(--color-brand-navy)]">
+                    Вписване
+                  </Link>
+                  <Link href="/register" onClick={() => setIsOpen(false)}
+                    className="text-sm font-semibold text-[var(--color-brand-orange)]">
+                    Регистрация
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         )}

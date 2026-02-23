@@ -67,10 +67,12 @@ export default function Step2() {
 
   // Fetch catalog data from API
   useEffect(() => {
+    const controller = new AbortController();
+
     async function fetchCatalog() {
       try {
         setLoading(true);
-        const response = await fetch('/api/catalog?type=all');
+        const response = await fetch('/api/catalog?type=all', { signal: controller.signal });
         if (!response.ok) {
           throw new Error('Failed to fetch catalog');
         }
@@ -78,6 +80,7 @@ export default function Step2() {
         setCatalogData(data);
         setError(null);
       } catch (err) {
+        if (err instanceof DOMException && err.name === 'AbortError') return;
         console.error('Error fetching catalog:', err);
         setError('Грешка при зареждане. Моля, опитайте отново.');
       } finally {
@@ -86,6 +89,7 @@ export default function Step2() {
     }
     
     fetchCatalog();
+    return () => controller.abort();
   }, []);
 
   // Get options from catalog data

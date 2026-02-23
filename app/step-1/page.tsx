@@ -42,6 +42,8 @@ export default function Step1() {
 
   // Fetch prices and box type names from API
   useEffect(() => {
+    const controller = new AbortController();
+
     async function fetchData() {
       try {
         setLoading(true);
@@ -52,7 +54,7 @@ export default function Step1() {
           : '/api/catalog?type=prices';
         
         // Fetch box types for names (only once, not dependent on promoCode)
-        const response = await fetch(pricesUrl);
+        const response = await fetch(pricesUrl, { signal: controller.signal });
         
         if (!response.ok) {
           throw new Error('Failed to fetch prices');
@@ -65,6 +67,7 @@ export default function Step1() {
         
         setError(null);
       } catch (err) {
+        if (err instanceof DOMException && err.name === 'AbortError') return;
         console.error('Error fetching data:', err);
         setError('Грешка при зареждане на цените. Моля, опитайте отново.');
       } finally {
@@ -73,6 +76,7 @@ export default function Step1() {
     }
     
     fetchData();
+    return () => controller.abort();
   }, [promoCode]);
 
   // Get price info for a box type

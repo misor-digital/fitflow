@@ -29,10 +29,12 @@ function HomeContent() {
   }, []);
   
   // Extract promo code from URL and validate via API
+  // Fix P3: Only validate if URL code differs from stored code
   useEffect(() => {
     async function validateAndSetPromo() {
       const urlPromoCode = searchParams.get('promocode');
-      if (urlPromoCode) {
+      const storedCode = useFormStore.getState().promoCode;
+      if (urlPromoCode && urlPromoCode !== storedCode) {
         try {
           const response = await fetch(`/api/promo/validate?code=${encodeURIComponent(urlPromoCode)}`);
           if (response.ok) {
