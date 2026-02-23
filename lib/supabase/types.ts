@@ -42,6 +42,7 @@ export interface PreorderInsert {
 export interface Preorder extends PreorderInsert {
   id: string;
   order_id: string;
+  user_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -197,6 +198,54 @@ export interface SiteConfigUpdate {
 }
 
 // ============================================================================
+// User Profiles Table
+// ============================================================================
+
+export type UserType = 'customer' | 'staff';
+
+export type StaffRole =
+  | 'super_admin'
+  | 'admin'
+  | 'manager'
+  | 'warehouse'
+  | 'marketing'
+  | 'support'
+  | 'finance'
+  | 'content'
+  | 'analyst';
+
+export interface UserProfileRow {
+  id: string;
+  full_name: string;
+  phone: string | null;
+  avatar_url: string | null;
+  user_type: UserType;
+  staff_role: StaffRole | null;
+  is_subscriber: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserProfileInsert {
+  id: string;
+  full_name: string;
+  phone?: string | null;
+  avatar_url?: string | null;
+  user_type?: UserType;
+  staff_role?: StaffRole | null;
+  is_subscriber?: boolean;
+}
+
+export interface UserProfileUpdate {
+  full_name?: string;
+  phone?: string | null;
+  avatar_url?: string | null;
+  user_type?: UserType;
+  staff_role?: StaffRole | null;
+  is_subscriber?: boolean;
+}
+
+// ============================================================================
 // RPC Function Return Types
 // ============================================================================
 
@@ -249,6 +298,17 @@ export interface Database {
         Update: SiteConfigUpdate;
         Relationships: [];
       };
+      user_profiles: {
+        Row: UserProfileRow;
+        Insert: UserProfileInsert;
+        Update: UserProfileUpdate;
+        Relationships: [{
+          foreignKeyName: 'user_profiles_id_fkey';
+          columns: ['id'];
+          referencedRelation: 'users';
+          referencedColumns: ['id'];
+        }];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -259,6 +319,8 @@ export interface Database {
     };
     Enums: {
       box_type: BoxType;
+      user_type: UserType;
+      staff_role: StaffRole;
     };
     CompositeTypes: Record<string, never>;
   };

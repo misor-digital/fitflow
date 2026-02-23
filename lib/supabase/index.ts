@@ -11,6 +11,11 @@ export type {
   OptionRow,
   OptionSetId,
   PromoCodeRow,
+  UserType,
+  StaffRole,
+  UserProfileRow,
+  UserProfileInsert,
+  UserProfileUpdate,
 } from './types';
 
 // Services
