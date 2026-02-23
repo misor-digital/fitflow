@@ -11,6 +11,7 @@ import {
   formatPriceDual,
   formatSavings,
 } from '@/lib/preorder';
+import { escapeHtml } from '@/lib/utils/sanitize';
 
 // ============================================================================
 // Label Map Type
@@ -53,7 +54,7 @@ export function formatOptionsWithOther(
   const result = labels.join(', ');
   
   if (options.includes('other') && otherValue?.trim()) {
-    return `${result} (${otherValue})`;
+    return `${result} (${escapeHtml(otherValue)})`;
   }
   
   return result;
@@ -80,7 +81,7 @@ function mapToDisplayNames(items: string[], labelMap: LabelMap): string[] {
 
 function printOtherOption(array: string[] | undefined, otherValue: string | undefined): string {
   if (array?.includes('other') && otherValue) {
-    return ` (${otherValue})`;
+    return ` (${escapeHtml(otherValue)})`;
   }
 
   return '';
@@ -158,7 +159,7 @@ export function generateConfirmationEmail(
         ${data.sizeUpper ? `<p><strong>Размер (горна част):</strong> ${data.sizeUpper}</p>` : ''}
         ${data.sizeLower ? `<p><strong>Размер (долна част):</strong> ${data.sizeLower}</p>` : ''}
         ${dietaryDisplay.length ? `<p><strong>Диетични предпочитания:</strong> ${dietaryDisplay.join(', ')}  ${printOtherOption(data.dietary, data.dietaryOther)}</p>` : ''}
-        ${data.additionalNotes ? `<p><strong>Допълнителни бележки:</strong> ${data.additionalNotes}</p>` : ''}
+        ${data.additionalNotes ? `<p><strong>Допълнителни бележки:</strong> ${escapeHtml(data.additionalNotes)}</p>` : ''}
       </div>
     `
     : '';
@@ -202,7 +203,7 @@ export function generateConfirmationEmail(
         <tr>
           <td style="padding: 40px 30px;">
             <h2 style="color: #363636; margin-top: 0; font-size: 24px;">
-              Благодарим ти, ${data.fullName}!
+              Благодарим ти, ${escapeHtml(data.fullName)}!
             </h2>
             
             <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">

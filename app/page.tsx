@@ -3,7 +3,7 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useRef, Suspense } from 'react';
+import { useEffect, useRef, Suspense, Fragment } from 'react';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { useFormStore } from '@/store/formStore';
@@ -167,7 +167,14 @@ function HomeContent() {
             <div key={idx} className="bg-white/10 backdrop-blur-sm p-5 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl border-l-4 border-[var(--color-brand-orange)] hover:-translate-y-1 hover:bg-white/15 hover:shadow-2xl transition-all text-center">
               <p className="text-base sm:text-lg md:text-xl italic text-white leading-relaxed mb-3 sm:mb-4 max-w-2xl mx-auto">
                 <span className="text-3xl sm:text-4xl md:text-5xl text-[var(--color-brand-orange)] leading-none mr-1">&quot;</span>
-                <span dangerouslySetInnerHTML={{ __html: quote.text }} />
+                <span>
+                  {quote.text.split('<br/>').map((part, i) => (
+                    <Fragment key={i}>
+                      {i > 0 && <br />}
+                      {part}
+                    </Fragment>
+                  ))}
+                </span>
               </p>
               <p className="text-sm sm:text-base font-semibold text-white">
                 <span className="text-[var(--color-brand-orange)]">— </span>{quote.author}

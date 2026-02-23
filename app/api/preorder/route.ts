@@ -5,9 +5,34 @@ import { handlePreorderEmailWorkflow } from '@/lib/email';
 import { calculatePrice, validatePromoCode, incrementPromoCodeUsage } from '@/lib/data';
 import { trackLeadCapi, hashForMeta, generateEventId } from '@/lib/analytics';
 import { EMAIL_REGEX } from '@/lib/preorder/validation';
+import { checkRateLimit } from '@/lib/utils/rateLimit';
+
+// Input length limits
+const MAX_NAME = 100;
+const MAX_EMAIL = 254;
+const MAX_PHONE = 20;
+const MAX_NOTES = 1000;
+const MAX_OTHER = 200;
+
+const VALID_BOX_TYPES = new Set([
+  'monthly-standard', 'monthly-premium', 'monthly-premium-monthly',
+  'monthly-premium-seasonal', 'onetime-standard', 'onetime-premium',
+]);
 
 export async function POST(request: Request): Promise<NextResponse> {
   try {
+    // Rate limiting
+    const headersList = await headers();
+    const ip = headersList.get('x-forwarded-for')?.split(',')[0] ?? 'unknown';
+    const withinLimit = await checkRateLimit(`preorder:${ip}`, 5, 3600); // 5 per hour
+
+    if (!withinLimit) {
+      return NextResponse.json(
+        { error: 'Прекалено много заявки. Опитайте по-късно.' },
+        { status: 429 }
+      );
+    }
+
     const data = await request.json();
 
     console.log('Received preorder data:', JSON.stringify(data, null, 2));
@@ -27,6 +52,34 @@ export async function POST(request: Request): Promise<NextResponse> {
         { error: 'Invalid email format' },
         { status: 400 }
       );
+    }
+
+    // Input length validation
+    if (typeof data.fullName === 'string' && data.fullName.length > MAX_NAME) {
+      return NextResponse.json({ error: 'Името е прекалено дълго' }, { status: 400 });
+    }
+    if (typeof data.email === 'string' && data.email.length > MAX_EMAIL) {
+      return NextResponse.json({ error: 'Имейлът е прекалено дълъг' }, { status: 400 });
+    }
+    if (data.phone && typeof data.phone === 'string' && data.phone.length > MAX_PHONE) {
+      return NextResponse.json({ error: 'Телефонният номер е прекалено дълъг' }, { status: 400 });
+    }
+    if (data.additionalNotes && typeof data.additionalNotes === 'string' && data.additionalNotes.length > MAX_NOTES) {
+      return NextResponse.json({ error: 'Бележките са прекалено дълги' }, { status: 400 });
+    }
+    if (data.sportOther && typeof data.sportOther === 'string' && data.sportOther.length > MAX_OTHER) {
+      return NextResponse.json({ error: 'Полето е прекалено дълго' }, { status: 400 });
+    }
+    if (data.flavorOther && typeof data.flavorOther === 'string' && data.flavorOther.length > MAX_OTHER) {
+      return NextResponse.json({ error: 'Полето е прекалено дълго' }, { status: 400 });
+    }
+    if (data.dietaryOther && typeof data.dietaryOther === 'string' && data.dietaryOther.length > MAX_OTHER) {
+      return NextResponse.json({ error: 'Полето е прекалено дълго' }, { status: 400 });
+    }
+
+    // Validate box type
+    if (!VALID_BOX_TYPES.has(data.boxType)) {
+      return NextResponse.json({ error: 'Невалиден тип кутия' }, { status: 400 });
     }
 
     // Server-side promo code validation and price calculation

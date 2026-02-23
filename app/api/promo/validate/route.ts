@@ -4,7 +4,9 @@
  */
 
 import { NextResponse } from 'next/server';
+import { headers } from 'next/headers';
 import { validatePromoCode, getAppliedPromo } from '@/lib/data';
+import { checkRateLimit } from '@/lib/utils/rateLimit';
 
 /**
  * GET /api/promo/validate?code=FITFLOW10
@@ -12,6 +14,17 @@ import { validatePromoCode, getAppliedPromo } from '@/lib/data';
  */
 export async function GET(request: Request): Promise<NextResponse> {
   try {
+    const headersList = await headers();
+    const ip = headersList.get('x-forwarded-for')?.split(',')[0] ?? 'unknown';
+    const withinLimit = await checkRateLimit(`promo:${ip}`, 20, 60); // 20 per minute
+
+    if (!withinLimit) {
+      return NextResponse.json(
+        { valid: false, error: 'Прекалено много заявки. Опитайте по-късно.' },
+        { status: 429 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const code = searchParams.get('code');
 
@@ -52,6 +65,17 @@ export async function GET(request: Request): Promise<NextResponse> {
  */
 export async function POST(request: Request): Promise<NextResponse> {
   try {
+    const headersList = await headers();
+    const ip = headersList.get('x-forwarded-for')?.split(',')[0] ?? 'unknown';
+    const withinLimit = await checkRateLimit(`promo:${ip}`, 20, 60); // 20 per minute
+
+    if (!withinLimit) {
+      return NextResponse.json(
+        { valid: false, error: 'Прекалено много заявки. Опитайте по-късно.' },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json();
     const code = body.code;
 

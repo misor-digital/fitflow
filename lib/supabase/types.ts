@@ -323,6 +323,10 @@ export interface Database {
         Args: { p_promo_code: string | null };
         Returns: BoxPriceInfo[];
       };
+      check_rate_limit: {
+        Args: { p_key: string; p_max_requests: number; p_window_seconds: number };
+        Returns: boolean;
+      };
     };
     Enums: {
       box_type: BoxType;
