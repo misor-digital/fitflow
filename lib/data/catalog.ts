@@ -259,13 +259,6 @@ export async function calculatePrice(
 }
 
 /**
- * Format price with 2 decimal places
- */
-export function formatPrice(price: number): string {
-  return price.toFixed(2);
-}
-
-/**
  * Convert EUR to BGN using the configured rate
  */
 export async function eurToBgn(eur: number): Promise<number> {

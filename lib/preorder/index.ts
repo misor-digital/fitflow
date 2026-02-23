@@ -113,9 +113,8 @@ export {
   formatSavings,
   
   // Currency conversion
-  EUR_TO_BGN_RATE,
-  eurToBgn,
-  bgnToEur,
+  eurToBgnSync,
+  bgnToEurSync,
   
   // Discount calculation
   calculateDiscountAmount,

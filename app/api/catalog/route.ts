@@ -24,7 +24,7 @@ import type { OptionSetId } from '@/lib/supabase';
  * - optionSet: 'sports' | 'colors' | 'flavors' | 'dietary' | 'sizes' (when type=options)
  * - promoCode: string (when type=prices, for calculating discounted prices)
  */
-export async function GET(request: Request) {
+export async function GET(request: Request): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type') || 'all';

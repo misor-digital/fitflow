@@ -23,6 +23,7 @@ export {
 
 // Email templates and utilities
 export {
+  generateConfirmationEmail,
   generatePreorderConfirmationEmail,
   generateOrderConfirmationEmail,
   formatOptionsWithOther,

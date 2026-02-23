@@ -26,9 +26,9 @@ export default function RootLayout({
         {children}
         <CookieConsentBanner />
         <ConditionalScripts 
-          googleAnalyticsId="G-P4N3Y0W613"
-          facebookPixelId="878687741371287"
-          googleAdsId="AW-XXXXXXXXXX"
+          googleAnalyticsId={process.env.NEXT_PUBLIC_GA_ID ?? ''}
+          facebookPixelId={process.env.NEXT_PUBLIC_META_PIXEL_ID ?? ''}
+          googleAdsId={process.env.NEXT_PUBLIC_GOOGLE_ADS_ID ?? ''}
         />
       </body>
     </html>

@@ -70,27 +70,27 @@ export function formatSavings(amountEur: number, amountBgn: number): string {
 // ============================================================================
 
 /**
- * Fixed EUR to BGN conversion rate
- * This is the official fixed rate for Bulgaria
- */
-export const EUR_TO_BGN_RATE = 1.9558;
-
-/**
- * Convert EUR to BGN
+ * Convert EUR to BGN using a provided rate (sync, for client-side display).
+ * For server-side usage, prefer the async `eurToBgn` from `@/lib/data/catalog`
+ * which fetches the rate from the database.
+ *
  * @param eur - Amount in EUR
+ * @param rate - EUR→BGN conversion rate
  * @returns Amount in BGN (rounded to 2 decimal places)
  */
-export function eurToBgn(eur: number): number {
-  return Math.round(eur * EUR_TO_BGN_RATE * 100) / 100;
+export function eurToBgnSync(eur: number, rate: number): number {
+  return Math.round(eur * rate * 100) / 100;
 }
 
 /**
- * Convert BGN to EUR
+ * Convert BGN to EUR using a provided rate (sync, for client-side display).
+ *
  * @param bgn - Amount in BGN
+ * @param rate - EUR→BGN conversion rate
  * @returns Amount in EUR (rounded to 2 decimal places)
  */
-export function bgnToEur(bgn: number): number {
-  return Math.round((bgn / EUR_TO_BGN_RATE) * 100) / 100;
+export function bgnToEurSync(bgn: number, rate: number): number {
+  return Math.round((bgn / rate) * 100) / 100;
 }
 
 // ============================================================================

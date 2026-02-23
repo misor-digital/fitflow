@@ -18,9 +18,11 @@ export {
   getAllBoxPrices,
   getAllBoxPricesMap,
   calculatePrice,
-  formatPrice,
   eurToBgn,
 } from './catalog';
+
+// Re-export formatPrice from its canonical location
+export { formatPrice } from '@/lib/preorder/format';
 
 // Promo code data
 export {

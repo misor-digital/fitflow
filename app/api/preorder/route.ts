@@ -4,8 +4,9 @@ import { createPreorder, type PreorderFormData } from '@/lib/supabase';
 import { handlePreorderEmailWorkflow } from '@/lib/email';
 import { calculatePrice, validatePromoCode, incrementPromoCodeUsage } from '@/lib/data';
 import { trackLeadCapi, hashForMeta, generateEventId } from '@/lib/analytics';
+import { EMAIL_REGEX } from '@/lib/preorder/validation';
 
-export async function POST(request: Request) {
+export async function POST(request: Request): Promise<NextResponse> {
   try {
     const data = await request.json();
 
@@ -21,8 +22,7 @@ export async function POST(request: Request) {
     }
 
     // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(data.email)) {
+    if (!EMAIL_REGEX.test(data.email)) {
       return NextResponse.json(
         { error: 'Invalid email format' },
         { status: 400 }
@@ -61,7 +61,7 @@ export async function POST(request: Request) {
       additionalNotes: data.preferences?.additionalNotes || data.additionalNotes,
       // Server-validated promo code and prices
       promoCode: validatedPromo?.code || null,
-      discountPercent: priceInfo.discountPercent || null,
+      discountPercent: priceInfo.discountPercent ?? null,
       originalPriceEur: priceInfo.originalPriceEur,
       finalPriceEur: priceInfo.finalPriceEur,
     };

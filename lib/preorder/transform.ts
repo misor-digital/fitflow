@@ -61,9 +61,9 @@ export function transformToPersistedFormat(
 
     // Pricing (from server-validated price info)
     promo_code: priceInfo?.promoCode || input.promoCode || null,
-    discount_percent: priceInfo?.discountPercent || null,
-    original_price_eur: priceInfo?.originalPriceEur || null,
-    final_price_eur: priceInfo?.finalPriceEur || null,
+    discount_percent: priceInfo?.discountPercent ?? null,
+    original_price_eur: priceInfo?.originalPriceEur ?? null,
+    final_price_eur: priceInfo?.finalPriceEur ?? null,
   };
 }
 

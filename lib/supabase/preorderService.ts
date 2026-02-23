@@ -1,5 +1,7 @@
 import { supabase } from './client';
 import type { PreorderInsert, Preorder } from './types';
+import { transformToPersistedFormat } from '@/lib/preorder/transform';
+import type { PreorderUserInput, PriceInfo } from '@/lib/preorder/types';
 
 export interface PreorderFormData {
   // Step 1
@@ -31,30 +33,26 @@ export interface PreorderFormData {
 }
 
 /**
- * Transform form data from the frontend to database format
+ * Adapt legacy PreorderFormData to PreorderUserInput for the canonical transform
  */
-function transformFormDataToInsert(data: PreorderFormData): PreorderInsert {
+function toUserInput(data: PreorderFormData): PreorderUserInput {
   return {
-    full_name: data.fullName,
+    boxType: data.boxType as PreorderUserInput['boxType'],
+    wantsPersonalization: data.wantsPersonalization ?? false,
+    sports: data.sports ?? [],
+    sportOther: data.sportOther ?? '',
+    colors: data.colors ?? [],
+    flavors: data.flavors ?? [],
+    flavorOther: data.flavorOther ?? '',
+    sizeUpper: data.sizeUpper ?? '',
+    sizeLower: data.sizeLower ?? '',
+    dietary: data.dietary ?? [],
+    dietaryOther: data.dietaryOther ?? '',
+    additionalNotes: data.additionalNotes ?? '',
+    fullName: data.fullName,
     email: data.email,
-    phone: data.phone || null,
-    box_type: data.boxType as PreorderInsert['box_type'],
-    wants_personalization: data.wantsPersonalization,
-    sports: data.sports?.length ? data.sports : null,
-    sport_other: data.sportOther || null,
-    colors: data.colors?.length ? data.colors : null,
-    flavors: data.flavors?.length ? data.flavors : null,
-    flavor_other: data.flavorOther || null,
-    size_upper: data.sizeUpper || null,
-    size_lower: data.sizeLower || null,
-    dietary: data.dietary?.length ? data.dietary : null,
-    dietary_other: data.dietaryOther || null,
-    additional_notes: data.additionalNotes || null,
-    // Promo code fields
-    promo_code: data.promoCode || null,
-    discount_percent: data.discountPercent || null,
-    original_price_eur: data.originalPriceEur || null,
-    final_price_eur: data.finalPriceEur || null,
+    phone: data.phone ?? '',
+    promoCode: data.promoCode ?? null,
   };
 }
 
@@ -63,7 +61,22 @@ function transformFormDataToInsert(data: PreorderFormData): PreorderInsert {
  */
 export async function createPreorder(data: PreorderFormData): Promise<{ data: Preorder | null; error: Error | null }> {
   try {
-    const insertData = transformFormDataToInsert(data);
+    const userInput = toUserInput(data);
+    const priceInfo: PriceInfo | null = data.originalPriceEur != null
+      ? {
+          boxTypeId: data.boxType,
+          boxTypeName: '',
+          originalPriceEur: data.originalPriceEur ?? 0,
+          originalPriceBgn: 0,
+          discountPercent: data.discountPercent ?? 0,
+          discountAmountEur: 0,
+          discountAmountBgn: 0,
+          finalPriceEur: data.finalPriceEur ?? 0,
+          finalPriceBgn: 0,
+          promoCode: data.promoCode ?? null,
+        }
+      : null;
+    const insertData = transformToPersistedFormat(userInput, priceInfo) as PreorderInsert;
     
     const { data: preorder, error } = await supabase
       .from('preorders')

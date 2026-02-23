@@ -4,6 +4,10 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --color-brand-orange: #FB7D00;
+  --color-brand-orange-dark: #e67100;
+  --color-brand-navy: #023047;
+  --color-brand-light-blue: #f0f9ff;
 }
 
 @theme inline {

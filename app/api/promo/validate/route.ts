@@ -10,7 +10,7 @@ import { validatePromoCode, getAppliedPromo } from '@/lib/data';
  * GET /api/promo/validate?code=FITFLOW10
  * Validates a promo code and returns discount info if valid
  */
-export async function GET(request: Request) {
+export async function GET(request: Request): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
     const code = searchParams.get('code');
@@ -50,7 +50,7 @@ export async function GET(request: Request) {
  * Body: { code: string }
  * Alternative POST method for promo validation
  */
-export async function POST(request: Request) {
+export async function POST(request: Request): Promise<NextResponse> {
   try {
     const body = await request.json();
     const code = body.code;

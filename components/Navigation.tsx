@@ -48,7 +48,7 @@ export default function Navigation() {
             <Link
               href="/"
               className={`font-semibold transition-colors ${
-                isActive('/') ? 'text-[#FB7D00]' : 'text-[#023047] hover:text-[#FB7D00]'
+                isActive('/') ? 'text-[var(--color-brand-orange)]' : 'text-[var(--color-brand-navy)] hover:text-[var(--color-brand-orange)]'
               }`}
             >
               Начало
@@ -56,7 +56,7 @@ export default function Navigation() {
             <Link
               href="/about"
               className={`font-semibold transition-colors ${
-                isActive('/about') ? 'text-[#FB7D00]' : 'text-[#023047] hover:text-[#FB7D00]'
+                isActive('/about') ? 'text-[var(--color-brand-orange)]' : 'text-[var(--color-brand-navy)] hover:text-[var(--color-brand-orange)]'
               }`}
             >
               За нас
@@ -64,7 +64,7 @@ export default function Navigation() {
             <Link
               href="/faqs"
               className={`font-semibold transition-colors ${
-                isActive('/faqs') ? 'text-[#FB7D00]' : 'text-[#023047] hover:text-[#FB7D00]'
+                isActive('/faqs') ? 'text-[var(--color-brand-orange)]' : 'text-[var(--color-brand-navy)] hover:text-[var(--color-brand-orange)]'
               }`}
             >
               Въпроси
@@ -74,7 +74,7 @@ export default function Navigation() {
           {/* Mobile Menu Button - Left Side */}
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="md:hidden p-1.5 sm:p-2 rounded-lg text-[#023047] hover:bg-gray-100 transition-colors"
+            className="md:hidden p-1.5 sm:p-2 rounded-lg text-[var(--color-brand-navy)] hover:bg-gray-100 transition-colors"
             aria-label="Toggle menu"
           >
             <svg
@@ -95,7 +95,7 @@ export default function Navigation() {
           </button>
 
           {/* Logo - Center */}
-          <Link href="/" className="absolute left-1/2 transform -translate-x-1/2 text-xl sm:text-2xl md:text-3xl font-extrabold text-[#023047] italic hover:text-[#FB7D00] hover:scale-150 transition-all duration-300">
+          <Link href="/" className="absolute left-1/2 transform -translate-x-1/2 text-xl sm:text-2xl md:text-3xl font-extrabold text-[var(--color-brand-navy)] italic hover:text-[var(--color-brand-orange)] hover:scale-150 transition-all duration-300">
             FitFlow
           </Link>
 
@@ -104,7 +104,7 @@ export default function Navigation() {
             <Link
               href="/step-1"
               onClick={() => trackCTAClick({ cta_text: 'Запиши поръчка', cta_location: 'navigation', destination: '/step-1' })}
-              className="bg-[#023047] hover:bg-[#FB7D00] px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-colors block"
+              className="bg-[var(--color-brand-navy)] hover:bg-[var(--color-brand-orange)] px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-colors block"
               aria-label="Запиши поръчка"
             >
               <svg
@@ -133,7 +133,7 @@ export default function Navigation() {
                 href="/"
                 onClick={() => setIsOpen(false)}
                 className={`text-sm sm:text-base font-semibold transition-colors ${
-                  isActive('/') ? 'text-[#FB7D00]' : 'text-[#023047] hover:text-[#FB7D00]'
+                  isActive('/') ? 'text-[var(--color-brand-orange)]' : 'text-[var(--color-brand-navy)] hover:text-[var(--color-brand-orange)]'
                 }`}
               >
                 Начало
@@ -142,7 +142,7 @@ export default function Navigation() {
                 href="/about"
                 onClick={() => setIsOpen(false)}
                 className={`text-sm sm:text-base font-semibold transition-colors ${
-                  isActive('/about') ? 'text-[#FB7D00]' : 'text-[#023047] hover:text-[#FB7D00]'
+                  isActive('/about') ? 'text-[var(--color-brand-orange)]' : 'text-[var(--color-brand-navy)] hover:text-[var(--color-brand-orange)]'
                 }`}
               >
                 За нас
@@ -151,7 +151,7 @@ export default function Navigation() {
                 href="/faqs"
                 onClick={() => setIsOpen(false)}
                 className={`text-sm sm:text-base font-semibold transition-colors ${
-                  isActive('/faqs') ? 'text-[#FB7D00]' : 'text-[#023047] hover:text-[#FB7D00]'
+                  isActive('/faqs') ? 'text-[var(--color-brand-orange)]' : 'text-[var(--color-brand-navy)] hover:text-[var(--color-brand-orange)]'
                 }`}
               >
                 Въпроси

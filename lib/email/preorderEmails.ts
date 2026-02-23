@@ -4,12 +4,12 @@
  */
 
 import { sendEmail, createOrUpdateContact, addContactToList, EMAIL_CONFIG } from './emailService';
-import { generateOrderConfirmationEmail } from './templates';
+import { generateConfirmationEmail } from './templates';
 import type { EmailLabelMaps } from './templates';
 import type { EmailResult, ContactResult, PreorderEmailData } from './types';
 import type { Preorder } from '@/lib/supabase';
 import { getBoxTypeNames, getOptionLabels, getColorNames } from '@/lib/data/catalog';
-import { PriceInfo } from '../preorder';
+import type { PriceInfo } from '../preorder';
 
 /**
  * Fetch all label maps needed for email generation
@@ -75,7 +75,7 @@ export async function sendPreorderConfirmationEmail(
   };
 
   // Generate email content with labels
-  const htmlContent = generateOrderConfirmationEmail(emailData, labels);
+  const htmlContent = generateConfirmationEmail(emailData, 'preorder', labels);
 
   // Send the email
   const result = await sendEmail({

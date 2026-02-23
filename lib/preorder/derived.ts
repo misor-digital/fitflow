@@ -11,6 +11,7 @@ import type {
   PreorderDerivedState,
   PersonalizationStep,
 } from './types';
+import { EMAIL_REGEX } from './validation';
 
 // ============================================================================
 // Box Type Helpers
@@ -239,8 +240,7 @@ function validateStep3(input: PreorderUserInput): boolean {
     return false;
   }
   // Basic email format check
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailRegex.test(input.email)) {
+  if (!EMAIL_REGEX.test(input.email)) {
     return false;
   }
   return true;
