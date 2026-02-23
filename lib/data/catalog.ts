@@ -14,8 +14,10 @@ import type { PriceInfo } from '@/lib/preorder';
 // ============================================================================
 
 /**
- * Get all enabled box types, sorted by sort_order
- * Cached for the duration of the request
+ * Get all enabled box types, sorted by sort_order.
+ * Cached for the duration of a single request (RSC render or Route Handler).
+ * React.cache() does NOT cache across requests — each request hits Supabase.
+ * For cross-request caching, add Cache-Control headers to API responses.
  */
 export const getBoxTypes = cache(async (): Promise<BoxTypeRow[]> => {
   const { data, error } = await supabaseAdmin

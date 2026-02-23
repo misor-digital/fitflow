@@ -28,13 +28,24 @@ export async function GET(request: Request): Promise<NextResponse> {
   try {
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type') || 'all';
-    const optionSet = searchParams.get('optionSet') as OptionSetId | null;
+    const VALID_OPTION_SETS: ReadonlySet<string> = new Set<OptionSetId>([
+      'sports', 'colors', 'flavors', 'dietary', 'sizes',
+    ]);
+
+    const rawOptionSet = searchParams.get('optionSet');
+    const optionSet: OptionSetId | null = rawOptionSet && VALID_OPTION_SETS.has(rawOptionSet)
+      ? (rawOptionSet as OptionSetId)
+      : null;
     const promoCode = searchParams.get('promoCode');
 
     switch (type) {
       case 'boxTypes': {
         const boxTypes = await getBoxTypes();
-        return NextResponse.json({ boxTypes });
+        return NextResponse.json({ boxTypes }, {
+          headers: {
+            'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+          },
+        });
       }
 
       case 'options': {
@@ -47,11 +58,19 @@ export async function GET(request: Request): Promise<NextResponse> {
         
         if (optionSet === 'colors') {
           const colors = await getColors();
-          return NextResponse.json({ options: colors });
+          return NextResponse.json({ options: colors }, {
+            headers: {
+              'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+            },
+          });
         }
         
         const options = await getOptions(optionSet);
-        return NextResponse.json({ options });
+        return NextResponse.json({ options }, {
+          headers: {
+            'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+          },
+        });
       }
 
       case 'labels': {
@@ -62,7 +81,11 @@ export async function GET(request: Request): Promise<NextResponse> {
           );
         }
         const labels = await getOptionLabels(optionSet);
-        return NextResponse.json({ labels });
+        return NextResponse.json({ labels }, {
+          headers: {
+            'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+          },
+        });
       }
 
       case 'prices': {
@@ -95,7 +118,11 @@ export async function GET(request: Request): Promise<NextResponse> {
           boxTypes[boxTypeId] = priceInfo.boxTypeName;
         }
 
-        return NextResponse.json({ prices, boxTypes });
+        return NextResponse.json({ prices, boxTypes }, {
+          headers: {
+            'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
+          },
+        });
       }
 
       case 'all':
@@ -135,6 +162,10 @@ export async function GET(request: Request): Promise<NextResponse> {
             flavors: flavorLabels,
             dietary: dietaryLabels,
             sizes: sizeLabels,
+          },
+        }, {
+          headers: {
+            'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=300',
           },
         });
       }
