@@ -12,6 +12,7 @@ import PromoDiscountPrompt from './PromoDiscountPrompt';
 export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [revealedBoxAvailable, setRevealedBoxAvailable] = useState<boolean | null>(null);
   const pathname = usePathname();
   const router = useRouter();
   const { promoCode } = useOrderStore();
@@ -56,6 +57,21 @@ export default function Navigation() {
     return () => controller.abort();
   }, [promoCode, lastValidatedCode]);
 
+  // ---- Check if revealed box is available ----
+  useEffect(() => {
+    const controller = new AbortController();
+    (async () => {
+      try {
+        const res = await fetch('/api/delivery/current', { signal: controller.signal });
+        setRevealedBoxAvailable(res.ok);
+      } catch (err) {
+        if (err instanceof DOMException && err.name === 'AbortError') return;
+        setRevealedBoxAvailable(false);
+      }
+    })();
+    return () => controller.abort();
+  }, []);
+
   // ---- Logout handler ----
   const handleLogout = useCallback(async () => {
     const supabase = createClient();
@@ -97,6 +113,17 @@ export default function Navigation() {
             >
               Въпроси
             </Link>
+            {revealedBoxAvailable && (
+              <Link
+                href="/box/current"
+                className={`font-semibold transition-colors flex items-center gap-1 ${
+                  isActive('/box/current') ? 'text-[var(--color-brand-orange)]' : 'text-[var(--color-brand-orange)] hover:text-[var(--color-brand-orange-dark)]'
+                }`}
+              >
+                🎁 Текуща кутия
+                <span className="bg-[var(--color-brand-orange)] text-white text-[0.6rem] px-1.5 py-0.5 rounded-full font-bold uppercase leading-none">НОВО</span>
+              </Link>
+            )}
           </div>
 
           {/* Mobile Menu Button - Left Side */}
@@ -253,6 +280,16 @@ export default function Navigation() {
               >
                 Въпроси
               </Link>
+              {revealedBoxAvailable && (
+                <Link
+                  href="/box/current"
+                  onClick={() => setIsOpen(false)}
+                  className="text-sm sm:text-base font-semibold text-[var(--color-brand-orange)] flex items-center gap-1.5"
+                >
+                  🎁 Текуща кутия
+                  <span className="bg-[var(--color-brand-orange)] text-white text-[0.55rem] px-1.5 py-0.5 rounded-full font-bold uppercase leading-none">НОВО</span>
+                </Link>
+              )}
 
               {/* Mobile auth links */}
               {!isLoading && !user && (

@@ -8,9 +8,10 @@ interface OrderStepperProps {
   isStep1Valid: boolean;
   isStep2Valid: boolean;
   isStep3Valid: boolean;
+  steps?: OrderStep[]; // default [1,2,3,4] — pass [1,3,4] to skip personalization
 }
 
-const STEP_LABELS: Record<OrderStep, string> = {
+const ALL_STEP_LABELS: Record<OrderStep, string> = {
   1: 'Кутия',
   2: 'Персонализация',
   3: 'Данни',
@@ -22,10 +23,11 @@ export default function OrderStepper({
   isStep1Valid,
   isStep2Valid,
   isStep3Valid,
+  steps: stepsProp,
 }: OrderStepperProps) {
   const { setStep } = useOrderStore();
 
-  const steps: OrderStep[] = [1, 2, 3, 4];
+  const steps: OrderStep[] = stepsProp ?? [1, 2, 3, 4];
 
   const isCompleted = (step: OrderStep): boolean => {
     if (step >= currentStep) return false;
@@ -66,7 +68,7 @@ export default function OrderStepper({
               className={`flex items-center gap-1.5 sm:gap-2 transition-all ${
                 clickable ? 'cursor-pointer hover:opacity-80' : 'cursor-default'
               }`}
-              aria-label={`Стъпка ${step}: ${STEP_LABELS[step]}`}
+              aria-label={`Стъпка ${step}: ${ALL_STEP_LABELS[step]}`}
               aria-current={active ? 'step' : undefined}
             >
               {/* Circle / Checkmark */}
@@ -98,7 +100,7 @@ export default function OrderStepper({
                       : 'text-gray-400'
                 }`}
               >
-                {STEP_LABELS[step]}
+                {ALL_STEP_LABELS[step]}
               </span>
             </button>
 

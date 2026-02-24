@@ -8,13 +8,18 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { useOrderStore } from '@/store/orderStore';
 import { trackViewContent, trackViewItem, trackCTAClick, trackPromoCode } from '@/lib/analytics';
-import { formatDeliveryDate } from '@/lib/delivery';
+import { formatDeliveryDate, formatMonthYear } from '@/lib/delivery';
 
 function HomeContent() {
   const searchParams = useSearchParams();
   const { setPromoCode } = useOrderStore();
   const hasTrackedViewContent = useRef(false);
   const [nextDeliveryDate, setNextDeliveryDate] = useState<string | null>(null);
+  const [revealedBox, setRevealedBox] = useState<{
+    cycle: { id: string; deliveryDate: string; title: string | null };
+    items: { id: string; name: string; imageUrl: string | null; category: string | null }[];
+    monthYear: string;
+  } | null>(null);
   
   // Track ViewContent (Meta) and view_item (GA4) on landing page load (once)
   useEffect(() => {
@@ -79,6 +84,28 @@ function HomeContent() {
         }
       } catch {
         // silently fail
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Fetch revealed box data for featured section
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/delivery/current');
+        if (!res.ok) return; // 404 = not available, hide section
+        const data = await res.json();
+        if (!cancelled && data.cycle) {
+          setRevealedBox({
+            cycle: data.cycle,
+            items: data.items || [],
+            monthYear: formatMonthYear(data.cycle.deliveryDate),
+          });
+        }
+      } catch {
+        // silently fail — section stays hidden
       }
     })();
     return () => { cancelled = true; };
@@ -218,6 +245,69 @@ function HomeContent() {
           </Link>
         </div>
       </section>
+
+      {/* Revealed Box Featured Section — only when available */}
+      {revealedBox && (
+        <section className="py-10 sm:py-12 md:py-16 px-4 sm:px-5 bg-gradient-to-br from-[var(--color-brand-orange)]/10 to-[var(--color-brand-orange)]/5">
+          <div className="max-w-3xl mx-auto text-center">
+            <div className="inline-flex items-center gap-2 bg-[var(--color-brand-orange)] text-white px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold uppercase tracking-wide mb-4 sm:mb-6 shadow-md">
+              🎁 РАЗКРИТА КУТИЯ
+            </div>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[var(--color-brand-navy)] mb-3 sm:mb-4 relative after:content-[''] after:block after:w-12 sm:after:w-16 after:h-1 after:bg-[var(--color-brand-orange)] after:mx-auto after:mt-3 sm:after:mt-4 after:rounded">
+              Виж какво има в кутията за {revealedBox.monthYear}!
+            </h2>
+            <p className="text-sm sm:text-base md:text-lg text-gray-600 mb-6 sm:mb-8 max-w-lg mx-auto">
+              Съдържанието е разкрито — поръчай с бърза доставка!
+            </p>
+
+            {/* Item Preview Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 max-w-2xl mx-auto mb-6 sm:mb-8">
+              {revealedBox.items.slice(0, 4).map((item) => (
+                <div key={item.id} className="bg-white rounded-xl p-3 sm:p-4 shadow-md border border-gray-100 text-center">
+                  {item.imageUrl ? (
+                    <div className="relative w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-2">
+                      <Image
+                        src={item.imageUrl}
+                        alt={item.name}
+                        fill
+                        className="object-cover rounded-lg"
+                        sizes="80px"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 mx-auto mb-2 bg-gray-50 rounded-lg flex items-center justify-center text-2xl">
+                      📦
+                    </div>
+                  )}
+                  <p className="text-xs sm:text-sm font-semibold text-[var(--color-brand-navy)] line-clamp-2">{item.name}</p>
+                </div>
+              ))}
+            </div>
+
+            {revealedBox.items.length > 4 && (
+              <p className="text-sm text-gray-500 mb-4">
+                +{revealedBox.items.length - 4} повече
+              </p>
+            )}
+
+            <div className="flex items-center justify-center gap-2 text-sm text-gray-500 mb-6">
+              <svg className="w-4 h-4 text-[var(--color-brand-orange)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              Бърза доставка до 2-3 работни дни
+            </div>
+
+            <Link
+              href="/box/current"
+              onClick={() => trackCTAClick({ cta_text: 'Виж всички продукти', cta_location: 'revealed_box_section', destination: '/box/current' })}
+            >
+              <button className="bg-[var(--color-brand-orange)] text-white px-9 py-3.5 rounded-full text-base font-semibold uppercase tracking-wide shadow-lg hover:bg-[var(--color-brand-orange-dark)] transition-all hover:-translate-y-0.5 hover:shadow-xl">
+                Виж всички продукти →
+              </button>
+            </Link>
+          </div>
+        </section>
+      )}
 
       {/* Quotes */}
       <section className="py-10 sm:py-12 md:py-16 px-4 sm:px-5 bg-gradient-to-br from-[var(--color-brand-navy)] to-[#045a7f]">

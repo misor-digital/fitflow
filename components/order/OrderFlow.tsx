@@ -37,11 +37,15 @@ export default function OrderFlow({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const lastPromoRef = useRef<string | null>(null);
 
-  const { currentStep, setStep, goToNextStep, goToPreviousStep, promoCode } =
+  const { currentStep, setStep, goToNextStep, goToPreviousStep, promoCode, orderType } =
     useOrderStore();
   const input = useOrderInput();
   const user = useAuthStore((s) => s.user);
   const derived = computeOrderDerivedState(input);
+
+  // Revealed box: skip personalization step entirely
+  const isRevealedBox = orderType === 'onetime-revealed' || propOrderType === 'onetime-revealed';
+  const activeSteps: OrderStep[] = isRevealedBox ? [1, 3, 4] : [1, 2, 3, 4];
 
   // ---------------------------------------------------------------------------
   // Pre-selection from URL params (mystery box flow)
@@ -62,12 +66,17 @@ export default function OrderFlow({
       store.setOrderType(propOrderType);
     }
 
-    // Pre-select box type and auto-advance to step 2
+    // Pre-select box type and auto-advance
     if (initialBoxType && !store.boxType) {
       const validTypes = ['onetime-standard', 'onetime-premium', 'monthly-standard', 'monthly-premium'];
       if (validTypes.includes(initialBoxType)) {
         store.setBoxType(initialBoxType as import('@/lib/catalog').BoxTypeId);
-        store.setStep(2 as OrderStep);
+        // For revealed box, skip personalization → go to step 3 (details)
+        if (propOrderType === 'onetime-revealed') {
+          store.setStep(3 as OrderStep);
+        } else {
+          store.setStep(2 as OrderStep);
+        }
       }
     }
   }, [hydrated, initialBoxType, propCycleId, propOrderType]);
@@ -133,6 +142,22 @@ export default function OrderFlow({
   // ---------------------------------------------------------------------------
   // Step navigation with validation guards
   // ---------------------------------------------------------------------------
+  // Navigate to next active step, skipping steps not in activeSteps
+  const goToNextActiveStep = useCallback(() => {
+    const currentIndex = activeSteps.indexOf(currentStep);
+    if (currentIndex < activeSteps.length - 1) {
+      setStep(activeSteps[currentIndex + 1]);
+    }
+  }, [currentStep, activeSteps, setStep]);
+
+  // Navigate to previous active step
+  const goToPreviousActiveStep = useCallback(() => {
+    const currentIndex = activeSteps.indexOf(currentStep);
+    if (currentIndex > 0) {
+      setStep(activeSteps[currentIndex - 1]);
+    }
+  }, [currentStep, activeSteps, setStep]);
+
   const handleNextStep = useCallback(() => {
     // Validate current step before advancing
     switch (currentStep) {
@@ -146,8 +171,8 @@ export default function OrderFlow({
         if (!derived.isStep3Valid) return;
         break;
     }
-    goToNextStep();
-  }, [currentStep, derived, goToNextStep]);
+    goToNextActiveStep();
+  }, [currentStep, derived, goToNextActiveStep]);
 
   const handleGoToStep = useCallback(
     (step: OrderStep) => {
@@ -247,6 +272,7 @@ export default function OrderFlow({
         isStep1Valid={derived.isStep1Valid}
         isStep2Valid={derived.isStep2Valid}
         isStep3Valid={derived.isStep3Valid}
+        steps={activeSteps}
       />
 
       {currentStep === 1 && (
@@ -257,18 +283,18 @@ export default function OrderFlow({
         />
       )}
 
-      {currentStep === 2 && (
+      {currentStep === 2 && !isRevealedBox && (
         <OrderStepPersonalize
           catalogData={catalogData}
           onNext={handleNextStep}
-          onBack={goToPreviousStep}
+          onBack={goToPreviousActiveStep}
         />
       )}
 
       {currentStep === 3 && (
         <OrderStepDetails
           onNext={handleNextStep}
-          onBack={goToPreviousStep}
+          onBack={goToPreviousActiveStep}
         />
       )}
 
@@ -276,9 +302,10 @@ export default function OrderFlow({
         <OrderStepConfirm
           prices={prices}
           catalogData={catalogData}
-          onBack={goToPreviousStep}
+          onBack={goToPreviousActiveStep}
           onSubmit={handleSubmit}
           isSubmitting={isSubmitting}
+          isRevealedBox={isRevealedBox}
         />
       )}
 

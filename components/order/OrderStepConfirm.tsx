@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { useOrderStore } from '@/store/orderStore';
 import { trackFunnelStep } from '@/lib/analytics';
 import PriceDisplay from '@/components/PriceDisplay';
@@ -14,6 +15,7 @@ interface OrderStepConfirmProps {
   onBack: () => void;
   onSubmit: () => Promise<void>;
   isSubmitting: boolean;
+  isRevealedBox?: boolean;
 }
 
 export default function OrderStepConfirm({
@@ -22,6 +24,7 @@ export default function OrderStepConfirm({
   onBack,
   onSubmit,
   isSubmitting,
+  isRevealedBox = false,
 }: OrderStepConfirmProps) {
   const store = useOrderStore();
   const hasTrackedStep = useRef(false);
@@ -96,9 +99,11 @@ export default function OrderStepConfirm({
                 <span className={`inline-block text-xs px-2 py-0.5 rounded-full font-semibold ${
                   isSubscription
                     ? 'bg-blue-100 text-blue-700'
-                    : 'bg-gray-100 text-gray-700'
+                    : isRevealedBox
+                      ? 'bg-orange-100 text-orange-700'
+                      : 'bg-gray-100 text-gray-700'
                 }`}>
-                  {isSubscription ? 'Абонамент' : 'Еднократна'}
+                  {isSubscription ? 'Абонамент' : isRevealedBox ? 'Еднократна — разкрита кутия' : 'Еднократна'}
                 </span>
                 {isPremium && (
                   <span className="inline-block text-xs px-2 py-0.5 rounded-full font-semibold bg-[var(--color-brand-orange)]/10 text-[var(--color-brand-orange)]">
@@ -132,7 +137,31 @@ export default function OrderStepConfirm({
           )}
         </div>
 
-        {/* Personalization */}
+        {/* Personalization / Revealed Box Info */}
+        {isRevealedBox ? (
+          <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 shadow-lg">
+            <div className="flex justify-between items-start mb-3 sm:mb-4 border-b pb-2">
+              <h3 className="text-lg sm:text-xl font-bold text-[var(--color-brand-navy)]">Съдържание</h3>
+              <Link
+                href="/box/current"
+                className="text-sm text-[var(--color-brand-orange)] font-semibold hover:underline"
+              >
+                Виж подробности
+              </Link>
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm sm:text-base text-gray-600">
+                Разкрита кутия — съдържанието е фиксирано
+              </p>
+              <div className="flex items-center gap-2 text-sm text-[var(--color-brand-navy)]">
+                <svg className="w-4 h-4 text-[var(--color-brand-orange)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <span className="font-semibold">Доставка: Бърза (2-3 работни дни)</span>
+              </div>
+            </div>
+          </div>
+        ) : (
         <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 shadow-lg">
           <div className="flex justify-between items-start mb-3 sm:mb-4 border-b pb-2">
             <h3 className="text-lg sm:text-xl font-bold text-[var(--color-brand-navy)]">Персонализация</h3>
@@ -207,6 +236,7 @@ export default function OrderStepConfirm({
             <p className="text-sm sm:text-base text-gray-600">Оставям избора на вас</p>
           )}
         </div>
+        )}
 
         {/* Delivery Data */}
         <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 shadow-lg">
