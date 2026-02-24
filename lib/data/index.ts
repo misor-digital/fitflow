@@ -33,3 +33,36 @@ export {
   getAppliedPromo,
   type AppliedPromo,
 } from './promo';
+
+// Address data
+export {
+  getAddressesByUser,
+  getAddressById,
+  getDefaultAddress,
+  createAddress,
+  updateAddress,
+  deleteAddress,
+  setDefaultAddress,
+  countAddressesByUser,
+} from './addresses';
+
+// Order data
+export {
+  createOrder,
+  getOrderById,
+  getOrderByNumber,
+  getOrderByNumberAndEmail,
+  getOrdersByUser,
+  updateOrderStatus,
+  getOrderStatusHistory,
+  getOrdersCount,
+  getOrdersPaginated,
+} from './orders';
+
+// Preorder conversion
+export {
+  getPreorderByToken,
+  markPreorderConverted,
+  getPreorderConversionStatus,
+  getPreordersWithConversionInfo,
+} from './preorder-conversion';
