@@ -4,6 +4,7 @@ import { getOrCreateMonthUsage, getUsageHistory } from '@/lib/data/email-usage';
 import EmailUsageCard from '@/components/admin/EmailUsageCard';
 import EmailStatsCards from '@/components/admin/EmailStatsCards';
 import EmailLogTable from '@/components/admin/EmailLogTable';
+import EmailHealthCard from '@/components/admin/EmailHealthCard';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -47,6 +48,11 @@ export default async function EmailDashboardPage() {
           </span>
         </div>
       </div>
+
+      {/* Section 0 — System Health */}
+      <section className="mb-8">
+        <EmailHealthCard />
+      </section>
 
       {/* Section 1 — Monthly Usage */}
       <section className="mb-8">

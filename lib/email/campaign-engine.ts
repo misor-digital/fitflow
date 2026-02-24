@@ -18,6 +18,7 @@ import { sendEmail, sendTemplateEmail } from './emailService';
 import type { EmailResult } from './types';
 import {
   getNextBatch,
+  getRecipientStats,
   markRecipientSent,
   markRecipientFailed,
   markRecipientSkipped,
@@ -325,4 +326,140 @@ export async function processCampaign(
   }
 
   return { sent: totalSent, failed: totalFailed, skipped: totalSkipped, stopped };
+}
+
+// ---------------------------------------------------------------------------
+// Chunked processing (for cron context with limited execution time)
+// ---------------------------------------------------------------------------
+
+export interface ProcessCampaignChunkResult {
+  processed: number;
+  remaining: number;
+  completed: boolean;
+}
+
+/**
+ * Process a limited chunk of campaign recipients.
+ * Designed for cron context where execution time is limited.
+ *
+ * Pre-conditions:
+ * - Campaign must already be in `'sending'` status.
+ * - Recipients must already be populated.
+ *
+ * @returns `{ processed, remaining, completed }` — completed is true when
+ *   all recipients have been processed and the campaign is marked 'sent'.
+ */
+export async function processCampaignChunk(
+  campaignId: string,
+  userId: string,
+  chunkSize: number,
+): Promise<ProcessCampaignChunkResult> {
+  // 1. Load & validate campaign
+  const campaign = await getCampaignById(campaignId);
+  if (!campaign) {
+    throw new Error(`Campaign ${campaignId} not found.`);
+  }
+  if (campaign.status !== 'sending') {
+    throw new Error(
+      `Campaign ${campaignId} is in '${campaign.status}' status — expected 'sending'.`,
+    );
+  }
+
+  let totalSent = 0;
+  let totalFailed = 0;
+  let totalSkipped = 0;
+
+  try {
+    // 2. Build A/B variant map (empty if no A/B test)
+    const variantMap = await buildVariantMap(campaignId);
+
+    // 3. Fetch a single batch of chunkSize recipients
+    const batch = await getNextBatch(campaignId, chunkSize);
+
+    for (const recipient of batch) {
+      // Check unsubscribe status before sending
+      const unsubscribed = await isUnsubscribed(recipient.email);
+      if (unsubscribed) {
+        await markRecipientSkipped(recipient.id, 'Отписан от имейли');
+        totalSkipped++;
+        continue;
+      }
+
+      // Resolve A/B variant (if any)
+      const variant = recipient.variant_id
+        ? variantMap.get(recipient.variant_id) ?? null
+        : null;
+
+      const success = await processRecipient(campaign, recipient, variant);
+      if (success) {
+        totalSent++;
+      } else {
+        totalFailed++;
+      }
+    }
+
+    // Increment counters atomically after the chunk
+    if (totalSent > 0 || totalFailed > 0) {
+      await incrementCampaignCounters(campaignId, totalSent, totalFailed);
+    }
+
+    // Increment monthly usage
+    if (totalSent > 0) {
+      await incrementUsage('campaign', totalSent).catch((err) => {
+        console.error('[campaign-engine] Failed to increment usage:', err);
+      });
+    }
+
+    console.log(
+      `[campaign-engine] Chunk complete: ${totalSent} sent, ${totalFailed} failed, ${totalSkipped} skipped (campaign ${campaignId})`,
+    );
+
+    // 4. Check remaining pending recipients
+    const stats = await getRecipientStats(campaignId);
+    const remaining = stats.pending;
+
+    // 5. If no more pending → mark campaign as 'sent'
+    if (remaining === 0) {
+      await updateCampaignStatus(campaignId, 'sent');
+      await recordCampaignAction({
+        campaign_id: campaignId,
+        action: 'completed',
+        changed_by: userId,
+        metadata: {
+          totalSent,
+          totalFailed,
+          totalSkipped,
+          processedVia: 'cron-chunk',
+        },
+      });
+
+      console.log(
+        `[campaign-engine] Campaign ${campaignId} completed via chunked processing.`,
+      );
+
+      return { processed: totalSent + totalFailed + totalSkipped, remaining: 0, completed: true };
+    }
+
+    return { processed: totalSent + totalFailed + totalSkipped, remaining, completed: false };
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : 'Unknown engine error';
+    console.error(`[campaign-engine] Fatal error in chunk processing for campaign ${campaignId}:`, err);
+
+    await updateCampaignStatus(campaignId, 'failed').catch(() => {});
+    await recordCampaignAction({
+      campaign_id: campaignId,
+      action: 'failed',
+      changed_by: userId,
+      notes: errorMessage,
+      metadata: {
+        totalSent,
+        totalFailed,
+        totalSkipped,
+        error: errorMessage,
+        processedVia: 'cron-chunk',
+      },
+    }).catch(() => {});
+
+    throw err;
+  }
 }
