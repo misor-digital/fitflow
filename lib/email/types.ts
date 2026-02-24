@@ -36,6 +36,8 @@ export interface SendTemplateEmailOptions {
   to: EmailRecipient | EmailRecipient[];
   templateId: number;
   params?: Record<string, string | number | boolean | string[]>;
+  /** Override the template's default subject line (useful for test emails) */
+  subject?: string;
   sender?: EmailSender;
   replyTo?: EmailRecipient;
   cc?: EmailRecipient[];

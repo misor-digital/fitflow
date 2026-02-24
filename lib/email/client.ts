@@ -87,5 +87,7 @@ export const EMAIL_CONFIG = {
     newsletter: Number(process.env.BREVO_NEWSLETTER_LIST_ID) || 0,
   },
   // Template IDs (configure these in Brevo dashboard)
-  templates: {},
+  templates: {
+    preorderConversion: Number(process.env.BREVO_TEMPLATE_PREORDER_CONVERSION) || 0,
+  },
 };

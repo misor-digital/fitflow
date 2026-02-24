@@ -101,6 +101,9 @@ export async function sendTemplateEmail(options: SendTemplateEmailOptions): Prom
     sendSmtpEmail.templateId = options.templateId;
     sendSmtpEmail.sender = options.sender || DEFAULT_SENDER;
     
+    if (options.subject) {
+      sendSmtpEmail.subject = options.subject;
+    }
     if (options.params) {
       sendSmtpEmail.params = options.params;
     }

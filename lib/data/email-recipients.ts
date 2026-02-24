@@ -128,6 +128,24 @@ export async function updateRecipientStatus(
   }
 }
 
+/**
+ * Delete all recipients for a campaign.
+ * Used when re-populating recipients after a filter change on a draft campaign.
+ */
+export async function deleteRecipientsByCampaign(
+  campaignId: string,
+): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('email_campaign_recipients')
+    .delete()
+    .eq('campaign_id', campaignId);
+
+  if (error) {
+    console.error('Error deleting recipients:', error);
+    throw new Error('Failed to delete campaign recipients.');
+  }
+}
+
 // ============================================================================
 // Read operations
 // ============================================================================

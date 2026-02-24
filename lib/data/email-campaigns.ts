@@ -137,6 +137,22 @@ export async function incrementCampaignCounters(
   }
 }
 
+/**
+ * Delete a draft campaign.
+ * Recipients are cascade-deleted by FK constraint.
+ */
+export async function deleteCampaign(id: string): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('email_campaigns')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    console.error('Error deleting campaign:', error);
+    throw new Error('Failed to delete campaign.');
+  }
+}
+
 // ============================================================================
 // Read operations (cached)
 // ============================================================================
