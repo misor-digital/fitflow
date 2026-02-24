@@ -3,11 +3,11 @@ name: Cron - Generate Subscription Orders
 on:
   schedule:
     # Every day at 06:00 UTC (matches Vercel cron)
-    - cron: '0 6 * * *'
+    - cron: "0 6 * * *"
   workflow_dispatch:
     inputs:
       cycle_id:
-        description: 'Specific delivery cycle ID (leave empty for auto-detect)'
+        description: "Specific delivery cycle ID (leave empty for auto-detect)"
         required: false
         type: string
 
