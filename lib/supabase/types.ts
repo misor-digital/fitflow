@@ -117,6 +117,7 @@ export interface PromoCodeRow {
   current_uses: number;
   min_order_value_eur: number | null;
   applicable_box_types: string[] | null;
+  max_uses_per_user: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -132,6 +133,7 @@ export interface PromoCodeInsert {
   current_uses?: number;
   min_order_value_eur?: number | null;
   applicable_box_types?: string[] | null;
+  max_uses_per_user?: number | null;
 }
 
 export interface PromoCodeUpdate {
@@ -145,6 +147,15 @@ export interface PromoCodeUpdate {
   current_uses?: number;
   min_order_value_eur?: number | null;
   applicable_box_types?: string[] | null;
+  max_uses_per_user?: number | null;
+}
+
+export interface PromoCodeUsageRow {
+  id: string;
+  promo_code_id: string;
+  user_id: string;
+  order_id: string | null;
+  used_at: string;
 }
 
 // ============================================================================
@@ -868,6 +879,31 @@ export interface Database {
         Update: ToRecord<PromoCodeUpdate>;
         Relationships: [];
       };
+      promo_code_usages: {
+        Row: ToRecord<PromoCodeUsageRow>;
+        Insert: Omit<ToRecord<PromoCodeUsageRow>, 'id' | 'used_at'> & { id?: string; used_at?: string };
+        Update: Partial<ToRecord<PromoCodeUsageRow>>;
+        Relationships: [
+          {
+            foreignKeyName: 'promo_code_usages_promo_code_id_fkey';
+            columns: ['promo_code_id'];
+            referencedRelation: 'promo_codes';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'promo_code_usages_user_id_fkey';
+            columns: ['user_id'];
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'promo_code_usages_order_id_fkey';
+            columns: ['order_id'];
+            referencedRelation: 'orders';
+            referencedColumns: ['id'];
+          }
+        ];
+      };
       options: {
         Row: ToRecord<OptionRow>;
         Insert: ToRecord<OptionInsert>;
@@ -1107,8 +1143,12 @@ export interface Database {
         Returns: boolean;
       };
       increment_promo_usage: {
-        Args: { p_code: string };
-        Returns: void;
+        Args: { p_code: string; p_user_id?: string; p_order_id?: string };
+        Returns: undefined;
+      };
+      check_user_promo_usage: {
+        Args: { p_code: string; p_user_id: string };
+        Returns: number;
       };
       increment_email_usage: {
         Args: { p_type: string; p_count?: number };
