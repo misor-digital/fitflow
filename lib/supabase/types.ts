@@ -52,6 +52,9 @@ export interface Preorder extends PreorderInsert {
   conversion_token_expires_at: string | null;
   conversion_status: PreorderConversionStatus;
   converted_to_order_id: string | null;
+  // GDPR email consent (added in Phase E1)
+  email_consent: boolean;
+  email_consent_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -583,6 +586,157 @@ export interface SubscriptionHistoryInsert {
 }
 
 // ============================================================================
+// Email Campaign Types
+// ============================================================================
+
+export type EmailCampaignTypeEnum = 'one-off' | 'preorder-conversion' | 'promotional' | 'lifecycle';
+export type EmailCampaignStatusEnum = 'draft' | 'scheduled' | 'sending' | 'sent' | 'paused' | 'cancelled' | 'failed';
+export type EmailRecipientStatusEnum = 'pending' | 'sent' | 'delivered' | 'opened' | 'clicked' | 'bounced' | 'failed' | 'skipped';
+export type EmailLogStatusEnum = 'sent' | 'delivered' | 'opened' | 'clicked' | 'bounced' | 'failed';
+export type TargetListTypeEnum = 'preorder-holders' | 'subscribers' | 'all-customers' | 'custom-list';
+
+export interface EmailCampaignRow {
+  id: string;
+  name: string;
+  subject: string;
+  template_id: number | null;
+  html_content: string | null;
+  campaign_type: EmailCampaignTypeEnum;
+  status: EmailCampaignStatusEnum;
+  target_list_type: TargetListTypeEnum;
+  target_filter: Record<string, unknown>;
+  params: Record<string, unknown>;
+  scheduled_at: string | null;
+  started_at: string | null;
+  completed_at: string | null;
+  total_recipients: number;
+  sent_count: number;
+  failed_count: number;
+  brevo_campaign_id: string | null;
+  created_by: string;
+  updated_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EmailCampaignInsert {
+  name: string;
+  subject: string;
+  template_id?: number | null;
+  html_content?: string | null;
+  campaign_type: EmailCampaignTypeEnum;
+  target_list_type: TargetListTypeEnum;
+  target_filter?: Record<string, unknown>;
+  params?: Record<string, unknown>;
+  scheduled_at?: string | null;
+  brevo_campaign_id?: string | null;
+  created_by: string;
+}
+
+export interface EmailCampaignUpdate {
+  name?: string;
+  subject?: string;
+  template_id?: number | null;
+  html_content?: string | null;
+  status?: EmailCampaignStatusEnum;
+  target_filter?: Record<string, unknown>;
+  params?: Record<string, unknown>;
+  scheduled_at?: string | null;
+  started_at?: string | null;
+  completed_at?: string | null;
+  total_recipients?: number;
+  sent_count?: number;
+  failed_count?: number;
+  brevo_campaign_id?: string | null;
+  updated_by?: string;
+}
+
+export interface EmailCampaignRecipientRow {
+  id: string;
+  campaign_id: string;
+  email: string;
+  full_name: string | null;
+  preorder_id: string | null;
+  params: Record<string, unknown>;
+  status: EmailRecipientStatusEnum;
+  brevo_message_id: string | null;
+  sent_at: string | null;
+  error: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EmailCampaignRecipientInsert {
+  campaign_id: string;
+  email: string;
+  full_name?: string | null;
+  preorder_id?: string | null;
+  params?: Record<string, unknown>;
+}
+
+export interface EmailCampaignHistoryRow {
+  id: string;
+  campaign_id: string;
+  action: string;
+  changed_by: string;
+  notes: string | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface EmailCampaignHistoryInsert {
+  campaign_id: string;
+  action: string;
+  changed_by: string;
+  notes?: string | null;
+  metadata?: Record<string, unknown>;
+}
+
+export interface EmailSendLogRow {
+  id: string;
+  email_type: 'transactional' | 'campaign';
+  email_category: string;
+  recipient_email: string;
+  recipient_name: string | null;
+  subject: string | null;
+  template_id: number | null;
+  brevo_message_id: string | null;
+  campaign_id: string | null;
+  status: EmailLogStatusEnum;
+  params: Record<string, unknown> | null;
+  error: string | null;
+  related_entity_type: string | null;
+  related_entity_id: string | null;
+  created_at: string;
+}
+
+export interface EmailSendLogInsert {
+  email_type: 'transactional' | 'campaign';
+  email_category: string;
+  recipient_email: string;
+  recipient_name?: string | null;
+  subject?: string | null;
+  template_id?: number | null;
+  brevo_message_id?: string | null;
+  campaign_id?: string | null;
+  status?: EmailLogStatusEnum;
+  params?: Record<string, unknown> | null;
+  error?: string | null;
+  related_entity_type?: string | null;
+  related_entity_id?: string | null;
+}
+
+export interface EmailMonthlyUsageRow {
+  month: string;
+  transactional_sent: number;
+  campaign_sent: number;
+  total_sent: number;
+  monthly_limit: number;
+  alert_sent_80: boolean;
+  alert_sent_95: boolean;
+}
+
+// ============================================================================
 // RPC Function Return Types
 // ============================================================================
 
@@ -620,6 +774,8 @@ export interface Database {
           conversion_token_expires_at?: string | null;
           conversion_status?: PreorderConversionStatus;
           converted_to_order_id?: string | null;
+          email_consent?: boolean;
+          email_consent_at?: string | null;
         }>;
         Relationships: [{
           foreignKeyName: 'preorders_converted_to_order_id_fkey';
@@ -775,6 +931,76 @@ export interface Database {
           referencedColumns: ['id'];
         }];
       };
+      email_campaigns: {
+        Row: ToRecord<EmailCampaignRow>;
+        Insert: ToRecord<EmailCampaignInsert>;
+        Update: ToRecord<EmailCampaignUpdate>;
+        Relationships: [{
+          foreignKeyName: 'email_campaigns_created_by_fkey';
+          columns: ['created_by'];
+          referencedRelation: 'users';
+          referencedColumns: ['id'];
+        }, {
+          foreignKeyName: 'email_campaigns_updated_by_fkey';
+          columns: ['updated_by'];
+          referencedRelation: 'users';
+          referencedColumns: ['id'];
+        }];
+      };
+      email_campaign_recipients: {
+        Row: ToRecord<EmailCampaignRecipientRow>;
+        Insert: ToRecord<EmailCampaignRecipientInsert>;
+        Update: ToRecord<Partial<EmailCampaignRecipientInsert> & {
+          status?: EmailRecipientStatusEnum;
+          brevo_message_id?: string | null;
+          sent_at?: string | null;
+          error?: string | null;
+        }>;
+        Relationships: [{
+          foreignKeyName: 'email_campaign_recipients_campaign_id_fkey';
+          columns: ['campaign_id'];
+          referencedRelation: 'email_campaigns';
+          referencedColumns: ['id'];
+        }, {
+          foreignKeyName: 'email_campaign_recipients_preorder_id_fkey';
+          columns: ['preorder_id'];
+          referencedRelation: 'preorders';
+          referencedColumns: ['id'];
+        }];
+      };
+      email_campaign_history: {
+        Row: ToRecord<EmailCampaignHistoryRow>;
+        Insert: ToRecord<EmailCampaignHistoryInsert>;
+        Update: ToRecord<Partial<EmailCampaignHistoryInsert>>;
+        Relationships: [{
+          foreignKeyName: 'email_campaign_history_campaign_id_fkey';
+          columns: ['campaign_id'];
+          referencedRelation: 'email_campaigns';
+          referencedColumns: ['id'];
+        }, {
+          foreignKeyName: 'email_campaign_history_changed_by_fkey';
+          columns: ['changed_by'];
+          referencedRelation: 'users';
+          referencedColumns: ['id'];
+        }];
+      };
+      email_send_log: {
+        Row: ToRecord<EmailSendLogRow>;
+        Insert: ToRecord<EmailSendLogInsert>;
+        Update: ToRecord<Partial<EmailSendLogInsert>>;
+        Relationships: [{
+          foreignKeyName: 'email_send_log_campaign_id_fkey';
+          columns: ['campaign_id'];
+          referencedRelation: 'email_campaigns';
+          referencedColumns: ['id'];
+        }];
+      };
+      email_monthly_usage: {
+        Row: ToRecord<EmailMonthlyUsageRow>;
+        Insert: ToRecord<Omit<EmailMonthlyUsageRow, 'total_sent'>>;
+        Update: ToRecord<Partial<Omit<EmailMonthlyUsageRow, 'total_sent'>>>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -790,6 +1016,10 @@ export interface Database {
         Args: { p_code: string };
         Returns: void;
       };
+      increment_email_usage: {
+        Args: { p_type: string; p_count?: number };
+        Returns: { current_total: number; current_limit: number; is_over_limit: boolean }[];
+      };
     };
     Enums: {
       box_type: BoxType;
@@ -799,6 +1029,11 @@ export interface Database {
       preorder_conversion_status: PreorderConversionStatus;
       delivery_cycle_status: DeliveryCycleStatus;
       subscription_status: SubscriptionStatus;
+      email_campaign_type: EmailCampaignTypeEnum;
+      email_campaign_status: EmailCampaignStatusEnum;
+      email_recipient_status: EmailRecipientStatusEnum;
+      email_log_status: EmailLogStatusEnum;
+      target_list_type: TargetListTypeEnum;
     };
     CompositeTypes: Record<string, never>;
   };

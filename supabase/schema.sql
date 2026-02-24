@@ -1,5 +1,5 @@
 -- ============================================================================
--- FitFlow — Complete Database Schema (as of 2026-02-24, Phase S3)
+-- FitFlow — Complete Database Schema (as of 2026-02-24, Phase E1)
 -- ============================================================================
 --
 -- This file represents the complete database schema after all migrations.
@@ -68,6 +68,55 @@ CREATE TYPE box_price_info AS (
   final_price_bgn NUMERIC
 );
 
+CREATE TYPE email_campaign_type AS ENUM (
+  'one-off',
+  'preorder-conversion',
+  'promotional',
+  'lifecycle'
+);
+COMMENT ON TYPE email_campaign_type IS 'Types of email campaigns: one-off (manual), preorder-conversion (token-based), promotional (marketing), lifecycle (event-triggered)';
+
+CREATE TYPE email_campaign_status AS ENUM (
+  'draft',
+  'scheduled',
+  'sending',
+  'sent',
+  'paused',
+  'cancelled',
+  'failed'
+);
+COMMENT ON TYPE email_campaign_status IS 'Lifecycle states for an email campaign';
+
+CREATE TYPE email_recipient_status AS ENUM (
+  'pending',
+  'sent',
+  'delivered',
+  'opened',
+  'clicked',
+  'bounced',
+  'failed',
+  'skipped'
+);
+COMMENT ON TYPE email_recipient_status IS 'Delivery status for individual campaign recipients, updated via Brevo webhooks';
+
+CREATE TYPE email_log_status AS ENUM (
+  'sent',
+  'delivered',
+  'opened',
+  'clicked',
+  'bounced',
+  'failed'
+);
+COMMENT ON TYPE email_log_status IS 'Status for all email sends — both transactional and campaign';
+
+CREATE TYPE target_list_type AS ENUM (
+  'preorder-holders',
+  'subscribers',
+  'all-customers',
+  'custom-list'
+);
+COMMENT ON TYPE target_list_type IS 'Audience targeting categories for email campaigns';
+
 
 -- ============================================================================
 -- 2. Shared Trigger Functions
@@ -129,6 +178,10 @@ CREATE TABLE preorders (
   conversion_status preorder_conversion_status NOT NULL DEFAULT 'pending',
   converted_to_order_id UUID REFERENCES orders(id) ON DELETE SET NULL,
 
+  -- GDPR email consent (added by 20260224120023)
+  email_consent BOOLEAN NOT NULL DEFAULT false,
+  email_consent_at TIMESTAMPTZ,
+
   -- Timestamps
   created_at TIMESTAMPTZ DEFAULT NOW() NOT NULL,
   updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
@@ -149,6 +202,8 @@ COMMENT ON COLUMN preorders.conversion_token IS 'UUID token for the preorder-to-
 COMMENT ON COLUMN preorders.conversion_token_expires_at IS 'Expiry timestamp for the conversion token (default: 90 days from creation)';
 COMMENT ON COLUMN preorders.conversion_status IS 'Tracks whether this preorder has been converted to a full order';
 COMMENT ON COLUMN preorders.converted_to_order_id IS 'FK to the order created from this preorder (if converted)';
+COMMENT ON COLUMN preorders.email_consent IS 'Whether the preorder holder has consented to receiving marketing emails (GDPR)';
+COMMENT ON COLUMN preorders.email_consent_at IS 'Timestamp when email consent was granted';
 
 -- Indexes
 CREATE INDEX idx_preorders_email ON preorders(email);
@@ -866,6 +921,280 @@ GRANT SELECT ON subscription_history TO authenticated;
 GRANT ALL ON subscription_history TO service_role;
 
 
+-- ---------- email_campaigns ----------
+
+CREATE TABLE email_campaigns (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name            TEXT NOT NULL,
+  subject         TEXT NOT NULL,
+  template_id     INTEGER,
+  html_content    TEXT,
+  campaign_type   email_campaign_type NOT NULL,
+  status          email_campaign_status NOT NULL DEFAULT 'draft',
+  target_list_type target_list_type NOT NULL,
+  target_filter   JSONB DEFAULT '{}'::jsonb,
+  params          JSONB DEFAULT '{}'::jsonb,
+  scheduled_at    TIMESTAMPTZ,
+  started_at      TIMESTAMPTZ,
+  completed_at    TIMESTAMPTZ,
+  total_recipients INTEGER NOT NULL DEFAULT 0,
+  sent_count      INTEGER NOT NULL DEFAULT 0,
+  failed_count    INTEGER NOT NULL DEFAULT 0,
+  brevo_campaign_id TEXT,
+  created_by      UUID NOT NULL REFERENCES auth.users(id),
+  updated_by      UUID REFERENCES auth.users(id),
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+  CONSTRAINT email_campaigns_content_check CHECK (
+    (template_id IS NOT NULL AND html_content IS NULL) OR
+    (template_id IS NULL AND html_content IS NOT NULL) OR
+    (template_id IS NULL AND html_content IS NULL)
+  )
+);
+
+COMMENT ON TABLE email_campaigns IS 'Email campaign definitions with targeting, scheduling, and progress tracking';
+COMMENT ON COLUMN email_campaigns.template_id IS 'Brevo template ID — used for Brevo-managed campaign emails';
+COMMENT ON COLUMN email_campaigns.html_content IS 'Inline HTML content — used for code-managed campaign emails';
+COMMENT ON COLUMN email_campaigns.target_filter IS 'JSONB filter criteria applied to the target audience (e.g. conversion_status, box_type)';
+COMMENT ON COLUMN email_campaigns.params IS 'Global template variables passed to every recipient';
+COMMENT ON COLUMN email_campaigns.brevo_campaign_id IS 'Brevo platform campaign ID when using their Campaign API for sending';
+
+CREATE INDEX idx_email_campaigns_status ON email_campaigns(status);
+CREATE INDEX idx_email_campaigns_type ON email_campaigns(campaign_type);
+CREATE INDEX idx_email_campaigns_scheduled ON email_campaigns(scheduled_at)
+  WHERE status = 'scheduled' AND scheduled_at IS NOT NULL;
+CREATE INDEX idx_email_campaigns_created_by ON email_campaigns(created_by);
+
+CREATE TRIGGER update_email_campaigns_updated_at
+  BEFORE UPDATE ON email_campaigns
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+ALTER TABLE email_campaigns ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "email_campaigns_staff_read" ON email_campaigns
+  FOR SELECT TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM user_profiles up
+      WHERE up.id = auth.uid()
+      AND up.user_type = 'staff'
+    )
+  );
+
+CREATE POLICY "email_campaigns_staff_insert" ON email_campaigns
+  FOR INSERT TO authenticated
+  WITH CHECK (
+    EXISTS (
+      SELECT 1 FROM user_profiles up
+      WHERE up.id = auth.uid()
+      AND up.user_type = 'staff'
+      AND up.staff_role IN ('super_admin', 'admin', 'marketing')
+    )
+  );
+
+CREATE POLICY "email_campaigns_staff_update" ON email_campaigns
+  FOR UPDATE TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM user_profiles up
+      WHERE up.id = auth.uid()
+      AND up.user_type = 'staff'
+      AND up.staff_role IN ('super_admin', 'admin', 'marketing')
+    )
+  );
+
+CREATE POLICY "email_campaigns_service_role" ON email_campaigns
+  FOR ALL TO service_role
+  USING (true) WITH CHECK (true);
+
+GRANT SELECT ON email_campaigns TO authenticated;
+GRANT ALL ON email_campaigns TO service_role;
+
+
+-- ---------- email_campaign_recipients ----------
+
+CREATE TABLE email_campaign_recipients (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  campaign_id     UUID NOT NULL REFERENCES email_campaigns(id) ON DELETE CASCADE,
+  email           TEXT NOT NULL,
+  full_name       TEXT,
+  preorder_id     UUID REFERENCES preorders(id) ON DELETE SET NULL,
+  params          JSONB DEFAULT '{}'::jsonb,
+  status          email_recipient_status NOT NULL DEFAULT 'pending',
+  brevo_message_id TEXT,
+  sent_at         TIMESTAMPTZ,
+  error           TEXT,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+  CONSTRAINT email_campaign_recipients_unique_email UNIQUE (campaign_id, email)
+);
+
+COMMENT ON TABLE email_campaign_recipients IS 'Individual recipients for each campaign with per-recipient params and delivery status';
+COMMENT ON COLUMN email_campaign_recipients.params IS 'Per-recipient template variables (e.g. conversion URL with token)';
+COMMENT ON COLUMN email_campaign_recipients.brevo_message_id IS 'Brevo message ID — used to correlate webhook events';
+
+CREATE INDEX idx_ecr_campaign_pending ON email_campaign_recipients(campaign_id)
+  WHERE status = 'pending';
+CREATE INDEX idx_ecr_campaign_status ON email_campaign_recipients(campaign_id, status);
+CREATE INDEX idx_ecr_brevo_message ON email_campaign_recipients(brevo_message_id)
+  WHERE brevo_message_id IS NOT NULL;
+
+CREATE TRIGGER update_email_campaign_recipients_updated_at
+  BEFORE UPDATE ON email_campaign_recipients
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+ALTER TABLE email_campaign_recipients ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "ecr_staff_read" ON email_campaign_recipients
+  FOR SELECT TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM user_profiles up
+      WHERE up.id = auth.uid()
+      AND up.user_type = 'staff'
+    )
+  );
+
+CREATE POLICY "ecr_service_role" ON email_campaign_recipients
+  FOR ALL TO service_role
+  USING (true) WITH CHECK (true);
+
+GRANT SELECT ON email_campaign_recipients TO authenticated;
+GRANT ALL ON email_campaign_recipients TO service_role;
+
+
+-- ---------- email_campaign_history ----------
+
+CREATE TABLE email_campaign_history (
+  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  campaign_id     UUID NOT NULL REFERENCES email_campaigns(id) ON DELETE CASCADE,
+  action          TEXT NOT NULL,
+  changed_by      UUID NOT NULL REFERENCES auth.users(id),
+  notes           TEXT,
+  metadata        JSONB DEFAULT '{}'::jsonb,
+  created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+COMMENT ON TABLE email_campaign_history IS 'Audit trail for email campaign lifecycle — every state change is logged with the staff member who performed it';
+COMMENT ON COLUMN email_campaign_history.action IS 'Campaign action: created, updated, scheduled, started, paused, resumed, cancelled, completed, failed';
+COMMENT ON COLUMN email_campaign_history.changed_by IS 'Staff member UUID who performed this action';
+COMMENT ON COLUMN email_campaign_history.metadata IS 'Action-specific metadata (e.g. {recipientCount, filter, previousStatus, errorDetail})';
+
+CREATE INDEX idx_ech_campaign ON email_campaign_history(campaign_id, created_at DESC);
+
+ALTER TABLE email_campaign_history ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "ech_staff_read" ON email_campaign_history
+  FOR SELECT TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM user_profiles up
+      WHERE up.id = auth.uid()
+      AND up.user_type = 'staff'
+    )
+  );
+
+CREATE POLICY "ech_service_role" ON email_campaign_history
+  FOR ALL TO service_role
+  USING (true) WITH CHECK (true);
+
+GRANT SELECT ON email_campaign_history TO authenticated;
+GRANT ALL ON email_campaign_history TO service_role;
+
+
+-- ---------- email_send_log ----------
+
+CREATE TABLE email_send_log (
+  id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email_type          TEXT NOT NULL CHECK (email_type IN ('transactional', 'campaign')),
+  email_category      TEXT NOT NULL,
+  recipient_email     TEXT NOT NULL,
+  recipient_name      TEXT,
+  subject             TEXT,
+  template_id         INTEGER,
+  brevo_message_id    TEXT,
+  campaign_id         UUID REFERENCES email_campaigns(id) ON DELETE SET NULL,
+  status              email_log_status NOT NULL DEFAULT 'sent',
+  params              JSONB,
+  error               TEXT,
+  related_entity_type TEXT,
+  related_entity_id   UUID,
+  created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+COMMENT ON TABLE email_send_log IS 'Unified audit log for all email sends (transactional + campaign) — used by admin email dashboard';
+COMMENT ON COLUMN email_send_log.email_category IS 'Descriptive category: order-confirmation, sub-created, sub-paused, preorder-conversion, cron-success, etc.';
+COMMENT ON COLUMN email_send_log.related_entity_type IS 'Type of the related business entity (order, subscription, preorder)';
+COMMENT ON COLUMN email_send_log.related_entity_id IS 'UUID of the related business entity';
+
+CREATE INDEX idx_esl_recipient ON email_send_log(recipient_email, created_at DESC);
+CREATE INDEX idx_esl_category ON email_send_log(email_category, created_at DESC);
+CREATE INDEX idx_esl_campaign ON email_send_log(campaign_id)
+  WHERE campaign_id IS NOT NULL;
+CREATE INDEX idx_esl_brevo_message ON email_send_log(brevo_message_id)
+  WHERE brevo_message_id IS NOT NULL;
+CREATE INDEX idx_esl_related ON email_send_log(related_entity_type, related_entity_id)
+  WHERE related_entity_type IS NOT NULL;
+CREATE INDEX idx_esl_created ON email_send_log(created_at DESC);
+
+ALTER TABLE email_send_log ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "esl_staff_read" ON email_send_log
+  FOR SELECT TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM user_profiles up
+      WHERE up.id = auth.uid()
+      AND up.user_type = 'staff'
+    )
+  );
+
+CREATE POLICY "esl_service_role" ON email_send_log
+  FOR ALL TO service_role
+  USING (true) WITH CHECK (true);
+
+GRANT SELECT ON email_send_log TO authenticated;
+GRANT ALL ON email_send_log TO service_role;
+
+
+-- ---------- email_monthly_usage ----------
+
+CREATE TABLE email_monthly_usage (
+  month               DATE PRIMARY KEY,
+  transactional_sent  INTEGER NOT NULL DEFAULT 0,
+  campaign_sent       INTEGER NOT NULL DEFAULT 0,
+  total_sent          INTEGER GENERATED ALWAYS AS (transactional_sent + campaign_sent) STORED,
+  monthly_limit       INTEGER NOT NULL DEFAULT 5000,
+  alert_sent_80       BOOLEAN NOT NULL DEFAULT false,
+  alert_sent_95       BOOLEAN NOT NULL DEFAULT false
+);
+
+COMMENT ON TABLE email_monthly_usage IS 'Monthly email send volume tracking against Brevo plan limits';
+COMMENT ON COLUMN email_monthly_usage.month IS 'First day of the month this row tracks (e.g. 2026-03-01)';
+COMMENT ON COLUMN email_monthly_usage.monthly_limit IS 'Email send limit from Brevo plan — Starter: 5000, adjustable on upgrade';
+
+ALTER TABLE email_monthly_usage ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "emu_staff_read" ON email_monthly_usage
+  FOR SELECT TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM user_profiles up
+      WHERE up.id = auth.uid()
+      AND up.user_type = 'staff'
+    )
+  );
+
+CREATE POLICY "emu_service_role" ON email_monthly_usage
+  FOR ALL TO service_role
+  USING (true) WITH CHECK (true);
+
+GRANT SELECT ON email_monthly_usage TO authenticated;
+GRANT ALL ON email_monthly_usage TO service_role;
+
+
 -- ============================================================================
 -- 4. RPC Functions
 -- ============================================================================
@@ -1052,6 +1381,48 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION handle_new_user();
+
+
+-- Atomic increment for email usage tracking
+CREATE OR REPLACE FUNCTION increment_email_usage(
+  p_type TEXT,
+  p_count INTEGER DEFAULT 1
+) RETURNS TABLE (
+  current_total INTEGER,
+  current_limit INTEGER,
+  is_over_limit BOOLEAN
+) LANGUAGE plpgsql SECURITY DEFINER AS $$
+DECLARE
+  v_month DATE := date_trunc('month', CURRENT_DATE)::date;
+  v_total INTEGER;
+  v_limit INTEGER;
+BEGIN
+  INSERT INTO email_monthly_usage (month)
+  VALUES (v_month)
+  ON CONFLICT (month) DO NOTHING;
+
+  IF p_type = 'transactional' THEN
+    UPDATE email_monthly_usage
+    SET transactional_sent = transactional_sent + p_count
+    WHERE month = v_month;
+  ELSIF p_type = 'campaign' THEN
+    UPDATE email_monthly_usage
+    SET campaign_sent = campaign_sent + p_count
+    WHERE month = v_month;
+  ELSE
+    RAISE EXCEPTION 'Invalid email type: %. Must be transactional or campaign.', p_type;
+  END IF;
+
+  SELECT emu.total_sent, emu.monthly_limit, (emu.total_sent > emu.monthly_limit)
+  INTO v_total, v_limit
+  FROM email_monthly_usage emu
+  WHERE emu.month = v_month;
+
+  RETURN QUERY SELECT v_total, v_limit, (v_total > v_limit);
+END;
+$$;
+
+COMMENT ON FUNCTION increment_email_usage IS 'Atomically increment email usage counter and return current state. Type must be transactional or campaign.';
 
 
 -- ============================================================================
