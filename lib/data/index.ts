@@ -140,6 +140,7 @@ export {
 export {
   logEmailSent,
   updateEmailLogStatus,
+  updateEmailLogFromWebhook,
   getEmailLog,
   getEmailLogByEntity,
   getEmailStats,

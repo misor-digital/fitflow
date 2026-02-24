@@ -57,6 +57,118 @@ export async function updateEmailLogStatus(
   }
 }
 
+/**
+ * Update email log entry from a Brevo webhook event.
+ * Idempotent — only updates if the event provides new information.
+ * Appends the raw event to the webhook_events audit trail.
+ */
+export async function updateEmailLogFromWebhook(
+  brevoMessageId: string,
+  event: string,
+  eventData: {
+    date?: string;
+    reason?: string;
+    link?: string;
+    rawEvent?: Record<string, unknown>;
+  },
+): Promise<{ campaignId: string | null; recipientEmail: string | null }> {
+  // Fetch current log entry
+  const { data: logEntry, error: fetchError } = await supabaseAdmin
+    .from('email_send_log')
+    .select('id, status, delivered_at, opened_at, clicked_at, unsubscribed_at, webhook_events, campaign_id, recipient_email')
+    .eq('brevo_message_id', brevoMessageId)
+    .maybeSingle();
+
+  if (fetchError) {
+    console.error('Error fetching email log for webhook:', fetchError);
+    throw new Error('Failed to fetch email log entry.');
+  }
+
+  if (!logEntry) {
+    // No matching log entry — skip silently (message may not be tracked)
+    return { campaignId: null, recipientEmail: null };
+  }
+
+  // Build update payload based on event type
+  const update: Record<string, unknown> = {};
+  const eventTimestamp = eventData.date ? new Date(eventData.date).toISOString() : new Date().toISOString();
+
+  switch (event) {
+    case 'delivered':
+      update.status = 'delivered';
+      if (!logEntry.delivered_at) {
+        update.delivered_at = eventTimestamp;
+      }
+      break;
+    case 'soft_bounce':
+    case 'hard_bounce':
+      update.status = 'bounced';
+      if (eventData.reason) {
+        update.error = eventData.reason;
+      }
+      break;
+    case 'opened':
+      // Only update status to opened if not already clicked
+      if (logEntry.status !== 'clicked') {
+        update.status = 'opened';
+      }
+      if (!logEntry.opened_at) {
+        update.opened_at = eventTimestamp;
+      }
+      break;
+    case 'clicked':
+      update.status = 'clicked';
+      if (!logEntry.clicked_at) {
+        update.clicked_at = eventTimestamp;
+      }
+      break;
+    case 'spam':
+      update.status = 'spam';
+      break;
+    case 'unsubscribed':
+      if (!logEntry.unsubscribed_at) {
+        update.unsubscribed_at = eventTimestamp;
+      }
+      break;
+    case 'blocked':
+      update.status = 'blocked';
+      if (eventData.reason) {
+        update.error = eventData.reason;
+      }
+      break;
+    default:
+      // Unknown event — just append to audit trail
+      break;
+  }
+
+  // Append raw event to webhook_events audit trail
+  const existingEvents = Array.isArray(logEntry.webhook_events) ? logEntry.webhook_events : [];
+  update.webhook_events = [
+    ...existingEvents,
+    {
+      event,
+      timestamp: eventTimestamp,
+      ...(eventData.reason && { reason: eventData.reason }),
+      ...(eventData.link && { link: eventData.link }),
+    },
+  ];
+
+  const { error: updateError } = await supabaseAdmin
+    .from('email_send_log')
+    .update(update)
+    .eq('id', logEntry.id);
+
+  if (updateError) {
+    console.error('Error updating email log from webhook:', updateError);
+    throw new Error('Failed to update email log from webhook.');
+  }
+
+  return {
+    campaignId: logEntry.campaign_id ?? null,
+    recipientEmail: logEntry.recipient_email ?? null,
+  };
+}
+
 // ============================================================================
 // Read operations (cached)
 // ============================================================================
@@ -141,6 +253,7 @@ export const getEmailLogByEntity = cache(
 
 /**
  * Aggregate stats for a date range.
+ * Uses webhook-enriched columns for accurate delivery/open/click tracking.
  * Used by admin dashboard.
  */
 export const getEmailStats = cache(
@@ -157,62 +270,75 @@ export const getEmailStats = cache(
     clicked: number;
     bounced: number;
     failed: number;
+    spam: number;
+    blocked: number;
   }> => {
-    // Get total count
-    let baseQuery = supabaseAdmin
-      .from('email_send_log')
-      .select('*', { count: 'exact', head: true })
-      .gte('created_at', dateFrom)
-      .lte('created_at', dateTo);
+    // Fetch all counts in parallel for efficiency
+    const baseFilters = (q: typeof supabaseAdmin extends { from: (t: string) => infer R } ? R : never) => q;
 
-    const { count: total } = await baseQuery;
+    const makeQuery = (extra?: (q: ReturnType<typeof supabaseAdmin.from>) => ReturnType<typeof supabaseAdmin.from>) => {
+      let q = supabaseAdmin
+        .from('email_send_log')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', dateFrom)
+        .lte('created_at', dateTo);
+      if (extra) q = extra(q) as typeof q;
+      return q;
+    };
 
-    // Get count by email_type
-    const { count: transactional } = await supabaseAdmin
-      .from('email_send_log')
-      .select('*', { count: 'exact', head: true })
-      .gte('created_at', dateFrom)
-      .lte('created_at', dateTo)
-      .eq('email_type', 'transactional');
+    const [
+      { count: total },
+      { count: transactional },
+      { count: campaign },
+      { count: sent },
+      { count: delivered },
+      { count: bounced },
+      { count: failed },
+      { count: spam },
+      { count: blocked },
+    ] = await Promise.all([
+      makeQuery(),
+      makeQuery(q => q.eq('email_type', 'transactional')),
+      makeQuery(q => q.eq('email_type', 'campaign')),
+      makeQuery(q => q.eq('status', 'sent')),
+      makeQuery(q => q.eq('status', 'delivered')),
+      makeQuery(q => q.eq('status', 'bounced')),
+      makeQuery(q => q.eq('status', 'failed')),
+      makeQuery(q => q.eq('status', 'spam')),
+      makeQuery(q => q.eq('status', 'blocked')),
+    ]);
 
-    const { count: campaign } = await supabaseAdmin
-      .from('email_send_log')
-      .select('*', { count: 'exact', head: true })
-      .gte('created_at', dateFrom)
-      .lte('created_at', dateTo)
-      .eq('email_type', 'campaign');
-
-    // Get counts by status
-    const statuses = ['sent', 'delivered', 'opened', 'clicked', 'bounced', 'failed'] as const;
-
-    const statusCounts = await Promise.all(
-      statuses.map(async (status) => {
-        const { count } = await supabaseAdmin
-          .from('email_send_log')
-          .select('*', { count: 'exact', head: true })
-          .gte('created_at', dateFrom)
-          .lte('created_at', dateTo)
-          .eq('status', status);
-
-        return { status, count: count ?? 0 };
-      }),
-    );
-
-    const statusMap: Record<string, number> = {};
-    for (const { status, count } of statusCounts) {
-      statusMap[status] = count;
-    }
+    // Count opened/clicked from webhook timestamp columns (more accurate)
+    const [
+      { count: opened },
+      { count: clicked },
+    ] = await Promise.all([
+      supabaseAdmin
+        .from('email_send_log')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', dateFrom)
+        .lte('created_at', dateTo)
+        .not('opened_at', 'is', null),
+      supabaseAdmin
+        .from('email_send_log')
+        .select('*', { count: 'exact', head: true })
+        .gte('created_at', dateFrom)
+        .lte('created_at', dateTo)
+        .not('clicked_at', 'is', null),
+    ]);
 
     return {
       total: total ?? 0,
       transactional: transactional ?? 0,
       campaign: campaign ?? 0,
-      sent: statusMap.sent ?? 0,
-      delivered: statusMap.delivered ?? 0,
-      opened: statusMap.opened ?? 0,
-      clicked: statusMap.clicked ?? 0,
-      bounced: statusMap.bounced ?? 0,
-      failed: statusMap.failed ?? 0,
+      sent: sent ?? 0,
+      delivered: delivered ?? 0,
+      opened: opened ?? 0,
+      clicked: clicked ?? 0,
+      bounced: bounced ?? 0,
+      failed: failed ?? 0,
+      spam: spam ?? 0,
+      blocked: blocked ?? 0,
     };
   },
 );

@@ -26,7 +26,7 @@ const DEFAULT_MONTHLY_LIMIT = 5000;
  */
 export const getOrCreateMonthUsage = cache(
   async (): Promise<EmailMonthlyUsageRow> => {
-    const currentMonth = new Date().toISOString().slice(0, 7); // 'YYYY-MM'
+    const currentMonth = new Date().toISOString().slice(0, 7) + '-01'; // 'YYYY-MM-01' for DATE column
 
     // Try to insert (no-op if already exists)
     await supabaseAdmin
@@ -149,7 +149,7 @@ export async function markAlertSent(
   threshold: 80 | 95,
 ): Promise<void> {
   const field = threshold === 80 ? 'alert_sent_80' : 'alert_sent_95';
-  const currentMonth = new Date().toISOString().slice(0, 7);
+  const currentMonth = new Date().toISOString().slice(0, 7) + '-01';
 
   const { error } = await supabaseAdmin
     .from('email_monthly_usage')

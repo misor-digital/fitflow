@@ -1121,6 +1121,11 @@ CREATE TABLE email_send_log (
   error               TEXT,
   related_entity_type TEXT,
   related_entity_id   UUID,
+  delivered_at        TIMESTAMPTZ,
+  opened_at           TIMESTAMPTZ,
+  clicked_at          TIMESTAMPTZ,
+  unsubscribed_at     TIMESTAMPTZ,
+  webhook_events      JSONB DEFAULT '[]'::jsonb,
   created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 

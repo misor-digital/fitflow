@@ -592,7 +592,7 @@ export interface SubscriptionHistoryInsert {
 export type EmailCampaignTypeEnum = 'one-off' | 'preorder-conversion' | 'promotional' | 'lifecycle';
 export type EmailCampaignStatusEnum = 'draft' | 'scheduled' | 'sending' | 'sent' | 'paused' | 'cancelled' | 'failed';
 export type EmailRecipientStatusEnum = 'pending' | 'sent' | 'delivered' | 'opened' | 'clicked' | 'bounced' | 'failed' | 'skipped';
-export type EmailLogStatusEnum = 'sent' | 'delivered' | 'opened' | 'clicked' | 'bounced' | 'failed';
+export type EmailLogStatusEnum = 'sent' | 'delivered' | 'opened' | 'clicked' | 'bounced' | 'failed' | 'spam' | 'blocked';
 export type TargetListTypeEnum = 'preorder-holders' | 'subscribers' | 'all-customers' | 'custom-list';
 
 export interface EmailCampaignRow {
@@ -707,6 +707,11 @@ export interface EmailSendLogRow {
   error: string | null;
   related_entity_type: string | null;
   related_entity_id: string | null;
+  delivered_at: string | null;
+  opened_at: string | null;
+  clicked_at: string | null;
+  unsubscribed_at: string | null;
+  webhook_events: unknown[];
   created_at: string;
 }
 
@@ -724,6 +729,11 @@ export interface EmailSendLogInsert {
   error?: string | null;
   related_entity_type?: string | null;
   related_entity_id?: string | null;
+  delivered_at?: string | null;
+  opened_at?: string | null;
+  clicked_at?: string | null;
+  unsubscribed_at?: string | null;
+  webhook_events?: unknown[];
 }
 
 export interface EmailMonthlyUsageRow {
