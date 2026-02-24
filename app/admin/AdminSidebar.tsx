@@ -29,6 +29,8 @@ const NAV_ITEMS: Array<{
     allowedRoles: ['super_admin', 'admin', 'marketing'] },
   { href: '/admin/emails', label: 'Имейли', icon: '📊',
     allowedRoles: ['super_admin', 'admin', 'content', 'marketing'] },
+  { href: '/admin/emails/contacts', label: 'Контакти', icon: '👤',
+    allowedRoles: ['super_admin', 'admin', 'marketing'] },
   { href: '/admin/campaigns', label: 'Кампании', icon: '📧',
     allowedRoles: ['super_admin', 'admin', 'content', 'marketing'] },
   { href: '/admin/content', label: 'Съдържание', icon: '📝',

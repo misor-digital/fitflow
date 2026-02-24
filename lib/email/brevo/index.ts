@@ -24,8 +24,11 @@ export {
   syncOrderToContact,
   addToBrevoList,
   getBrevoContact,
+  removeContactFromList,
+  getBrevoLists,
+  getListContacts,
 } from './contacts';
-export type { FitFlowContactAttributes } from './contacts';
+export type { FitFlowContactAttributes, BrevoListInfo, BrevoListContact } from './contacts';
 
 export {
   listBrevoTemplates,

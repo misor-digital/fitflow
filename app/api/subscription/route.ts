@@ -12,6 +12,7 @@ import { checkRateLimit } from '@/lib/utils/rateLimit';
 import { determineFirstCycle } from '@/lib/delivery/assignment';
 import { generateSingleOrderForSubscription } from '@/lib/delivery/generate';
 import { sendSubscriptionCreatedEmail } from '@/lib/subscription/notifications';
+import { syncSubscriptionChange } from '@/lib/email/contact-sync';
 import type { SubscriptionInsert } from '@/lib/supabase/types';
 import type { SubscriptionWithDelivery } from '@/lib/subscription';
 
@@ -261,6 +262,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const nextDate = upcomingForEmail?.delivery_date ?? '';
     if (session.email) {
       sendSubscriptionCreatedEmail(session.email, subscription, nextDate).catch(() => {});
+
+      // Sync subscription to Brevo contacts (fire-and-forget)
+      syncSubscriptionChange({
+        email: session.email,
+        status: 'active',
+        boxType: boxType as string,
+        frequency: frequency as string,
+      }).catch(console.error);
     }
 
     // ------------------------------------------------------------------

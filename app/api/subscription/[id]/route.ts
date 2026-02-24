@@ -26,6 +26,7 @@ import {
   sendSubscriptionResumedEmail,
   sendSubscriptionCancelledEmail,
 } from '@/lib/subscription/notifications';
+import { syncSubscriptionChange } from '@/lib/email/contact-sync';
 import type { SubscriptionPreferencesUpdate } from '@/lib/subscription';
 
 // ============================================================================
@@ -164,6 +165,12 @@ export async function PATCH(
         // Fire-and-forget email
         if (session.email) {
           sendSubscriptionPausedEmail(session.email, sub).catch(() => {});
+          syncSubscriptionChange({
+            email: session.email,
+            status: 'paused',
+            boxType: sub.box_type,
+            frequency: sub.frequency,
+          }).catch(console.error);
         }
 
         return NextResponse.json({
@@ -204,6 +211,12 @@ export async function PATCH(
             sub,
             upcoming?.delivery_date ?? '',
           ).catch(() => {});
+          syncSubscriptionChange({
+            email: session.email,
+            status: 'active',
+            boxType: sub.box_type,
+            frequency: sub.frequency,
+          }).catch(console.error);
         }
 
         return NextResponse.json({
@@ -251,6 +264,12 @@ export async function PATCH(
         // Fire-and-forget email
         if (session.email) {
           sendSubscriptionCancelledEmail(session.email, sub).catch(() => {});
+          syncSubscriptionChange({
+            email: session.email,
+            status: 'cancelled',
+            boxType: sub.box_type,
+            frequency: sub.frequency,
+          }).catch(console.error);
         }
 
         return NextResponse.json({

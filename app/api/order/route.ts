@@ -18,6 +18,7 @@ import { trackLeadCapi, hashForMeta, generateEventId } from '@/lib/analytics';
 import type { OrderInsert, ShippingAddressSnapshot, Preorder, BoxType, OrderType } from '@/lib/supabase/types';
 import type { AddressInput } from '@/lib/order';
 import { sendTransactionalEmail, syncOrderToContact } from '@/lib/email/brevo';
+import { syncPreorderConverted, syncOrderCustomer } from '@/lib/email/contact-sync';
 import { generateConfirmationEmail } from '@/lib/email';
 import type { ConfirmationEmailData } from '@/lib/email';
 import { getBoxTypeNames } from '@/lib/data';
@@ -455,6 +456,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       try {
         await markPreorderConverted(preorder.id, order.id);
         conversionCompleted = true;
+
+        // Sync preorder conversion to Brevo (fire-and-forget)
+        syncPreorderConverted({ email: preorder.email }).catch(console.error);
       } catch (conversionError) {
         console.error(JSON.stringify({
           level: 'error',
@@ -537,6 +541,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         new Date().toISOString().split('T')[0],
         effectiveBoxType
       ).catch((err) => console.error('Failed to sync contact:', err));
+
+      // Ensure customer is in the customers list (fire-and-forget)
+      syncOrderCustomer({
+        email: email.trim().toLowerCase(),
+        orderDate: new Date().toISOString(),
+        boxType: effectiveBoxType,
+      }).catch(console.error);
 
     } catch (emailError) {
       console.error(JSON.stringify({

@@ -17,6 +17,7 @@ import {
   sendSubscriptionResumedEmail,
   sendSubscriptionCancelledEmail,
 } from '@/lib/subscription/notifications';
+import { syncSubscriptionChange } from '@/lib/email/contact-sync';
 
 // ============================================================================
 // PATCH /api/admin/subscription/:id — Admin subscription management
@@ -121,6 +122,12 @@ export async function PATCH(
         if (customerEmail) {
           sendSubscriptionPausedEmail(customerEmail, sub)
             .catch((err) => console.error('Admin sub pause email failed:', err));
+          syncSubscriptionChange({
+            email: customerEmail,
+            status: 'paused',
+            boxType: sub.box_type,
+            frequency: sub.frequency,
+          }).catch(console.error);
         }
 
         return NextResponse.json({
@@ -149,6 +156,12 @@ export async function PATCH(
               )
             )
           ).catch((err) => console.error('Admin sub resume email failed:', err));
+          syncSubscriptionChange({
+            email: customerEmail,
+            status: 'active',
+            boxType: sub.box_type,
+            frequency: sub.frequency,
+          }).catch(console.error);
         }
 
         return NextResponse.json({
@@ -187,6 +200,12 @@ export async function PATCH(
         if (customerEmail) {
           sendSubscriptionCancelledEmail(customerEmail, sub)
             .catch((err) => console.error('Admin sub cancel email failed:', err));
+          syncSubscriptionChange({
+            email: customerEmail,
+            status: 'cancelled',
+            boxType: sub.box_type,
+            frequency: sub.frequency,
+          }).catch(console.error);
         }
 
         return NextResponse.json({
@@ -203,6 +222,17 @@ export async function PATCH(
           );
         }
         await expireSubscription(id, performedBy);
+
+        // Sync expired status to Brevo (fire-and-forget)
+        if (customerEmail) {
+          syncSubscriptionChange({
+            email: customerEmail,
+            status: 'expired',
+            boxType: sub.box_type,
+            frequency: sub.frequency,
+          }).catch(console.error);
+        }
+
         return NextResponse.json({
           success: true,
           message: 'Абонаментът е маркиран като изтекъл.',
