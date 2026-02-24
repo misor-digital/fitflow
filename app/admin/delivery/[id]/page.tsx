@@ -1,8 +1,9 @@
 import { requireStaff } from '@/lib/auth';
-import { ORDER_VIEW_ROLES } from '@/lib/auth/permissions';
-import { getDeliveryCycleById, getCycleItems } from '@/lib/data';
+import { ORDER_VIEW_ROLES, STAFF_MANAGEMENT_ROLES } from '@/lib/auth/permissions';
+import { getDeliveryCycleById, getCycleItems, getSubscriptionsForCycle } from '@/lib/data';
 import { computeCycleState } from '@/lib/delivery';
 import { CycleDetailView } from '@/components/admin/CycleDetailView';
+import { GenerateOrdersSection } from '@/components/admin/GenerateOrdersSection';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
@@ -26,7 +27,7 @@ export default async function CycleDetailPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  await requireStaff([...ORDER_VIEW_ROLES]);
+  const session = await requireStaff([...ORDER_VIEW_ROLES]);
 
   const { id } = await params;
 
@@ -41,6 +42,25 @@ export default async function CycleDetailPage({
 
   const cycleState = computeCycleState(cycle);
 
+  // Check if admin can manage (generate orders)
+  const canManage = session.profile.staff_role
+    ? STAFF_MANAGEMENT_ROLES.has(session.profile.staff_role)
+    : false;
+
+  // Only fetch eligible subscriptions for upcoming/delivered cycles
+  const showGenerateOrders =
+    canManage && (cycle.status === 'upcoming' || cycle.status === 'delivered');
+
+  let eligibleCount = 0;
+  if (showGenerateOrders) {
+    try {
+      const eligible = await getSubscriptionsForCycle(id);
+      eligibleCount = eligible.length;
+    } catch {
+      // Non-fatal — will show 0
+    }
+  }
+
   return (
     <div>
       <div className="mb-6">
@@ -53,6 +73,16 @@ export default async function CycleDetailPage({
       </div>
 
       <CycleDetailView cycle={cycle} items={items} cycleState={cycleState} />
+
+      {showGenerateOrders && (
+        <div className="mt-6">
+          <GenerateOrdersSection
+            cycleId={cycle.id}
+            cycleDate={cycle.delivery_date}
+            eligibleCount={eligibleCount}
+          />
+        </div>
+      )}
     </div>
   );
 }

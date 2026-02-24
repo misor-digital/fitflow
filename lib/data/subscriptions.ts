@@ -16,10 +16,11 @@ import type {
   SubscriptionUpdate,
   SubscriptionHistoryInsert,
   OrderInsert,
+  OrderRow,
   ShippingAddressSnapshot,
   SubscriptionHistoryRow,
 } from '@/lib/supabase/types';
-import type { BatchGenerationResult, SubscriptionPreferencesUpdate } from '@/lib/subscription';
+import type { BatchGenerationResult, SubscriptionPreferencesUpdate, SubscriptionWithUserInfo } from '@/lib/subscription';
 import { shouldIncludeInCycle } from '@/lib/subscription';
 import { createOrder } from './orders';
 import { getAddressById } from './addresses';
@@ -707,7 +708,28 @@ export const getSubscriptionHistory = cache(
 // ============================================================================
 
 /**
+ * Get orders linked to a subscription, newest first.
+ */
+export const getOrdersBySubscription = cache(
+  async (subscriptionId: string): Promise<OrderRow[]> => {
+    const { data, error } = await supabaseAdmin
+      .from('orders')
+      .select('*')
+      .eq('subscription_id', subscriptionId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching orders by subscription:', error);
+      throw new Error('Failed to load subscription orders.');
+    }
+
+    return data ?? [];
+  },
+);
+
+/**
  * Get paginated subscriptions with optional filters.
+ * Returns SubscriptionWithUserInfo (includes user_email + user_full_name).
  * Supports filtering by status, boxType, frequency, and search (user name/email).
  */
 export const getSubscriptionsPaginated = cache(
@@ -720,7 +742,7 @@ export const getSubscriptionsPaginated = cache(
       frequency?: string;
       search?: string;
     },
-  ): Promise<{ subscriptions: SubscriptionRow[]; total: number }> => {
+  ): Promise<{ subscriptions: SubscriptionWithUserInfo[]; total: number }> => {
     const from = (page - 1) * perPage;
     const to = from + perPage - 1;
 
@@ -735,14 +757,7 @@ export const getSubscriptionsPaginated = cache(
         .select('id')
         .ilike('full_name', search);
 
-      // Search in auth.users (email) via admin API
-      // Supabase admin listUsers doesn't support ilike, so we'll also search
-      // user_profiles matches and combine
       const profileIds = (profileMatches ?? []).map((p) => p.id);
-
-      // For email search, query orders table which stores customer_email
-      // or use auth admin. We'll use a pragmatic approach: search subscriptions
-      // that have matching user_ids from profiles.
       userIds = profileIds;
 
       // If no matching users found, return empty
@@ -777,8 +792,46 @@ export const getSubscriptionsPaginated = cache(
       throw new Error('Failed to load subscriptions.');
     }
 
+    const rows = data ?? [];
+
+    // Enrich with user info (email + name)
+    if (rows.length === 0) {
+      return { subscriptions: [], total: count ?? 0 };
+    }
+
+    const uniqueUserIds = [...new Set(rows.map((r) => r.user_id))];
+
+    // Fetch profiles
+    const { data: profiles } = await supabaseAdmin
+      .from('user_profiles')
+      .select('id, full_name')
+      .in('id', uniqueUserIds);
+
+    const profileMap = new Map(
+      (profiles ?? []).map((p) => [p.id, p.full_name]),
+    );
+
+    // Fetch emails via auth admin API
+    const emailMap = new Map<string, string>();
+    for (const uid of uniqueUserIds) {
+      try {
+        const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(uid);
+        if (authUser?.user?.email) {
+          emailMap.set(uid, authUser.user.email);
+        }
+      } catch {
+        // Non-fatal — email will be empty
+      }
+    }
+
+    const subscriptions: SubscriptionWithUserInfo[] = rows.map((row) => ({
+      ...row,
+      user_full_name: profileMap.get(row.user_id) ?? 'Неизвестен',
+      user_email: emailMap.get(row.user_id) ?? '',
+    }));
+
     return {
-      subscriptions: data ?? [],
+      subscriptions,
       total: count ?? 0,
     };
   },

@@ -50,6 +50,12 @@ export interface BatchGenerationResult {
   errorDetails: Array<{ subscriptionId: string; error: string }>;
 }
 
+/** Subscription with joined user info for admin tables */
+export interface SubscriptionWithUserInfo extends SubscriptionRow {
+  user_email: string;
+  user_full_name: string;
+}
+
 /** History action types for type safety */
 export type SubscriptionAction =
   | 'created'

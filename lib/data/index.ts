@@ -109,4 +109,5 @@ export {
   getSubscriptionHistory,
   getSubscriptionsPaginated,
   getSubscriptionsForCycle,
+  getOrdersBySubscription,
 } from './subscriptions';

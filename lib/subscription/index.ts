@@ -15,6 +15,7 @@ export type {
   BatchGenerationResult,
   SubscriptionAction,
   SubscriptionWithDelivery,
+  SubscriptionWithUserInfo,
   SubscriptionRow,
   SubscriptionStatus,
   SubscriptionHistoryRow,
