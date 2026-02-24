@@ -6,6 +6,8 @@ import {
   getAddressById,
   calculatePrice,
   createSubscription,
+  validatePromoCode,
+  incrementPromoCodeUsage,
 } from '@/lib/data';
 import { validatePreferenceUpdate } from '@/lib/subscription';
 import { checkRateLimit } from '@/lib/utils/rateLimit';
@@ -193,9 +195,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // ------------------------------------------------------------------
-    // Step 5: Server-side price calculation
+    // Step 5: Server-side price calculation (with per-user promo validation)
     // ------------------------------------------------------------------
-    const priceInfo = await calculatePrice(boxType, promoCode ?? undefined);
+    let effectivePromoCode = promoCode ?? undefined;
+    if (effectivePromoCode) {
+      const promoValid = await validatePromoCode(effectivePromoCode, session.userId);
+      if (!promoValid) {
+        effectivePromoCode = undefined;
+      }
+    }
+
+    const priceInfo = await calculatePrice(boxType, effectivePromoCode);
 
     // ------------------------------------------------------------------
     // Step 6: Determine first cycle (with mid-cycle support)
@@ -241,6 +251,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     };
 
     const subscription = await createSubscription(subscriptionData, session.userId);
+
+    // 7a. Increment promo code usage (with per-user tracking)
+    if (priceInfo.promoCode) {
+      try {
+        await incrementPromoCodeUsage(priceInfo.promoCode, session.userId);
+      } catch (promoError) {
+        console.warn('Failed to increment promo code usage:', promoError);
+      }
+    }
 
     // ------------------------------------------------------------------
     // Step 7b: If subscribing into a cycle that's already processing,

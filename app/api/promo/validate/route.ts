@@ -5,7 +5,8 @@
 
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
-import { validatePromoCode, getAppliedPromo } from '@/lib/data';
+import { validatePromoCode } from '@/lib/data';
+import { verifySession } from '@/lib/auth';
 import { checkRateLimit } from '@/lib/utils/rateLimit';
 
 /**
@@ -35,7 +36,10 @@ export async function GET(request: Request): Promise<NextResponse> {
       );
     }
 
-    const promo = await validatePromoCode(code);
+    // Try to get the current user session (non-throwing)
+    const session = await verifySession();
+
+    const promo = await validatePromoCode(code, session?.userId);
 
     if (!promo) {
       return NextResponse.json({
@@ -86,9 +90,12 @@ export async function POST(request: Request): Promise<NextResponse> {
       );
     }
 
-    const appliedPromo = await getAppliedPromo(code);
+    // Try to get the current user session (non-throwing)
+    const session = await verifySession();
 
-    if (!appliedPromo) {
+    const promo = await validatePromoCode(code, session?.userId);
+
+    if (!promo) {
       return NextResponse.json({
         valid: false,
         code: code.toUpperCase(),
@@ -97,8 +104,8 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     return NextResponse.json({
       valid: true,
-      code: appliedPromo.code,
-      discountPercent: appliedPromo.discountPercent,
+      code: promo.code,
+      discountPercent: promo.discount_percent,
     });
   } catch (error) {
     console.error('Error validating promo code:', error);

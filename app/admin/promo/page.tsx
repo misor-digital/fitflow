@@ -2,6 +2,7 @@ import { requireStaff } from '@/lib/auth';
 import { listPromoCodes, derivePromoStatus } from '@/lib/data';
 import type { PromoCodeFilters, PromoStatus } from '@/lib/data/promo';
 import Link from 'next/link';
+import PromoActions from '@/components/admin/PromoActions';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -330,12 +331,20 @@ export default async function PromoPage({ searchParams }: PromoPageProps) {
                           {formatDate(promo.created_at)}
                         </td>
                         <td className="px-4 py-3 text-right">
-                          <Link
-                            href={`/admin/promo/${promo.id}/edit`}
-                            className="text-sm text-[var(--color-brand-orange)] hover:underline"
-                          >
-                            Редактирай
-                          </Link>
+                          <div className="flex items-center justify-end gap-3">
+                            <PromoActions
+                              promoId={promo.id}
+                              promoCode={promo.code}
+                              isEnabled={promo.is_enabled}
+                              currentUses={promo.current_uses}
+                            />
+                            <Link
+                              href={`/admin/promo/${promo.id}/edit`}
+                              className="text-sm text-[var(--color-brand-orange)] hover:underline"
+                            >
+                              Редактирай
+                            </Link>
+                          </div>
                         </td>
                       </tr>
                     );

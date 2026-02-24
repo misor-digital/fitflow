@@ -7,6 +7,7 @@ import {
   getAddressById,
   calculatePrice,
   incrementPromoCodeUsage,
+  validatePromoCode,
   getPreorderByToken,
   markPreorderConverted,
   getDeliveryCycleById,
@@ -394,9 +395,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // ------------------------------------------------------------------
-    // Step 6: Server-Side Price Calculation
+    // Step 6: Server-Side Price Calculation (with per-user promo validation)
     // ------------------------------------------------------------------
-    const priceInfo = await calculatePrice(effectiveBoxType, promoCode);
+    let effectivePromoCode = promoCode ?? undefined;
+    if (effectivePromoCode && userId) {
+      const promoValid = await validatePromoCode(effectivePromoCode, userId);
+      if (!promoValid) {
+        effectivePromoCode = undefined;
+      }
+    }
+
+    const priceInfo = await calculatePrice(effectiveBoxType, effectivePromoCode);
 
     // ------------------------------------------------------------------
     // Step 7: Create Order
@@ -471,10 +480,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       }
     }
 
-    // 8b. Increment promo code usage
+    // 8b. Increment promo code usage (with per-user tracking)
     if (priceInfo.promoCode) {
       try {
-        await incrementPromoCodeUsage(priceInfo.promoCode);
+        await incrementPromoCodeUsage(
+          priceInfo.promoCode,
+          session?.userId,
+          order.id,
+        );
       } catch (promoError) {
         console.warn('Failed to increment promo code usage:', promoError);
         // Non-fatal — the order was saved successfully
