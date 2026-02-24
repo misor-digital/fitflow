@@ -248,6 +248,161 @@ export interface UserProfileUpdate {
 }
 
 // ============================================================================
+// Addresses Table
+// ============================================================================
+
+export type OrderStatus = 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'refunded';
+
+export interface ShippingAddressSnapshot {
+  full_name: string;
+  phone: string | null;
+  city: string;
+  postal_code: string;
+  street_address: string;
+  building_entrance: string | null;
+  floor: string | null;
+  apartment: string | null;
+  delivery_notes: string | null;
+}
+
+export interface AddressRow {
+  id: string;
+  user_id: string;
+  label: string | null;
+  full_name: string;
+  phone: string | null;
+  city: string;
+  postal_code: string;
+  street_address: string;
+  building_entrance: string | null;
+  floor: string | null;
+  apartment: string | null;
+  delivery_notes: string | null;
+  is_default: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AddressInsert {
+  user_id: string;
+  label?: string | null;
+  full_name: string;
+  phone?: string | null;
+  city: string;
+  postal_code: string;
+  street_address: string;
+  building_entrance?: string | null;
+  floor?: string | null;
+  apartment?: string | null;
+  delivery_notes?: string | null;
+  is_default?: boolean;
+}
+
+export interface AddressUpdate {
+  label?: string | null;
+  full_name?: string;
+  phone?: string | null;
+  city?: string;
+  postal_code?: string;
+  street_address?: string;
+  building_entrance?: string | null;
+  floor?: string | null;
+  apartment?: string | null;
+  delivery_notes?: string | null;
+  is_default?: boolean;
+}
+
+// ============================================================================
+// Orders Table
+// ============================================================================
+
+export interface OrderRow {
+  id: string;
+  order_number: string;
+  user_id: string | null;
+  customer_email: string;
+  customer_full_name: string;
+  customer_phone: string | null;
+  shipping_address: ShippingAddressSnapshot;
+  address_id: string | null;
+  box_type: string;
+  wants_personalization: boolean;
+  sports: string[] | null;
+  sport_other: string | null;
+  colors: string[] | null;
+  flavors: string[] | null;
+  flavor_other: string | null;
+  dietary: string[] | null;
+  dietary_other: string | null;
+  size_upper: string | null;
+  size_lower: string | null;
+  additional_notes: string | null;
+  promo_code: string | null;
+  discount_percent: number | null;
+  original_price_eur: number | null;
+  final_price_eur: number | null;
+  status: OrderStatus;
+  converted_from_preorder_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface OrderInsert {
+  user_id?: string | null;
+  customer_email: string;
+  customer_full_name: string;
+  customer_phone?: string | null;
+  shipping_address: ShippingAddressSnapshot;
+  address_id?: string | null;
+  box_type: string;
+  wants_personalization: boolean;
+  sports?: string[] | null;
+  sport_other?: string | null;
+  colors?: string[] | null;
+  flavors?: string[] | null;
+  flavor_other?: string | null;
+  dietary?: string[] | null;
+  dietary_other?: string | null;
+  size_upper?: string | null;
+  size_lower?: string | null;
+  additional_notes?: string | null;
+  promo_code?: string | null;
+  discount_percent?: number | null;
+  original_price_eur?: number | null;
+  final_price_eur?: number | null;
+  status?: OrderStatus;
+  converted_from_preorder_id?: string | null;
+}
+
+export interface OrderUpdate {
+  status?: OrderStatus;
+  shipping_address?: ShippingAddressSnapshot;
+  address_id?: string | null;
+}
+
+// ============================================================================
+// Order Status History Table
+// ============================================================================
+
+export interface OrderStatusHistoryRow {
+  id: string;
+  order_id: string;
+  from_status: OrderStatus | null;
+  to_status: OrderStatus;
+  changed_by: string | null;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface OrderStatusHistoryInsert {
+  order_id: string;
+  from_status?: OrderStatus | null;
+  to_status: OrderStatus;
+  changed_by?: string | null;
+  notes?: string | null;
+}
+
+// ============================================================================
 // RPC Function Return Types
 // ============================================================================
 
@@ -318,6 +473,49 @@ export interface Database {
           referencedColumns: ['id'];
         }];
       };
+      addresses: {
+        Row: ToRecord<AddressRow>;
+        Insert: ToRecord<AddressInsert>;
+        Update: ToRecord<AddressUpdate>;
+        Relationships: [{
+          foreignKeyName: 'addresses_user_id_fkey';
+          columns: ['user_id'];
+          referencedRelation: 'users';
+          referencedColumns: ['id'];
+        }];
+      };
+      orders: {
+        Row: ToRecord<OrderRow>;
+        Insert: ToRecord<OrderInsert>;
+        Update: ToRecord<OrderUpdate>;
+        Relationships: [{
+          foreignKeyName: 'orders_user_id_fkey';
+          columns: ['user_id'];
+          referencedRelation: 'users';
+          referencedColumns: ['id'];
+        }, {
+          foreignKeyName: 'orders_address_id_fkey';
+          columns: ['address_id'];
+          referencedRelation: 'addresses';
+          referencedColumns: ['id'];
+        }, {
+          foreignKeyName: 'orders_converted_from_preorder_id_fkey';
+          columns: ['converted_from_preorder_id'];
+          referencedRelation: 'preorders';
+          referencedColumns: ['id'];
+        }];
+      };
+      order_status_history: {
+        Row: ToRecord<OrderStatusHistoryRow>;
+        Insert: ToRecord<OrderStatusHistoryInsert>;
+        Update: ToRecord<Partial<OrderStatusHistoryInsert>>;
+        Relationships: [{
+          foreignKeyName: 'order_status_history_order_id_fkey';
+          columns: ['order_id'];
+          referencedRelation: 'orders';
+          referencedColumns: ['id'];
+        }];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -338,6 +536,7 @@ export interface Database {
       box_type: BoxType;
       user_type: UserType;
       staff_role: StaffRole;
+      order_status: OrderStatus;
     };
     CompositeTypes: Record<string, never>;
   };
