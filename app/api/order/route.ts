@@ -17,6 +17,10 @@ import { checkRateLimit } from '@/lib/utils/rateLimit';
 import { trackLeadCapi, hashForMeta, generateEventId } from '@/lib/analytics';
 import type { OrderInsert, ShippingAddressSnapshot, Preorder, BoxType, OrderType } from '@/lib/supabase/types';
 import type { AddressInput } from '@/lib/order';
+import { sendTransactionalEmail, syncOrderToContact } from '@/lib/email/brevo';
+import { generateConfirmationEmail } from '@/lib/email';
+import type { ConfirmationEmailData } from '@/lib/email';
+import { getBoxTypeNames } from '@/lib/data';
 
 // ============================================================================
 // Input length limits
@@ -473,29 +477,75 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       }
     }
 
-    // 8c. Send confirmation email (placeholder — fire-and-forget)
+    // 8c. Send confirmation email (fire-and-forget)
     let emailSent = false;
     try {
-      // TODO: Implement order confirmation email workflow
-      // Use generateConfirmationEmail(data, 'order', labels) from @/lib/email
-      // - order.order_number, effectiveBoxType, priceInfo, addressSnapshot
-      console.log(JSON.stringify({
-        level: 'info',
-        event: 'order_email_placeholder',
-        orderId: order.id,
-        orderNumber: order.order_number,
-        email: order.customer_email,
-        timestamp: new Date().toISOString(),
-      }));
-      emailSent = false; // Will be true once email is implemented
+      // Build display name for box type
+      const boxTypeNames = await getBoxTypeNames();
+      const boxTypeDisplay = boxTypeNames[effectiveBoxType] ?? effectiveBoxType;
+
+      // Build ConfirmationEmailData from available order data
+      const emailData: ConfirmationEmailData = {
+        fullName: fullName.trim(),
+        email: email.trim().toLowerCase(),
+        boxType: effectiveBoxType,
+        boxTypeDisplay,
+        wantsPersonalization: effectiveWantsPersonalization,
+        orderId: order.order_number,
+        sports: effectivePreferences?.sports ?? undefined,
+        sportOther: effectivePreferences?.sportOther ?? undefined,
+        colors: effectivePreferences?.colors ?? undefined,
+        flavors: effectivePreferences?.flavors ?? undefined,
+        flavorOther: effectivePreferences?.flavorOther ?? undefined,
+        sizeUpper: effectiveSizes?.upper ?? undefined,
+        sizeLower: effectiveSizes?.lower ?? undefined,
+        dietary: effectivePreferences?.dietary ?? undefined,
+        dietaryOther: effectivePreferences?.dietaryOther ?? undefined,
+        additionalNotes: effectivePreferences?.additionalNotes ?? undefined,
+        hasPromoCode: !!priceInfo.promoCode,
+        promoCode: priceInfo.promoCode ?? undefined,
+        discountPercent: priceInfo.discountPercent ?? undefined,
+        originalPriceEur: priceInfo.originalPriceEur ?? undefined,
+        finalPriceEur: priceInfo.finalPriceEur ?? undefined,
+      };
+
+      // Determine email type based on whether this is a conversion
+      const emailType = preorder ? 'legacy' : 'order';
+
+      // Generate HTML
+      const htmlContent = generateConfirmationEmail(emailData, emailType);
+
+      // Send via Brevo wrapper (auto-logs to email_send_log)
+      const result = await sendTransactionalEmail({
+        to: { email: email.trim().toLowerCase(), name: fullName.trim() },
+        subject: preorder
+          ? 'FitFlow — Поръчката ви от предварителна заявка е потвърдена!'
+          : 'FitFlow — Поръчката ви е потвърдена!',
+        htmlContent,
+        tags: ['order', preorder ? 'preorder-conversion' : 'confirmation'],
+        category: preorder ? 'preorder-conversion-confirmation' : 'order-confirmation',
+        relatedEntityType: 'order',
+        relatedEntityId: order.id,
+      });
+
+      emailSent = result.success;
+
+      // Sync customer to Brevo contacts (fire-and-forget)
+      syncOrderToContact(
+        email.trim().toLowerCase(),
+        1,
+        new Date().toISOString().split('T')[0],
+        effectiveBoxType
+      ).catch((err) => console.error('Failed to sync contact:', err));
+
     } catch (emailError) {
       console.error(JSON.stringify({
         level: 'error',
         event: 'order_email_failed',
         orderId: order.id,
-        error: emailError instanceof Error ? emailError.message : String(emailError),
-        timestamp: new Date().toISOString(),
+        error: emailError instanceof Error ? emailError.message : 'Unknown',
       }));
+      emailSent = false;
     }
 
     // 8d. Server-side Meta CAPI event tracking

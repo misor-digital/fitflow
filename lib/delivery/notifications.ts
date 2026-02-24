@@ -5,7 +5,7 @@
  * Uses Brevo template emails — templates must be created in the Brevo dashboard.
  */
 
-import { sendTemplateEmail } from '@/lib/email';
+import { sendTransactionalTemplateEmail } from '@/lib/email/brevo';
 import type { GenerationResult } from './generate';
 
 const ADMIN_NOTIFICATION_EMAIL = process.env.ADMIN_EMAIL || 'admin@fitflow.bg';
@@ -30,7 +30,7 @@ export async function sendCronErrorNotification(result: GenerationResult): Promi
   }
 
   try {
-    await sendTemplateEmail({
+    await sendTransactionalTemplateEmail({
       to: { email: ADMIN_NOTIFICATION_EMAIL },
       templateId: CRON_TEMPLATE_IDS.errors,
       params: {
@@ -44,6 +44,7 @@ export async function sendCronErrorNotification(result: GenerationResult): Promi
         timestamp: new Date().toISOString(),
       },
       tags: ['cron', 'order-generation', 'errors'],
+      category: 'cron-errors',
     });
   } catch (emailError) {
     // Don't let email failure cascade — just log it
@@ -61,7 +62,7 @@ export async function sendCronSuccessNotification(result: GenerationResult): Pro
   }
 
   try {
-    await sendTemplateEmail({
+    await sendTransactionalTemplateEmail({
       to: { email: ADMIN_NOTIFICATION_EMAIL },
       templateId: CRON_TEMPLATE_IDS.success,
       params: {
@@ -73,6 +74,7 @@ export async function sendCronSuccessNotification(result: GenerationResult): Pro
         timestamp: new Date().toISOString(),
       },
       tags: ['cron', 'order-generation', 'success'],
+      category: 'cron-success',
     });
   } catch (emailError) {
     console.error('[CRON] Failed to send success notification email:', emailError);
@@ -89,7 +91,7 @@ export async function sendCronFailureNotification(error: unknown): Promise<void>
   }
 
   try {
-    await sendTemplateEmail({
+    await sendTransactionalTemplateEmail({
       to: { email: ADMIN_NOTIFICATION_EMAIL },
       templateId: CRON_TEMPLATE_IDS.failure,
       params: {
@@ -97,6 +99,7 @@ export async function sendCronFailureNotification(error: unknown): Promise<void>
         timestamp: new Date().toISOString(),
       },
       tags: ['cron', 'order-generation', 'failure'],
+      category: 'cron-failure',
     });
   } catch (emailError) {
     console.error('[CRON] Failed to send failure notification email:', emailError);

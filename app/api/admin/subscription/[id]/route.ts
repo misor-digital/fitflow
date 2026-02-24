@@ -11,6 +11,12 @@ import {
 } from '@/lib/data';
 import { canPause, canResume, canCancel, validateCancellationReason } from '@/lib/subscription';
 import { checkRateLimit } from '@/lib/utils/rateLimit';
+import { supabaseAdmin } from '@/lib/supabase/admin';
+import {
+  sendSubscriptionPausedEmail,
+  sendSubscriptionResumedEmail,
+  sendSubscriptionCancelledEmail,
+} from '@/lib/subscription/notifications';
 
 // ============================================================================
 // PATCH /api/admin/subscription/:id — Admin subscription management
@@ -89,6 +95,15 @@ export async function PATCH(
 
     const performedBy = session.userId;
 
+    // Resolve customer email (needed for lifecycle notifications)
+    let customerEmail: string | null = null;
+    try {
+      const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(sub.user_id);
+      customerEmail = authUser?.user?.email ?? null;
+    } catch {
+      // Non-fatal — emails will be skipped if we can't resolve
+    }
+
     // ------------------------------------------------------------------
     // Step 5: Dispatch by action
     // ------------------------------------------------------------------
@@ -101,6 +116,13 @@ export async function PATCH(
           );
         }
         await pauseSubscription(id, performedBy);
+
+        // Fire-and-forget customer notification
+        if (customerEmail) {
+          sendSubscriptionPausedEmail(customerEmail, sub)
+            .catch((err) => console.error('Admin sub pause email failed:', err));
+        }
+
         return NextResponse.json({
           success: true,
           message: 'Абонаментът е спрян.',
@@ -115,6 +137,20 @@ export async function PATCH(
           );
         }
         await resumeSubscription(id, performedBy);
+
+        // Fire-and-forget customer notification
+        if (customerEmail) {
+          import('@/lib/data').then(({ getUpcomingCycle }) =>
+            getUpcomingCycle().then((upcoming) =>
+              sendSubscriptionResumedEmail(
+                customerEmail!,
+                sub,
+                upcoming?.delivery_date ?? '',
+              )
+            )
+          ).catch((err) => console.error('Admin sub resume email failed:', err));
+        }
+
         return NextResponse.json({
           success: true,
           message: 'Абонаментът е подновен.',
@@ -146,6 +182,13 @@ export async function PATCH(
         }
 
         await cancelSubscription(id, performedBy, reason);
+
+        // Fire-and-forget customer notification
+        if (customerEmail) {
+          sendSubscriptionCancelledEmail(customerEmail, sub)
+            .catch((err) => console.error('Admin sub cancel email failed:', err));
+        }
+
         return NextResponse.json({
           success: true,
           message: 'Абонаментът е отказан.',

@@ -6,7 +6,7 @@
  * All calls catch errors to prevent failures from blocking the main flow.
  */
 
-import { sendTemplateEmail } from '@/lib/email';
+import { sendTransactionalTemplateEmail } from '@/lib/email/brevo';
 import type { SubscriptionRow } from '@/lib/supabase/types';
 
 /**
@@ -35,7 +35,7 @@ export async function sendSubscriptionCreatedEmail(
   }
 
   try {
-    await sendTemplateEmail({
+    await sendTransactionalTemplateEmail({
       to: { email },
       templateId: SUBSCRIPTION_TEMPLATE_IDS.created,
       params: {
@@ -45,6 +45,9 @@ export async function sendSubscriptionCreatedEmail(
         manageUrl: 'https://fitflow.bg/account/subscriptions',
       },
       tags: ['subscription', 'created'],
+      category: 'sub-created',
+      relatedEntityType: 'subscription',
+      relatedEntityId: subscription.id,
     });
   } catch (err) {
     console.error('[EMAIL] subscription-created failed:', err);
@@ -64,7 +67,7 @@ export async function sendSubscriptionPausedEmail(
   }
 
   try {
-    await sendTemplateEmail({
+    await sendTransactionalTemplateEmail({
       to: { email },
       templateId: SUBSCRIPTION_TEMPLATE_IDS.paused,
       params: {
@@ -72,6 +75,9 @@ export async function sendSubscriptionPausedEmail(
         resumeUrl: 'https://fitflow.bg/account/subscriptions',
       },
       tags: ['subscription', 'paused'],
+      category: 'sub-paused',
+      relatedEntityType: 'subscription',
+      relatedEntityId: subscription.id,
     });
   } catch (err) {
     console.error('[EMAIL] subscription-paused failed:', err);
@@ -92,7 +98,7 @@ export async function sendSubscriptionResumedEmail(
   }
 
   try {
-    await sendTemplateEmail({
+    await sendTransactionalTemplateEmail({
       to: { email },
       templateId: SUBSCRIPTION_TEMPLATE_IDS.resumed,
       params: {
@@ -101,6 +107,9 @@ export async function sendSubscriptionResumedEmail(
         manageUrl: 'https://fitflow.bg/account/subscriptions',
       },
       tags: ['subscription', 'resumed'],
+      category: 'sub-resumed',
+      relatedEntityType: 'subscription',
+      relatedEntityId: subscription.id,
     });
   } catch (err) {
     console.error('[EMAIL] subscription-resumed failed:', err);
@@ -120,7 +129,7 @@ export async function sendSubscriptionCancelledEmail(
   }
 
   try {
-    await sendTemplateEmail({
+    await sendTransactionalTemplateEmail({
       to: { email },
       templateId: SUBSCRIPTION_TEMPLATE_IDS.cancelled,
       params: {
@@ -128,6 +137,9 @@ export async function sendSubscriptionCancelledEmail(
         resubscribeUrl: 'https://fitflow.bg/order',
       },
       tags: ['subscription', 'cancelled'],
+      category: 'sub-cancelled',
+      relatedEntityType: 'subscription',
+      relatedEntityId: subscription.id,
     });
   } catch (err) {
     console.error('[EMAIL] subscription-cancelled failed:', err);
@@ -149,7 +161,7 @@ export async function sendDeliveryUpcomingEmail(
   }
 
   try {
-    await sendTemplateEmail({
+    await sendTransactionalTemplateEmail({
       to: { email },
       templateId: SUBSCRIPTION_TEMPLATE_IDS.deliveryUpcoming,
       params: {
@@ -158,6 +170,9 @@ export async function sendDeliveryUpcomingEmail(
         trackUrl: `https://fitflow.bg/order/track?orderId=${orderId}`,
       },
       tags: ['subscription', 'delivery-upcoming'],
+      category: 'delivery-upcoming',
+      relatedEntityType: 'order',
+      relatedEntityId: orderId,
     });
   } catch (err) {
     console.error('[EMAIL] delivery-upcoming failed:', err);

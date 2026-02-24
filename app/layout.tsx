@@ -4,6 +4,10 @@ import CookieConsentBanner from "@/components/CookieConsentBanner";
 import OrderTrackingWidget from "@/components/OrderTrackingWidget";
 import ConditionalScripts from "@/components/ConditionalScripts";
 import AuthProvider from "@/components/AuthProvider";
+import { initializeEmailSystem } from "@/lib/data";
+
+// Wire DAL callbacks into Brevo wrapper (idempotent)
+initializeEmailSystem();
 
 export const metadata: Metadata = {
   title: "FitFlow - Кутия за АКТИВНИ дами",

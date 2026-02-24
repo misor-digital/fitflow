@@ -6,6 +6,7 @@
  */
 
 import { sendEmail, sendTemplateEmail } from '../emailService';
+import { incrementUsage } from '@/lib/data/email-usage';
 import type { SendEmailOptions, SendTemplateEmailOptions, EmailResult } from '../types';
 import type { EmailSendLogInput } from '../types';
 
@@ -30,6 +31,12 @@ export async function sendTransactionalEmail(
   }
 ): Promise<EmailResult> {
   const result = await sendEmail(options);
+
+  // Fire-and-forget usage tracking
+  if (result.success) {
+    incrementUsage('transactional', 1)
+      .catch((err) => console.error('Failed to increment email usage:', err));
+  }
 
   // Fire-and-forget logging
   if (onEmailSentCallback) {
@@ -68,6 +75,12 @@ export async function sendTransactionalTemplateEmail(
   }
 ): Promise<EmailResult> {
   const result = await sendTemplateEmail(options);
+
+  // Fire-and-forget usage tracking
+  if (result.success) {
+    incrementUsage('transactional', 1)
+      .catch((err) => console.error('Failed to increment email usage:', err));
+  }
 
   if (onEmailSentCallback) {
     const recipients = Array.isArray(options.to) ? options.to : [options.to];
