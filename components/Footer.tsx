@@ -40,6 +40,11 @@ export default function Footer() {
                   Направи поръчка
                 </Link>
               </li>
+              <li>
+                <Link href="/box/mystery" className="text-gray-300 hover:text-[var(--color-brand-orange)] transition-colors text-xs sm:text-sm">
+                  Мистериозна кутия
+                </Link>
+              </li>
             </ul>
           </div>
 

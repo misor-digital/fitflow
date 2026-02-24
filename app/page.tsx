@@ -166,6 +166,33 @@ function HomeContent() {
         </div>
       </section>
 
+      {/* Subscription CTA Section */}
+      <section className="bg-[var(--color-brand-navy)] py-12 sm:py-14 md:py-16 text-white">
+        <div className="mx-auto max-w-4xl px-4 text-center">
+          <h2 className="mb-4 text-2xl sm:text-3xl font-bold">Абонирай се за FitFlow</h2>
+          <p className="mb-8 text-base sm:text-lg text-white/80">
+            Получавай кутия с фитнес продукти всеки месец — или на всеки 3 месеца.
+            Спри и поднови по всяко време.
+          </p>
+          <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
+            <Link
+              href="/order"
+              onClick={() => trackCTAClick({ cta_text: 'Абонирай се', cta_location: 'subscription_cta', destination: '/order' })}
+              className="rounded-lg bg-[var(--color-brand-orange)] px-8 py-3 text-lg font-semibold text-white hover:opacity-90 transition-opacity"
+            >
+              Абонирай се
+            </Link>
+            <Link
+              href="/box/mystery"
+              onClick={() => trackCTAClick({ cta_text: 'Еднократна кутия', cta_location: 'subscription_cta', destination: '/box/mystery' })}
+              className="rounded-lg border-2 border-white px-8 py-3 text-lg font-semibold text-white hover:bg-white/10 transition-colors"
+            >
+              Еднократна кутия
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* What's Inside */}
       <section className="py-10 sm:py-12 md:py-16 px-4 sm:px-5 bg-white">
         <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[var(--color-brand-navy)] text-center mb-8 sm:mb-10 md:mb-12 relative after:content-[''] after:block after:w-12 sm:after:w-16 after:h-1 after:bg-[var(--color-brand-orange)] after:mx-auto after:mt-3 sm:after:mt-4 after:rounded">

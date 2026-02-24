@@ -85,23 +85,30 @@ export function shouldIncludeInCycle(
     // Never delivered — include in first available cycle on or after first_cycle_id
     if (sub.last_delivered_cycle_id === null) {
       if (!sub.first_cycle_id) return true; // No first_cycle_id constraint — include
-      const firstCycleIndex = allCyclesSorted.findIndex((c) => c.id === sub.first_cycle_id);
-      const currentIndex = allCyclesSorted.findIndex((c) => c.id === currentCycle.id);
-      // Include if current cycle is at or after the first cycle
-      return currentIndex >= firstCycleIndex;
+      const firstCycle = allCyclesSorted.find((c) => c.id === sub.first_cycle_id);
+      if (!firstCycle) return true; // first_cycle deleted — include
+      // Include if current cycle is at or after the first cycle by date
+      return currentCycle.delivery_date >= firstCycle.delivery_date;
     }
 
-    // Find positions in sorted cycle list
-    const lastDeliveredIndex = allCyclesSorted.findIndex(
+    // Find the last delivered cycle
+    const lastDeliveredCycle = allCyclesSorted.find(
       (c) => c.id === sub.last_delivered_cycle_id,
     );
-    const currentIndex = allCyclesSorted.findIndex((c) => c.id === currentCycle.id);
 
-    // If either index not found, skip to be safe
-    if (lastDeliveredIndex === -1 || currentIndex === -1) return false;
+    // If last delivered cycle not found (deleted/archived), include to be safe
+    if (!lastDeliveredCycle) return true;
+
+    // Count cycles between last_delivered and current by date order
+    // This is resilient to deleted/archived cycles in the gap
+    const cyclesBetween = allCyclesSorted.filter(
+      (c) =>
+        c.delivery_date > lastDeliveredCycle.delivery_date &&
+        c.delivery_date <= currentCycle.delivery_date,
+    ).length;
 
     // Include when 3 or more cycles have passed since last delivery
-    return currentIndex - lastDeliveredIndex >= 3;
+    return cyclesBetween >= 3;
   }
 
   // Unknown frequency — exclude

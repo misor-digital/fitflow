@@ -9,6 +9,9 @@ import {
 } from '@/lib/data';
 import { validatePreferenceUpdate } from '@/lib/subscription';
 import { checkRateLimit } from '@/lib/utils/rateLimit';
+import { determineFirstCycle } from '@/lib/delivery/assignment';
+import { generateSingleOrderForSubscription } from '@/lib/delivery/generate';
+import { sendSubscriptionCreatedEmail } from '@/lib/subscription/notifications';
 import type { SubscriptionInsert } from '@/lib/supabase/types';
 import type { SubscriptionWithDelivery } from '@/lib/subscription';
 
@@ -194,9 +197,21 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const priceInfo = await calculatePrice(boxType, promoCode ?? undefined);
 
     // ------------------------------------------------------------------
-    // Step 6: Determine first cycle
+    // Step 6: Determine first cycle (with mid-cycle support)
     // ------------------------------------------------------------------
-    const upcomingCycle = await getUpcomingCycle();
+    let cycleId: string | null = null;
+    let needsImmediateOrder = false;
+
+    try {
+      const cycleResult = await determineFirstCycle();
+      cycleId = cycleResult.cycleId;
+      needsImmediateOrder = cycleResult.needsImmediateOrder;
+    } catch {
+      // No available cycle — subscription will be created without a first cycle
+      // and will be picked up when the next cycle is created by admin
+      const upcomingCycle = await getUpcomingCycle();
+      cycleId = upcomingCycle?.id ?? null;
+    }
 
     // ------------------------------------------------------------------
     // Step 7: Create subscription
@@ -221,10 +236,32 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       base_price_eur: priceInfo.originalPriceEur ?? priceInfo.finalPriceEur,
       current_price_eur: priceInfo.finalPriceEur,
       default_address_id: addressId,
-      first_cycle_id: upcomingCycle?.id ?? null,
+      first_cycle_id: cycleId,
     };
 
     const subscription = await createSubscription(subscriptionData, session.userId);
+
+    // ------------------------------------------------------------------
+    // Step 7b: If subscribing into a cycle that's already processing,
+    //          generate their order now (late addition)
+    // ------------------------------------------------------------------
+    if (needsImmediateOrder && cycleId) {
+      try {
+        await generateSingleOrderForSubscription(subscription.id, cycleId, 'system');
+      } catch (err) {
+        console.error('Late-addition order generation failed:', err);
+        // Non-fatal — subscription was created, order can be manually added
+      }
+    }
+
+    // ------------------------------------------------------------------
+    // Step 7c: Send confirmation email (fire-and-forget)
+    // ------------------------------------------------------------------
+    const upcomingForEmail = await getUpcomingCycle();
+    const nextDate = upcomingForEmail?.delivery_date ?? '';
+    if (session.email) {
+      sendSubscriptionCreatedEmail(session.email, subscription, nextDate).catch(() => {});
+    }
 
     // ------------------------------------------------------------------
     // Step 8: Return response

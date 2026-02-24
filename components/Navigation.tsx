@@ -12,6 +12,7 @@ import PromoDiscountPrompt from './PromoDiscountPrompt';
 export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [boxDropdownOpen, setBoxDropdownOpen] = useState(false);
   const [revealedBoxAvailable, setRevealedBoxAvailable] = useState<boolean | null>(null);
   const pathname = usePathname();
   const router = useRouter();
@@ -97,6 +98,40 @@ export default function Navigation() {
             >
               Начало
             </Link>
+            {/* Кутии dropdown */}
+            <div
+              className="relative"
+              onMouseEnter={() => setBoxDropdownOpen(true)}
+              onMouseLeave={() => setBoxDropdownOpen(false)}
+            >
+              <button
+                className={`font-semibold transition-colors flex items-center gap-1 ${
+                  pathname.startsWith('/box') ? 'text-[var(--color-brand-orange)]' : 'text-[var(--color-brand-navy)] hover:text-[var(--color-brand-orange)]'
+                }`}
+              >
+                Кутии ▾
+              </button>
+              {boxDropdownOpen && (
+                <div className="absolute left-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border py-2 z-50">
+                  <Link
+                    href="/box/mystery"
+                    onClick={() => setBoxDropdownOpen(false)}
+                    className="block px-4 py-2 text-sm font-medium text-[var(--color-brand-navy)] hover:bg-gray-50 hover:text-[var(--color-brand-orange)] transition-colors"
+                  >
+                    🎁 Мистериозна кутия
+                  </Link>
+                  {revealedBoxAvailable && (
+                    <Link
+                      href="/box/current"
+                      onClick={() => setBoxDropdownOpen(false)}
+                      className="block px-4 py-2 text-sm font-medium text-[var(--color-brand-navy)] hover:bg-gray-50 hover:text-[var(--color-brand-orange)] transition-colors"
+                    >
+                      👀 Разкрита кутия
+                    </Link>
+                  )}
+                </div>
+              )}
+            </div>
             <Link
               href="/about"
               className={`font-semibold transition-colors ${
@@ -113,17 +148,6 @@ export default function Navigation() {
             >
               Въпроси
             </Link>
-            {revealedBoxAvailable && (
-              <Link
-                href="/box/current"
-                className={`font-semibold transition-colors flex items-center gap-1 ${
-                  isActive('/box/current') ? 'text-[var(--color-brand-orange)]' : 'text-[var(--color-brand-orange)] hover:text-[var(--color-brand-orange-dark)]'
-                }`}
-              >
-                🎁 Текуща кутия
-                <span className="bg-[var(--color-brand-orange)] text-white text-[0.6rem] px-1.5 py-0.5 rounded-full font-bold uppercase leading-none">НОВО</span>
-              </Link>
-            )}
           </div>
 
           {/* Mobile Menu Button - Left Side */}
@@ -280,14 +304,22 @@ export default function Navigation() {
               >
                 Въпроси
               </Link>
+              <Link
+                href="/box/mystery"
+                onClick={() => setIsOpen(false)}
+                className={`text-sm sm:text-base font-semibold transition-colors ${
+                  isActive('/box/mystery') ? 'text-[var(--color-brand-orange)]' : 'text-[var(--color-brand-navy)] hover:text-[var(--color-brand-orange)]'
+                }`}
+              >
+                🎁 Мистериозна кутия
+              </Link>
               {revealedBoxAvailable && (
                 <Link
                   href="/box/current"
                   onClick={() => setIsOpen(false)}
                   className="text-sm sm:text-base font-semibold text-[var(--color-brand-orange)] flex items-center gap-1.5"
                 >
-                  🎁 Текуща кутия
-                  <span className="bg-[var(--color-brand-orange)] text-white text-[0.55rem] px-1.5 py-0.5 rounded-full font-bold uppercase leading-none">НОВО</span>
+                  👀 Разкрита кутия
                 </Link>
               )}
 

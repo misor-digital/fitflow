@@ -203,6 +203,8 @@ export function CycleDetailView({
               const data = await res.json();
               setError(data.error || 'Грешка при разкриване на цикъла.');
             } else {
+              setSuccess('Цикълът е разкрит! Виж публичната страница →');
+              setTimeout(() => setSuccess(null), 5000);
               router.refresh();
             }
           } catch {
@@ -366,7 +368,16 @@ export function CycleDetailView({
       )}
       {success && (
         <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-700">
-          {success}
+          {success.includes('публичната страница') ? (
+            <span>
+              {success.replace(' →', '')}{' '}
+              <a href="/box/current" target="_blank" rel="noopener noreferrer" className="underline font-medium">
+                Виж публичната страница →
+              </a>
+            </span>
+          ) : (
+            success
+          )}
         </div>
       )}
 
@@ -404,6 +415,11 @@ export function CycleDetailView({
             </span>
           )}
         </div>
+        {cycle.status !== 'upcoming' && (
+          <p className="text-sm text-amber-600">
+            ⚠ Промяната на дата на цикъл, който вече е в обработка, може да обърка клиентите.
+          </p>
+        )}
 
         {/* Revealed status */}
         <div className="text-sm text-gray-600">

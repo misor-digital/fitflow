@@ -21,6 +21,11 @@ import {
   validateCancellationReason,
 } from '@/lib/subscription';
 import { checkRateLimit } from '@/lib/utils/rateLimit';
+import {
+  sendSubscriptionPausedEmail,
+  sendSubscriptionResumedEmail,
+  sendSubscriptionCancelledEmail,
+} from '@/lib/subscription/notifications';
 import type { SubscriptionPreferencesUpdate } from '@/lib/subscription';
 
 // ============================================================================
@@ -155,6 +160,12 @@ export async function PATCH(
         }
 
         await pauseSubscription(id, session.userId);
+
+        // Fire-and-forget email
+        if (session.email) {
+          sendSubscriptionPausedEmail(session.email, sub).catch(() => {});
+        }
+
         return NextResponse.json({
           success: true,
           message: 'Абонаментът е спрян.',
@@ -179,7 +190,22 @@ export async function PATCH(
           );
         }
 
+        // Note: Resuming a subscription does NOT retroactively generate orders
+        // for cycles that have already been processed. The subscriber will be
+        // included starting from the next eligible cycle.
         await resumeSubscription(id, session.userId);
+
+        // Fire-and-forget email
+        if (session.email) {
+          const { getUpcomingCycle } = await import('@/lib/data');
+          const upcoming = await getUpcomingCycle();
+          sendSubscriptionResumedEmail(
+            session.email,
+            sub,
+            upcoming?.delivery_date ?? '',
+          ).catch(() => {});
+        }
+
         return NextResponse.json({
           success: true,
           message: 'Абонаментът е подновен.',
@@ -221,6 +247,12 @@ export async function PATCH(
         }
 
         await cancelSubscription(id, session.userId, reason);
+
+        // Fire-and-forget email
+        if (session.email) {
+          sendSubscriptionCancelledEmail(session.email, sub).catch(() => {});
+        }
+
         return NextResponse.json({
           success: true,
           message: 'Абонаментът е отказан.',

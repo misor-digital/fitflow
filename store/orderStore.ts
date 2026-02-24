@@ -52,6 +52,7 @@ interface OrderStore extends OrderUserInput {
   // Delivery cycle
   setDeliveryCycleId: (id: string | null) => void;
   setOrderType: (type: string | null) => void;
+  resetSubscriptionFields: () => void;
 
   // Navigation
   setStep: (step: OrderStep) => void;
@@ -123,6 +124,10 @@ export const useOrderStore = create<OrderStore>()(
       // Delivery cycle
       setDeliveryCycleId: (id) => set({ deliveryCycleId: id }),
       setOrderType: (type) => set({ orderType: type }),
+      resetSubscriptionFields: () => set({
+        orderType: null,
+        deliveryCycleId: null,
+      }),
 
       // Navigation
       setStep: (step) => set({ currentStep: step }),

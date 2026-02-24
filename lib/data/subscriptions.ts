@@ -22,6 +22,7 @@ import type {
 } from '@/lib/supabase/types';
 import type { BatchGenerationResult, SubscriptionPreferencesUpdate, SubscriptionWithUserInfo } from '@/lib/subscription';
 import { shouldIncludeInCycle } from '@/lib/subscription';
+import { sendDeliveryUpcomingEmail } from '@/lib/subscription/notifications';
 import { createOrder } from './orders';
 import { getAddressById } from './addresses';
 import { calculatePrice } from './catalog';
@@ -259,6 +260,10 @@ export async function pauseSubscription(
 
 /**
  * Resume a paused subscription.
+ *
+ * Note: Resuming a subscription does NOT retroactively generate orders
+ * for cycles that have already been processed. The subscriber will be
+ * included starting from the next eligible cycle.
  */
 export async function resumeSubscription(
   id: string,
@@ -665,6 +670,14 @@ export async function generateOrdersForCycle(
         details: { cycle_id: cycleId, order_id: order.id },
         performed_by: performedBy,
       });
+
+      // Fire-and-forget delivery upcoming email
+      sendDeliveryUpcomingEmail(
+        authUser.user.email ?? '',
+        sub,
+        cycle.delivery_date,
+        order.id,
+      ).catch(() => {});
 
       result.generated++;
     } catch (err) {
