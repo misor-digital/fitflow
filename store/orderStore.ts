@@ -49,6 +49,10 @@ interface OrderStore extends OrderUserInput {
   setConversionToken: (token: string | null) => void;
   prefillFromConversion: (source: UserInput) => void;
 
+  // Delivery cycle
+  setDeliveryCycleId: (id: string | null) => void;
+  setOrderType: (type: string | null) => void;
+
   // Navigation
   setStep: (step: OrderStep) => void;
   goToNextStep: () => void;
@@ -116,6 +120,10 @@ export const useOrderStore = create<OrderStore>()(
           promoCode: source.promoCode,
         }),
 
+      // Delivery cycle
+      setDeliveryCycleId: (id) => set({ deliveryCycleId: id }),
+      setOrderType: (type) => set({ orderType: type }),
+
       // Navigation
       setStep: (step) => set({ currentStep: step }),
       goToNextStep: () => {
@@ -168,5 +176,7 @@ export function useOrderInput(): OrderUserInput {
     address: store.address,
     promoCode: store.promoCode,
     conversionToken: store.conversionToken,
+    deliveryCycleId: store.deliveryCycleId,
+    orderType: store.orderType,
   };
 }

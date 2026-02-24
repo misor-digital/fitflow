@@ -136,6 +136,8 @@ export default function ConversionFlow({
         address: currentInput.address,
         promoCode: currentInput.promoCode,
         conversionToken: currentInput.conversionToken,
+        deliveryCycleId: currentInput.deliveryCycleId,
+        orderType: currentInput.orderType,
       });
 
       const response = await fetch('/api/order', {

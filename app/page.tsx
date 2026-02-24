@@ -3,16 +3,18 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useRef, Suspense, Fragment } from 'react';
+import { useEffect, useRef, Suspense, Fragment, useState } from 'react';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { useOrderStore } from '@/store/orderStore';
 import { trackViewContent, trackViewItem, trackCTAClick, trackPromoCode } from '@/lib/analytics';
+import { formatDeliveryDate } from '@/lib/delivery';
 
 function HomeContent() {
   const searchParams = useSearchParams();
   const { setPromoCode } = useOrderStore();
   const hasTrackedViewContent = useRef(false);
+  const [nextDeliveryDate, setNextDeliveryDate] = useState<string | null>(null);
   
   // Track ViewContent (Meta) and view_item (GA4) on landing page load (once)
   useEffect(() => {
@@ -63,6 +65,24 @@ function HomeContent() {
     
     validateAndSetPromo();
   }, [searchParams, setPromoCode]);
+
+  // Fetch upcoming delivery date for mystery box section
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/delivery/upcoming');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!cancelled && data.nextDeliveryDate) {
+          setNextDeliveryDate(formatDeliveryDate(data.nextDeliveryDate));
+        }
+      } catch {
+        // silently fail
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   return (
     <>
@@ -150,6 +170,50 @@ function HomeContent() {
           <Link href="/order" onClick={() => trackCTAClick({ cta_text: 'Започни сега', cta_location: 'whats_inside', destination: '/order' })}>
             <button className="bg-[var(--color-brand-navy)] text-white px-9 py-3.5 rounded-full text-base font-semibold uppercase tracking-wide shadow-lg hover:bg-[#034561] transition-all hover:-translate-y-0.5 hover:shadow-xl">
               Започни сега
+            </button>
+          </Link>
+        </div>
+      </section>
+
+      {/* Mystery Box Section */}
+      <section className="py-10 sm:py-12 md:py-16 px-4 sm:px-5 bg-gradient-to-b from-[var(--color-brand-lightBlue)]/20 to-white">
+        <div className="max-w-3xl mx-auto text-center">
+          <div className="text-4xl sm:text-5xl mb-4 sm:mb-6">🎁</div>
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[var(--color-brand-navy)] mb-3 sm:mb-4 relative after:content-[''] after:block after:w-12 sm:after:w-16 after:h-1 after:bg-[var(--color-brand-orange)] after:mx-auto after:mt-3 sm:after:mt-4 after:rounded">
+            Мистериозна Кутия
+          </h2>
+          <p className="text-sm sm:text-base md:text-lg text-gray-600 mb-6 sm:mb-8 max-w-lg mx-auto">
+            Не искаш абонамент? Поръчай еднократна кутия — доставяме на{' '}
+            {nextDeliveryDate ? (
+              <span className="font-semibold text-[var(--color-brand-navy)]">{nextDeliveryDate}</span>
+            ) : (
+              <span className="font-semibold text-[var(--color-brand-navy)]">следващата дата</span>
+            )}!
+          </p>
+          {nextDeliveryDate && (
+            <div className="inline-flex items-center gap-2 bg-[var(--color-brand-orange)] text-white px-5 py-2.5 rounded-full text-sm sm:text-base font-semibold shadow-md mb-6 sm:mb-8">
+              <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              Следваща доставка: {nextDeliveryDate}
+            </div>
+          )}
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 max-w-md mx-auto mb-6 sm:mb-8">
+            <div className="bg-white rounded-xl p-4 sm:p-5 shadow-md border border-gray-100">
+              <h3 className="text-sm sm:text-base font-bold text-[var(--color-brand-navy)] mb-1">Стандартна</h3>
+              <p className="text-xs text-gray-500 mb-1">4-5 продукта</p>
+              <p className="text-base sm:text-lg font-bold text-[var(--color-brand-orange)]">29.90€</p>
+            </div>
+            <div className="bg-white rounded-xl p-4 sm:p-5 shadow-md border-2 border-[var(--color-brand-orange)] relative">
+              <div className="absolute -top-2 right-2 bg-[var(--color-brand-orange)] text-white px-2 py-0.5 rounded-full text-[0.6rem] font-semibold uppercase">Премиум</div>
+              <h3 className="text-sm sm:text-base font-bold text-[var(--color-brand-navy)] mb-1">Премиум</h3>
+              <p className="text-xs text-gray-500 mb-1">6-8 продукта</p>
+              <p className="text-base sm:text-lg font-bold text-[var(--color-brand-orange)]">39.90€</p>
+            </div>
+          </div>
+          <Link href="/box/mystery" onClick={() => trackCTAClick({ cta_text: 'Поръчай мистериозна кутия', cta_location: 'mystery_box_section', destination: '/box/mystery' })}>
+            <button className="bg-[var(--color-brand-navy)] text-white px-9 py-3.5 rounded-full text-base font-semibold uppercase tracking-wide shadow-lg hover:bg-[#034561] transition-all hover:-translate-y-0.5 hover:shadow-xl">
+              Поръчай мистериозна кутия →
             </button>
           </Link>
         </div>

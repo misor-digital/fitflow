@@ -69,6 +69,10 @@ export interface OrderUserInput {
 
   // Conversion (null for fresh orders)
   conversionToken: string | null;
+
+  // Delivery cycle (for mystery box orders)
+  deliveryCycleId: string | null;
+  orderType: string | null; // 'onetime-mystery' | 'onetime-revealed' | null
 }
 
 // ============================================================================
@@ -169,6 +173,10 @@ export interface OrderApiRequest {
 
   // Conversion
   conversionToken?: string | null;
+
+  // Delivery cycle
+  deliveryCycleId?: string | null;
+  orderType?: string | null;
 }
 
 export interface OrderSubmitResponse {

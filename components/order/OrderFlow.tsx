@@ -17,12 +17,18 @@ interface OrderFlowProps {
   initialPrices: PricesMap;
   boxTypeNames: Record<string, string>;
   catalogData: CatalogData;
+  initialBoxType?: string;       // pre-select box type from URL
+  deliveryCycleId?: string;      // link order to delivery cycle
+  orderType?: string;            // 'onetime-mystery' | 'onetime-revealed'
 }
 
 export default function OrderFlow({
   initialPrices,
   boxTypeNames,
   catalogData,
+  initialBoxType,
+  deliveryCycleId: propCycleId,
+  orderType: propOrderType,
 }: OrderFlowProps) {
   const router = useRouter();
   const [hydrated, setHydrated] = useState(false);
@@ -36,6 +42,35 @@ export default function OrderFlow({
   const input = useOrderInput();
   const user = useAuthStore((s) => s.user);
   const derived = computeOrderDerivedState(input);
+
+  // ---------------------------------------------------------------------------
+  // Pre-selection from URL params (mystery box flow)
+  // ---------------------------------------------------------------------------
+  const hasAppliedPreselection = useRef(false);
+
+  useEffect(() => {
+    if (!hydrated || hasAppliedPreselection.current) return;
+    hasAppliedPreselection.current = true;
+
+    const store = useOrderStore.getState();
+
+    // Set delivery cycle fields
+    if (propCycleId) {
+      store.setDeliveryCycleId(propCycleId);
+    }
+    if (propOrderType) {
+      store.setOrderType(propOrderType);
+    }
+
+    // Pre-select box type and auto-advance to step 2
+    if (initialBoxType && !store.boxType) {
+      const validTypes = ['onetime-standard', 'onetime-premium', 'monthly-standard', 'monthly-premium'];
+      if (validTypes.includes(initialBoxType)) {
+        store.setBoxType(initialBoxType as import('@/lib/catalog').BoxTypeId);
+        store.setStep(2 as OrderStep);
+      }
+    }
+  }, [hydrated, initialBoxType, propCycleId, propOrderType]);
 
   // ---------------------------------------------------------------------------
   // Hydration guard — avoid server/client mismatch with sessionStorage
@@ -154,6 +189,8 @@ export default function OrderFlow({
         address: currentInput.address,
         promoCode: currentInput.promoCode,
         conversionToken: currentInput.conversionToken,
+        deliveryCycleId: currentInput.deliveryCycleId,
+        orderType: currentInput.orderType,
       });
 
       const response = await fetch('/api/order', {

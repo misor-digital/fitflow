@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { useOrderStore } from '@/store/orderStore';
 import { trackFunnelStep, trackBoxSelection } from '@/lib/analytics';
 import PriceDisplay from '@/components/PriceDisplay';
@@ -275,6 +276,16 @@ export default function OrderStepBox({ prices, boxTypeNames, onNext }: OrderStep
               </p>
               {onetimePremiumPrice && <PriceDisplay priceInfo={onetimePremiumPrice} />}
             </div>
+          </div>
+
+          {/* Mystery box link */}
+          <div className="mt-4 sm:mt-5 text-center">
+            <Link
+              href="/box/mystery"
+              className="inline-flex items-center gap-1.5 text-sm sm:text-base text-[var(--color-brand-orange)] font-semibold hover:underline transition-colors"
+            >
+              🎁 Виж мистериозната кутия →
+            </Link>
           </div>
         </div>
       </div>

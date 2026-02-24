@@ -167,6 +167,14 @@ export function transformOrderToApiRequest(input: OrderUserInput): OrderApiReque
     request.conversionToken = input.conversionToken;
   }
 
+  // Delivery cycle
+  if (input.deliveryCycleId) {
+    request.deliveryCycleId = input.deliveryCycleId;
+  }
+  if (input.orderType) {
+    request.orderType = input.orderType;
+  }
+
   return request;
 }
 
@@ -223,4 +231,8 @@ export const INITIAL_ORDER_INPUT: OrderUserInput = {
 
   // Conversion
   conversionToken: null,
+
+  // Delivery cycle
+  deliveryCycleId: null,
+  orderType: null,
 };

@@ -17,7 +17,16 @@ export const metadata: Metadata = {
   description: 'Поръчайте вашата FitFlow кутия за активни дами',
 };
 
-export default async function OrderPage() {
+interface OrderPageProps {
+  searchParams: Promise<{
+    boxType?: string;
+    cycleId?: string;
+    orderType?: string;
+  }>;
+}
+
+export default async function OrderPage({ searchParams }: OrderPageProps) {
+  const params = await searchParams;
   // Fetch all catalog data in parallel (server-side, no waterfall)
   const [
     prices,
@@ -89,6 +98,9 @@ export default async function OrderPage() {
           initialPrices={prices}
           boxTypeNames={boxTypeNames}
           catalogData={catalogData}
+          initialBoxType={params.boxType}
+          deliveryCycleId={params.cycleId}
+          orderType={params.orderType}
         />
       </main>
       <Footer />
