@@ -20,8 +20,8 @@ interface LastOrderInfo {
 export default function OrderThankYou() {
   const router = useRouter();
   const hasTracked = useRef(false);
+  const orderInfoRef = useRef<LastOrderInfo | null>(null);
   const [orderInfo, setOrderInfo] = useState<LastOrderInfo | null>(null);
-  const [ready, setReady] = useState(false);
 
   // Read order info from sessionStorage on mount
   useEffect(() => {
@@ -36,8 +36,9 @@ export default function OrderThankYou() {
         router.replace('/order');
         return;
       }
-      setOrderInfo(info);
-      setReady(true);
+      orderInfoRef.current = info;
+      // Batch via queueMicrotask to avoid synchronous setState-in-effect
+      queueMicrotask(() => setOrderInfo(info));
     } catch {
       router.replace('/order');
     }
@@ -45,7 +46,7 @@ export default function OrderThankYou() {
 
   // Track conversion events once
   useEffect(() => {
-    if (!ready || !orderInfo || hasTracked.current) return;
+    if (!orderInfo || hasTracked.current) return;
 
     // Meta Pixel — Lead event (purchase tracking can be added when payments are live)
     trackLead();
@@ -62,7 +63,7 @@ export default function OrderThankYou() {
     });
 
     hasTracked.current = true;
-  }, [ready, orderInfo]);
+  }, [orderInfo]);
 
   const handleGoHome = () => {
     // Clean up order state
@@ -72,7 +73,7 @@ export default function OrderThankYou() {
   };
 
   // Loading state
-  if (!ready || !orderInfo) {
+  if (!orderInfo) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin w-8 h-8 border-4 border-[var(--color-brand-orange)] border-t-transparent rounded-full" />

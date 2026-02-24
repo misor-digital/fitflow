@@ -6,7 +6,7 @@ import { useAuthStore } from '@/store/authStore';
 import { trackFunnelStep, trackFormInteraction } from '@/lib/analytics';
 import { isValidEmail, isValidPhone, getEmailError, getPhoneError } from '@/lib/catalog';
 import { isSubscriptionBox } from '@/lib/catalog';
-import { isValidPostalCode, getAddressFieldError, validateAddress } from '@/lib/order';
+import { getAddressFieldError, validateAddress } from '@/lib/order';
 import type { AddressInput } from '@/lib/order';
 import Link from 'next/link';
 

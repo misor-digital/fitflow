@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition, useRef, useCallback } from 'react';
+import { useState, useTransition, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import type {
   DeliveryCycleRow,
@@ -99,8 +99,6 @@ export function CycleDetailView({
   // ============================================================================
   // Cycle field updates
   // ============================================================================
-
-  const saveTitleTimeout = useRef<ReturnType<typeof setTimeout>>(null);
 
   const handleTitleBlur = useCallback(async () => {
     if (title === (cycle.title ?? '')) return;

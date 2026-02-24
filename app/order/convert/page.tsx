@@ -1,7 +1,6 @@
 import { getPreorderByToken } from '@/lib/data';
 import { calculatePrice } from '@/lib/data';
 import {
-  getAllBoxPricesMap,
   getBoxTypeNames,
   getBoxTypes,
   getOptions,

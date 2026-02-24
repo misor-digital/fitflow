@@ -46,7 +46,7 @@ export default function ContactListsTable({ lists }: ContactListsTableProps) {
     synced: number;
     failed: number;
   } | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
 
   async function handleSyncScope(scope: string) {
     setSyncing(scope);

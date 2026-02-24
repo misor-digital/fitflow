@@ -7,7 +7,7 @@ import {
   getBoxTypeNames,
   getAddressById,
 } from '@/lib/data';
-import { computeSubscriptionState, FREQUENCY_LABELS } from '@/lib/subscription';
+import { computeSubscriptionState } from '@/lib/subscription';
 import { SubscriptionDetailView } from '@/components/admin/SubscriptionDetailView';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';

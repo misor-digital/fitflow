@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useOrderStore, useOrderInput } from '@/store/orderStore';
 import { useAuthStore } from '@/store/authStore';
@@ -37,7 +37,7 @@ export default function OrderFlow({
   const [submitError, setSubmitError] = useState<string | null>(null);
   const lastPromoRef = useRef<string | null>(null);
 
-  const { currentStep, setStep, goToNextStep, goToPreviousStep, promoCode, orderType } =
+  const { currentStep, setStep, promoCode, orderType } =
     useOrderStore();
   const input = useOrderInput();
   const user = useAuthStore((s) => s.user);
@@ -45,7 +45,10 @@ export default function OrderFlow({
 
   // Revealed box: skip personalization step entirely
   const isRevealedBox = orderType === 'onetime-revealed' || propOrderType === 'onetime-revealed';
-  const activeSteps: OrderStep[] = isRevealedBox ? [1, 3, 4] : [1, 2, 3, 4];
+  const activeSteps: OrderStep[] = useMemo(
+    () => (isRevealedBox ? [1, 3, 4] : [1, 2, 3, 4]),
+    [isRevealedBox],
+  );
 
   // ---------------------------------------------------------------------------
   // Pre-selection from URL params (mystery box flow)
@@ -173,16 +176,6 @@ export default function OrderFlow({
     }
     goToNextActiveStep();
   }, [currentStep, derived, goToNextActiveStep]);
-
-  const handleGoToStep = useCallback(
-    (step: OrderStep) => {
-      // Only allow navigating backward to completed steps
-      if (step < currentStep) {
-        setStep(step);
-      }
-    },
-    [currentStep, setStep],
-  );
 
   // ---------------------------------------------------------------------------
   // Order submission

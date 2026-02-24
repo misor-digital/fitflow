@@ -17,7 +17,6 @@ import {
   removeContactFromList,
 } from './brevo/contacts';
 import { EMAIL_CONFIG } from './client';
-import type { ContactResult } from './types';
 
 // ============================================================================
 // Types

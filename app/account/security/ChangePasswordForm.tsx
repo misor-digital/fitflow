@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/browser';
 import { validatePassword } from '@/lib/auth/passwordPolicy';
 
@@ -12,7 +12,11 @@ export default function ChangePasswordForm() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [hasPassword, setHasPassword] = useState<boolean | null>(null);
-  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+
+  const validationErrors = useMemo(
+    () => (newPassword ? validatePassword(newPassword).errors : []),
+    [newPassword],
+  );
 
   // Check if user has an existing password
   useEffect(() => {
@@ -36,16 +40,6 @@ export default function ChangePasswordForm() {
     checkPassword();
     return () => controller.abort();
   }, []);
-
-  // Validate new password on change
-  useEffect(() => {
-    if (newPassword) {
-      const result = validatePassword(newPassword);
-      setValidationErrors(result.errors);
-    } else {
-      setValidationErrors([]);
-    }
-  }, [newPassword]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

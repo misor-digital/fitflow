@@ -274,8 +274,6 @@ export const getEmailStats = cache(
     blocked: number;
   }> => {
     // Fetch all counts in parallel for efficiency
-    const baseFilters = (q: typeof supabaseAdmin extends { from: (t: string) => infer R } ? R : never) => q;
-
     const makeQuery = (extra?: (q: ReturnType<typeof supabaseAdmin.from>) => ReturnType<typeof supabaseAdmin.from>) => {
       let q = supabaseAdmin
         .from('email_send_log')

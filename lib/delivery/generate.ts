@@ -16,8 +16,6 @@ import {
   createOrder,
   getDeliveryCycleById,
 } from '@/lib/data';
-import type { BatchGenerationResult } from '@/lib/subscription';
-
 /** Extended result that allows null cycleId/cycleDate when no eligible cycle found */
 export interface GenerationResult {
   cycleId: string | null;

@@ -27,8 +27,10 @@ export default function Navigation() {
     // Skip if same code was already validated
     if (promoCode === lastValidatedCode) return;
     if (!promoCode) {
-      setDiscountPercent(0);
-      setLastValidatedCode(null);
+      queueMicrotask(() => {
+        setDiscountPercent(0);
+        setLastValidatedCode(null);
+      });
       return;
     }
 

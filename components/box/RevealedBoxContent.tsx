@@ -3,7 +3,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import Link from 'next/link';
 import PriceDisplay from '@/components/PriceDisplay';
 import { useOrderStore } from '@/store/orderStore';
 import { trackViewContent, trackViewItem, trackCTAClick } from '@/lib/analytics';

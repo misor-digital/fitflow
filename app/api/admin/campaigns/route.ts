@@ -120,8 +120,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       type,
       subject,
       templateId,
-      fromName,
-      fromEmail,
       filter,
       params,
     } = body as {
@@ -129,8 +127,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       type?: string;
       subject?: string;
       templateId?: number | null;
-      fromName?: string;
-      fromEmail?: string;
       filter?: Record<string, unknown>;
       params?: Record<string, unknown>;
     };

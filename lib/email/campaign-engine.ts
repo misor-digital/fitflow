@@ -228,7 +228,6 @@ export async function processCampaign(
     const variantMap = await buildVariantMap(campaignId);
 
     // 3. Batch loop
-    // eslint-disable-next-line no-constant-condition
     while (true) {
       const batch = await getNextBatch(campaignId, BATCH_SIZE);
       if (batch.length === 0) break; // all recipients processed

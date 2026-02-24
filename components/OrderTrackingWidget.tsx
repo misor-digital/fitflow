@@ -25,21 +25,27 @@ export default function OrderTrackingWidget() {
     // Check sessionStorage for dismissal
     try {
       if (sessionStorage.getItem(DISMISS_KEY) === '1') {
-        setDismissed(true);
+        // Already dismissed — keep initial dismissed=true state
         return;
       }
     } catch {
       // sessionStorage unavailable — show the widget
     }
 
-    setDismissed(false);
+    // Defer state update to avoid synchronous setState in effect body
+    const timer = setTimeout(() => {
+      setDismissed(false);
+    }, 0);
 
     // Fade in after 2 seconds
-    const timer = setTimeout(() => {
+    const fadeTimer = setTimeout(() => {
       setVisible(true);
     }, 2000);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(fadeTimer);
+    };
   }, []);
 
   // Hide for authenticated users

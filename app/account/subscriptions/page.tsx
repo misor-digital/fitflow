@@ -8,7 +8,6 @@ import {
   getBoxTypes,
   getOptions,
   getColors,
-  getOptionLabels,
 } from '@/lib/data';
 import { SubscriptionDashboard } from '@/components/account/SubscriptionDashboard';
 import type { SubscriptionWithDelivery } from '@/lib/subscription';

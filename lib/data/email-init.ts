@@ -28,7 +28,7 @@ export function initializeEmailSystem(): void {
       template_id: log.templateId,
       brevo_message_id: log.brevoMessageId,
       campaign_id: log.campaignId,
-      status: log.status as any,
+      status: log.status,
       params: log.params,
       error: log.error,
       related_entity_type: log.relatedEntityType,

@@ -1,7 +1,7 @@
 'use client';
 
 export default function BoxError({
-  error,
+  error: _error,
   reset,
 }: {
   error: Error & { digest?: string };

@@ -22,7 +22,6 @@ export default function FrequencyModal({
   onSuccess,
   onClose,
 }: FrequencyModalProps) {
-  const newFrequency = currentFrequency === 'monthly' ? 'seasonal' : 'monthly';
   const [selected, setSelected] = useState<string>(currentFrequency);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
