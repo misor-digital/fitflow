@@ -89,3 +89,24 @@ export {
   getDeliveryConfigMap,
   updateDeliveryConfig,
 } from './delivery-cycles';
+
+// Subscriptions
+export {
+  createSubscription,
+  getSubscriptionById,
+  getSubscriptionsByUser,
+  getActiveSubscriptions,
+  getSubscriptionsCount,
+  getSubscriptionMRR,
+  pauseSubscription,
+  resumeSubscription,
+  cancelSubscription,
+  expireSubscription,
+  updateSubscriptionPreferences,
+  updateSubscriptionAddress,
+  updateSubscriptionFrequency,
+  generateOrdersForCycle,
+  getSubscriptionHistory,
+  getSubscriptionsPaginated,
+  getSubscriptionsForCycle,
+} from './subscriptions';
