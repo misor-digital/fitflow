@@ -50,6 +50,9 @@ COMMENT ON TYPE order_status IS 'Lifecycle states for an order';
 
 CREATE TYPE preorder_conversion_status AS ENUM ('pending', 'converted', 'expired');
 
+CREATE TYPE delivery_cycle_status AS ENUM ('upcoming', 'delivered', 'archived');
+COMMENT ON TYPE delivery_cycle_status IS 'Lifecycle states for a delivery cycle: upcoming (not yet shipped), delivered (shipped, may or may not be revealed), archived (past, no longer relevant)';
+
 CREATE TYPE box_price_info AS (
   box_type_id TEXT,
   box_type_name TEXT,
@@ -449,6 +452,108 @@ CREATE POLICY "Service role only" ON rate_limits
   FOR ALL TO service_role USING (true) WITH CHECK (true);
 
 
+-- ---------- delivery_cycles ----------
+
+CREATE TABLE delivery_cycles (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  delivery_date DATE NOT NULL UNIQUE,
+  status delivery_cycle_status NOT NULL DEFAULT 'upcoming',
+  title TEXT,
+  description TEXT,
+  is_revealed BOOLEAN NOT NULL DEFAULT false,
+  revealed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+COMMENT ON TABLE delivery_cycles IS 'Monthly delivery cycles — each row represents one box shipment date';
+COMMENT ON COLUMN delivery_cycles.delivery_date IS 'The date this cycle ships (e.g. 2026-03-08)';
+COMMENT ON COLUMN delivery_cycles.status IS 'Lifecycle state: upcoming, delivered, archived';
+COMMENT ON COLUMN delivery_cycles.title IS 'Display name (e.g. "Март 2026 кутия")';
+COMMENT ON COLUMN delivery_cycles.description IS 'Rich text for the revealed-box public page';
+COMMENT ON COLUMN delivery_cycles.is_revealed IS 'Whether box contents are publicly visible';
+COMMENT ON COLUMN delivery_cycles.revealed_at IS 'When admin revealed the contents';
+
+CREATE INDEX idx_delivery_cycles_upcoming ON delivery_cycles(delivery_date)
+  WHERE status = 'upcoming';
+CREATE INDEX idx_delivery_cycles_revealed ON delivery_cycles(delivery_date DESC)
+  WHERE is_revealed = true;
+CREATE INDEX idx_delivery_cycles_status ON delivery_cycles(status);
+
+CREATE TRIGGER trigger_delivery_cycles_updated_at
+  BEFORE UPDATE ON delivery_cycles FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+ALTER TABLE delivery_cycles ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "delivery_cycles_anon_read" ON delivery_cycles
+  FOR SELECT TO anon USING (true);
+CREATE POLICY "delivery_cycles_auth_read" ON delivery_cycles
+  FOR SELECT TO authenticated USING (true);
+CREATE POLICY "delivery_cycles_service_role" ON delivery_cycles
+  FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+GRANT SELECT ON delivery_cycles TO anon;
+GRANT SELECT ON delivery_cycles TO authenticated;
+GRANT ALL ON delivery_cycles TO service_role;
+
+
+-- ---------- delivery_cycle_items ----------
+
+CREATE TABLE delivery_cycle_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  delivery_cycle_id UUID NOT NULL REFERENCES delivery_cycles(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  description TEXT,
+  image_url TEXT,
+  category TEXT,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+COMMENT ON TABLE delivery_cycle_items IS 'Contents of each delivery cycle box — revealed publicly after delivery';
+COMMENT ON COLUMN delivery_cycle_items.delivery_cycle_id IS 'FK to delivery_cycles — cascade deletes items when cycle is removed';
+COMMENT ON COLUMN delivery_cycle_items.name IS 'Item display name (e.g. "Whey Protein 500g")';
+COMMENT ON COLUMN delivery_cycle_items.description IS 'Item description';
+COMMENT ON COLUMN delivery_cycle_items.image_url IS 'Path in Supabase Storage (e.g. box-contents/march-2026/protein.jpg)';
+COMMENT ON COLUMN delivery_cycle_items.category IS 'Item category: protein, supplement, accessory, clothing, other';
+COMMENT ON COLUMN delivery_cycle_items.sort_order IS 'Display order within the cycle';
+
+CREATE INDEX idx_cycle_items_cycle ON delivery_cycle_items(delivery_cycle_id, sort_order);
+
+CREATE TRIGGER trigger_delivery_cycle_items_updated_at
+  BEFORE UPDATE ON delivery_cycle_items FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+ALTER TABLE delivery_cycle_items ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "cycle_items_anon_read" ON delivery_cycle_items
+  FOR SELECT TO anon
+  USING (
+    EXISTS (
+      SELECT 1 FROM delivery_cycles dc
+      WHERE dc.id = delivery_cycle_items.delivery_cycle_id
+      AND dc.is_revealed = true
+    )
+  );
+CREATE POLICY "cycle_items_auth_read" ON delivery_cycle_items
+  FOR SELECT TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM delivery_cycles dc
+      WHERE dc.id = delivery_cycle_items.delivery_cycle_id
+      AND dc.is_revealed = true
+    )
+  );
+CREATE POLICY "cycle_items_service_role" ON delivery_cycle_items
+  FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+GRANT SELECT ON delivery_cycle_items TO anon;
+GRANT SELECT ON delivery_cycle_items TO authenticated;
+GRANT ALL ON delivery_cycle_items TO service_role;
+
+
 -- ---------- addresses ----------
 
 CREATE TABLE addresses (
@@ -521,9 +626,15 @@ CREATE TABLE orders (
   original_price_eur NUMERIC(10,2),
   final_price_eur NUMERIC(10,2),
   status order_status NOT NULL DEFAULT 'pending',
+  delivery_cycle_id UUID REFERENCES delivery_cycles(id) ON DELETE SET NULL,
+  order_type TEXT NOT NULL DEFAULT 'direct',
   converted_from_preorder_id UUID UNIQUE REFERENCES preorders(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+  CONSTRAINT valid_order_type CHECK (
+    order_type IN ('subscription', 'onetime-mystery', 'onetime-revealed', 'direct')
+  ),
 
   CONSTRAINT valid_shipping_address CHECK (
     shipping_address ? 'city'
@@ -538,6 +649,8 @@ COMMENT ON TABLE orders IS 'Customer orders for FitFlow subscription boxes';
 COMMENT ON COLUMN orders.shipping_address IS 'Frozen address snapshot at order time — immutable source of truth';
 COMMENT ON COLUMN orders.address_id IS 'Optional back-reference to saved address — SET NULL on delete';
 COMMENT ON COLUMN orders.customer_email IS 'Customer email frozen at order time — used for guest tracking';
+COMMENT ON COLUMN orders.delivery_cycle_id IS 'FK to delivery cycle — set for subscription-generated, mystery, and revealed orders';
+COMMENT ON COLUMN orders.order_type IS 'Order origin: subscription (auto-generated), onetime-mystery (ships with cycle batch), onetime-revealed (ships ASAP, past cycle contents), direct (legacy/standard)';
 COMMENT ON COLUMN orders.converted_from_preorder_id IS 'Links to the preorder this order was converted from (if any)';
 
 CREATE INDEX idx_orders_user_id ON orders(user_id);
@@ -546,6 +659,8 @@ CREATE INDEX idx_orders_customer_email ON orders(customer_email);
 CREATE INDEX idx_orders_status ON orders(status);
 CREATE INDEX idx_orders_created_at ON orders(created_at DESC);
 CREATE INDEX idx_orders_converted_from ON orders(converted_from_preorder_id) WHERE converted_from_preorder_id IS NOT NULL;
+CREATE INDEX idx_orders_delivery_cycle ON orders(delivery_cycle_id) WHERE delivery_cycle_id IS NOT NULL;
+CREATE INDEX idx_orders_order_type ON orders(order_type);
 
 CREATE TRIGGER trigger_orders_updated_at
   BEFORE UPDATE ON orders FOR EACH ROW
@@ -801,6 +916,13 @@ CREATE TRIGGER on_auth_user_created
 --   FREE_SHIPPING_THRESHOLD_EUR = 0
 --   PREORDER_ENABLED            = false (deprecated)
 --   ORDER_ENABLED               = true
+--   SUBSCRIPTION_DELIVERY_DAY   = 5
+--   FIRST_DELIVERY_DATE         = 2026-03-08
+--   SUBSCRIPTION_ENABLED        = true
+--   REVEALED_BOX_ENABLED        = false
+
+-- Delivery cycles:
+--   2026-03-08 — Март 2026 кутия (upcoming, first delivery)
 
 -- Options: sports (7), colors (10), flavors (6), dietary (5), sizes (5)
 -- See migration 20251228120002_create_options.sql for full seed data.

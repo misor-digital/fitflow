@@ -323,6 +323,9 @@ export interface AddressUpdate {
 // Orders Table
 // ============================================================================
 
+// Order type discriminator
+export type OrderType = 'subscription' | 'onetime-mystery' | 'onetime-revealed' | 'direct';
+
 export interface OrderRow {
   id: string;
   order_number: string;
@@ -349,6 +352,8 @@ export interface OrderRow {
   original_price_eur: number | null;
   final_price_eur: number | null;
   status: OrderStatus;
+  delivery_cycle_id: string | null;
+  order_type: string; // OrderType
   converted_from_preorder_id: string | null;
   created_at: string;
   updated_at: string;
@@ -379,6 +384,8 @@ export interface OrderInsert {
   final_price_eur?: number | null;
   status?: OrderStatus;
   converted_from_preorder_id?: string | null;
+  delivery_cycle_id?: string | null;
+  order_type?: string;
 }
 
 export interface OrderUpdate {
@@ -407,6 +414,70 @@ export interface OrderStatusHistoryInsert {
   to_status: OrderStatus;
   changed_by?: string | null;
   notes?: string | null;
+}
+
+// ============================================================================
+// Delivery Cycle Types
+// ============================================================================
+
+export type DeliveryCycleStatus = 'upcoming' | 'delivered' | 'archived';
+
+export interface DeliveryCycleRow {
+  id: string;
+  delivery_date: string;        // DATE as ISO string
+  status: DeliveryCycleStatus;
+  title: string | null;
+  description: string | null;
+  is_revealed: boolean;
+  revealed_at: string | null;   // TIMESTAMPTZ as ISO string
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DeliveryCycleInsert {
+  delivery_date: string;
+  status?: DeliveryCycleStatus;
+  title?: string | null;
+  description?: string | null;
+  is_revealed?: boolean;
+}
+
+export interface DeliveryCycleUpdate {
+  delivery_date?: string;
+  status?: DeliveryCycleStatus;
+  title?: string | null;
+  description?: string | null;
+  is_revealed?: boolean;
+  revealed_at?: string | null;
+}
+
+export interface DeliveryCycleItemRow {
+  id: string;
+  delivery_cycle_id: string;
+  name: string;
+  description: string | null;
+  image_url: string | null;
+  category: string | null;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DeliveryCycleItemInsert {
+  delivery_cycle_id: string;
+  name: string;
+  description?: string | null;
+  image_url?: string | null;
+  category?: string | null;
+  sort_order?: number;
+}
+
+export interface DeliveryCycleItemUpdate {
+  name?: string;
+  description?: string | null;
+  image_url?: string | null;
+  category?: string | null;
+  sort_order?: number;
 }
 
 // ============================================================================
@@ -520,6 +591,28 @@ export interface Database {
           columns: ['converted_from_preorder_id'];
           referencedRelation: 'preorders';
           referencedColumns: ['id'];
+        }, {
+          foreignKeyName: 'orders_delivery_cycle_id_fkey';
+          columns: ['delivery_cycle_id'];
+          referencedRelation: 'delivery_cycles';
+          referencedColumns: ['id'];
+        }];
+      };
+      delivery_cycles: {
+        Row: ToRecord<DeliveryCycleRow>;
+        Insert: ToRecord<DeliveryCycleInsert>;
+        Update: ToRecord<DeliveryCycleUpdate>;
+        Relationships: [];
+      };
+      delivery_cycle_items: {
+        Row: ToRecord<DeliveryCycleItemRow>;
+        Insert: ToRecord<DeliveryCycleItemInsert>;
+        Update: ToRecord<DeliveryCycleItemUpdate>;
+        Relationships: [{
+          foreignKeyName: 'delivery_cycle_items_delivery_cycle_id_fkey';
+          columns: ['delivery_cycle_id'];
+          referencedRelation: 'delivery_cycles';
+          referencedColumns: ['id'];
         }];
       };
       order_status_history: {
@@ -555,6 +648,7 @@ export interface Database {
       staff_role: StaffRole;
       order_status: OrderStatus;
       preorder_conversion_status: PreorderConversionStatus;
+      delivery_cycle_status: DeliveryCycleStatus;
     };
     CompositeTypes: Record<string, never>;
   };
