@@ -354,6 +354,7 @@ export interface OrderRow {
   status: OrderStatus;
   delivery_cycle_id: string | null;
   order_type: string; // OrderType
+  subscription_id: string | null;
   converted_from_preorder_id: string | null;
   created_at: string;
   updated_at: string;
@@ -383,6 +384,7 @@ export interface OrderInsert {
   original_price_eur?: number | null;
   final_price_eur?: number | null;
   status?: OrderStatus;
+  subscription_id?: string | null;
   converted_from_preorder_id?: string | null;
   delivery_cycle_id?: string | null;
   order_type?: string;
@@ -478,6 +480,106 @@ export interface DeliveryCycleItemUpdate {
   image_url?: string | null;
   category?: string | null;
   sort_order?: number;
+}
+
+// ============================================================================
+// Subscription Types
+// ============================================================================
+
+export type SubscriptionStatus = 'active' | 'paused' | 'cancelled' | 'expired';
+
+export interface SubscriptionRow {
+  id: string;
+  user_id: string;
+  box_type: string;
+  status: SubscriptionStatus;
+  frequency: string;                // 'monthly' | 'seasonal'
+  wants_personalization: boolean;
+  sports: string[] | null;
+  sport_other: string | null;
+  colors: string[] | null;
+  flavors: string[] | null;
+  flavor_other: string | null;
+  dietary: string[] | null;
+  dietary_other: string | null;
+  size_upper: string | null;
+  size_lower: string | null;
+  additional_notes: string | null;
+  promo_code: string | null;
+  discount_percent: number | null;
+  base_price_eur: number;
+  current_price_eur: number;
+  default_address_id: string | null;
+  started_at: string;
+  first_cycle_id: string | null;
+  last_delivered_cycle_id: string | null;
+  paused_at: string | null;
+  cancelled_at: string | null;
+  cancellation_reason: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SubscriptionInsert {
+  user_id: string;
+  box_type: string;
+  status?: SubscriptionStatus;
+  frequency?: string;
+  wants_personalization?: boolean;
+  sports?: string[] | null;
+  sport_other?: string | null;
+  colors?: string[] | null;
+  flavors?: string[] | null;
+  flavor_other?: string | null;
+  dietary?: string[] | null;
+  dietary_other?: string | null;
+  size_upper?: string | null;
+  size_lower?: string | null;
+  additional_notes?: string | null;
+  promo_code?: string | null;
+  discount_percent?: number | null;
+  base_price_eur: number;
+  current_price_eur: number;
+  default_address_id?: string | null;
+  first_cycle_id?: string | null;
+}
+
+export interface SubscriptionUpdate {
+  status?: SubscriptionStatus;
+  frequency?: string;
+  wants_personalization?: boolean;
+  sports?: string[] | null;
+  sport_other?: string | null;
+  colors?: string[] | null;
+  flavors?: string[] | null;
+  flavor_other?: string | null;
+  dietary?: string[] | null;
+  dietary_other?: string | null;
+  size_upper?: string | null;
+  size_lower?: string | null;
+  additional_notes?: string | null;
+  default_address_id?: string | null;
+  first_cycle_id?: string | null;
+  last_delivered_cycle_id?: string | null;
+  paused_at?: string | null;
+  cancelled_at?: string | null;
+  cancellation_reason?: string | null;
+}
+
+export interface SubscriptionHistoryRow {
+  id: string;
+  subscription_id: string;
+  action: string;
+  details: Record<string, unknown> | null;
+  performed_by: string | null;
+  created_at: string;
+}
+
+export interface SubscriptionHistoryInsert {
+  subscription_id: string;
+  action: string;
+  details?: Record<string, unknown> | null;
+  performed_by?: string | null;
 }
 
 // ============================================================================
@@ -596,6 +698,11 @@ export interface Database {
           columns: ['delivery_cycle_id'];
           referencedRelation: 'delivery_cycles';
           referencedColumns: ['id'];
+        }, {
+          foreignKeyName: 'orders_subscription_id_fkey';
+          columns: ['subscription_id'];
+          referencedRelation: 'subscriptions';
+          referencedColumns: ['id'];
         }];
       };
       delivery_cycles: {
@@ -626,6 +733,48 @@ export interface Database {
           referencedColumns: ['id'];
         }];
       };
+      subscriptions: {
+        Row: ToRecord<SubscriptionRow>;
+        Insert: ToRecord<SubscriptionInsert>;
+        Update: ToRecord<SubscriptionUpdate>;
+        Relationships: [{
+          foreignKeyName: 'subscriptions_user_id_fkey';
+          columns: ['user_id'];
+          referencedRelation: 'users';
+          referencedColumns: ['id'];
+        }, {
+          foreignKeyName: 'subscriptions_default_address_id_fkey';
+          columns: ['default_address_id'];
+          referencedRelation: 'addresses';
+          referencedColumns: ['id'];
+        }, {
+          foreignKeyName: 'subscriptions_first_cycle_id_fkey';
+          columns: ['first_cycle_id'];
+          referencedRelation: 'delivery_cycles';
+          referencedColumns: ['id'];
+        }, {
+          foreignKeyName: 'subscriptions_last_delivered_cycle_id_fkey';
+          columns: ['last_delivered_cycle_id'];
+          referencedRelation: 'delivery_cycles';
+          referencedColumns: ['id'];
+        }];
+      };
+      subscription_history: {
+        Row: ToRecord<SubscriptionHistoryRow>;
+        Insert: ToRecord<SubscriptionHistoryInsert>;
+        Update: ToRecord<Partial<SubscriptionHistoryInsert>>;
+        Relationships: [{
+          foreignKeyName: 'subscription_history_subscription_id_fkey';
+          columns: ['subscription_id'];
+          referencedRelation: 'subscriptions';
+          referencedColumns: ['id'];
+        }, {
+          foreignKeyName: 'subscription_history_performed_by_fkey';
+          columns: ['performed_by'];
+          referencedRelation: 'users';
+          referencedColumns: ['id'];
+        }];
+      };
     };
     Views: Record<string, never>;
     Functions: {
@@ -649,6 +798,7 @@ export interface Database {
       order_status: OrderStatus;
       preorder_conversion_status: PreorderConversionStatus;
       delivery_cycle_status: DeliveryCycleStatus;
+      subscription_status: SubscriptionStatus;
     };
     CompositeTypes: Record<string, never>;
   };

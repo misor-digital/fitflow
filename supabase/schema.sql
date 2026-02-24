@@ -1,5 +1,5 @@
 -- ============================================================================
--- FitFlow — Complete Database Schema (as of 2026-02-24)
+-- FitFlow — Complete Database Schema (as of 2026-02-24, Phase S3)
 -- ============================================================================
 --
 -- This file represents the complete database schema after all migrations.
@@ -52,6 +52,9 @@ CREATE TYPE preorder_conversion_status AS ENUM ('pending', 'converted', 'expired
 
 CREATE TYPE delivery_cycle_status AS ENUM ('upcoming', 'delivered', 'archived');
 COMMENT ON TYPE delivery_cycle_status IS 'Lifecycle states for a delivery cycle: upcoming (not yet shipped), delivered (shipped, may or may not be revealed), archived (past, no longer relevant)';
+
+CREATE TYPE subscription_status AS ENUM ('active', 'paused', 'cancelled', 'expired');
+COMMENT ON TYPE subscription_status IS 'Lifecycle states for a subscription: active (receiving boxes), paused (temporarily stopped), cancelled (permanently stopped), expired (ran out / admin terminated)';
 
 CREATE TYPE box_price_info AS (
   box_type_id TEXT,
@@ -628,6 +631,7 @@ CREATE TABLE orders (
   status order_status NOT NULL DEFAULT 'pending',
   delivery_cycle_id UUID REFERENCES delivery_cycles(id) ON DELETE SET NULL,
   order_type TEXT NOT NULL DEFAULT 'direct',
+  subscription_id UUID REFERENCES subscriptions(id) ON DELETE SET NULL,
   converted_from_preorder_id UUID UNIQUE REFERENCES preorders(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -651,6 +655,7 @@ COMMENT ON COLUMN orders.address_id IS 'Optional back-reference to saved address
 COMMENT ON COLUMN orders.customer_email IS 'Customer email frozen at order time — used for guest tracking';
 COMMENT ON COLUMN orders.delivery_cycle_id IS 'FK to delivery cycle — set for subscription-generated, mystery, and revealed orders';
 COMMENT ON COLUMN orders.order_type IS 'Order origin: subscription (auto-generated), onetime-mystery (ships with cycle batch), onetime-revealed (ships ASAP, past cycle contents), direct (legacy/standard)';
+COMMENT ON COLUMN orders.subscription_id IS 'FK to parent subscription — set for auto-generated subscription cycle orders';
 COMMENT ON COLUMN orders.converted_from_preorder_id IS 'Links to the preorder this order was converted from (if any)';
 
 CREATE INDEX idx_orders_user_id ON orders(user_id);
@@ -661,6 +666,7 @@ CREATE INDEX idx_orders_created_at ON orders(created_at DESC);
 CREATE INDEX idx_orders_converted_from ON orders(converted_from_preorder_id) WHERE converted_from_preorder_id IS NOT NULL;
 CREATE INDEX idx_orders_delivery_cycle ON orders(delivery_cycle_id) WHERE delivery_cycle_id IS NOT NULL;
 CREATE INDEX idx_orders_order_type ON orders(order_type);
+CREATE INDEX idx_orders_subscription ON orders(subscription_id) WHERE subscription_id IS NOT NULL;
 
 CREATE TRIGGER trigger_orders_updated_at
   BEFORE UPDATE ON orders FOR EACH ROW
@@ -705,6 +711,159 @@ GRANT ALL ON order_status_history TO service_role;
 -- NOTE: Auto-insert trigger for status changes was removed in migration
 -- 20260224120006_remove_auto_status_trigger.sql — status history is now
 -- managed explicitly by the application DAL to support changed_by and notes.
+
+
+-- ---------- subscriptions ----------
+
+CREATE TABLE subscriptions (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  box_type TEXT NOT NULL,
+  status subscription_status NOT NULL DEFAULT 'active',
+  frequency TEXT NOT NULL DEFAULT 'monthly',
+
+  -- Personalization preferences (stored independently — updates affect future orders only)
+  wants_personalization BOOLEAN NOT NULL DEFAULT false,
+  sports TEXT[],
+  sport_other TEXT,
+  colors TEXT[],
+  flavors TEXT[],
+  flavor_other TEXT,
+  dietary TEXT[],
+  dietary_other TEXT,
+  size_upper TEXT,
+  size_lower TEXT,
+  additional_notes TEXT,
+
+  -- Pricing
+  promo_code TEXT,
+  discount_percent NUMERIC(5,2),
+  base_price_eur NUMERIC(10,2) NOT NULL,
+  current_price_eur NUMERIC(10,2) NOT NULL,
+
+  -- Address
+  default_address_id UUID REFERENCES addresses(id) ON DELETE SET NULL,
+
+  -- Cycle tracking
+  started_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  first_cycle_id UUID REFERENCES delivery_cycles(id) ON DELETE SET NULL,
+  last_delivered_cycle_id UUID REFERENCES delivery_cycles(id) ON DELETE SET NULL,
+
+  -- Lifecycle timestamps
+  paused_at TIMESTAMPTZ,
+  cancelled_at TIMESTAMPTZ,
+  cancellation_reason TEXT,
+
+  -- Timestamps
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+  -- Constraints
+  CONSTRAINT valid_frequency CHECK (frequency IN ('monthly', 'seasonal')),
+  CONSTRAINT valid_sub_box_type CHECK (box_type IN ('monthly-standard', 'monthly-premium'))
+);
+
+COMMENT ON TABLE subscriptions IS 'Active and historical subscriptions — one row per subscriber per box type';
+COMMENT ON COLUMN subscriptions.user_id IS 'FK to auth.users — subscriptions require authentication';
+COMMENT ON COLUMN subscriptions.box_type IS 'monthly-standard or monthly-premium';
+COMMENT ON COLUMN subscriptions.status IS 'Lifecycle state: active, paused, cancelled, expired';
+COMMENT ON COLUMN subscriptions.frequency IS 'Delivery frequency: monthly (every cycle) or seasonal (every 3rd cycle)';
+COMMENT ON COLUMN subscriptions.wants_personalization IS 'Whether subscriber opted for personalized boxes';
+COMMENT ON COLUMN subscriptions.base_price_eur IS 'Original price per cycle in EUR';
+COMMENT ON COLUMN subscriptions.current_price_eur IS 'Current price per cycle in EUR (after any discounts)';
+COMMENT ON COLUMN subscriptions.default_address_id IS 'Default shipping address for auto-generated orders';
+COMMENT ON COLUMN subscriptions.first_cycle_id IS 'The first delivery cycle this subscription participates in';
+COMMENT ON COLUMN subscriptions.last_delivered_cycle_id IS 'Most recent cycle with an order generated for this subscription';
+COMMENT ON COLUMN subscriptions.paused_at IS 'Timestamp when subscription was paused';
+COMMENT ON COLUMN subscriptions.cancelled_at IS 'Timestamp when subscription was cancelled';
+COMMENT ON COLUMN subscriptions.cancellation_reason IS 'Optional reason for cancellation';
+
+CREATE INDEX idx_subscriptions_user ON subscriptions(user_id);
+CREATE INDEX idx_subscriptions_status ON subscriptions(status);
+CREATE INDEX idx_subscriptions_active ON subscriptions(status) WHERE status = 'active';
+CREATE INDEX idx_subscriptions_first_cycle ON subscriptions(first_cycle_id) WHERE first_cycle_id IS NOT NULL;
+
+CREATE TRIGGER trigger_subscriptions_updated_at
+  BEFORE UPDATE ON subscriptions FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+ALTER TABLE subscriptions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "subscriptions_select_own" ON subscriptions
+  FOR SELECT TO authenticated
+  USING (user_id = auth.uid());
+
+CREATE POLICY "subscriptions_update_own" ON subscriptions
+  FOR UPDATE TO authenticated
+  USING (user_id = auth.uid())
+  WITH CHECK (
+    user_id = auth.uid()
+    AND status = (SELECT status FROM subscriptions WHERE id = subscriptions.id)
+  );
+
+CREATE POLICY "staff_read_subscriptions" ON subscriptions
+  FOR SELECT TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM user_profiles up
+      WHERE up.id = auth.uid()
+      AND up.user_type = 'staff'
+      AND up.staff_role IN ('super_admin', 'admin', 'manager', 'support', 'warehouse')
+    )
+  );
+
+CREATE POLICY "subscriptions_service_role" ON subscriptions
+  FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+GRANT SELECT, UPDATE ON subscriptions TO authenticated;
+GRANT ALL ON subscriptions TO service_role;
+
+
+-- ---------- subscription_history ----------
+
+CREATE TABLE subscription_history (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  subscription_id UUID NOT NULL REFERENCES subscriptions(id) ON DELETE CASCADE,
+  action TEXT NOT NULL,
+  details JSONB,
+  performed_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+COMMENT ON TABLE subscription_history IS 'Audit trail for subscription lifecycle events';
+COMMENT ON COLUMN subscription_history.subscription_id IS 'FK to parent subscription — cascade deletes history when subscription is removed';
+COMMENT ON COLUMN subscription_history.action IS 'Event type: created, paused, resumed, cancelled, expired, preferences_updated, address_changed, frequency_changed, order_generated';
+COMMENT ON COLUMN subscription_history.details IS 'JSONB payload with before/after snapshots or contextual data';
+COMMENT ON COLUMN subscription_history.performed_by IS 'FK to auth.users — the user or admin who triggered the action';
+
+CREATE INDEX idx_sub_history_sub ON subscription_history(subscription_id, created_at DESC);
+
+ALTER TABLE subscription_history ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "sub_history_select_own" ON subscription_history
+  FOR SELECT TO authenticated
+  USING (
+    subscription_id IN (
+      SELECT id FROM subscriptions WHERE user_id = auth.uid()
+    )
+  );
+
+CREATE POLICY "sub_history_staff_read" ON subscription_history
+  FOR SELECT TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM user_profiles up
+      WHERE up.id = auth.uid()
+      AND up.user_type = 'staff'
+      AND up.staff_role IN ('super_admin', 'admin', 'manager', 'support', 'warehouse')
+    )
+  );
+
+CREATE POLICY "sub_history_service_role" ON subscription_history
+  FOR ALL TO service_role USING (true) WITH CHECK (true);
+
+GRANT SELECT ON subscription_history TO authenticated;
+GRANT ALL ON subscription_history TO service_role;
 
 
 -- ============================================================================
