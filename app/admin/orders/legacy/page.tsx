@@ -56,7 +56,7 @@ export default async function LegacyPreordersPage({ searchParams }: LegacyPreord
           </span>
         </div>
         <Link
-          href="/admin/preorders"
+          href="/admin/orders"
           className="text-sm text-[var(--color-brand-navy)] hover:underline"
         >
           ← Обратно към поръчки
@@ -66,7 +66,7 @@ export default async function LegacyPreordersPage({ searchParams }: LegacyPreord
       {/* Info banner */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mb-6 text-sm text-blue-800">
         Тази страница показва исторически предпоръчки. Новите поръчки са в раздел{' '}
-        <Link href="/admin/preorders" className="font-semibold underline">Поръчки</Link>.
+        <Link href="/admin/orders" className="font-semibold underline">Поръчки</Link>.
       </div>
 
       {/* Table */}
@@ -88,7 +88,7 @@ export default async function LegacyPreordersPage({ searchParams }: LegacyPreord
             <nav className="flex justify-center items-center gap-2 mt-6">
               {page > 1 && (
                 <Link
-                  href={`/admin/preorders/legacy?page=${page - 1}`}
+                  href={`/admin/orders/legacy?page=${page - 1}`}
                   className="px-3 py-1.5 text-sm border rounded-lg hover:bg-gray-50"
                 >
                   ← Предишна
@@ -108,7 +108,7 @@ export default async function LegacyPreordersPage({ searchParams }: LegacyPreord
                   ) : (
                     <Link
                       key={item}
-                      href={`/admin/preorders/legacy?page=${item}`}
+                      href={`/admin/orders/legacy?page=${item}`}
                       className={`px-3 py-1.5 text-sm border rounded-lg ${
                         item === page
                           ? 'bg-[var(--color-brand-navy)] text-white border-[var(--color-brand-navy)]'
@@ -122,7 +122,7 @@ export default async function LegacyPreordersPage({ searchParams }: LegacyPreord
 
               {page < totalPages && (
                 <Link
-                  href={`/admin/preorders/legacy?page=${page + 1}`}
+                  href={`/admin/orders/legacy?page=${page + 1}`}
                   className="px-3 py-1.5 text-sm border rounded-lg hover:bg-gray-50"
                 >
                   Следваща →

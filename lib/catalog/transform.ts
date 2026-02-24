@@ -8,8 +8,8 @@
 
 import type {
   BoxTypeId,
-  PreorderUserInput,
-  PreorderPersistData,
+  UserInput,
+  PersistData,
   PriceInfo,
 } from './types';
 import { sortWithOtherAtEnd } from './derived';
@@ -27,9 +27,9 @@ import { sortWithOtherAtEnd } from './derived';
  * @returns Data ready for Supabase insertion
  */
 export function transformToPersistedFormat(
-  input: PreorderUserInput,
+  input: UserInput,
   priceInfo?: PriceInfo | null
-): PreorderPersistData {
+): PersistData {
   // Ensure boxType is not null for persistence
   if (!input.boxType) {
     throw new Error('Box type is required for persistence');
@@ -72,10 +72,10 @@ export function transformToPersistedFormat(
 // ============================================================================
 
 /**
- * Format for sending to /api/preorder
+ * Format for sending to /api/order
  * This matches what the API route expects
  */
-export interface PreorderApiRequest {
+export interface ApiRequest {
   fullName: string;
   email: string;
   phone?: string;
@@ -104,12 +104,12 @@ export interface PreorderApiRequest {
  * @param input - User input from form store
  * @returns Data formatted for API submission
  */
-export function transformToApiRequest(input: PreorderUserInput): PreorderApiRequest {
+export function transformToApiRequest(input: UserInput): ApiRequest {
   if (!input.boxType) {
     throw new Error('Box type is required for submission');
   }
 
-  const request: PreorderApiRequest = {
+  const request: ApiRequest = {
     fullName: input.fullName.trim(),
     email: input.email.trim().toLowerCase(),
     boxType: input.boxType,
@@ -159,7 +159,7 @@ export function transformToApiRequest(input: PreorderUserInput): PreorderApiRequ
  * Initial/empty state for user input
  * Use this when resetting the form
  */
-export const INITIAL_USER_INPUT: PreorderUserInput = {
+export const INITIAL_USER_INPUT: UserInput = {
   boxType: null,
   wantsPersonalization: null,
   sports: [],
@@ -183,10 +183,10 @@ export const INITIAL_USER_INPUT: PreorderUserInput = {
 // ============================================================================
 
 /**
- * Extract PreorderUserInput from a form store state
+ * Extract UserInput from a form store state
  * Useful when the store has additional methods/properties
  */
-export function extractUserInput(store: Record<string, unknown>): PreorderUserInput {
+export function extractUserInput(store: Record<string, unknown>): UserInput {
   return {
     boxType: (store.boxType as BoxTypeId | null) ?? null,
     wantsPersonalization: (store.wantsPersonalization as boolean | null) ?? null,

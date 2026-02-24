@@ -17,7 +17,7 @@ const NAV_ITEMS: Array<{
   allowedRoles: StaffRole[] | 'all';
 }> = [
   { href: '/admin', label: 'Табло', icon: '📊', allowedRoles: 'all' },
-  { href: '/admin/preorders', label: 'Поръчки', icon: '📦',
+  { href: '/admin/orders', label: 'Поръчки', icon: '📦',
     allowedRoles: ['super_admin', 'admin', 'manager', 'support', 'warehouse'] },
   { href: '/admin/staff', label: 'Служители', icon: '👥',
     allowedRoles: ['super_admin', 'admin'] },

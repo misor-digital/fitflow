@@ -9,7 +9,7 @@ export default async function AdminDashboard() {
   const session = await requireStaff();
 
   // Basic stats
-  const [preorderCount, staffCount] = await Promise.all([
+  const [orderCount, staffCount] = await Promise.all([
     supabaseAdmin.from('preorders').select('id', { count: 'exact', head: true }),
     supabaseAdmin.from('user_profiles').select('id', { count: 'exact', head: true }).eq('user_type', 'staff'),
   ]);
@@ -24,7 +24,7 @@ export default async function AdminDashboard() {
         <div className="bg-white rounded-xl shadow-sm p-6">
           <p className="text-sm text-gray-500">Общо поръчки</p>
           <p className="text-3xl font-bold text-[var(--color-brand-navy)]">
-            {preorderCount.count ?? 0}
+            {orderCount.count ?? 0}
           </p>
         </div>
         <div className="bg-white rounded-xl shadow-sm p-6">

@@ -20,12 +20,4 @@ export type {
   UserProfileUpdate,
 } from './types';
 
-// Services
-export { 
-  createPreorder, 
-  getPreorderById, 
-  getPreorderByOrderId, 
-  getPreorderByEmail, 
-  getAllPreorders, 
-  type PreorderFormData 
-} from './preorderService';
+

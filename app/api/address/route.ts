@@ -6,7 +6,7 @@ import {
   countAddressesByUser,
 } from '@/lib/data';
 import { validateAddress } from '@/lib/order';
-import { isValidPhone } from '@/lib/preorder';
+import { isValidPhone } from '@/lib/catalog';
 import { checkRateLimit } from '@/lib/utils/rateLimit';
 import type { AddressInsert } from '@/lib/supabase/types';
 

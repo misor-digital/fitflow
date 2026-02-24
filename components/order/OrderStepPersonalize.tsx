@@ -3,14 +3,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { useOrderStore } from '@/store/orderStore';
 import { trackFunnelStep, trackPersonalizationChoice } from '@/lib/analytics';
-import type { CatalogData, PersonalizationStep } from '@/lib/preorder';
+import type { CatalogData, PersonalizationStep } from '@/lib/catalog';
 import {
   isPremiumBox,
   getActivePersonalizationSteps,
   calculatePersonalizationProgress,
   validatePersonalizationStep,
   sortWithOtherAtEnd,
-} from '@/lib/preorder';
+} from '@/lib/catalog';
 
 interface OrderStepPersonalizeProps {
   catalogData: CatalogData;

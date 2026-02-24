@@ -11,8 +11,8 @@ import type {
   AddressInput,
 } from './types';
 import type { ShippingAddressSnapshot } from '@/lib/supabase/types';
-import type { PriceInfo } from '@/lib/preorder';
-import { sortWithOtherAtEnd } from '@/lib/preorder';
+import type { PriceInfo } from '@/lib/catalog';
+import { sortWithOtherAtEnd } from '@/lib/catalog';
 
 // ============================================================================
 // Address Transformation
@@ -191,7 +191,7 @@ const INITIAL_ADDRESS_INPUT: AddressInput = {
 
 /**
  * Initial/empty state for order user input.
- * Same box/personalization defaults as preorder, plus empty address fields.
+ * Same box/personalization defaults as catalog, plus empty address fields.
  */
 export const INITIAL_ORDER_INPUT: OrderUserInput = {
   // Step 1: Box Selection

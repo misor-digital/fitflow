@@ -7,7 +7,7 @@
 import { cache } from 'react';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import type { BoxTypeRow, OptionRow, OptionSetId } from '@/lib/supabase';
-import type { PriceInfo } from '@/lib/preorder';
+import type { PriceInfo } from '@/lib/catalog';
 
 // ============================================================================
 // Box Types
@@ -183,7 +183,7 @@ export const getEurToBgnRate = cache(async (): Promise<number> => {
 // Price Calculation (Server-side only)
 // ============================================================================
 
-// PriceInfo is now imported from @/lib/preorder/types and re-exported above
+// PriceInfo is now imported from @/lib/catalog/types and re-exported above
 
 /**
  * Get all box prices in a single database call using Supabase RPC

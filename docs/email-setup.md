@@ -5,7 +5,7 @@ This document describes how to set up and configure the Brevo email service.
 ## Overview
 
 This app uses [Brevo](https://www.brevo.com/) (formerly Sendinblue) for:
-- **Transactional emails**: Preorder confirmations, order updates, etc.
+- **Transactional emails**: Order confirmations, order updates, etc.
 - **Contact management**: Building a customer database for future marketing
 - **Campaign capability**: Ready for future marketing campaigns and newsletters
 
@@ -20,11 +20,8 @@ BREVO_SENDER_EMAIL=your-email
 BREVO_SENDER_NAME=your-business-name
 
 # Optional - Contact List IDs (for marketing campaigns)
-BREVO_PREORDER_LIST_ID=0
 BREVO_NEWSLETTER_LIST_ID=0
-
-# Optional - Template IDs (if using Brevo templates)
-BREVO_PREORDER_TEMPLATE_ID=0
+BREVO_PREORDER_LIST_ID=0  # Legacy preorder list (kept for historical data)
 ```
 
 ## Getting Your Brevo API Key
@@ -59,9 +56,9 @@ Set up domain authentication for better deliverability:
 To enable marketing campaigns:
 
 1. Go to **Contacts** → **Lists**
-2. Create a new list (e.g., "Preorder Customers")
+2. Create a new list (e.g., "Customers")
 3. Note the List ID (visible in the URL or list details)
-4. Add it to your `.env.local` as `BREVO_PREORDER_LIST_ID`
+4. Add it to your `.env.local` as `BREVO_NEWSLETTER_LIST_ID`
 
 ## Using Brevo Templates (Optional)
 
@@ -72,7 +69,7 @@ Instead of inline HTML templates, you can use Brevo's template editor:
 3. Design your email using the drag-and-drop editor
 4. Use template variables like `{{ params.FULLNAME }}`, `{{ params.BOXTYPE }}`
 5. Note the Template ID
-6. Add it to your `.env.local` as `BREVO_PREORDER_TEMPLATE_ID`
+6. Add it to your `.env.local` as your template ID
 
 ### Template Variables Available
 
@@ -81,7 +78,7 @@ When using templates, these variables are passed:
 - `EMAIL` - Customer's email
 - `BOXTYPE` - Selected box type
 - `BOXTYPEDISPLAY` - Human-readable box type name
-- `PREORDERID` - Unique preorder ID
+- `ORDERID` - Unique order ID
 - `WANTSPERSONALIZATION` - Boolean
 - `SPORTS`, `COLORS`, `FLAVORS` - Preferences (comma-separated)
 - `SIZEUPPER`, `SIZELOWER` - Size preferences
@@ -96,8 +93,7 @@ lib/email/
 ├── types.ts           # TypeScript interfaces
 ├── client.ts          # Brevo API client configuration
 ├── emailService.ts    # Core email sending functions
-├── templates.ts       # HTML email templates
-└── preorderEmails.ts  # Preorder-specific email functions
+└── templates.ts       # HTML email templates
 ```
 
 ## Usage Examples
@@ -116,13 +112,15 @@ await sendEmail({
 });
 ```
 
-### Send Preorder Confirmation
+### Send Order Confirmation
 
 ```typescript
-import { handlePreorderEmailWorkflow } from '@/lib/email';
+import { generateConfirmationEmail } from '@/lib/email';
+import { sendEmail } from '@/lib/email';
 
-// After saving preorder to database
-const { emailResult, contactResult } = await handlePreorderEmailWorkflow(preorder);
+// After saving order to database
+const html = generateConfirmationEmail(emailData, 'order', labels);
+await sendEmail({ to: { email, name }, subject: '...', htmlContent: html });
 ```
 
 ### Add Contact to List
@@ -149,7 +147,7 @@ await createOrUpdateContact({
 # Run the development server
 pnpm dev
 
-# Submit a test preorder through the UI
+# Submit a test order through the UI
 # Check Brevo dashboard for sent emails
 ```
 

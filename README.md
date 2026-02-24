@@ -8,7 +8,7 @@ A modern subscription box e-commerce platform for active women, built with Next.
 - **Order Tracking** — Track orders by email + order number
 - **Preorder Conversion** — Convert legacy preorders to full orders via token-based links
 - **Authentication** — Supabase Auth with email/password, session management, password reset
-- **Admin Panel** — Staff dashboard for orders, legacy preorders, promo codes, analytics, content, and settings
+- **Admin Panel** — Staff dashboard for orders, promo codes, analytics, content, and settings
 - **Promo Codes** — Database-driven promotional discount codes with validation
 - **Dynamic Pricing** — Box prices and currency conversion managed via database
 - **Address Management** — Save, edit, and reuse shipping addresses
@@ -40,7 +40,7 @@ fitflow/
 │   │   ├── auth/               # Auth helpers
 │   │   ├── catalog/            # Box types, options, prices
 │   │   ├── order/              # Order creation + tracking
-│   │   ├── preorder/           # Legacy: disabled (410), link API kept
+│   │   ├── preorder/           # Legacy: link API only (preorder creation disabled)
 │   │   └── promo/              # Promo code validation
 │   ├── order/                  # Order flow (main customer journey)
 │   │   ├── page.tsx            # Multi-step order page
@@ -50,7 +50,7 @@ fitflow/
 │   ├── admin/                  # Admin panel (staff only)
 │   │   ├── analytics/          # Analytics dashboard
 │   │   ├── content/            # Content management
-│   │   ├── preorders/          # Orders + legacy preorders view
+│   │   ├── orders/             # Orders + legacy preorders view
 │   │   ├── promo/              # Promo code management
 │   │   ├── settings/           # Site configuration
 │   │   └── staff/              # Staff management
@@ -83,7 +83,7 @@ fitflow/
 │   ├── email/                  # Email service + templates
 │   ├── legal/                  # Legal content loaders
 │   ├── order/                  # Order domain (types, validation, transform)
-│   ├── preorder/               # Legacy preorder domain (deprecated)
+│   ├── catalog/                # Shared catalog domain (box types, pricing, validation)
 │   ├── supabase/               # Supabase clients (browser, server, admin)
 │   └── utils/                  # Shared utilities (rate limiting, sanitization)
 ├── store/
@@ -163,8 +163,8 @@ pnpm lint         # Run ESLint
 | `/account/edit` | Edit profile |
 | `/account/security` | Change password |
 | `/admin` | Admin dashboard |
-| `/admin/preorders` | Orders management |
-| `/admin/preorders/legacy` | Legacy preorders view |
+| `/admin/orders` | Orders management |
+| `/admin/orders/legacy` | Legacy preorders view |
 | `/admin/promo` | Promo code management |
 | `/about`, `/faqs` | Info pages |
 
@@ -174,7 +174,6 @@ pnpm lint         # Run ESLint
 |--------|-------|-------------|
 | `POST` | `/api/order` | Create a new order |
 | `GET` | `/api/order/track` | Track order by email + order number |
-| `POST` | `/api/preorder` | **Disabled (410 Gone)** — replaced by `/api/order` |
 | `POST` | `/api/preorder/link` | Link historical preorder to account |
 | `GET/POST` | `/api/address` | Address CRUD |
 | `GET` | `/api/catalog/prices` | Box prices with optional promo |

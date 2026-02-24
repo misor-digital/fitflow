@@ -65,14 +65,15 @@ export interface ContactResult {
   error?: string;
 }
 
-// Preorder-specific email data
-export interface PreorderEmailData {
+// Confirmation email data (shared by all confirmation emails)
+export interface ConfirmationEmailData {
   fullName: string;
   email: string;
   boxType: string;
   boxTypeDisplay: string;
   wantsPersonalization: boolean;
-  preorderId: string;
+  /** Human-readable order number (e.g. FF-201224-A7K2) */
+  orderId: string;
   sports?: string[];
   sportOther?: string;
   colors?: string[];

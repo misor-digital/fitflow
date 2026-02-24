@@ -1,12 +1,12 @@
 /**
- * Canonical Preorder Domain Types
- * 
- * This is the single source of truth for all preorder-related types.
- * All step pages, API routes, and services should import from here.
- * 
+ * Catalog Domain Types
+ *
+ * Single source of truth for box-type, pricing, personalization, and validation types.
+ * Used by both the order flow and legacy preorder conversion.
+ *
  * NOTE: BoxTypeId is re-exported from lib/supabase/types.ts where it's defined
  * as BoxType to match the database enum. We alias it here for semantic clarity
- * in the preorder domain (BoxTypeId = identifier, BoxType = full entity).
+ * (BoxTypeId = identifier, BoxType = full entity).
  */
 
 // ============================================================================
@@ -14,13 +14,12 @@
 // ============================================================================
 
 // Import the canonical BoxType from Supabase types (matches DB enum)
-// and re-export as BoxTypeId for semantic clarity in preorder domain
+// and re-export as BoxTypeId for semantic clarity in the catalog domain
 import type { BoxType as SupabaseBoxType } from '@/lib/supabase/types';
 
 /**
  * All valid box type identifiers
- * This is an alias for the Supabase BoxType enum to maintain consistency
- * with the database schema while providing semantic clarity in the preorder domain.
+ * Alias for the Supabase BoxType enum for semantic clarity.
  */
 export type BoxTypeId = SupabaseBoxType;
 
@@ -86,7 +85,7 @@ export interface PriceDisplayInfo {
  * Raw user input collected across all steps
  * This is what gets stored in the client-side form store
  */
-export interface PreorderUserInput {
+export interface UserInput {
   // Step 1: Box Selection
   boxType: BoxTypeId | null;
   
@@ -132,7 +131,7 @@ export type PersonalizationStep =
  * Derived state computed from user input
  * These values should never be stored - always computed
  */
-export interface PreorderDerivedState {
+export interface DerivedState {
   // Box characteristics
   isPremium: boolean;
   isSubscription: boolean;
@@ -162,7 +161,7 @@ export interface PreorderDerivedState {
  * Data format for Supabase insertion
  * Uses snake_case to match database column names
  */
-export interface PreorderPersistData {
+export interface PersistData {
   // Contact
   full_name: string;
   email: string;
@@ -212,7 +211,7 @@ export interface ColorOption extends CatalogOption {
 }
 
 /**
- * Complete catalog data for the preorder flow
+ * Complete catalog data for the order flow
  */
 export interface CatalogData {
   boxTypes: BoxType[];
@@ -288,9 +287,9 @@ export interface PromoValidationResponse {
 }
 
 /**
- * Response from /api/preorder POST
+ * Response from /api/order POST
  */
-export interface PreorderSubmitResponse {
+export interface SubmitResponse {
   success: boolean;
   message?: string;
   preorderId?: string;

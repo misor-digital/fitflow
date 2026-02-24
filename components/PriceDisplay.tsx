@@ -1,7 +1,7 @@
 'use client';
 
-import type { PriceDisplayInfo } from '@/lib/preorder';
-import { formatPriceDual } from '@/lib/preorder';
+import type { PriceDisplayInfo } from '@/lib/catalog';
+import { formatPriceDual } from '@/lib/catalog';
 
 interface PriceDisplayProps {
   priceInfo: PriceDisplayInfo;

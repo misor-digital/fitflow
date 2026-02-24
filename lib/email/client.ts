@@ -62,18 +62,15 @@ export const DEFAULT_SENDER = {
 export const EMAIL_CONFIG = {
   // Default tags for tracking
   tags: {
-    preorder: 'preorder',
     confirmation: 'confirmation',
     transactional: 'transactional',
     marketing: 'marketing',
   },
   // Contact list IDs (configure these in Brevo dashboard)
   lists: {
-    preorders: Number(process.env.BREVO_PREORDER_LIST_ID) || 0,
+    legacyPreorders: Number(process.env.BREVO_PREORDER_LIST_ID) || 0,
     newsletter: Number(process.env.BREVO_NEWSLETTER_LIST_ID) || 0,
   },
   // Template IDs (configure these in Brevo dashboard)
-  templates: {
-    preorderConfirmation: Number(process.env.BREVO_PREORDER_TEMPLATE_ID) || 0,
-  },
+  templates: {},
 };

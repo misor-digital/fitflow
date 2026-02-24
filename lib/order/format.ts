@@ -1,7 +1,7 @@
 /**
  * Order Formatting
  *
- * Format order data for display. Reuses price formatting from @/lib/preorder/format.
+ * Format order data for display. Reuses price formatting from @/lib/catalog/format.
  */
 
 import type { OrderStatus, ShippingAddressSnapshot } from '@/lib/supabase/types';

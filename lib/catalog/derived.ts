@@ -7,8 +7,8 @@
 
 import type {
   BoxTypeId,
-  PreorderUserInput,
-  PreorderDerivedState,
+  UserInput,
+  DerivedState,
   PersonalizationStep,
 } from './types';
 import { EMAIL_REGEX } from './validation';
@@ -142,9 +142,9 @@ export function requiresColors(
  * This is the main function to use in components
  */
 export function computeDerivedState(
-  input: PreorderUserInput,
+  input: UserInput,
   currentPersonalizationStep: number = 0
-): PreorderDerivedState {
+): DerivedState {
   const isPremium = isPremiumBox(input.boxType);
   const isSubscription = isSubscriptionBox(input.boxType);
   const activeSteps = getActivePersonalizationSteps(input.wantsPersonalization, isPremium);
@@ -173,14 +173,14 @@ export function computeDerivedState(
 /**
  * Validate Step 1: Box Selection
  */
-function validateStep1(input: PreorderUserInput): boolean {
+function validateStep1(input: UserInput): boolean {
   return input.boxType !== null;
 }
 
 /**
  * Validate Step 2: Personalization
  */
-function validateStep2(input: PreorderUserInput, isPremium: boolean): boolean {
+function validateStep2(input: UserInput, isPremium: boolean): boolean {
   // Must have made personalization choice
   if (input.wantsPersonalization === null) {
     return false;
@@ -232,7 +232,7 @@ function validateStep2(input: PreorderUserInput, isPremium: boolean): boolean {
 /**
  * Validate Step 3: Contact Info
  */
-function validateStep3(input: PreorderUserInput): boolean {
+function validateStep3(input: UserInput): boolean {
   if (!input.fullName.trim()) {
     return false;
   }
@@ -247,9 +247,9 @@ function validateStep3(input: PreorderUserInput): boolean {
 }
 
 /**
- * Validate complete preorder (all steps)
+ * Validate all steps
  */
-function validateComplete(input: PreorderUserInput, isPremium: boolean): boolean {
+function validateComplete(input: UserInput, isPremium: boolean): boolean {
   return (
     validateStep1(input) &&
     validateStep2(input, isPremium) &&

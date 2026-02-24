@@ -8,7 +8,7 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS, formatShippingAddress } from '@/lib/order';
 import type { OrderStatus, ShippingAddressSnapshot } from '@/lib/supabase/types';
-import { formatPriceDual } from '@/lib/preorder';
+import { formatPriceDual } from '@/lib/catalog';
 
 // ============================================================================
 // Types

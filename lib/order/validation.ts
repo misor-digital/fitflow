@@ -1,13 +1,13 @@
 /**
  * Order Validation Rules
  *
- * Extends preorder validation with address validation for Bulgarian addresses.
+ * Extends catalog validation with address validation for Bulgarian addresses.
  * Used by both client (UI hints) and server (enforcement).
  */
 
 import type { OrderUserInput, AddressInput } from './types';
-import type { ValidationResult, ValidationError } from '@/lib/preorder';
-import { isPremiumBox, isSubscriptionBox, isValidEmail, isValidPhone } from '@/lib/preorder';
+import type { ValidationResult, ValidationError } from '@/lib/catalog';
+import { isPremiumBox, isSubscriptionBox, isValidEmail, isValidPhone } from '@/lib/catalog';
 
 // ============================================================================
 // Bulgarian Address Validation
@@ -108,7 +108,7 @@ export function validateOrderStep1(input: OrderUserInput): boolean {
 
 /**
  * Validate Step 2: Personalization
- * Reuses the same logic as preorder step 2:
+ * Reuses the same logic as catalog step 2:
  * - Must have made personalization choice
  * - Premium boxes always need sizes
  * - If personalization wanted, validate preference fields

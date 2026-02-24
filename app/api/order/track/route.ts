@@ -9,7 +9,7 @@ import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { getOrderByNumberAndEmail, getOrderStatusHistory, getBoxTypeNames } from '@/lib/data';
 import { eurToBgn } from '@/lib/data';
-import { isValidEmail } from '@/lib/preorder';
+import { isValidEmail } from '@/lib/catalog';
 import { checkRateLimit } from '@/lib/utils/rateLimit';
 import { ORDER_STATUS_LABELS } from '@/lib/order';
 import type { OrderTrackingData } from '@/lib/order';

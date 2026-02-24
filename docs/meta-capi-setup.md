@@ -37,7 +37,7 @@ Currently, the following events are sent via CAPI:
 
 | Event | Trigger | Location |
 |-------|---------|----------|
-| `Lead` | Successful preorder submission | `/api/preorder` |
+| `Lead` | Successful order submission | `/api/order` |
 
 ## Event Deduplication
 
@@ -56,7 +56,7 @@ import { generateEventId } from '@/lib/analytics';
 const eventId = generateEventId();
 
 // Send to API
-await fetch('/api/preorder', {
+await fetch('/api/order', {
   method: 'POST',
   body: JSON.stringify({
     ...formData,
@@ -110,7 +110,7 @@ const response = await fetch(
 
 ### Verify Events
 
-1. Submit a test preorder
+1. Submit a test order
 2. Check Events Manager > Test Events
 3. Verify the Lead event appears with correct data
 
@@ -159,4 +159,4 @@ Improve match rate by including more user data:
 
 - `lib/analytics/metaCapi.ts` - CAPI utility functions
 - `lib/analytics/index.ts` - Exports
-- `app/api/preorder/route.ts` - Lead event integration
+- `app/api/order/route.ts` - Lead event integration

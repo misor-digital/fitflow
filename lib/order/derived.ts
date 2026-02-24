@@ -2,12 +2,12 @@
  * Order Derived State
  *
  * Pure functions that compute state from OrderUserInput.
- * Delegates box-type logic to @/lib/preorder/derived.
+ * Delegates box-type logic to @/lib/catalog/derived.
  */
 
-import type { BoxTypeId } from '@/lib/preorder';
+import type { BoxTypeId } from '@/lib/catalog';
 import type { OrderUserInput, OrderDerivedState } from './types';
-import { isPremiumBox, isSubscriptionBox } from '@/lib/preorder';
+import { isPremiumBox, isSubscriptionBox } from '@/lib/catalog';
 import { validateOrderStep1, validateOrderStep2, validateOrderStep3 } from './validation';
 
 // ============================================================================

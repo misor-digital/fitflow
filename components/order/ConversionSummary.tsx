@@ -1,14 +1,14 @@
 'use client';
 
 import PriceDisplay from '@/components/PriceDisplay';
-import { formatPriceDual, formatSavings, isPremiumBox, isSubscriptionBox } from '@/lib/preorder';
-import type { PriceInfo, CatalogData, BoxTypeId } from '@/lib/preorder';
+import { formatPriceDual, formatSavings, isPremiumBox, isSubscriptionBox } from '@/lib/catalog';
+import type { PriceInfo, CatalogData, BoxTypeId } from '@/lib/catalog';
 
 /**
- * Serializable preorder data passed from server to client.
+ * Serializable legacy order data passed from server to client.
  * Matches the shape produced by the convert page server component.
  */
-export interface PreorderForConversion {
+export interface ConversionSource {
   id: string;
   orderId: string;
   conversionToken: string;
@@ -30,31 +30,31 @@ export interface PreorderForConversion {
   promoCode: string | null;
 }
 
-interface PreorderSummaryProps {
-  preorder: PreorderForConversion;
+interface ConversionSummaryProps {
+  source: ConversionSource;
   priceInfo: PriceInfo;
   catalogData: CatalogData;
   boxTypeNames: Record<string, string>;
 }
 
 /**
- * Readonly summary of preorder data for the conversion flow.
+ * Readonly summary of legacy order data for the conversion flow.
  * Shows box type, personalization choices (with resolved labels), and pricing.
  */
-export default function PreorderSummary({
-  preorder,
+export default function ConversionSummary({
+  source,
   priceInfo,
   catalogData,
   boxTypeNames,
-}: PreorderSummaryProps) {
+}: ConversionSummaryProps) {
   const sportLabels = catalogData?.labels?.sports ?? {};
   const colorLabels = catalogData?.labels?.colors ?? {};
   const flavorLabels = catalogData?.labels?.flavors ?? {};
   const dietaryLabels = catalogData?.labels?.dietary ?? {};
   const sizeLabels = catalogData?.labels?.sizes ?? {};
 
-  const isPremium = isPremiumBox(preorder.boxType);
-  const isSubscription = isSubscriptionBox(preorder.boxType);
+  const isPremium = isPremiumBox(source.boxType);
+  const isSubscription = isSubscriptionBox(source.boxType);
   const hasDiscount = priceInfo.discountPercent > 0;
 
   return (
@@ -72,7 +72,7 @@ export default function PreorderSummary({
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-0">
           <div>
             <div className="text-base sm:text-lg font-semibold text-[var(--color-brand-navy)]">
-              {boxTypeNames[preorder.boxType] || preorder.boxType}
+              {boxTypeNames[source.boxType] || source.boxType}
             </div>
             <div className="flex gap-2 mt-1">
               <span
@@ -97,7 +97,7 @@ export default function PreorderSummary({
         </div>
 
         {/* Promo discount */}
-        {hasDiscount && preorder.promoCode && (
+        {hasDiscount && source.promoCode && (
           <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-100">
             <div className="flex items-center gap-1.5 sm:gap-2 text-green-600">
               <svg
@@ -114,7 +114,7 @@ export default function PreorderSummary({
                 />
               </svg>
               <span className="text-sm sm:text-base font-semibold">
-                Промо код {preorder.promoCode} е приложен – {priceInfo.discountPercent}%
+                Промо код {source.promoCode} е приложен – {priceInfo.discountPercent}%
                 отстъпка
               </span>
             </div>
@@ -131,28 +131,28 @@ export default function PreorderSummary({
           Персонализация
         </h3>
 
-        {preorder.wantsPersonalization ? (
+        {source.wantsPersonalization ? (
           <div className="space-y-3 sm:space-y-4">
-            {preorder.sports && preorder.sports.length > 0 && (
+            {source.sports && source.sports.length > 0 && (
               <div>
                 <div className="text-sm sm:text-base font-semibold text-[var(--color-brand-navy)] mb-0.5 sm:mb-1">
                   Спорт:
                 </div>
                 <div className="text-sm sm:text-base text-gray-600">
-                  {preorder.sports.map((s) => sportLabels[s] || s).join(', ')}
-                  {preorder.sports.includes('other') &&
-                    preorder.sportOther &&
-                    ` (${preorder.sportOther})`}
+                  {source.sports.map((s) => sportLabels[s] || s).join(', ')}
+                  {source.sports.includes('other') &&
+                    source.sportOther &&
+                    ` (${source.sportOther})`}
                 </div>
               </div>
             )}
-            {preorder.colors && preorder.colors.length > 0 && (
+            {source.colors && source.colors.length > 0 && (
               <div>
                 <div className="text-sm sm:text-base font-semibold text-[var(--color-brand-navy)] mb-1.5 sm:mb-2">
                   Цветове:
                 </div>
                 <div className="flex gap-1.5 sm:gap-2 flex-wrap">
-                  {preorder.colors.map((c) => (
+                  {source.colors.map((c) => (
                     <div
                       key={c}
                       title={colorLabels[c] || c}
@@ -163,55 +163,55 @@ export default function PreorderSummary({
                 </div>
               </div>
             )}
-            {preorder.flavors && preorder.flavors.length > 0 && (
+            {source.flavors && source.flavors.length > 0 && (
               <div>
                 <div className="text-sm sm:text-base font-semibold text-[var(--color-brand-navy)] mb-0.5 sm:mb-1">
                   Вкусове:
                 </div>
                 <div className="text-sm sm:text-base text-gray-600">
-                  {preorder.flavors.map((f) => flavorLabels[f] || f).join(', ')}
-                  {preorder.flavors.includes('other') &&
-                    preorder.flavorOther &&
-                    ` (${preorder.flavorOther})`}
+                  {source.flavors.map((f) => flavorLabels[f] || f).join(', ')}
+                  {source.flavors.includes('other') &&
+                    source.flavorOther &&
+                    ` (${source.flavorOther})`}
                 </div>
               </div>
             )}
-            {(preorder.sizeUpper || preorder.sizeLower) && (
+            {(source.sizeUpper || source.sizeLower) && (
               <div>
                 <div className="text-sm sm:text-base font-semibold text-[var(--color-brand-navy)] mb-0.5 sm:mb-1">
                   Размери:
                 </div>
                 <div className="text-sm sm:text-base text-gray-600">
-                  {preorder.sizeUpper && (
-                    <>Горна: {sizeLabels[preorder.sizeUpper] || preorder.sizeUpper}</>
+                  {source.sizeUpper && (
+                    <>Горна: {sizeLabels[source.sizeUpper] || source.sizeUpper}</>
                   )}
-                  {preorder.sizeUpper && preorder.sizeLower && ' / '}
-                  {preorder.sizeLower && (
-                    <>Долна: {sizeLabels[preorder.sizeLower] || preorder.sizeLower}</>
+                  {source.sizeUpper && source.sizeLower && ' / '}
+                  {source.sizeLower && (
+                    <>Долна: {sizeLabels[source.sizeLower] || source.sizeLower}</>
                   )}
                 </div>
               </div>
             )}
-            {preorder.dietary && preorder.dietary.length > 0 && (
+            {source.dietary && source.dietary.length > 0 && (
               <div>
                 <div className="text-sm sm:text-base font-semibold text-[var(--color-brand-navy)] mb-0.5 sm:mb-1">
                   Хранителни ограничения:
                 </div>
                 <div className="text-sm sm:text-base text-gray-600">
-                  {preorder.dietary.map((d) => dietaryLabels[d] || d).join(', ')}
-                  {preorder.dietary.includes('other') &&
-                    preorder.dietaryOther &&
-                    ` (${preorder.dietaryOther})`}
+                  {source.dietary.map((d) => dietaryLabels[d] || d).join(', ')}
+                  {source.dietary.includes('other') &&
+                    source.dietaryOther &&
+                    ` (${source.dietaryOther})`}
                 </div>
               </div>
             )}
-            {preorder.additionalNotes && preorder.additionalNotes.trim() !== '' && (
+            {source.additionalNotes && source.additionalNotes.trim() !== '' && (
               <div>
                 <div className="text-sm sm:text-base font-semibold text-[var(--color-brand-navy)] mb-0.5 sm:mb-1">
                   Допълнителни бележки:
                 </div>
                 <div className="text-sm sm:text-base text-gray-600">
-                  {preorder.additionalNotes}
+                  {source.additionalNotes}
                 </div>
               </div>
             )}
@@ -259,9 +259,9 @@ export default function PreorderSummary({
         </div>
       </div>
 
-      {/* Preorder reference */}
+      {/* Legacy order reference */}
       <div className="text-sm text-gray-500 text-center">
-        Предпоръчка #{preorder.orderId}
+        Предпоръчка #{source.orderId}
       </div>
     </div>
   );

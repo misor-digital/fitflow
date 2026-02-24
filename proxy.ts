@@ -8,13 +8,15 @@ import { createServerClient } from '@supabase/ssr';
  * Does NOT perform authorization — that's the DAL's job.
  */
 export default async function proxy(request: NextRequest) {
-  // Preorder route redirects (legacy → order)
+  // Legacy route redirects
   const redirects: Record<string, string> = {
     '/step-1': '/order',
     '/step-2': '/order',
     '/step-3': '/order',
     '/step-4': '/order',
     '/thank-you/preorder': '/order/thank-you',
+    '/admin/preorders': '/admin/orders',
+    '/admin/preorders/legacy': '/admin/orders/legacy',
   };
 
   const pathname = request.nextUrl.pathname;

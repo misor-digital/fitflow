@@ -22,7 +22,7 @@ export {
 } from './catalog';
 
 // Re-export formatPrice from its canonical location
-export { formatPrice } from '@/lib/preorder/format';
+export { formatPrice } from '@/lib/catalog/format';
 
 // Promo code data
 export {

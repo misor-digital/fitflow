@@ -4,8 +4,8 @@ import { useState, useEffect, useRef } from 'react';
 import { useOrderStore } from '@/store/orderStore';
 import { trackFunnelStep, trackBoxSelection } from '@/lib/analytics';
 import PriceDisplay from '@/components/PriceDisplay';
-import type { PricesMap, BoxTypeId, PriceInfo } from '@/lib/preorder';
-import { getDisplayBoxType, getPremiumFrequency, buildBoxTypeId } from '@/lib/preorder';
+import type { PricesMap, BoxTypeId, PriceInfo } from '@/lib/catalog';
+import { getDisplayBoxType, getPremiumFrequency, buildBoxTypeId } from '@/lib/catalog';
 
 interface OrderStepBoxProps {
   prices: PricesMap;

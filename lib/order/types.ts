@@ -2,10 +2,10 @@
  * Canonical Order Domain Types
  *
  * Single source of truth for all order-related types.
- * Box/personalization types are imported from @/lib/preorder.
+ * Box/personalization types are imported from @/lib/catalog.
  */
 
-import type { BoxTypeId, PriceInfo, PriceDisplayInfo, PricesMap } from '@/lib/preorder';
+import type { BoxTypeId, PriceInfo, PriceDisplayInfo, PricesMap } from '@/lib/catalog';
 import type { OrderStatus, ShippingAddressSnapshot } from '@/lib/supabase/types';
 
 // Re-export for convenience
@@ -37,13 +37,13 @@ export interface AddressInput {
 
 /**
  * Complete user input collected across all order steps.
- * Extends concept of PreorderUserInput with address + auth awareness.
+ * Extends concept of UserInput with address + auth awareness.
  */
 export interface OrderUserInput {
-  // Step 1: Box Selection (same as preorder)
+  // Step 1: Box Selection
   boxType: BoxTypeId | null;
 
-  // Step 2: Personalization (same as preorder)
+  // Step 2: Personalization
   wantsPersonalization: boolean | null;
   sports: string[];
   sportOther: string;
@@ -79,7 +79,7 @@ export interface OrderUserInput {
 export type OrderStep = 1 | 2 | 3 | 4;
 
 export interface OrderDerivedState {
-  // Box characteristics (delegated to preorder helpers)
+  // Box characteristics (delegated to catalog helpers)
   isPremium: boolean;
   isSubscription: boolean;
 

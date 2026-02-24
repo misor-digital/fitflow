@@ -14,17 +14,11 @@ export {
   DEFAULT_SENDER,
 } from './emailService';
 
-// Preorder-specific email functions
-export {
-  sendPreorderConfirmationEmail,
-  addPreorderCustomerToContacts,
-  handlePreorderEmailWorkflow,
-} from './preorderEmails';
+
 
 // Email templates and utilities
 export {
   generateConfirmationEmail,
-  generatePreorderConfirmationEmail,
   generateOrderConfirmationEmail,
   formatOptionsWithOther,
 } from './templates';
@@ -45,5 +39,5 @@ export type {
   EmailResult,
   ContactData,
   ContactResult,
-  PreorderEmailData,
+  ConfirmationEmailData,
 } from './types';

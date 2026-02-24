@@ -55,7 +55,7 @@ export const STAFF_MANAGEMENT_ROLES: ReadonlySet<StaffRole> = new Set([
 ]);
 
 /**
- * Roles that can view orders/preorders.
+ * Roles that can view orders.
  */
 export const ORDER_VIEW_ROLES: ReadonlySet<StaffRole> = new Set([
   'super_admin',

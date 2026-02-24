@@ -5,7 +5,7 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
  * Check rate limit using Supabase-backed counter.
  * Returns true if the request is within limits.
  *
- * @param key - Unique identifier (e.g., "preorder:{ip}" or "promo:{ip}")
+ * @param key - Unique identifier (e.g., "order:{ip}" or "promo:{ip}")
  * @param maxRequests - Max requests in the window
  * @param windowSeconds - Window duration in seconds
  */

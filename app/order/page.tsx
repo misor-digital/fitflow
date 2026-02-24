@@ -10,7 +10,7 @@ import OrderFlow from '@/components/order/OrderFlow';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import type { Metadata } from 'next';
-import type { CatalogData, BoxType } from '@/lib/preorder';
+import type { CatalogData, BoxType } from '@/lib/catalog';
 
 export const metadata: Metadata = {
   title: 'Поръчка | FitFlow',

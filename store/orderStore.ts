@@ -10,7 +10,7 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { BoxTypeId, PreorderUserInput } from '@/lib/preorder';
+import type { BoxTypeId, UserInput } from '@/lib/catalog';
 import type { OrderUserInput, OrderStep, AddressInput } from '@/lib/order';
 import { INITIAL_ORDER_INPUT } from '@/lib/order';
 
@@ -47,7 +47,7 @@ interface OrderStore extends OrderUserInput {
 
   // Conversion
   setConversionToken: (token: string | null) => void;
-  prefillFromPreorder: (preorder: PreorderUserInput) => void;
+  prefillFromConversion: (source: UserInput) => void;
 
   // Navigation
   setStep: (step: OrderStep) => void;
@@ -99,21 +99,21 @@ export const useOrderStore = create<OrderStore>()(
       // Conversion
       setConversionToken: (token) => set({ conversionToken: token }),
 
-      prefillFromPreorder: (preorder) =>
+      prefillFromConversion: (source) =>
         set({
-          boxType: preorder.boxType,
-          wantsPersonalization: preorder.wantsPersonalization,
-          sports: preorder.sports,
-          sportOther: preorder.sportOther,
-          colors: preorder.colors,
-          flavors: preorder.flavors,
-          flavorOther: preorder.flavorOther,
-          sizeUpper: preorder.sizeUpper,
-          sizeLower: preorder.sizeLower,
-          dietary: preorder.dietary,
-          dietaryOther: preorder.dietaryOther,
-          additionalNotes: preorder.additionalNotes,
-          promoCode: preorder.promoCode,
+          boxType: source.boxType,
+          wantsPersonalization: source.wantsPersonalization,
+          sports: source.sports,
+          sportOther: source.sportOther,
+          colors: source.colors,
+          flavors: source.flavors,
+          flavorOther: source.flavorOther,
+          sizeUpper: source.sizeUpper,
+          sizeLower: source.sizeLower,
+          dietary: source.dietary,
+          dietaryOther: source.dietaryOther,
+          additionalNotes: source.additionalNotes,
+          promoCode: source.promoCode,
         }),
 
       // Navigation

@@ -5,16 +5,16 @@ import { useRouter } from 'next/navigation';
 import { useOrderStore, useOrderInput } from '@/store/orderStore';
 import { useAuthStore } from '@/store/authStore';
 import { computeOrderDerivedState, transformOrderToApiRequest } from '@/lib/order';
-import type { PricesMap, CatalogData, PriceInfo } from '@/lib/preorder';
-import type { PreorderForConversion } from './PreorderSummary';
-import PreorderSummary from './PreorderSummary';
+import type { PricesMap, CatalogData, PriceInfo } from '@/lib/catalog';
+import type { ConversionSource } from './ConversionSummary';
+import ConversionSummary from './ConversionSummary';
 import OrderStepDetails from './OrderStepDetails';
 import OrderStepConfirm from './OrderStepConfirm';
 
 type ConversionStep = 'summary' | 'address' | 'confirm';
 
 interface ConversionFlowProps {
-  preorder: PreorderForConversion;
+  source: ConversionSource;
   priceInfo: PriceInfo;
   catalogData: CatalogData;
   boxTypeNames: Record<string, string>;
@@ -22,13 +22,13 @@ interface ConversionFlowProps {
 
 /**
  * Client component managing the conversion-specific 2-step process:
- * 1. Summary (readonly preorder data) → 2. Address → 3. Confirm & submit
+ * 1. Summary (readonly legacy order data) → 2. Address → 3. Confirm & submit
  *
- * Prefills the order store from preorder data so shared step components
+ * Prefills the order store from legacy order data so shared step components
  * (OrderStepDetails, OrderStepConfirm) can read from the same store.
  */
 export default function ConversionFlow({
-  preorder,
+  source,
   priceInfo,
   catalogData,
   boxTypeNames,
@@ -41,10 +41,10 @@ export default function ConversionFlow({
 
   const user = useAuthStore((s) => s.user);
 
-  // Build a prices map from the single priceInfo (keyed by the preorder's box type)
-  const prices: PricesMap = { [preorder.boxType]: priceInfo };
+  // Build a prices map from the single priceInfo (keyed by the source's box type)
+  const prices: PricesMap = { [source.boxType]: priceInfo };
 
-  // Prefill the order store with preorder data on mount (once)
+  // Prefill the order store with legacy order data on mount (once)
   useEffect(() => {
     if (prefilled.current) return;
     prefilled.current = true;
@@ -53,35 +53,35 @@ export default function ConversionFlow({
 
     // Reset and prefill
     store.reset();
-    store.prefillFromPreorder({
-      boxType: preorder.boxType as Parameters<typeof store.prefillFromPreorder>[0]['boxType'],
-      wantsPersonalization: preorder.wantsPersonalization,
-      sports: preorder.sports ?? [],
-      sportOther: preorder.sportOther ?? '',
-      colors: preorder.colors ?? [],
-      flavors: preorder.flavors ?? [],
-      flavorOther: preorder.flavorOther ?? '',
-      sizeUpper: preorder.sizeUpper ?? '',
-      sizeLower: preorder.sizeLower ?? '',
-      dietary: preorder.dietary ?? [],
-      dietaryOther: preorder.dietaryOther ?? '',
-      additionalNotes: preorder.additionalNotes ?? '',
-      fullName: preorder.fullName,
-      email: preorder.email,
-      phone: preorder.phone ?? '',
-      promoCode: preorder.promoCode,
+    store.prefillFromConversion({
+      boxType: source.boxType as Parameters<typeof store.prefillFromConversion>[0]['boxType'],
+      wantsPersonalization: source.wantsPersonalization,
+      sports: source.sports ?? [],
+      sportOther: source.sportOther ?? '',
+      colors: source.colors ?? [],
+      flavors: source.flavors ?? [],
+      flavorOther: source.flavorOther ?? '',
+      sizeUpper: source.sizeUpper ?? '',
+      sizeLower: source.sizeLower ?? '',
+      dietary: source.dietary ?? [],
+      dietaryOther: source.dietaryOther ?? '',
+      additionalNotes: source.additionalNotes ?? '',
+      fullName: source.fullName,
+      email: source.email,
+      phone: source.phone ?? '',
+      promoCode: source.promoCode,
     });
 
-    // Set contact info from preorder
+    // Set contact info from legacy order
     store.setContactInfo(
-      preorder.fullName,
-      preorder.email,
-      preorder.phone ?? '',
+      source.fullName,
+      source.email,
+      source.phone ?? '',
     );
 
     // Set conversion token
-    store.setConversionToken(preorder.conversionToken);
-  }, [preorder]);
+    store.setConversionToken(source.conversionToken);
+  }, [source]);
 
   // Scroll to top on step change
   useEffect(() => {
@@ -225,11 +225,11 @@ export default function ConversionFlow({
         Завършете поръчката
       </h1>
 
-      {/* Step: Summary (readonly preorder data) */}
+      {/* Step: Summary (readonly legacy order data) */}
       {conversionStep === 'summary' && (
         <div>
-          <PreorderSummary
-            preorder={preorder}
+          <ConversionSummary
+            source={source}
             priceInfo={priceInfo}
             catalogData={catalogData}
             boxTypeNames={boxTypeNames}

@@ -10,7 +10,7 @@
 // ============================================================================
 
 export type {
-  // Re-exported from preorder / supabase
+  // Re-exported from catalog / supabase
   BoxTypeId,
   PriceInfo,
   PriceDisplayInfo,

@@ -1,14 +1,10 @@
 /**
- * @deprecated This module is legacy. For new code:
- * - Order types/logic: import from '@/lib/order'
- * - Shared validation: will be extracted to '@/lib/shared' in future
- * - This module remains for backward compatibility with preorder conversion
- *   and admin legacy views.
+ * Catalog Domain Module
  *
- * Preorder Domain Module
- * 
- * Centralized exports for all preorder-related types, utilities, and logic.
- * Import from '@/lib/preorder' instead of individual files.
+ * Shared types, validation, formatting, and derived-state logic
+ * for box types, personalization, and pricing.
+ *
+ * Import from '@/lib/catalog' instead of individual files.
  */
 
 // ============================================================================
@@ -27,14 +23,14 @@ export type {
   PricesMap,
   
   // User input
-  PreorderUserInput,
+  UserInput,
   
   // Derived state
   PersonalizationStep,
-  PreorderDerivedState,
+  DerivedState,
   
   // Persistence
-  PreorderPersistData,
+  PersistData,
   
   // Catalog
   CatalogOption,
@@ -49,7 +45,7 @@ export type {
   PricesApiResponse,
   CatalogApiResponse,
   PromoValidationResponse,
-  PreorderSubmitResponse,
+  SubmitResponse,
 } from './types';
 
 // ============================================================================
@@ -100,7 +96,7 @@ export {
   validatePersonalizationStep,
   
   // Full validation
-  validatePreorderSubmission,
+  validateSubmission,
   getFieldError,
   hasFieldError,
 } from './validation';
@@ -128,18 +124,6 @@ export {
 } from './format';
 
 // ============================================================================
-// Labels (DEPRECATED - use lib/data/catalog.ts to fetch from database)
-// ============================================================================
-
-// NOTE: Label maps have been removed. Fetch labels from the database using:
-// - getBoxTypeNames() from lib/data/catalog.ts
-// - getOptionLabels('sports') from lib/data/catalog.ts
-// - getColorNames() from lib/data/catalog.ts
-// etc.
-//
-// For email templates, use formatOptionsWithOther from lib/email/templates.ts
-
-// ============================================================================
 // Transformation
 // ============================================================================
 
@@ -155,5 +139,5 @@ export {
   extractUserInput,
   
   // Types
-  type PreorderApiRequest,
+  type ApiRequest,
 } from './transform';

@@ -13,8 +13,8 @@ import ConversionError from '@/components/order/ConversionError';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import type { Metadata } from 'next';
-import type { CatalogData, BoxType, BoxTypeId } from '@/lib/preorder';
-import type { PreorderForConversion } from '@/components/order/PreorderSummary';
+import type { CatalogData, BoxType, BoxTypeId } from '@/lib/catalog';
+import type { ConversionSource } from '@/components/order/ConversionSummary';
 
 export const metadata: Metadata = {
   title: 'Завършете поръчката | FitFlow',
@@ -59,9 +59,9 @@ export default async function ConvertPage({ searchParams }: ConvertPageProps) {
   }
 
   // Validate token against database
-  const preorder = await getPreorderByToken(token);
+  const legacyOrder = await getPreorderByToken(token);
 
-  if (!preorder) {
+  if (!legacyOrder) {
     return (
       <>
         <Navigation />
@@ -101,7 +101,7 @@ export default async function ConvertPage({ searchParams }: ConvertPageProps) {
     getOptionLabels('flavors'),
     getOptionLabels('dietary'),
     getOptionLabels('sizes'),
-    calculatePrice(preorder.box_type, preorder.promo_code),
+    calculatePrice(legacyOrder.box_type, legacyOrder.promo_code),
   ]);
 
   const mappedBoxTypes: BoxType[] = boxTypes.map((bt) => ({
@@ -134,27 +134,27 @@ export default async function ConvertPage({ searchParams }: ConvertPageProps) {
     },
   };
 
-  // Map preorder DB row to serializable client format
-  const preorderForConversion: PreorderForConversion = {
-    id: preorder.id,
-    orderId: preorder.order_id,
+  // Map legacy order DB row to serializable client format
+  const conversionSource: ConversionSource = {
+    id: legacyOrder.id,
+    orderId: legacyOrder.order_id,
     conversionToken: token,
-    fullName: preorder.full_name,
-    email: preorder.email,
-    phone: preorder.phone ?? null,
-    boxType: preorder.box_type as BoxTypeId,
-    wantsPersonalization: preorder.wants_personalization,
-    sports: preorder.sports ?? null,
-    sportOther: preorder.sport_other ?? null,
-    colors: preorder.colors ?? null,
-    flavors: preorder.flavors ?? null,
-    flavorOther: preorder.flavor_other ?? null,
-    dietary: preorder.dietary ?? null,
-    dietaryOther: preorder.dietary_other ?? null,
-    sizeUpper: preorder.size_upper ?? null,
-    sizeLower: preorder.size_lower ?? null,
-    additionalNotes: preorder.additional_notes ?? null,
-    promoCode: preorder.promo_code ?? null,
+    fullName: legacyOrder.full_name,
+    email: legacyOrder.email,
+    phone: legacyOrder.phone ?? null,
+    boxType: legacyOrder.box_type as BoxTypeId,
+    wantsPersonalization: legacyOrder.wants_personalization,
+    sports: legacyOrder.sports ?? null,
+    sportOther: legacyOrder.sport_other ?? null,
+    colors: legacyOrder.colors ?? null,
+    flavors: legacyOrder.flavors ?? null,
+    flavorOther: legacyOrder.flavor_other ?? null,
+    dietary: legacyOrder.dietary ?? null,
+    dietaryOther: legacyOrder.dietary_other ?? null,
+    sizeUpper: legacyOrder.size_upper ?? null,
+    sizeLower: legacyOrder.size_lower ?? null,
+    additionalNotes: legacyOrder.additional_notes ?? null,
+    promoCode: legacyOrder.promo_code ?? null,
   };
 
   return (
@@ -162,7 +162,7 @@ export default async function ConvertPage({ searchParams }: ConvertPageProps) {
       <Navigation />
       <main className="min-h-screen bg-white">
         <ConversionFlow
-          preorder={preorderForConversion}
+          source={conversionSource}
           priceInfo={priceInfo}
           catalogData={catalogData}
           boxTypeNames={boxTypeNames}

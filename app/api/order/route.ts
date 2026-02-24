@@ -11,7 +11,7 @@ import {
   markPreorderConverted,
 } from '@/lib/data';
 import { validateAddress, addressInputToSnapshot } from '@/lib/order';
-import { isSubscriptionBox, EMAIL_REGEX, isValidPhone } from '@/lib/preorder';
+import { isSubscriptionBox, EMAIL_REGEX, isValidPhone } from '@/lib/catalog';
 import { checkRateLimit } from '@/lib/utils/rateLimit';
 import { trackLeadCapi, hashForMeta, generateEventId } from '@/lib/analytics';
 import type { OrderInsert, ShippingAddressSnapshot, Preorder, BoxType } from '@/lib/supabase/types';
@@ -404,7 +404,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     let emailSent = false;
     try {
       // TODO: Implement order confirmation email workflow
-      // similar to handlePreorderEmailWorkflow but with order data:
+      // Use generateConfirmationEmail(data, 'order', labels) from @/lib/email
       // - order.order_number, effectiveBoxType, priceInfo, addressSnapshot
       console.log(JSON.stringify({
         level: 'info',

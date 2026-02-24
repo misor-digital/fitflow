@@ -58,7 +58,7 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
       if (v) p.set(k, v);
     }
     const qs = p.toString();
-    return `/admin/preorders${qs ? `?${qs}` : ''}`;
+    return `/admin/orders${qs ? `?${qs}` : ''}`;
   }
 
   return (
@@ -74,7 +74,7 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
           </span>
         </div>
         <Link
-          href="/admin/preorders/legacy"
+          href="/admin/orders/legacy"
           className="text-sm text-[var(--color-brand-navy)] border border-[var(--color-brand-navy)] px-4 py-2 rounded-lg hover:bg-[var(--color-brand-navy)] hover:text-white transition-colors"
         >
           Стари предпоръчки →
@@ -129,7 +129,7 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
 
         {(status || boxType || search) && (
           <Link
-            href="/admin/preorders"
+            href="/admin/orders"
             className="text-sm text-gray-500 hover:text-gray-700 self-center underline"
           >
             Изчисти
@@ -142,7 +142,7 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
         <div className="text-center py-16 text-gray-500">
           <p className="text-lg mb-2">Няма намерени поръчки.</p>
           {(status || boxType || search) && (
-            <Link href="/admin/preorders" className="text-[var(--color-brand-orange)] hover:underline text-sm">
+            <Link href="/admin/orders" className="text-[var(--color-brand-orange)] hover:underline text-sm">
               Нулирай филтрите
             </Link>
           )}

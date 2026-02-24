@@ -7,7 +7,7 @@ import {
   setDefaultAddress,
 } from '@/lib/data';
 import { validateAddress } from '@/lib/order';
-import { isValidPhone } from '@/lib/preorder';
+import { isValidPhone } from '@/lib/catalog';
 import { checkRateLimit } from '@/lib/utils/rateLimit';
 import { validateFieldLengths } from '../route';
 import type { AddressUpdate } from '@/lib/supabase/types';

@@ -12,7 +12,7 @@ import {
   getOptionLabels,
   getAllBoxPricesMap,
 } from '@/lib/data';
-import type { PriceInfo } from '@/lib/preorder';
+import type { PriceInfo } from '@/lib/catalog';
 import type { OptionSetId } from '@/lib/supabase';
 
 /**

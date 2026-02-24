@@ -6,11 +6,11 @@
  * and passed to email generation functions. No hardcoded fallbacks.
  */
 
-import type { PreorderEmailData } from './types';
+import type { ConfirmationEmailData } from './types';
 import {
   formatPriceDual,
   formatSavings,
-} from '@/lib/preorder';
+} from '@/lib/catalog';
 import { escapeHtml } from '@/lib/utils/sanitize';
 
 // ============================================================================
@@ -105,7 +105,7 @@ function generateColorSwatchesHtml(colors: string[], colorLabels: LabelMap): str
 /**
  * Generate promo code section HTML for email
  */
-function generatePromoCodeSection(data: PreorderEmailData): string {
+function generatePromoCodeSection(data: ConfirmationEmailData): string {
   if (!data.hasPromoCode) return '';
 
   return `
@@ -127,15 +127,15 @@ function generatePromoCodeSection(data: PreorderEmailData): string {
 
 /**
  * Generate confirmation email HTML
- * Unified template for both preorder and order confirmation emails.
+ * Unified template for both legacy conversion and standard order confirmation emails.
  * 
- * @param data - Preorder email data
- * @param emailType - 'preorder' includes free delivery banner and preorder-specific copy; 'order' is standard
+ * @param data - Confirmation email data
+ * @param emailType - 'legacy' includes free delivery banner; 'order' is standard
  * @param labels - Label maps fetched from database (optional for backward compatibility)
  */
 export function generateConfirmationEmail(
-  data: PreorderEmailData,
-  emailType: 'preorder' | 'order' = 'preorder',
+  data: ConfirmationEmailData,
+  emailType: 'legacy' | 'order' = 'order',
   labels?: Partial<EmailLabelMaps>
 ): string {
   // Use provided labels or empty maps (will fall back to raw IDs)
@@ -167,10 +167,10 @@ export function generateConfirmationEmail(
   // Generate promo code section if applicable
   const promoCodeSection = generatePromoCodeSection(data);
 
-  // Copy differences between preorder and order emails
+  // Copy differences between legacy and order emails
   const confirmationText = 'Твоята поръчка беше успешно регистрирана! Благодарим ти, че избра FitFlow.';
 
-  const freeDeliveryBanner = emailType === 'preorder'
+  const freeDeliveryBanner = emailType === 'legacy'
     ? `
             <!-- Free Delivery Banner -->
             <div style="background-color: #e8f5e9; border: 2px solid #4caf50; padding: 15px 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
@@ -213,7 +213,7 @@ export function generateConfirmationEmail(
             <!-- Order Details -->
             <div style="background-color: #fff4ec; padding: 20px; border-radius: 8px; margin: 20px 0;">
               <h3 style="color: #363636; margin-top: 0;">📦 Детайли на поръчката</h3>
-              <p style="margin: 5px 0;"><strong>Номер на поръчка:</strong> ${data.preorderId}</p>
+              <p style="margin: 5px 0;"><strong>Номер на поръчка:</strong> ${data.orderId}</p>
               <p style="margin: 5px 0;"><strong>Избрана кутия:</strong> ${data.boxTypeDisplay}${!data.hasPromoCode ? ` (${formatPriceDual(data.originalPriceEur ?? 0, data.originalPriceBgn ?? 0)})` : ''}</p>
               <p style="margin: 5px 0;"><strong>Персонализация:</strong> ${data.wantsPersonalization ? 'Да' : 'Не'}</p>
             </div>
@@ -263,20 +263,10 @@ export function generateConfirmationEmail(
 }
 
 /**
- * @deprecated Use `generateConfirmationEmail(data, 'preorder', labels)` instead
- */
-export function generatePreorderConfirmationEmail(
-  data: PreorderEmailData,
-  labels?: Partial<EmailLabelMaps>
-): string {
-  return generateConfirmationEmail(data, 'preorder', labels);
-}
-
-/**
  * @deprecated Use `generateConfirmationEmail(data, 'order', labels)` instead
  */
 export function generateOrderConfirmationEmail(
-  data: PreorderEmailData,
+  data: ConfirmationEmailData,
   labels?: Partial<EmailLabelMaps>
 ): string {
   return generateConfirmationEmail(data, 'order', labels);

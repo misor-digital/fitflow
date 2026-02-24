@@ -1,12 +1,12 @@
 /**
  * Validation Rules
- * 
- * Centralized validation logic for preorder data.
+ *
+ * Centralized validation logic for catalog/order data.
  * Used by both client-side (for UI hints) and server-side (for enforcement).
  */
 
 import type {
-  PreorderUserInput,
+  UserInput,
   PersonalizationStep,
   ValidationResult,
   ValidationError,
@@ -81,7 +81,7 @@ export function getPhoneError(phone: string): string | null {
  */
 export function validatePersonalizationStep(
   step: PersonalizationStep,
-  input: PreorderUserInput
+  input: UserInput
 ): boolean {
   switch (step) {
     case 'personalization':
@@ -118,15 +118,15 @@ export function validatePersonalizationStep(
 }
 
 // ============================================================================
-// Full Preorder Validation (Server-side)
+// Full Submission Validation (Server-side)
 // ============================================================================
 
 /**
- * Validate complete preorder data for submission
+ * Validate complete submission data
  * Returns detailed validation result with all errors
  */
-export function validatePreorderSubmission(
-  input: PreorderUserInput
+export function validateSubmission(
+  input: UserInput
 ): ValidationResult {
   const errors: ValidationError[] = [];
 

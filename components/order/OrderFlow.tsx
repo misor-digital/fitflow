@@ -6,7 +6,7 @@ import { useOrderStore, useOrderInput } from '@/store/orderStore';
 import { useAuthStore } from '@/store/authStore';
 import { computeOrderDerivedState, transformOrderToApiRequest } from '@/lib/order';
 import type { OrderStep, PricesMap } from '@/lib/order';
-import type { CatalogData } from '@/lib/preorder';
+import type { CatalogData } from '@/lib/catalog';
 import OrderStepBox from './OrderStepBox';
 import OrderStepPersonalize from './OrderStepPersonalize';
 import OrderStepDetails from './OrderStepDetails';

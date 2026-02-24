@@ -4,8 +4,8 @@ import { useEffect, useRef } from 'react';
 import { useOrderStore } from '@/store/orderStore';
 import { trackFunnelStep } from '@/lib/analytics';
 import PriceDisplay from '@/components/PriceDisplay';
-import type { PricesMap, CatalogData, PriceInfo } from '@/lib/preorder';
-import { formatPriceDual, formatSavings, isPremiumBox, isSubscriptionBox } from '@/lib/preorder';
+import type { PricesMap, CatalogData, PriceInfo } from '@/lib/catalog';
+import { formatPriceDual, formatSavings, isPremiumBox, isSubscriptionBox } from '@/lib/catalog';
 import type { OrderStep } from '@/lib/order';
 
 interface OrderStepConfirmProps {
