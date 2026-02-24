@@ -1,6 +1,7 @@
 /**
- * Email service module for FitFlow
- * Uses Brevo API for transactional emails and contact management
+ * Email Module — Barrel Exports
+ *
+ * Core email service + Brevo API wrappers + usage tracking
  */
 
 // Core email service functions
@@ -29,7 +30,7 @@ export type {
   EmailLabelMaps,
 } from './templates';
 
-// Types
+// Types (existing + new)
 export type {
   EmailRecipient,
   EmailSender,
@@ -40,4 +41,20 @@ export type {
   ContactData,
   ContactResult,
   ConfirmationEmailData,
+  // New types
+  EmailCampaignType,
+  EmailCampaignStatus,
+  EmailRecipientStatus,
+  EmailLogStatus,
+  EmailLogType,
+  TargetListType,
+  EmailSendLogInput,
+  CampaignHistoryAction,
 } from './types';
+
+// Brevo API wrappers (new)
+export * from './brevo';
+
+// Usage tracking (new)
+export { checkUsage, setUsageChecker, getWarningLevel } from './usage';
+export type { UsageCheck, UsageChecker } from './usage';

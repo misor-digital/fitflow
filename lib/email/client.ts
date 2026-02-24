@@ -7,6 +7,7 @@ import * as Brevo from '@getbrevo/brevo';
 // Singleton instance for the API clients
 let transactionalEmailsApi: Brevo.TransactionalEmailsApi | null = null;
 let contactsApi: Brevo.ContactsApi | null = null;
+let emailCampaignsApi: Brevo.EmailCampaignsApi | null = null;
 
 /**
  * Get the Brevo API key from environment variables
@@ -45,6 +46,20 @@ export function getContactsApi(): Brevo.ContactsApi {
     );
   }
   return contactsApi;
+}
+
+/**
+ * Get or create the Email Campaigns API instance
+ */
+export function getEmailCampaignsApi(): Brevo.EmailCampaignsApi {
+  if (!emailCampaignsApi) {
+    emailCampaignsApi = new Brevo.EmailCampaignsApi();
+    emailCampaignsApi.setApiKey(
+      Brevo.EmailCampaignsApiApiKeys.apiKey,
+      getApiKey()
+    );
+  }
+  return emailCampaignsApi;
 }
 
 /**

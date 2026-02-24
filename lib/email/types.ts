@@ -96,3 +96,48 @@ export interface ConfirmationEmailData {
   finalPriceBgn?: number | null;
   discountAmountBgn?: number | null;
 }
+
+// ============================================================================
+// Email Campaign Types
+// ============================================================================
+
+export type EmailCampaignType = 'one-off' | 'preorder-conversion' | 'promotional' | 'lifecycle';
+
+export type EmailCampaignStatus = 'draft' | 'scheduled' | 'sending' | 'sent' | 'paused' | 'cancelled' | 'failed';
+
+export type EmailRecipientStatus = 'pending' | 'sent' | 'delivered' | 'opened' | 'clicked' | 'bounced' | 'failed' | 'skipped';
+
+export type EmailLogStatus = 'sent' | 'delivered' | 'opened' | 'clicked' | 'bounced' | 'failed';
+
+export type EmailLogType = 'transactional' | 'campaign';
+
+export type TargetListType = 'preorder-holders' | 'subscribers' | 'all-customers' | 'custom-list';
+
+/** Input for the email_send_log table */
+export interface EmailSendLogInput {
+  emailType: EmailLogType;
+  emailCategory: string;
+  recipientEmail: string;
+  recipientName: string | null;
+  subject: string | null;
+  templateId: number | null;
+  brevoMessageId: string | null;
+  campaignId: string | null;
+  status: EmailLogStatus;
+  params: Record<string, unknown> | null;
+  error: string | null;
+  relatedEntityType: string | null;
+  relatedEntityId: string | null;
+}
+
+/** Campaign history action types */
+export type CampaignHistoryAction =
+  | 'created'
+  | 'updated'
+  | 'scheduled'
+  | 'started'
+  | 'paused'
+  | 'resumed'
+  | 'cancelled'
+  | 'completed'
+  | 'failed';
