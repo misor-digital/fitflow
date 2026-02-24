@@ -30,7 +30,16 @@ import {
 import { recordCampaignAction } from '@/lib/data/email-campaign-history';
 import { logEmailSent } from '@/lib/data/email-log';
 import { incrementUsage } from '@/lib/data/email-usage';
-import type { EmailCampaignRow, EmailCampaignRecipientRow } from '@/lib/supabase/types';
+import { isUnsubscribed } from './unsubscribe';
+import {
+  buildVariantMap,
+  incrementVariantSentCount,
+} from './ab-testing';
+import type {
+  EmailCampaignRow,
+  EmailCampaignRecipientRow,
+  EmailABVariantRow,
+} from '@/lib/supabase/types';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -91,25 +100,30 @@ async function isCampaignStillActive(campaignId: string): Promise<boolean> {
 
 /**
  * Send to a single recipient and record the outcome.
+ * Supports A/B variant overrides for subject, template, and params.
  * Returns `true` if the send succeeded.
  */
 async function processRecipient(
   campaign: EmailCampaignRow,
   recipient: EmailCampaignRecipientRow,
+  variant?: EmailABVariantRow | null,
 ): Promise<boolean> {
-  // Merge global campaign params with per-recipient params
-  const mergedParams: Record<string, unknown> = {
+  // Determine effective subject, template, and params (variant overrides campaign)
+  const effectiveSubject = variant?.subject ?? campaign.subject;
+  const effectiveTemplateId = variant?.template_id ?? campaign.template_id;
+  const effectiveParams: Record<string, unknown> = {
     ...(campaign.params ?? {}),
+    ...(variant?.params ?? {}),
     ...(recipient.params ?? {}),
   };
 
   // Build the send call
   const result = await sendWithRetry(() => {
-    if (campaign.template_id) {
+    if (effectiveTemplateId) {
       return sendTemplateEmail({
         to: { email: recipient.email, name: recipient.full_name ?? undefined },
-        templateId: campaign.template_id,
-        params: mergedParams as Record<string, string | number | boolean | string[]>,
+        templateId: effectiveTemplateId,
+        params: effectiveParams as Record<string, string | number | boolean | string[]>,
         tags: ['campaign', campaign.campaign_type],
       });
     }
@@ -117,9 +131,9 @@ async function processRecipient(
     // Fallback to HTML content
     return sendEmail({
       to: { email: recipient.email, name: recipient.full_name ?? undefined },
-      subject: campaign.subject,
+      subject: effectiveSubject,
       htmlContent: campaign.html_content ?? undefined,
-      params: mergedParams as Record<string, string | number | boolean>,
+      params: effectiveParams as Record<string, string | number | boolean>,
       tags: ['campaign', campaign.campaign_type],
     });
   });
@@ -127,18 +141,23 @@ async function processRecipient(
   if (result.success) {
     await markRecipientSent(recipient.id, result.messageId ?? '');
 
+    // Increment variant counter if A/B test
+    if (variant) {
+      incrementVariantSentCount(variant.id).catch(() => {});
+    }
+
     // Fire-and-forget logging — never block the engine
     logEmailSent({
       email_type: 'campaign',
       email_category: campaign.campaign_type,
       recipient_email: recipient.email,
       recipient_name: recipient.full_name,
-      subject: campaign.subject,
-      template_id: campaign.template_id,
+      subject: effectiveSubject,
+      template_id: effectiveTemplateId,
       brevo_message_id: result.messageId ?? null,
       campaign_id: campaign.id,
       status: 'sent',
-      params: mergedParams as Record<string, unknown>,
+      params: effectiveParams as Record<string, unknown>,
     }).catch(() => {});
 
     return true;
@@ -152,8 +171,8 @@ async function processRecipient(
     email_category: campaign.campaign_type,
     recipient_email: recipient.email,
     recipient_name: recipient.full_name,
-    subject: campaign.subject,
-    template_id: campaign.template_id,
+    subject: effectiveSubject,
+    template_id: effectiveTemplateId,
     campaign_id: campaign.id,
     status: 'failed',
     error: result.error ?? 'Unknown send error',
@@ -204,7 +223,10 @@ export async function processCampaign(
   let stopped = false;
 
   try {
-    // 2. Batch loop
+    // 2. Build A/B variant map (empty if no A/B test)
+    const variantMap = await buildVariantMap(campaignId);
+
+    // 3. Batch loop
     // eslint-disable-next-line no-constant-condition
     while (true) {
       const batch = await getNextBatch(campaignId, BATCH_SIZE);
@@ -214,7 +236,20 @@ export async function processCampaign(
       let batchFailed = 0;
 
       for (const recipient of batch) {
-        const success = await processRecipient(campaign, recipient);
+        // Check unsubscribe status before sending
+        const unsubscribed = await isUnsubscribed(recipient.email);
+        if (unsubscribed) {
+          await markRecipientSkipped(recipient.id, 'Отписан от имейли');
+          totalSkipped++;
+          continue;
+        }
+
+        // Resolve A/B variant (if any)
+        const variant = recipient.variant_id
+          ? variantMap.get(recipient.variant_id) ?? null
+          : null;
+
+        const success = await processRecipient(campaign, recipient, variant);
         if (success) {
           batchSent++;
         } else {
@@ -231,7 +266,7 @@ export async function processCampaign(
         `[campaign-engine] Batch complete: ${batchSent} sent, ${batchFailed} failed (campaign ${campaignId})`,
       );
 
-      // 3. Check if campaign was paused or cancelled between batches
+      // 4. Check if campaign was paused or cancelled between batches
       const stillActive = await isCampaignStillActive(campaignId);
       if (!stillActive) {
         console.log(
@@ -242,7 +277,7 @@ export async function processCampaign(
       }
     }
 
-    // 4. Mark campaign complete if we processed everything (not stopped)
+    // 5. Mark campaign complete if we processed everything (not stopped)
     if (!stopped) {
       await updateCampaignStatus(campaignId, 'sent');
       await recordCampaignAction({
@@ -261,7 +296,7 @@ export async function processCampaign(
       );
     }
 
-    // 5. Increment monthly usage (campaign type)
+    // 6. Increment monthly usage (campaign type)
     if (totalSent > 0) {
       await incrementUsage('campaign', totalSent).catch((err) => {
         console.error('[campaign-engine] Failed to increment usage:', err);

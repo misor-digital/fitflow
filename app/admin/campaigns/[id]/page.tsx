@@ -1,5 +1,6 @@
 import { requireStaff } from '@/lib/auth';
 import { getCampaignById, getCampaignHistory, getRecipientStats, getRecipientsPaginated } from '@/lib/data';
+import { getCampaignUnsubscribeCount } from '@/lib/email/unsubscribe';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import CampaignDetailView from '@/components/admin/CampaignDetailView';
@@ -33,10 +34,11 @@ export default async function CampaignDetailPage({ params, searchParams }: Campa
   const campaign = await getCampaignById(id);
   if (!campaign) notFound();
 
-  const [recipientStats, { recipients, total: recipientsTotal }, history] = await Promise.all([
+  const [recipientStats, { recipients, total: recipientsTotal }, history, unsubscribeCount] = await Promise.all([
     getRecipientStats(campaign.id),
     getRecipientsPaginated(campaign.id, rPage, RECIPIENTS_PER_PAGE),
     getCampaignHistory(campaign.id),
+    getCampaignUnsubscribeCount(campaign.id),
   ]);
 
   return (
@@ -62,6 +64,7 @@ export default async function CampaignDetailPage({ params, searchParams }: Campa
         recipientsPage={rPage}
         recipientsPerPage={RECIPIENTS_PER_PAGE}
         history={history}
+        unsubscribeCount={unsubscribeCount}
       />
     </div>
   );

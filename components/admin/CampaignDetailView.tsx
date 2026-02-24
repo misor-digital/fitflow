@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition, useCallback } from 'react';
+import { useState, useTransition, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import CampaignStatusBadge from './CampaignStatusBadge';
 import CampaignTypeBadge from './CampaignTypeBadge';
@@ -12,6 +12,33 @@ import type {
   EmailCampaignRecipientRow,
   EmailRecipientStatusEnum,
 } from '@/lib/supabase/types';
+
+interface ABVariantResult {
+  id: string;
+  variantLabel: string;
+  subject: string | null;
+  templateId: number | null;
+  recipientPercentage: number;
+  sentCount: number;
+  deliveredCount: number;
+  openedCount: number;
+  clickedCount: number;
+  openRate: number;
+  clickRate: number;
+}
+
+interface ABTestData {
+  campaignId: string;
+  variants: ABVariantResult[];
+  totalRecipients: number;
+  hasMinimumSample: boolean;
+}
+
+interface ABWinner {
+  winnerId: string;
+  variantLabel: string;
+  metric: number;
+}
 
 interface RecipientStats {
   pending: number;
@@ -32,6 +59,7 @@ interface CampaignDetailViewProps {
   recipientsPage: number;
   recipientsPerPage: number;
   history: EmailCampaignHistoryRow[];
+  unsubscribeCount?: number;
 }
 
 /** Mask email for GDPR: i***@gmail.com */
@@ -60,6 +88,7 @@ export default function CampaignDetailView({
   recipientsPage,
   recipientsPerPage,
   history,
+  unsubscribeCount = 0,
 }: CampaignDetailViewProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -72,6 +101,11 @@ export default function CampaignDetailView({
   const [success, setSuccess] = useState<string | null>(null);
   const [revealedEmails, setRevealedEmails] = useState<Set<string>>(new Set());
 
+  // A/B test state
+  const [abTestData, setAbTestData] = useState<ABTestData | null>(null);
+  const [abWinner, setAbWinner] = useState<ABWinner | null>(null);
+  const [abLoading, setAbLoading] = useState(false);
+
   const totalRecipients = campaign.total_recipients;
   const sentCount = campaign.sent_count;
   const failedCount = campaign.failed_count;
@@ -79,6 +113,28 @@ export default function CampaignDetailView({
   const progressPct = totalRecipients > 0 ? Math.round((sentCount / totalRecipients) * 100) : 0;
 
   const recipientsTotalPages = Math.max(1, Math.ceil(recipientsTotal / recipientsPerPage));
+
+  // Fetch A/B test data on mount
+  useEffect(() => {
+    async function fetchABTest() {
+      setAbLoading(true);
+      try {
+        const res = await fetch(`/api/admin/campaigns/${campaign.id}/ab-test`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json.data?.variants?.length > 0) {
+            setAbTestData(json.data);
+            setAbWinner(json.winner ?? null);
+          }
+        }
+      } catch {
+        // Non-critical
+      } finally {
+        setAbLoading(false);
+      }
+    }
+    fetchABTest();
+  }, [campaign.id]);
 
   // ------------------------------------------------------------------
   // Actions
@@ -158,6 +214,26 @@ export default function CampaignDetailView({
   function handleRestart() {
     // Create a copy — redirect to create page with pre-filled type
     router.push(`/admin/campaigns/create`);
+  }
+
+  function handleDuplicate() {
+    startTransition(async () => {
+      try {
+        setError(null);
+        const res = await fetch(`/api/admin/campaigns/${campaign.id}/duplicate`, {
+          method: 'POST',
+        });
+        if (!res.ok) {
+          const json = await res.json().catch(() => null);
+          setError(json?.error ?? `Грешка при дублиране (${res.status}).`);
+          return;
+        }
+        const { data } = await res.json();
+        router.push(`/admin/campaigns/${data.id}`);
+      } catch {
+        setError('Мрежова грешка при дублиране.');
+      }
+    });
   }
 
   function toggleEmailReveal(recipientId: string) {
@@ -287,6 +363,18 @@ export default function CampaignDetailView({
     );
   }
 
+  // Duplicate button — available for all statuses
+  actionButtons.push(
+    <button
+      key="duplicate"
+      onClick={handleDuplicate}
+      disabled={isPending}
+      className="border border-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-colors disabled:opacity-50"
+    >
+      📋 Дублирай
+    </button>,
+  );
+
   return (
     <div>
       {/* Feedback */}
@@ -321,7 +409,7 @@ export default function CampaignDetailView({
       </div>
 
       {/* Stats cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
         <div className="bg-white rounded-xl shadow-sm p-5">
           <p className="text-sm text-gray-500">Общо получатели</p>
           <p className="text-2xl font-bold text-gray-700">{totalRecipients}</p>
@@ -338,7 +426,100 @@ export default function CampaignDetailView({
           <p className="text-sm text-gray-500">Чакащи</p>
           <p className="text-2xl font-bold text-gray-600">{pendingCount}</p>
         </div>
+        <div className="bg-white rounded-xl shadow-sm p-5 border-l-4 border-orange-400">
+          <p className="text-sm text-gray-500">Отписани</p>
+          <p className="text-2xl font-bold text-orange-600">{unsubscribeCount}</p>
+        </div>
       </div>
+
+      {/* A/B Test Results */}
+      {abLoading && (
+        <div className="bg-white rounded-xl shadow-sm p-5 mb-6 text-center text-gray-400 text-sm">
+          Зареждане на A/B резултати...
+        </div>
+      )}
+      {abTestData && abTestData.variants.length > 0 && (
+        <div className="bg-white rounded-xl shadow-sm mb-6">
+          <div className="px-5 py-4 border-b">
+            <h2 className="text-lg font-semibold text-[var(--color-brand-navy)]">
+              A/B Тест Резултати
+            </h2>
+          </div>
+          <div className="p-5">
+            {!abTestData.hasMinimumSample && (
+              <div className="bg-amber-50 border border-amber-200 text-amber-700 rounded-lg px-4 py-3 mb-4 text-sm">
+                ⚠️ Минималният размер на извадката не е достигнат (50 доставени на вариант). Резултатите може да не са представителни.
+              </div>
+            )}
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b bg-gray-50 text-left">
+                    <th className="px-4 py-3 font-semibold text-gray-600">Метрика</th>
+                    {abTestData.variants.map((v) => (
+                      <th key={v.id} className="px-4 py-3 font-semibold text-gray-600">
+                        Вариант {v.variantLabel}
+                        {abWinner && abWinner.winnerId === v.id && (
+                          <span className="ml-2 text-green-600" title="Победител">🏆</span>
+                        )}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  <tr className="hover:bg-gray-50">
+                    <td className="px-4 py-3 font-medium text-gray-700">Тема</td>
+                    {abTestData.variants.map((v) => (
+                      <td key={v.id} className="px-4 py-3 text-gray-600">
+                        {v.subject ?? <span className="text-gray-400">По подразбиране</span>}
+                      </td>
+                    ))}
+                  </tr>
+                  <tr className="hover:bg-gray-50">
+                    <td className="px-4 py-3 font-medium text-gray-700">Изпратени</td>
+                    {abTestData.variants.map((v) => (
+                      <td key={v.id} className="px-4 py-3 text-gray-600">{v.sentCount}</td>
+                    ))}
+                  </tr>
+                  <tr className="hover:bg-gray-50">
+                    <td className="px-4 py-3 font-medium text-gray-700">Доставени</td>
+                    {abTestData.variants.map((v) => (
+                      <td key={v.id} className="px-4 py-3 text-gray-600">{v.deliveredCount}</td>
+                    ))}
+                  </tr>
+                  <tr className="hover:bg-gray-50">
+                    <td className="px-4 py-3 font-medium text-gray-700">Отворени</td>
+                    {abTestData.variants.map((v) => (
+                      <td key={v.id} className="px-4 py-3 text-gray-600">
+                        {v.openedCount} ({v.openRate}%)
+                      </td>
+                    ))}
+                  </tr>
+                  <tr className="hover:bg-gray-50">
+                    <td className="px-4 py-3 font-medium text-gray-700">Кликнати</td>
+                    {abTestData.variants.map((v) => (
+                      <td key={v.id} className="px-4 py-3 text-gray-600">
+                        {v.clickedCount} ({v.clickRate}%)
+                      </td>
+                    ))}
+                  </tr>
+                  <tr className="hover:bg-gray-50">
+                    <td className="px-4 py-3 font-medium text-gray-700">Разпределение</td>
+                    {abTestData.variants.map((v) => (
+                      <td key={v.id} className="px-4 py-3 text-gray-600">{v.recipientPercentage}%</td>
+                    ))}
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            {abWinner && (
+              <div className="mt-4 bg-green-50 border border-green-200 text-green-700 rounded-lg px-4 py-3 text-sm">
+                🏆 <strong>Победител: Вариант {abWinner.variantLabel}</strong> с {abWinner.metric}% (по избрания критерий)
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Progress bar */}
       {totalRecipients > 0 && (
@@ -411,6 +592,11 @@ export default function CampaignDetailView({
                           <span className={`font-medium ${statusInfo.className}`}>
                             {statusInfo.label}
                           </span>
+                          {r.status === 'skipped' && r.error?.includes('Отписан') && (
+                            <span className="ml-1.5 bg-orange-100 text-orange-700 text-xs px-1.5 py-0.5 rounded">
+                              Отписан
+                            </span>
+                          )}
                         </td>
                         <td className="px-4 py-3 text-gray-500 text-xs">
                           {r.sent_at

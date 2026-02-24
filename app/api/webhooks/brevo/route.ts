@@ -14,6 +14,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { updateEmailLogFromWebhook } from '@/lib/data/email-log';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { recordUnsubscribe } from '@/lib/email/unsubscribe';
 import type { EmailRecipientStatusEnum } from '@/lib/supabase/types';
 
 const WEBHOOK_SECRET = process.env.BREVO_WEBHOOK_SECRET;
@@ -114,6 +115,16 @@ async function processWebhookEvent(payload: BrevoWebhookPayload): Promise<void> 
           }
         }
       }
+    }
+
+    // Handle unsubscribe events — record in local unsubscribe list
+    if (payload.event === 'unsubscribed' && payload.email) {
+      await recordUnsubscribe(
+        payload.email,
+        'brevo',
+        campaignId ?? undefined,
+        payload.reason,
+      );
     }
   } catch (err) {
     console.error(`Error processing webhook event ${payload.event} for ${messageId}:`, err);

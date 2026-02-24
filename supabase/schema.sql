@@ -1020,6 +1020,7 @@ CREATE TABLE email_campaign_recipients (
   email           TEXT NOT NULL,
   full_name       TEXT,
   preorder_id     UUID REFERENCES preorders(id) ON DELETE SET NULL,
+  variant_id      UUID REFERENCES email_ab_variants(id) ON DELETE SET NULL,
   params          JSONB DEFAULT '{}'::jsonb,
   status          email_recipient_status NOT NULL DEFAULT 'pending',
   brevo_message_id TEXT,
@@ -1198,6 +1199,60 @@ CREATE POLICY "emu_service_role" ON email_monthly_usage
 
 GRANT SELECT ON email_monthly_usage TO authenticated;
 GRANT ALL ON email_monthly_usage TO service_role;
+
+
+-- ---------- email_ab_variants ----------
+
+CREATE TABLE email_ab_variants (
+  id                   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  campaign_id          UUID NOT NULL REFERENCES email_campaigns(id) ON DELETE CASCADE,
+  variant_label        TEXT NOT NULL DEFAULT 'A',
+  subject              TEXT,
+  template_id          INTEGER,
+  params               JSONB DEFAULT '{}'::jsonb,
+  recipient_percentage INTEGER NOT NULL DEFAULT 50,
+  sent_count           INTEGER NOT NULL DEFAULT 0,
+  delivered_count      INTEGER NOT NULL DEFAULT 0,
+  opened_count         INTEGER NOT NULL DEFAULT 0,
+  clicked_count        INTEGER NOT NULL DEFAULT 0,
+  created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+COMMENT ON TABLE email_ab_variants IS 'A/B test variants for email campaigns — each variant can override subject, template, or params';
+
+ALTER TABLE email_ab_variants ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "eav_service_role" ON email_ab_variants
+  FOR ALL TO service_role
+  USING (true) WITH CHECK (true);
+
+GRANT SELECT ON email_ab_variants TO authenticated;
+GRANT ALL ON email_ab_variants TO service_role;
+
+
+-- ---------- email_unsubscribes ----------
+
+CREATE TABLE email_unsubscribes (
+  id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  email            TEXT NOT NULL UNIQUE,
+  source           TEXT NOT NULL DEFAULT 'brevo',
+  campaign_id      UUID REFERENCES email_campaigns(id) ON DELETE SET NULL,
+  reason           TEXT,
+  unsubscribed_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+COMMENT ON TABLE email_unsubscribes IS 'Global unsubscribe list — recipients who opted out of marketing emails';
+
+CREATE INDEX idx_email_unsubscribes_email ON email_unsubscribes(email);
+
+ALTER TABLE email_unsubscribes ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "eu_service_role" ON email_unsubscribes
+  FOR ALL TO service_role
+  USING (true) WITH CHECK (true);
+
+GRANT SELECT ON email_unsubscribes TO authenticated;
+GRANT ALL ON email_unsubscribes TO service_role;
 
 
 -- ============================================================================

@@ -4,7 +4,14 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import type { EmailCampaignTypeEnum } from '@/lib/supabase/types';
 
-type WizardStep = 'type' | 'details' | 'audience' | 'review';
+type WizardStep = 'type' | 'details' | 'ab-test' | 'audience' | 'review';
+
+interface ABVariantForm {
+  variantLabel: string;
+  subject: string;
+  templateId: string;
+  recipientPercentage: number;
+}
 
 interface CampaignFormData {
   type: EmailCampaignTypeEnum | '';
@@ -15,11 +22,15 @@ interface CampaignFormData {
   templateId: string;
   params: string; // JSON string
   filter: Record<string, unknown>;
+  abEnabled: boolean;
+  abVariants: ABVariantForm[];
+  abWinnerMetric: 'open_rate' | 'click_rate';
 }
 
 const STEPS: { key: WizardStep; label: string }[] = [
   { key: 'type', label: 'Тип кампания' },
   { key: 'details', label: 'Детайли' },
+  { key: 'ab-test', label: 'A/B Тест' },
   { key: 'audience', label: 'Аудитория' },
   { key: 'review', label: 'Преглед' },
 ];
@@ -84,6 +95,12 @@ export default function CampaignCreateWizard() {
     templateId: '',
     params: '{}',
     filter: {},
+    abEnabled: false,
+    abVariants: [
+      { variantLabel: 'A', subject: '', templateId: '', recipientPercentage: 50 },
+      { variantLabel: 'B', subject: '', templateId: '', recipientPercentage: 50 },
+    ],
+    abWinnerMetric: 'open_rate',
   });
   const [previewCount, setPreviewCount] = useState<number | null>(null);
   const [isLoadingPreview, setIsLoadingPreview] = useState(false);
@@ -100,6 +117,8 @@ export default function CampaignCreateWizard() {
         return formData.type !== '';
       case 'details':
         return formData.name.trim() !== '' && formData.subject.trim() !== '';
+      case 'ab-test':
+        return true; // Optional step — always valid
       case 'audience':
         return true;
       case 'review':
@@ -184,6 +203,23 @@ export default function CampaignCreateWizard() {
         }
 
         const { data } = await res.json();
+
+        // Create A/B test if enabled
+        if (formData.abEnabled) {
+          const abVariants = formData.abVariants.map((v) => ({
+            variantLabel: v.variantLabel,
+            subject: v.subject || undefined,
+            templateId: v.templateId ? Number(v.templateId) : undefined,
+            recipientPercentage: v.recipientPercentage,
+          }));
+
+          await fetch(`/api/admin/campaigns/${data.id}/ab-test`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ variants: abVariants }),
+          });
+        }
+
         router.push(`/admin/campaigns/${data.id}`);
       } catch {
         setError('Мрежова грешка. Опитайте отново.');
@@ -363,7 +399,141 @@ export default function CampaignCreateWizard() {
         </div>
       )}
 
-      {/* Step 3: Audience */}
+      {/* Step 3: A/B Test (optional) */}
+      {step === 'ab-test' && (
+        <div>
+          <h2 className="text-xl font-bold text-[var(--color-brand-navy)] mb-4">
+            A/B Тест
+          </h2>
+          <p className="text-sm text-gray-500 mb-4">
+            По избор: тествайте различни теми или шаблони, за да разберете кое работи по-добре.
+          </p>
+
+          <label className="flex items-center gap-3 mb-6 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={formData.abEnabled}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, abEnabled: e.target.checked }))
+              }
+              className="h-5 w-5 accent-[var(--color-brand-orange)] rounded"
+            />
+            <span className="text-sm font-medium text-gray-700">
+              Активирай A/B тест
+            </span>
+          </label>
+
+          {formData.abEnabled && (
+            <div className="space-y-6 max-w-xl">
+              {formData.abVariants.map((variant, idx) => (
+                <div key={variant.variantLabel} className="bg-white rounded-xl border p-4 space-y-3">
+                  <h3 className="font-semibold text-[var(--color-brand-navy)]">
+                    Вариант {variant.variantLabel}
+                  </h3>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Тема на имейла (замества кампанията)
+                    </label>
+                    <input
+                      type="text"
+                      value={variant.subject}
+                      onChange={(e) => {
+                        const updated = [...formData.abVariants];
+                        updated[idx] = { ...updated[idx], subject: e.target.value };
+                        setFormData((prev) => ({ ...prev, abVariants: updated }));
+                      }}
+                      className="w-full border rounded-lg px-3 py-2 text-sm"
+                      placeholder={`Тема за вариант ${variant.variantLabel}`}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Brevo шаблон ID (замества кампанията)
+                    </label>
+                    <input
+                      type="number"
+                      value={variant.templateId}
+                      onChange={(e) => {
+                        const updated = [...formData.abVariants];
+                        updated[idx] = { ...updated[idx], templateId: e.target.value };
+                        setFormData((prev) => ({ ...prev, abVariants: updated }));
+                      }}
+                      className="w-full border rounded-lg px-3 py-2 text-sm"
+                      placeholder="напр. 12"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Процент получатели: {variant.recipientPercentage}%
+                    </label>
+                    <input
+                      type="range"
+                      min={10}
+                      max={90}
+                      value={variant.recipientPercentage}
+                      onChange={(e) => {
+                        const newVal = Number(e.target.value);
+                        const updated = [...formData.abVariants];
+                        updated[idx] = { ...updated[idx], recipientPercentage: newVal };
+                        // Auto-adjust the other variant to sum to 100
+                        const otherIdx = idx === 0 ? 1 : 0;
+                        updated[otherIdx] = {
+                          ...updated[otherIdx],
+                          recipientPercentage: 100 - newVal,
+                        };
+                        setFormData((prev) => ({ ...prev, abVariants: updated }));
+                      }}
+                      className="w-full"
+                    />
+                  </div>
+                </div>
+              ))}
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Критерий за победител
+                </label>
+                <div className="flex gap-4">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="abMetric"
+                      checked={formData.abWinnerMetric === 'open_rate'}
+                      onChange={() =>
+                        setFormData((prev) => ({ ...prev, abWinnerMetric: 'open_rate' }))
+                      }
+                      className="accent-[var(--color-brand-orange)]"
+                    />
+                    <span className="text-sm">Процент отваряне</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="abMetric"
+                      checked={formData.abWinnerMetric === 'click_rate'}
+                      onChange={() =>
+                        setFormData((prev) => ({ ...prev, abWinnerMetric: 'click_rate' }))
+                      }
+                      className="accent-[var(--color-brand-orange)]"
+                    />
+                    <span className="text-sm">Процент кликване</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 text-xs text-gray-500 bg-gray-50 rounded-lg p-3">
+                <span>ℹ️</span>
+                <span>
+                  Получателите ще бъдат разделени на {formData.abVariants[0].recipientPercentage}% / {formData.abVariants[1].recipientPercentage}%.
+                  Победителят ще бъде определен след изпращане при минимум 50 доставени на вариант.
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Step 4: Audience */}
       {step === 'audience' && (
         <div>
           <h2 className="text-xl font-bold text-[var(--color-brand-navy)] mb-4">
@@ -463,7 +633,7 @@ export default function CampaignCreateWizard() {
         </div>
       )}
 
-      {/* Step 4: Review */}
+      {/* Step 5: Review */}
       {step === 'review' && (
         <div>
           <h2 className="text-xl font-bold text-[var(--color-brand-navy)] mb-4">
@@ -494,6 +664,21 @@ export default function CampaignCreateWizard() {
                 <div>
                   <p className="text-gray-500">Brevo шаблон</p>
                   <p className="font-medium">#{formData.templateId}</p>
+                </div>
+              )}
+              {formData.abEnabled && (
+                <div className="col-span-2">
+                  <p className="text-gray-500">A/B Тест</p>
+                  <div className="flex flex-wrap gap-2 mt-1">
+                    {formData.abVariants.map((v) => (
+                      <span key={v.variantLabel} className="bg-blue-50 text-blue-700 text-xs px-2 py-1 rounded">
+                        {v.variantLabel}: {v.subject || 'Тема по подразбиране'} ({v.recipientPercentage}%)
+                      </span>
+                    ))}
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1">
+                    Критерий: {formData.abWinnerMetric === 'open_rate' ? 'Процент отваряне' : 'Процент кликване'}
+                  </p>
                 </div>
               )}
               {Object.keys(formData.filter).filter((k) => formData.filter[k]).length > 0 && (

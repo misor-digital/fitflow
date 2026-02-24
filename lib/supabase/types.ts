@@ -662,6 +662,7 @@ export interface EmailCampaignRecipientRow {
   brevo_message_id: string | null;
   sent_at: string | null;
   error: string | null;
+  variant_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -672,6 +673,7 @@ export interface EmailCampaignRecipientInsert {
   full_name?: string | null;
   preorder_id?: string | null;
   params?: Record<string, unknown>;
+  variant_id?: string | null;
 }
 
 export interface EmailCampaignHistoryRow {
@@ -744,6 +746,66 @@ export interface EmailMonthlyUsageRow {
   monthly_limit: number;
   alert_sent_80: boolean;
   alert_sent_95: boolean;
+}
+
+// ============================================================================
+// Email A/B Variant Types
+// ============================================================================
+
+export interface EmailABVariantRow {
+  id: string;
+  campaign_id: string;
+  variant_label: string;
+  subject: string | null;
+  template_id: number | null;
+  params: Record<string, unknown>;
+  recipient_percentage: number;
+  sent_count: number;
+  delivered_count: number;
+  opened_count: number;
+  clicked_count: number;
+  created_at: string;
+}
+
+export interface EmailABVariantInsert {
+  campaign_id: string;
+  variant_label: string;
+  subject?: string | null;
+  template_id?: number | null;
+  params?: Record<string, unknown>;
+  recipient_percentage: number;
+}
+
+export interface EmailABVariantUpdate {
+  variant_label?: string;
+  subject?: string | null;
+  template_id?: number | null;
+  params?: Record<string, unknown>;
+  recipient_percentage?: number;
+  sent_count?: number;
+  delivered_count?: number;
+  opened_count?: number;
+  clicked_count?: number;
+}
+
+// ============================================================================
+// Email Unsubscribe Types
+// ============================================================================
+
+export interface EmailUnsubscribeRow {
+  id: string;
+  email: string;
+  source: string;
+  campaign_id: string | null;
+  reason: string | null;
+  unsubscribed_at: string;
+}
+
+export interface EmailUnsubscribeInsert {
+  email: string;
+  source?: string;
+  campaign_id?: string | null;
+  reason?: string | null;
 }
 
 // ============================================================================
@@ -1010,6 +1072,28 @@ export interface Database {
         Insert: ToRecord<Omit<EmailMonthlyUsageRow, 'total_sent'>>;
         Update: ToRecord<Partial<Omit<EmailMonthlyUsageRow, 'total_sent'>>>;
         Relationships: [];
+      };
+      email_ab_variants: {
+        Row: ToRecord<EmailABVariantRow>;
+        Insert: ToRecord<EmailABVariantInsert>;
+        Update: ToRecord<EmailABVariantUpdate>;
+        Relationships: [{
+          foreignKeyName: 'email_ab_variants_campaign_id_fkey';
+          columns: ['campaign_id'];
+          referencedRelation: 'email_campaigns';
+          referencedColumns: ['id'];
+        }];
+      };
+      email_unsubscribes: {
+        Row: ToRecord<EmailUnsubscribeRow>;
+        Insert: ToRecord<EmailUnsubscribeInsert>;
+        Update: ToRecord<Partial<EmailUnsubscribeInsert>>;
+        Relationships: [{
+          foreignKeyName: 'email_unsubscribes_campaign_id_fkey';
+          columns: ['campaign_id'];
+          referencedRelation: 'email_campaigns';
+          referencedColumns: ['id'];
+        }];
       };
     };
     Views: Record<string, never>;

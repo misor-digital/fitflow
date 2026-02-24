@@ -12,11 +12,18 @@ import {
   updateCampaignStatus,
   getCampaignById,
   updateCampaign,
+  createCampaign,
 } from '@/lib/data/email-campaigns';
 import { recordCampaignAction } from '@/lib/data/email-campaign-history';
 import { getRecipientStats } from '@/lib/data/email-recipients';
 import { processCampaign } from './campaign-engine';
-import type { EmailCampaignStatusEnum } from '@/lib/supabase/types';
+import { assignRecipientsToVariants, getABVariants } from './ab-testing';
+import {
+  buildPreorderConversionRecipients,
+  buildSubscriberRecipients,
+  buildCustomerRecipients,
+} from './recipient-builder';
+import type { EmailCampaignStatusEnum, EmailCampaignRow } from '@/lib/supabase/types';
 
 // ---------------------------------------------------------------------------
 // Transition map
@@ -84,6 +91,13 @@ export async function startCampaign(
       targetFilter: campaign.target_filter,
     },
   });
+
+  // Assign recipients to A/B variants (if configured)
+  const variants = await getABVariants(campaignId);
+  if (variants.length > 0) {
+    await assignRecipientsToVariants(campaignId);
+    console.log(`[campaign-lifecycle] A/B variants assigned for campaign ${campaignId}`);
+  }
 
   // Process recipients
   await processCampaign(campaignId, userId);
@@ -240,4 +254,81 @@ export async function completeCampaign(
       bounced: stats.bounced,
     },
   });
+}
+
+// ---------------------------------------------------------------------------
+// Campaign duplication
+// ---------------------------------------------------------------------------
+
+/**
+ * Duplicate a campaign — creates a new draft campaign with the same settings,
+ * audience filter, template, and params. Recipients are re-populated from the filter.
+ * A/B test config is NOT duplicated (must be re-created).
+ */
+export async function duplicateCampaign(
+  campaignId: string,
+  userId: string,
+): Promise<EmailCampaignRow> {
+  const original = await getCampaignById(campaignId);
+  if (!original) throw new Error(`Campaign ${campaignId} not found.`);
+
+  // Create new draft campaign with "[Копие] {originalName}" naming
+  const newCampaign = await createCampaign({
+    name: `[Копие] ${original.name}`,
+    subject: original.subject,
+    campaign_type: original.campaign_type,
+    target_list_type: original.target_list_type,
+    template_id: original.template_id,
+    target_filter: original.target_filter,
+    params: original.params,
+    created_by: userId,
+  });
+
+  // Re-populate recipients from the filter
+  let recipientCount = 0;
+
+  switch (original.campaign_type) {
+    case 'preorder-conversion':
+      recipientCount = await buildPreorderConversionRecipients(
+        newCampaign.id,
+        original.target_filter as never,
+      );
+      break;
+    case 'lifecycle':
+      recipientCount = await buildSubscriberRecipients(
+        newCampaign.id,
+        original.target_filter as never,
+      );
+      break;
+    case 'promotional':
+      recipientCount = await buildCustomerRecipients(
+        newCampaign.id,
+        original.target_filter as never,
+      );
+      break;
+    // 'one-off' — no auto-population
+  }
+
+  // Update total_recipients
+  if (recipientCount > 0) {
+    await updateCampaign(newCampaign.id, {
+      total_recipients: recipientCount,
+      updated_by: userId,
+    });
+  }
+
+  // Audit log
+  await recordCampaignAction({
+    campaign_id: newCampaign.id,
+    action: 'duplicated',
+    changed_by: userId,
+    metadata: {
+      originalCampaignId: original.id,
+      originalName: original.name,
+      recipientCount,
+    },
+    notes: `Дублирана от „${original.name}"`,
+  });
+
+  return { ...newCampaign, total_recipients: recipientCount };
 }
