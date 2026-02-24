@@ -9,12 +9,13 @@ import {
   incrementPromoCodeUsage,
   getPreorderByToken,
   markPreorderConverted,
+  getDeliveryCycleById,
 } from '@/lib/data';
 import { validateAddress, addressInputToSnapshot } from '@/lib/order';
 import { isSubscriptionBox, EMAIL_REGEX, isValidPhone } from '@/lib/catalog';
 import { checkRateLimit } from '@/lib/utils/rateLimit';
 import { trackLeadCapi, hashForMeta, generateEventId } from '@/lib/analytics';
-import type { OrderInsert, ShippingAddressSnapshot, Preorder, BoxType } from '@/lib/supabase/types';
+import type { OrderInsert, ShippingAddressSnapshot, Preorder, BoxType, OrderType } from '@/lib/supabase/types';
 import type { AddressInput } from '@/lib/order';
 
 // ============================================================================
@@ -82,6 +83,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       selectedAddressId,
       address,
       conversionToken,
+      orderType: rawOrderType,
+      deliveryCycleId,
     } = data as {
       fullName?: string;
       email?: string;
@@ -104,6 +107,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       selectedAddressId?: string | null;
       address?: AddressInput;
       conversionToken?: string | null;
+      orderType?: string;
+      deliveryCycleId?: string | null;
     };
 
     // Required fields
@@ -204,6 +209,57 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         { error: 'Абонаментните кутии изискват регистрация.' },
         { status: 403 },
       );
+    }
+
+    // Validate order_type (optional, defaults to 'direct')
+    const VALID_ORDER_TYPES: OrderType[] = ['onetime-mystery', 'onetime-revealed', 'direct'];
+    const orderType: OrderType = rawOrderType && typeof rawOrderType === 'string'
+      ? rawOrderType as OrderType
+      : 'direct';
+
+    if (!VALID_ORDER_TYPES.includes(orderType)) {
+      return NextResponse.json(
+        { error: 'Невалиден тип поръчка.' },
+        { status: 400 },
+      );
+    }
+
+    // 'subscription' order type is not allowed via direct order API
+    if (rawOrderType === 'subscription') {
+      return NextResponse.json(
+        { error: 'Абонаментни поръчки не могат да се създават директно.' },
+        { status: 400 },
+      );
+    }
+
+    // Validate delivery_cycle_id (optional)
+    let validatedCycleId: string | null = null;
+    if (deliveryCycleId && typeof deliveryCycleId === 'string') {
+      const cycle = await getDeliveryCycleById(deliveryCycleId);
+      if (!cycle) {
+        return NextResponse.json(
+          { error: 'Посоченият цикъл на доставка не е намерен.' },
+          { status: 400 },
+        );
+      }
+
+      // Validate cycle status based on order type
+      if (orderType === 'onetime-mystery' && cycle.status !== 'upcoming') {
+        return NextResponse.json(
+          { error: 'Mystery кутия може да се поръча само за предстоящ цикъл.' },
+          { status: 400 },
+        );
+      }
+      if (orderType === 'onetime-revealed') {
+        if (cycle.status !== 'delivered' || !cycle.is_revealed) {
+          return NextResponse.json(
+            { error: 'Revealed кутия може да се поръча само за разкрит цикъл.' },
+            { status: 400 },
+          );
+        }
+      }
+
+      validatedCycleId = cycle.id;
     }
 
     // ------------------------------------------------------------------
@@ -364,7 +420,24 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       original_price_eur: priceInfo.originalPriceEur ?? null,
       final_price_eur: priceInfo.finalPriceEur ?? null,
       converted_from_preorder_id: preorder?.id || null,
+      delivery_cycle_id: validatedCycleId ?? undefined,
+      order_type: orderType,
     };
+
+    // For 'onetime-revealed' orders, skip personalization (contents are fixed)
+    if (orderType === 'onetime-revealed') {
+      orderData.wants_personalization = false;
+      orderData.sports = null;
+      orderData.sport_other = null;
+      orderData.colors = null;
+      orderData.flavors = null;
+      orderData.flavor_other = null;
+      orderData.dietary = null;
+      orderData.dietary_other = null;
+      orderData.size_upper = null;
+      orderData.size_lower = null;
+      orderData.additional_notes = null;
+    }
 
     const order = await createOrder(orderData);
 
