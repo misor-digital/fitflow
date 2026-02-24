@@ -155,7 +155,7 @@ export function derivePromoStatus(promo: PromoCodeRow): PromoStatus {
 
 export interface PromoCodeFilters {
   search?: string;
-  status?: 'all' | 'active' | 'inactive' | 'expired' | 'exhausted';
+  status?: 'all' | 'active' | 'inactive' | 'expired' | 'exhausted' | 'scheduled';
   sort?: 'newest' | 'oldest' | 'most-used' | 'code-asc';
   page?: number;
   limit?: number;
@@ -226,7 +226,7 @@ export const listPromoCodes = cache(
     let filtered = rows ?? [];
 
     // JS-level status filtering for complex statuses
-    if (status === 'active' || status === 'exhausted') {
+    if (status === 'active' || status === 'exhausted' || status === 'scheduled') {
       filtered = filtered.filter((p) => derivePromoStatus(p) === status);
     }
 
