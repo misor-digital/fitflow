@@ -16,6 +16,8 @@ export type BoxType =
 // Preorders Table
 // ============================================================================
 
+export type PreorderConversionStatus = 'pending' | 'converted' | 'expired';
+
 export interface PreorderInsert {
   full_name: string;
   email: string;
@@ -45,6 +47,11 @@ export interface Preorder extends PreorderInsert {
   id: string;
   order_id: string;
   user_id: string | null;
+  // Conversion tracking (added in Phase 1)
+  conversion_token: string | null;
+  conversion_token_expires_at: string | null;
+  conversion_status: PreorderConversionStatus;
+  converted_to_order_id: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -435,8 +442,18 @@ export interface Database {
       preorders: {
         Row: ToRecord<Preorder>;
         Insert: ToRecord<PreorderInsert>;
-        Update: ToRecord<Partial<PreorderInsert>>;
-        Relationships: [];
+        Update: ToRecord<Partial<PreorderInsert> & {
+          conversion_token?: string | null;
+          conversion_token_expires_at?: string | null;
+          conversion_status?: PreorderConversionStatus;
+          converted_to_order_id?: string | null;
+        }>;
+        Relationships: [{
+          foreignKeyName: 'preorders_converted_to_order_id_fkey';
+          columns: ['converted_to_order_id'];
+          referencedRelation: 'orders';
+          referencedColumns: ['id'];
+        }];
       };
       box_types: {
         Row: ToRecord<BoxTypeRow>;
@@ -537,6 +554,7 @@ export interface Database {
       user_type: UserType;
       staff_role: StaffRole;
       order_status: OrderStatus;
+      preorder_conversion_status: PreorderConversionStatus;
     };
     CompositeTypes: Record<string, never>;
   };
