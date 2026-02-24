@@ -48,6 +48,11 @@ export default function Footer() {
             <h4 className="text-base sm:text-lg font-semibold mb-3 sm:mb-4 text-[var(--color-brand-orange)]">Поддръжка</h4>
             <ul className="space-y-1.5 sm:space-y-2">
               <li>
+                <Link href="/order/track" className="text-gray-300 hover:text-[var(--color-brand-orange)] transition-colors text-xs sm:text-sm">
+                  Проследи поръчка
+                </Link>
+              </li>
+              <li>
                 <Link href="/faqs" className="text-gray-300 hover:text-[var(--color-brand-orange)] transition-colors text-xs sm:text-sm">
                   Често задавани въпроси
                 </Link>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
+import OrderTrackingWidget from "@/components/OrderTrackingWidget";
 import ConditionalScripts from "@/components/ConditionalScripts";
 import AuthProvider from "@/components/AuthProvider";
 
@@ -28,6 +29,7 @@ export default function RootLayout({
           {children}
         </AuthProvider>
         <CookieConsentBanner />
+        <OrderTrackingWidget />
         <ConditionalScripts 
           googleAnalyticsId={process.env.NEXT_PUBLIC_GA_ID ?? ''}
           facebookPixelId={process.env.NEXT_PUBLIC_META_PIXEL_ID ?? ''}
