@@ -1,0 +1,50 @@
+name: Cron - Generate Subscription Orders
+
+on:
+  schedule:
+    # Every day at 06:00 UTC (matches Vercel cron)
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      cycle_id:
+        description: 'Specific delivery cycle ID (leave empty for auto-detect)'
+        required: false
+        type: string
+
+env:
+  APP_URL: ${{ secrets.APP_URL }}
+  CRON_SECRET: ${{ secrets.CRON_SECRET }}
+
+jobs:
+  generate-orders:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Trigger order generation
+        id: generate
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -X GET \
+            -H "Authorization: Bearer $CRON_SECRET" \
+            -H "Content-Type: application/json" \
+            "$APP_URL/api/cron/generate-orders")
+
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY_RESPONSE=$(echo "$RESPONSE" | sed '$d')
+
+          echo "status=$HTTP_CODE" >> $GITHUB_OUTPUT
+          echo "body=$BODY_RESPONSE" >> $GITHUB_OUTPUT
+
+          echo "### Order Generation Result" >> $GITHUB_STEP_SUMMARY
+          echo "**Status**: $HTTP_CODE" >> $GITHUB_STEP_SUMMARY
+          echo '```json' >> $GITHUB_STEP_SUMMARY
+          echo "$BODY_RESPONSE" | jq '.' >> $GITHUB_STEP_SUMMARY || echo "$BODY_RESPONSE" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Check result
+        if: steps.generate.outputs.status != '200'
+        run: |
+          echo "::error::Order generation failed with status ${{ steps.generate.outputs.status }}"
+          echo "Response: ${{ steps.generate.outputs.body }}"
+          exit 1

@@ -164,6 +164,21 @@ export const getSiteConfig = cache(async (key: string): Promise<string | null> =
 });
 
 /**
+ * Upsert a site config value (insert or update on conflict).
+ * Uses service-role client — bypasses RLS.
+ */
+export async function upsertSiteConfig(key: string, value: string): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('site_config')
+    .upsert({ key, value }, { onConflict: 'key' });
+
+  if (error) {
+    console.error(`Error upserting site_config key "${key}":`, error);
+    throw error;
+  }
+}
+
+/**
  * Get EUR to BGN conversion rate
  * Throws error if not configured in database
  */

@@ -44,3 +44,11 @@ export {
   CYCLE_STATUS_COLORS,
   BULGARIAN_MONTHS,
 } from './derived';
+
+// ============================================================================
+// Generation Logic & Cron Notifications
+// ============================================================================
+// NOTE: generate.ts and notifications.ts are NOT re-exported here because they
+// import server-only modules (lib/data, lib/supabase/admin). Import them
+// directly from '@/lib/delivery/generate' and '@/lib/delivery/notifications'
+// in server-only contexts (API routes, server components).

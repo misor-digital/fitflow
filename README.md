@@ -131,6 +131,15 @@ BREVO_SENDER_NAME=FitFlow
 NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
 NEXT_PUBLIC_META_PIXEL_ID=your-pixel-id
 META_CAPI_ACCESS_TOKEN=your-capi-token
+
+# Cron Job Authentication
+CRON_SECRET=your-cron-secret-here
+ADMIN_EMAIL=admin@fitflow.bg
+
+# Brevo Cron Notification Template IDs (optional — set after creating templates)
+# BREVO_CRON_SUCCESS_TEMPLATE_ID=0
+# BREVO_CRON_ERRORS_TEMPLATE_ID=0
+# BREVO_CRON_FAILURE_TEMPLATE_ID=0
 ```
 
 ### Development

@@ -2,11 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { verifySession } from '@/lib/auth';
 import { STAFF_MANAGEMENT_ROLES } from '@/lib/auth/permissions';
-import {
-  getUpcomingCycle,
-  getDeliveryCycleById,
-  generateOrdersForCycle,
-} from '@/lib/data';
+import { generateOrdersForActiveCycle, generateOrdersForSpecificCycle } from '@/lib/delivery/generate';
 import { checkRateLimit } from '@/lib/utils/rateLimit';
 
 // ============================================================================
@@ -71,42 +67,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // ------------------------------------------------------------------
-    // Step 4: Determine target cycle
+    // Step 4: Generate orders (shared logic)
     // ------------------------------------------------------------------
-    let targetCycleId: string;
-
-    if (cycleId) {
-      // Explicit cycle — verify it exists
-      const cycle = await getDeliveryCycleById(cycleId);
-      if (!cycle) {
-        return NextResponse.json(
-          { error: 'Цикълът не е намерен.' },
-          { status: 404 },
-        );
-      }
-      targetCycleId = cycle.id;
-    } else {
-      // Auto-detect: earliest upcoming cycle where delivery_date <= today
-      const upcomingCycle = await getUpcomingCycle();
-      if (!upcomingCycle) {
-        return NextResponse.json({
-          message: 'Няма предстоящ цикъл за генериране.',
-        });
-      }
-
-      const today = new Date().toISOString().split('T')[0];
-      if (upcomingCycle.delivery_date > today) {
-        return NextResponse.json({
-          message: 'Няма предстоящ цикъл за генериране.',
-        });
-      }
-      targetCycleId = upcomingCycle.id;
-    }
-
-    // ------------------------------------------------------------------
-    // Step 5: Generate orders
-    // ------------------------------------------------------------------
-    const result = await generateOrdersForCycle(targetCycleId, performedBy);
+    const result = cycleId
+      ? await generateOrdersForSpecificCycle(cycleId, performedBy)
+      : await generateOrdersForActiveCycle(performedBy);
 
     return NextResponse.json(result);
   } catch (error) {

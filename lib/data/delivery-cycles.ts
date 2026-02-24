@@ -99,6 +99,30 @@ export const getUpcomingCycle = cache(
 );
 
 /**
+ * Get the earliest upcoming cycle whose delivery_date <= today.
+ * This is the cycle eligible for automatic order generation by the cron job.
+ */
+export async function getEarliestEligibleCycle(): Promise<DeliveryCycleRow | null> {
+  const today = new Date().toISOString().split('T')[0];
+
+  const { data, error } = await supabaseAdmin
+    .from('delivery_cycles')
+    .select('*')
+    .eq('status', 'upcoming')
+    .lte('delivery_date', today)
+    .order('delivery_date', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Error fetching earliest eligible cycle:', error);
+    return null;
+  }
+
+  return data;
+}
+
+/**
  * Get the most recently revealed cycle.
  */
 export const getCurrentRevealedCycle = cache(
