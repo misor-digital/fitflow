@@ -58,3 +58,20 @@ export * from './brevo';
 // Usage tracking (new)
 export { checkUsage, setUsageChecker, getWarningLevel } from './usage';
 export type { UsageCheck, UsageChecker } from './usage';
+
+// Campaign engine
+export { processCampaign } from './campaign-engine';
+export type { ProcessCampaignResult } from './campaign-engine';
+export {
+  startCampaign,
+  scheduleCampaign,
+  pauseCampaign,
+  resumeCampaign,
+  cancelCampaign,
+  completeCampaign,
+} from './campaign-lifecycle';
+export {
+  buildPreorderConversionRecipients,
+  buildSubscriberRecipients,
+  buildCustomerRecipients,
+} from './recipient-builder';
