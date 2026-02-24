@@ -10,7 +10,7 @@ export default async function AdminDashboard() {
 
   // Basic stats
   const [orderCount, staffCount] = await Promise.all([
-    supabaseAdmin.from('preorders').select('id', { count: 'exact', head: true }),
+    supabaseAdmin.from('orders').select('id', { count: 'exact', head: true }),
     supabaseAdmin.from('user_profiles').select('id', { count: 'exact', head: true }).eq('user_type', 'staff'),
   ]);
 
