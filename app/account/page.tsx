@@ -1,5 +1,4 @@
 import { requireAuth } from '@/lib/auth';
-import PreorderLinkBanner from '@/components/PreorderLinkBanner';
 
 export const metadata = {
   title: 'Моят профил | FitFlow',
@@ -10,7 +9,6 @@ export default async function AccountPage() {
 
   return (
     <div>
-      <PreorderLinkBanner />
 
       <h1 className="text-2xl font-bold text-[var(--color-brand-navy)] mb-6">
         Моят профил

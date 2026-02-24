@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState, useEffect, useCallback } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { useFormStore } from '@/store/formStore';
+import { useOrderStore } from '@/store/orderStore';
 import { useAuthStore } from '@/store/authStore';
 import { createClient } from '@/lib/supabase/browser';
 import { trackCTAClick } from '@/lib/analytics';
@@ -14,7 +14,7 @@ export default function Navigation() {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
-  const { promoCode } = useFormStore();
+  const { promoCode } = useOrderStore();
   const { user, isLoading } = useAuthStore();
 
   // ---- Fix P2: Cache discount in state, only fetch when promoCode changes ----
@@ -198,8 +198,8 @@ export default function Navigation() {
             {/* CTA Button with Promo Prompt */}
             <div className="relative">
             <Link
-              href="/step-1"
-              onClick={() => trackCTAClick({ cta_text: 'Запиши поръчка', cta_location: 'navigation', destination: '/step-1' })}
+              href="/order"
+              onClick={() => trackCTAClick({ cta_text: 'Запиши поръчка', cta_location: 'navigation', destination: '/order' })}
               className="bg-[var(--color-brand-navy)] hover:bg-[var(--color-brand-orange)] px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-colors block"
               aria-label="Запиши поръчка"
             >

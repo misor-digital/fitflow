@@ -1,6 +1,8 @@
 /**
- * Preorder-specific email functions
- * High-level functions for sending preorder-related emails
+ * @deprecated Preorder-specific email functions
+ * These are kept for backward compatibility with the disabled preorder API route
+ * (emergency rollback) and for the preorder conversion flow.
+ * For new code, create order-specific email functions.
  */
 
 import { sendEmail, createOrUpdateContact, addContactToList, EMAIL_CONFIG } from './emailService';

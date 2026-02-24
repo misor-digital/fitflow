@@ -1,255 +1,210 @@
-# FitFlow - Next.js Application
+# FitFlow — Next.js Application
 
-A modern subscription box landing page for active women, built with Next.js 15, TypeScript, Tailwind CSS, and Zustand.
+A modern subscription box e-commerce platform for active women, built with Next.js 15, TypeScript, Tailwind CSS, Supabase, and Zustand.
 
-## 🚀 Features
+## Features
 
-- ✅ **Modern Tech Stack**: Next.js 15, TypeScript, Tailwind CSS
-- ✅ **State Management**: Zustand with persistence
-- ✅ **Responsive Design**: Mobile-first approach
-- ✅ **Multi-step Form**: Personalization wizard with validation
-- ✅ **Image Optimization**: Next.js Image component
-- ✅ **API Routes**: Built-in backend for form submission
-- ✅ **Type Safety**: Full TypeScript support
-- ✅ **SEO Optimized**: Meta tags and Open Graph
+- **Order System** — Multi-step order flow with guest checkout and authenticated checkout
+- **Order Tracking** — Track orders by email + order number
+- **Preorder Conversion** — Convert legacy preorders to full orders via token-based links
+- **Authentication** — Supabase Auth with email/password, session management, password reset
+- **Admin Panel** — Staff dashboard for orders, legacy preorders, promo codes, analytics, content, and settings
+- **Promo Codes** — Database-driven promotional discount codes with validation
+- **Dynamic Pricing** — Box prices and currency conversion managed via database
+- **Address Management** — Save, edit, and reuse shipping addresses
+- **Email Notifications** — Transactional emails via Brevo (confirmation, contacts sync)
+- **Analytics** — Google Analytics 4 + Meta Pixel + Meta Conversions API (server-side)
+- **GDPR Compliance** — Cookie consent banner with granular preferences
+- **Responsive Design** — Mobile-first approach
+- **Type Safety** — Full TypeScript with Supabase-generated types
 
-## 📁 Project Structure
+## Tech Stack
+
+- **Framework**: Next.js 15 (App Router)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **Database**: Supabase (PostgreSQL + Auth + RLS)
+- **State Management**: Zustand with session persistence
+- **Email**: Brevo (Sendinblue) transactional API
+- **Analytics**: GA4 + Meta Pixel + Meta CAPI
+- **Package Manager**: pnpm
+
+## Project Structure
 
 ```
 fitflow/
 ├── app/
 │   ├── api/
-│   │   └── preorder/
-│   │       └── route.ts          # API endpoint for form submission
-│   ├── step-1/
-│   │   └── page.tsx              # Box selection page
-│   ├── step-2/
-│   │   └── page.tsx              # Personalization wizard
-│   ├── step-3/
-│   │   └── page.tsx              # Contact form
-│   ├── layout.tsx                # Root layout with metadata
-│   ├── page.tsx                  # Home page
-│   └── globals.css               # Global styles
+│   │   ├── address/            # Address CRUD API
+│   │   ├── admin/              # Admin API (orders, stats)
+│   │   ├── auth/               # Auth helpers
+│   │   ├── catalog/            # Box types, options, prices
+│   │   ├── order/              # Order creation + tracking
+│   │   ├── preorder/           # Legacy: disabled (410), link API kept
+│   │   └── promo/              # Promo code validation
+│   ├── order/                  # Order flow (main customer journey)
+│   │   ├── page.tsx            # Multi-step order page
+│   │   ├── convert/            # Preorder-to-order conversion
+│   │   ├── thank-you/          # Order confirmation
+│   │   └── track/              # Order tracking by email
+│   ├── admin/                  # Admin panel (staff only)
+│   │   ├── analytics/          # Analytics dashboard
+│   │   ├── content/            # Content management
+│   │   ├── preorders/          # Orders + legacy preorders view
+│   │   ├── promo/              # Promo code management
+│   │   ├── settings/           # Site configuration
+│   │   └── staff/              # Staff management
+│   ├── account/                # User account + profile
+│   ├── auth/                   # Auth callback handler
+│   ├── login/                  # Login page
+│   ├── register/               # Registration page
+│   ├── forgot-password/        # Password reset request
+│   ├── reset-password/         # Password reset form
+│   ├── setup-password/         # Initial password setup
+│   ├── about/                  # About page
+│   ├── faqs/                   # FAQ page
+│   ├── cookies/                # Cookie policy
+│   ├── privacy/                # Privacy policy
+│   ├── terms/                  # Terms of service
+│   ├── page.tsx                # Home / landing page
+│   └── layout.tsx              # Root layout
+├── components/
+│   ├── order/                  # Order flow components
+│   ├── admin/                  # Admin panel components
+│   ├── Navigation.tsx          # Main navigation bar
+│   ├── Footer.tsx              # Site footer
+│   └── ...                     # Shared components
+├── lib/
+│   ├── analytics/              # GA4 + Meta tracking
+│   ├── auth/                   # Auth DAL + session helpers
+│   ├── consent/                # GDPR cookie consent
+│   ├── constants/              # App constants + version
+│   ├── data/                   # Database queries (catalog, prices, orders)
+│   ├── email/                  # Email service + templates
+│   ├── legal/                  # Legal content loaders
+│   ├── order/                  # Order domain (types, validation, transform)
+│   ├── preorder/               # Legacy preorder domain (deprecated)
+│   ├── supabase/               # Supabase clients (browser, server, admin)
+│   └── utils/                  # Shared utilities (rate limiting, sanitization)
 ├── store/
-│   └── formStore.ts              # Zustand store for form state
-├── public/
-│   └── storage/                  # Images
-└── package.json
+│   ├── authStore.ts            # Auth state (Zustand)
+│   └── orderStore.ts           # Order form state (Zustand + sessionStorage)
+├── supabase/
+│   ├── schema.sql              # Complete schema reference (documentation only)
+│   └── migrations/             # All database migrations (source of truth)
+└── scripts/
+    └── seed-super-admin.ts     # Seed initial super admin user
 ```
 
-## 🛠️ Getting Started
+## Getting Started
 
 ### Prerequisites
 
-- Node.js 18+ installed
-- pnpm package manager (install with `npm install -g pnpm`)
+- Node.js 18+
+- pnpm (`npm install -g pnpm`)
+- Supabase project (local or hosted)
 
 ### Installation
 
-1. Navigate to the project directory:
 ```bash
 cd fitflow
-```
-
-2. Install dependencies:
-```bash
 pnpm install
 ```
 
-3. Run the development server:
-```bash
-pnpm dev
-```
-
-4. Open [http://localhost:3000](http://localhost:3000) in your browser
-
-## 🎨 Pages
-
-### Home Page (`/`)
-- Hero section with call-to-action
-- How it works section
-- Product showcase
-- Inspirational quotes
-
-### Step 1 (`/step-1`)
-- Box type selection (One-time, Monthly, Seasonal)
-- Pricing display
-
-### Step 2 (`/step-2`)
-- Personalization wizard with 8 steps:
-  1. Personalization choice
-  2. Sport preferences
-  3. Color preferences
-  4. Size selection
-  6. Dietary restrictions
-  7. Additional notes
-  8. Summary and confirmation
-
-### Step 3 (`/step-3`)
-- Contact information form
-- Form submission to API
-
-## 🔧 State Management
-
-The application uses Zustand for state management with localStorage persistence:
-
-```typescript
-// Access the store in any component
-import { useFormStore } from '@/store/formStore';
-
-function MyComponent() {
-  const { boxType, setBoxType } = useFormStore();
-  // ...
-}
-```
-
-## 📡 API Routes
-
-### POST `/api/preorder`
-
-Handles form submission. Currently logs data to console.
-
-**Request Body:**
-```json
-{
-  "fullName": "string",
-  "email": "string",
-  "phone": "string (optional)",
-  "boxType": "one-time | monthly | seasonal",
-  "wantsPersonalization": "boolean",
-  "preferences": {
-    "sports": ["string"],
-    "colors": ["string"],
-    "dietary": ["string"],
-    "additionalNotes": "string"
-  },
-  "sizes": {
-    "upper": "XS | S | M | L | XL",
-    "lower": "XS | S | M | L | XL"
-  }
-}
-```
-
-## 🚀 Deployment
-
-### Deploy to Vercel (Recommended)
-
-1. Push your code to GitHub
-2. Import project in Vercel
-3. Deploy automatically
-
-```bash
-# Or use Vercel CLI
-npm install -g vercel
-vercel
-```
-
-### Build for Production
-
-```bash
-pnpm build
-pnpm start
-```
-
-## 🔮 Next Steps
-
-### 1. Add Database (PostgreSQL)
-
-Install dependencies:
-```bash
-pnpm add pg
-```
-
-Update `app/api/preorder/route.ts` to save data to database (example code is commented in the file).
-
-### 2. Add Email Notifications (Resend)
-
-Install Resend:
-```bash
-pnpm add resend
-```
-
-Add environment variable:
-```env
-RESEND_API_KEY=your_api_key_here
-```
-
-Uncomment email code in `app/api/preorder/route.ts`.
-
-### 3. Environment Variables
+### Environment Variables
 
 Create `.env.local`:
+
 ```env
-DATABASE_URL=postgresql://user:password@host:5432/database
-RESEND_API_KEY=re_xxxxxxxxxxxxx
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+
+# Brevo (email)
+BREVO_API_KEY=your-brevo-api-key
+BREVO_SENDER_EMAIL=info@fitflow.bg
+BREVO_SENDER_NAME=FitFlow
+
+# Analytics
+NEXT_PUBLIC_GA_MEASUREMENT_ID=G-XXXXXXXXXX
+NEXT_PUBLIC_META_PIXEL_ID=your-pixel-id
+META_CAPI_ACCESS_TOKEN=your-capi-token
 ```
 
-### 4. Add Analytics
+### Development
 
-Add Google Analytics to `app/layout.tsx`:
-```tsx
-<Script
-  src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"
-  strategy="afterInteractive"
-/>
+```bash
+pnpm dev          # Start dev server (default port 3000)
+pnpm dev --port 4000  # Custom port
 ```
 
-## 📊 Database Schema (Recommended)
+### Production
 
-```sql
--- Pre-orders table
-CREATE TABLE preorders (
-    id SERIAL PRIMARY KEY,
-    full_name VARCHAR(255) NOT NULL,
-    email VARCHAR(255) NOT NULL UNIQUE,
-    phone VARCHAR(50),
-    box_type VARCHAR(50) NOT NULL,
-    wants_personalization BOOLEAN NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    status VARCHAR(50) DEFAULT 'pending'
-);
-
--- Preferences table
-CREATE TABLE preferences (
-    id SERIAL PRIMARY KEY,
-    preorder_id INTEGER REFERENCES preorders(id) ON DELETE CASCADE,
-    sports JSONB,
-    sport_other TEXT,
-    colors JSONB,
-    size_upper VARCHAR(10),
-    size_lower VARCHAR(10),
-    dietary JSONB,
-    dietary_other TEXT,
-    additional_notes TEXT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+```bash
+pnpm build        # Build for production
+pnpm start        # Start production server
+pnpm lint         # Run ESLint
 ```
 
-## 🎯 Features to Add
+## Pages & Routes
 
-- Admin dashboard to view pre-orders
-- Analytics dashboard
-- User authentication
-- Payment integration (Stripe)
-- Order tracking
-- Subscription management
+| Route | Description |
+|-------|-------------|
+| `/` | Landing page with CTA to order flow |
+| `/order` | Multi-step order page (box → personalization → details → confirm) |
+| `/order/track` | Track order by email + order number |
+| `/order/convert?token=...` | Convert legacy preorder to order |
+| `/order/thank-you` | Order confirmation page |
+| `/login` | Login |
+| `/register` | Registration |
+| `/account` | User profile |
+| `/account/edit` | Edit profile |
+| `/account/security` | Change password |
+| `/admin` | Admin dashboard |
+| `/admin/preorders` | Orders management |
+| `/admin/preorders/legacy` | Legacy preorders view |
+| `/admin/promo` | Promo code management |
+| `/about`, `/faqs` | Info pages |
 
-## 🐛 Troubleshooting
+## API Routes
 
-### Images not loading
-- Ensure images are in `public/storage/` directory
-- Check image file names match exactly (case-sensitive)
+| Method | Route | Description |
+|--------|-------|-------------|
+| `POST` | `/api/order` | Create a new order |
+| `GET` | `/api/order/track` | Track order by email + order number |
+| `POST` | `/api/preorder` | **Disabled (410 Gone)** — replaced by `/api/order` |
+| `POST` | `/api/preorder/link` | Link historical preorder to account |
+| `GET/POST` | `/api/address` | Address CRUD |
+| `GET` | `/api/catalog/prices` | Box prices with optional promo |
+| `GET` | `/api/catalog/options` | Form options (sports, colors, etc.) |
+| `GET` | `/api/promo/validate` | Validate promo code |
+| `GET/POST` | `/api/admin/*` | Admin endpoints (staff only) |
 
-### State not persisting
-- Check browser localStorage
-- Clear localStorage if needed: `localStorage.clear()`
+## Database
 
-### Build errors
-- Delete `.next` folder and `node_modules`
-- Run `pnpm install` again
-- Run `pnpm build`
+The database is managed via Supabase with PostgreSQL and Row Level Security (RLS).
 
-## 📝 Scripts
+**Tables**: `orders`, `order_status_history`, `preorders` (legacy), `box_types`, `promo_codes`, `options`, `site_config`, `user_profiles`, `addresses`, `rate_limits`
+
+**Key functions**: `generate_order_id()`, `calculate_box_prices()`, `check_rate_limit()`, `increment_promo_usage()`, `enforce_single_default_address()`, `ensure_default_on_delete()`
+
+See [supabase/schema.sql](supabase/schema.sql) for the complete schema reference. Migrations in `supabase/migrations/` are the source of truth.
+
+## Architecture Notes
+
+### Order Flow
+1. Customer selects box type → personalizes (optional) → enters details + address → confirms
+2. Guest checkout supported (no account required)
+3. Authenticated users can save/reuse addresses
+4. Server-side price validation prevents client-side manipulation
+5. Order creation is atomic: validate → insert → promo increment → email → analytics
+
+### Preorder → Order Conversion
+Legacy preorders can be converted to full orders via token-based links. The conversion flow prefills order data from the preorder, and the customer completes the shipping address step.
+
+## Scripts
 
 ```bash
 pnpm dev             # Start development server
@@ -258,21 +213,21 @@ pnpm start           # Start production server
 pnpm lint            # Run ESLint
 ```
 
-## 🔗 Resources
+## Documentation
 
-- [Next.js Documentation](https://nextjs.org/docs)
-- [Tailwind CSS](https://tailwindcss.com/docs)
-- [Zustand](https://github.com/pmndrs/zustand)
-- [Vercel Deployment](https://vercel.com/docs)
+Additional docs are in the `docs/` directory:
+- [Auth Setup](docs/auth-setup.md)
+- [Email Setup](docs/email-setup.md)
+- [GDPR Cookie Consent](docs/gdpr-cookie-consent.md)
+- [Meta CAPI Setup](docs/meta-capi-setup.md)
+- [Database Refactor](docs/database-refactor.md)
+- [Releases](docs/releases.md)
+- [Rollback](docs/rollback.md)
 
-## 📄 License
+## License
 
 This project is private and proprietary.
 
-## 👥 Support
-
-For questions or issues, contact the development team.
-
 ---
 
-**Built with ❤️ for FitFlow**
+**Built with care for FitFlow**

@@ -168,9 +168,7 @@ export function generateConfirmationEmail(
   const promoCodeSection = generatePromoCodeSection(data);
 
   // Copy differences between preorder and order emails
-  const confirmationText = emailType === 'preorder'
-    ? 'Твоята предварителна поръчка беше успешно регистрирана! Благодарим ти, че избра FitFlow.'
-    : 'Твоята поръчка беше успешно регистрирана! Благодарим ти, че избра FitFlow.';
+  const confirmationText = 'Твоята поръчка беше успешно регистрирана! Благодарим ти, че избра FitFlow.';
 
   const freeDeliveryBanner = emailType === 'preorder'
     ? `

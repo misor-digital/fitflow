@@ -1,4 +1,10 @@
 /**
+ * @deprecated This module is legacy. For new code:
+ * - Order types/logic: import from '@/lib/order'
+ * - Shared validation: will be extracted to '@/lib/shared' in future
+ * - This module remains for backward compatibility with preorder conversion
+ *   and admin legacy views.
+ *
  * Preorder Domain Module
  * 
  * Centralized exports for all preorder-related types, utilities, and logic.

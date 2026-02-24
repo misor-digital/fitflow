@@ -4,10 +4,10 @@ import { usePathname } from 'next/navigation';
 
 export default function SlidingBanner() {
   const pathname = usePathname();
-  const text = 'БЕЗПЛАТНА доставка на всички предварителни поръчки';
+  const text = 'БЕЗПЛАТНА доставка на всички поръчки';
   
-  // Hide banner on thank-you/preorder page
-  if (pathname === '/thank-you/preorder') {
+  // Hide banner on order thank-you page
+  if (pathname === '/order/thank-you') {
     return null;
   }
   

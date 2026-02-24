@@ -6,12 +6,12 @@ import { useSearchParams } from 'next/navigation';
 import { useEffect, useRef, Suspense, Fragment } from 'react';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
-import { useFormStore } from '@/store/formStore';
+import { useOrderStore } from '@/store/orderStore';
 import { trackViewContent, trackViewItem, trackCTAClick, trackPromoCode } from '@/lib/analytics';
 
 function HomeContent() {
   const searchParams = useSearchParams();
-  const { setPromoCode } = useFormStore();
+  const { setPromoCode } = useOrderStore();
   const hasTrackedViewContent = useRef(false);
   
   // Track ViewContent (Meta) and view_item (GA4) on landing page load (once)
@@ -33,7 +33,7 @@ function HomeContent() {
   useEffect(() => {
     async function validateAndSetPromo() {
       const urlPromoCode = searchParams.get('promocode');
-      const storedCode = useFormStore.getState().promoCode;
+      const storedCode = useOrderStore.getState().promoCode;
       if (urlPromoCode && urlPromoCode !== storedCode) {
         try {
           const response = await fetch(`/api/promo/validate?code=${encodeURIComponent(urlPromoCode)}`);
@@ -87,9 +87,9 @@ function HomeContent() {
           <p className="text-sm sm:text-base md:text-xl text-white my-6 md:my-8 drop-shadow-md text-left">
             Спортно облекло, аксесоари, протеинови продукти, здравословни снакове, хранителни добавки и мотивация на едно място
           </p>
-          <Link href="/step-1" onClick={() => trackCTAClick({ cta_text: 'Запиши се сега', cta_location: 'hero', destination: '/step-1' })}>
+          <Link href="/order" onClick={() => trackCTAClick({ cta_text: 'Поръчай сега', cta_location: 'hero', destination: '/order' })}>
             <button className="bg-[var(--color-brand-orange)] text-white px-10 py-4 rounded-full text-lg font-semibold uppercase tracking-wide shadow-lg hover:bg-[var(--color-brand-orange-dark)] transition-all hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0">
-              Запиши се сега
+              Поръчай сега
             </button>
           </Link>
         </div>
@@ -147,7 +147,7 @@ function HomeContent() {
           ))}
         </div>
         <div className="text-center mt-8 sm:mt-10 md:mt-12">
-          <Link href="/step-1" onClick={() => trackCTAClick({ cta_text: 'Започни сега', cta_location: 'whats_inside', destination: '/step-1' })}>
+          <Link href="/order" onClick={() => trackCTAClick({ cta_text: 'Започни сега', cta_location: 'whats_inside', destination: '/order' })}>
             <button className="bg-[var(--color-brand-navy)] text-white px-9 py-3.5 rounded-full text-base font-semibold uppercase tracking-wide shadow-lg hover:bg-[#034561] transition-all hover:-translate-y-0.5 hover:shadow-xl">
               Започни сега
             </button>

@@ -36,7 +36,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/step-1" className="text-gray-300 hover:text-[var(--color-brand-orange)] transition-colors text-xs sm:text-sm">
+                <Link href="/order" className="text-gray-300 hover:text-[var(--color-brand-orange)] transition-colors text-xs sm:text-sm">
                   Направи поръчка
                 </Link>
               </li>

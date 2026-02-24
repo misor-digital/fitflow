@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 import { headers } from 'next/headers';
 import { createPreorder, type PreorderFormData } from '@/lib/supabase';
 import { handlePreorderEmailWorkflow } from '@/lib/email';
@@ -21,7 +22,19 @@ const VALID_BOX_TYPES = new Set([
   'monthly-premium-seasonal', 'onetime-standard', 'onetime-premium',
 ]);
 
-export async function POST(request: Request): Promise<NextResponse> {
+/**
+ * @deprecated Preorder creation is disabled — orders have replaced preorders.
+ * Code is kept below the 410 guard for emergency rollback.
+ */
+export async function POST(request: NextRequest): Promise<NextResponse> {
+  // Preorder creation is disabled — orders have replaced preorders
+  return NextResponse.json(
+    { error: 'Предпоръчките са деактивирани. Моля, използвайте /order.' },
+    { status: 410 } // Gone
+  );
+
+  // --- Kept for emergency rollback — do not delete ---
+  // eslint-disable-next-line no-unreachable
   try {
     // Rate limiting
     const headersList = await headers();
@@ -36,8 +49,6 @@ export async function POST(request: Request): Promise<NextResponse> {
     }
 
     const data = await request.json();
-
-    console.log('Received preorder data:', JSON.stringify(data, null, 2));
 
     // Validate required fields
     if (!data.fullName || !data.email || !data.boxType) {
@@ -89,13 +100,6 @@ export async function POST(request: Request): Promise<NextResponse> {
     const priceInfo = await calculatePrice(data.boxType, data.promoCode);
     const validatedPromo = await validatePromoCode(data.promoCode);
 
-    console.log('Server-side price calculation:', {
-      boxType: data.boxType,
-      promoCode: data.promoCode,
-      validatedPromo,
-      priceInfo,
-    });
-
     // Prepare the preorder data with server-validated prices
     const preorderData: PreorderFormData = {
       boxType: data.boxType,
@@ -121,44 +125,30 @@ export async function POST(request: Request): Promise<NextResponse> {
       finalPriceEur: priceInfo.finalPriceEur,
     };
 
-    console.log('Transformed preorder data:', JSON.stringify(preorderData, null, 2));
-
     // Save to Supabase
     const { data: preorder, error } = await createPreorder(preorderData);
 
     if (error) {
-      console.error('Error saving preorder to database:', error.message);
+      console.error('Error saving preorder to database:', error?.message);
       return NextResponse.json(
-        { error: `Failed to save preorder: ${error.message}` },
+        { error: `Failed to save preorder: ${error?.message}` },
         { status: 500 }
       );
     }
-
-    console.log('Pre-order saved successfully:', {
-      id: preorder?.id,
-      fullName: preorder?.full_name,
-      email: preorder?.email,
-      boxType: preorder?.box_type,
-      promoCode: preorder?.promo_code,
-      discountPercent: preorder?.discount_percent,
-      originalPriceEur: preorder?.original_price_eur,
-      finalPriceEur: preorder?.final_price_eur,
-      timestamp: preorder?.created_at,
-    });
 
     // Auto-link if user is authenticated
     const session = await verifySession();
     if (session && preorder) {
       await supabaseAdmin
         .from('preorders')
-        .update({ user_id: session.userId })
-        .eq('id', preorder.id);
+        .update({ user_id: session!.userId })
+        .eq('id', preorder!.id);
     }
 
     // Increment promo code usage if one was applied
     if (validatedPromo?.code) {
       try {
-        await incrementPromoCodeUsage(validatedPromo.code);
+        await incrementPromoCodeUsage(validatedPromo!.code);
       } catch (promoError) {
         console.warn('Failed to increment promo code usage:', promoError);
         // Don't fail the request - preorder was saved successfully
@@ -171,28 +161,28 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     if (preorder && priceInfo) {
       try {
-        const workflowResult = await handlePreorderEmailWorkflow(preorder, priceInfo);
+        const workflowResult = await handlePreorderEmailWorkflow(preorder!, priceInfo!);
         emailResult = workflowResult.emailResult;
         contactResult = workflowResult.contactResult;
         
-        if (!emailResult.success) {
+        if (!emailResult!.success) {
           console.error(JSON.stringify({
             level: 'error',
             event: 'email_send_failed',
             preorderId: preorder?.id,
             email: preorder?.email,
-            error: emailResult.error,
+            error: emailResult!.error,
             timestamp: new Date().toISOString(),
           }));
         }
         
-        if (!contactResult.success) {
+        if (!contactResult!.success) {
           console.error(JSON.stringify({
             level: 'error',
             event: 'contact_add_failed',
             preorderId: preorder?.id,
             email: preorder?.email,
-            error: contactResult.error,
+            error: contactResult!.error,
             timestamp: new Date().toISOString(),
           }));
         }
@@ -202,7 +192,7 @@ export async function POST(request: Request): Promise<NextResponse> {
           level: 'error',
           event: 'email_workflow_exception',
           preorderId: preorder?.id,
-          error: emailError instanceof Error ? emailError.message : String(emailError),
+          error: emailError instanceof Error ? (emailError as Error).message : String(emailError),
           timestamp: new Date().toISOString(),
         }));
       }
@@ -254,8 +244,6 @@ export async function POST(request: Request): Promise<NextResponse> {
       
       if (!capiResult.success) {
         console.warn('Meta CAPI Lead event failed:', capiResult.error);
-      } else {
-        console.log('Meta CAPI Lead event sent successfully');
       }
     } catch (capiError) {
       // Log but don't fail the request
