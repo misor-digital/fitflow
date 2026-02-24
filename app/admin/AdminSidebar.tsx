@@ -27,6 +27,8 @@ const NAV_ITEMS: Array<{
     allowedRoles: ['super_admin', 'admin'] },
   { href: '/admin/promo', label: 'Промо кодове', icon: '🏷️',
     allowedRoles: ['super_admin', 'admin', 'marketing'] },
+  { href: '/admin/campaigns', label: 'Кампании', icon: '📧',
+    allowedRoles: ['super_admin', 'admin', 'content', 'marketing'] },
   { href: '/admin/content', label: 'Съдържание', icon: '📝',
     allowedRoles: ['super_admin', 'admin', 'content'] },
   { href: '/admin/analytics', label: 'Анализи', icon: '📈',
