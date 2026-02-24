@@ -113,3 +113,49 @@ export {
   getSubscriptionsForCycle,
   getOrdersBySubscription,
 } from './subscriptions';
+
+// Email campaigns
+export {
+  createCampaign,
+  getCampaignById,
+  getCampaignsPaginated,
+  updateCampaign,
+  updateCampaignStatus,
+  incrementCampaignCounters,
+  getScheduledCampaigns,
+  getSendingCampaigns,
+} from './email-campaigns';
+
+export {
+  addRecipients,
+  getNextBatch,
+  markRecipientSent,
+  markRecipientFailed,
+  markRecipientSkipped,
+  updateRecipientStatus,
+  getRecipientStats,
+  getRecipientsPaginated,
+} from './email-recipients';
+
+export {
+  logEmailSent,
+  updateEmailLogStatus,
+  getEmailLog,
+  getEmailLogByEntity,
+  getEmailStats,
+} from './email-log';
+
+export {
+  getOrCreateMonthUsage,
+  incrementUsage,
+  canSendEmails,
+  getUsageHistory,
+  markAlertSent,
+} from './email-usage';
+
+export {
+  recordCampaignAction,
+  getCampaignHistory,
+} from './email-campaign-history';
+
+export { initializeEmailSystem } from './email-init';
