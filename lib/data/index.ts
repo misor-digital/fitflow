@@ -32,7 +32,19 @@ export {
   isValidPromoCode,
   incrementPromoCodeUsage,
   getAppliedPromo,
+  listPromoCodes,
+  getPromoCodeById,
+  createPromoCode,
+  updatePromoCode,
+  deletePromoCode,
+  togglePromoCode,
+  getPromoCodeStats,
+  derivePromoStatus,
   type AppliedPromo,
+  type PromoCodeFilters,
+  type PromoCodeListResult,
+  type PromoCodeStats,
+  type PromoStatus,
 } from './promo';
 
 // Address data
