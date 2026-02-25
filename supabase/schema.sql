@@ -699,6 +699,7 @@ CREATE TABLE orders (
   customer_phone TEXT,
   shipping_address JSONB NOT NULL,
   address_id UUID REFERENCES addresses(id) ON DELETE SET NULL,
+  delivery_method TEXT NOT NULL DEFAULT 'address',
   box_type TEXT NOT NULL,
   wants_personalization BOOLEAN NOT NULL DEFAULT false,
   sports TEXT[],
@@ -727,18 +728,33 @@ CREATE TABLE orders (
     order_type IN ('subscription', 'onetime-mystery', 'onetime-revealed', 'direct')
   ),
 
+  CONSTRAINT valid_delivery_method CHECK (
+    delivery_method IN ('address', 'speedy_office')
+  ),
+
   CONSTRAINT valid_shipping_address CHECK (
-    shipping_address ? 'city'
-    AND shipping_address ? 'postal_code'
-    AND shipping_address ? 'street_address'
-    AND shipping_address ? 'full_name'
-    AND (shipping_address->>'postal_code') ~ '^\d{4}$'
+    CASE
+      WHEN delivery_method = 'speedy_office' THEN
+        shipping_address ? 'full_name'
+        AND shipping_address ? 'phone'
+        AND (shipping_address->>'phone') IS NOT NULL
+        AND length(shipping_address->>'phone') > 0
+        AND shipping_address ? 'speedy_office_id'
+        AND shipping_address ? 'speedy_office_name'
+      ELSE
+        shipping_address ? 'city'
+        AND shipping_address ? 'postal_code'
+        AND shipping_address ? 'street_address'
+        AND shipping_address ? 'full_name'
+        AND (shipping_address->>'postal_code') ~ '^\d{4}$'
+    END
   )
 );
 
 COMMENT ON TABLE orders IS 'Customer orders for FitFlow subscription boxes';
 COMMENT ON COLUMN orders.shipping_address IS 'Frozen address snapshot at order time — immutable source of truth';
 COMMENT ON COLUMN orders.address_id IS 'Optional back-reference to saved address — SET NULL on delete';
+COMMENT ON COLUMN orders.delivery_method IS 'Delivery method: address (to door) or speedy_office (Speedy office pickup)';
 COMMENT ON COLUMN orders.customer_email IS 'Customer email frozen at order time — used for guest tracking';
 COMMENT ON COLUMN orders.delivery_cycle_id IS 'FK to delivery cycle — set for subscription-generated, mystery, and revealed orders';
 COMMENT ON COLUMN orders.order_type IS 'Order origin: subscription (auto-generated), onetime-mystery (ships with cycle batch), onetime-revealed (ships ASAP, past cycle contents), direct (legacy/standard)';
@@ -753,6 +769,7 @@ CREATE INDEX idx_orders_created_at ON orders(created_at DESC);
 CREATE INDEX idx_orders_converted_from ON orders(converted_from_preorder_id) WHERE converted_from_preorder_id IS NOT NULL;
 CREATE INDEX idx_orders_delivery_cycle ON orders(delivery_cycle_id) WHERE delivery_cycle_id IS NOT NULL;
 CREATE INDEX idx_orders_order_type ON orders(order_type);
+CREATE INDEX idx_orders_delivery_method ON orders(delivery_method);
 CREATE INDEX idx_orders_subscription ON orders(subscription_id) WHERE subscription_id IS NOT NULL;
 
 CREATE TRIGGER trigger_orders_updated_at
