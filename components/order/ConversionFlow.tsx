@@ -138,6 +138,8 @@ export default function ConversionFlow({
         conversionToken: currentInput.conversionToken,
         deliveryCycleId: currentInput.deliveryCycleId,
         orderType: currentInput.orderType,
+        deliveryMethod: currentInput.deliveryMethod,
+        speedyOffice: currentInput.speedyOffice,
       });
 
       const response = await fetch('/api/order', {
