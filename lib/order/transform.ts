@@ -9,6 +9,8 @@ import type {
   OrderPersistData,
   OrderApiRequest,
   AddressInput,
+  DeliveryMethod,
+  SpeedyOfficeSelection,
 } from './types';
 import type { ShippingAddressSnapshot } from '@/lib/supabase/types';
 import type { PriceInfo } from '@/lib/catalog';
@@ -22,8 +24,11 @@ import { sortWithOtherAtEnd } from '@/lib/catalog';
  * Convert camelCase AddressInput to snake_case ShippingAddressSnapshot.
  * Trims all strings, converts empty strings to null for nullable fields.
  */
-export function addressInputToSnapshot(address: AddressInput): ShippingAddressSnapshot {
-  return {
+export function addressInputToSnapshot(
+  address: AddressInput,
+  options?: { deliveryMethod?: DeliveryMethod; speedyOffice?: SpeedyOfficeSelection | null }
+): ShippingAddressSnapshot {
+  const base: ShippingAddressSnapshot = {
     full_name: address.fullName.trim(),
     phone: address.phone.trim() || null,
     city: address.city.trim(),
@@ -34,6 +39,26 @@ export function addressInputToSnapshot(address: AddressInput): ShippingAddressSn
     apartment: address.apartment.trim() || null,
     delivery_notes: address.deliveryNotes.trim() || null,
   };
+
+  if (options?.deliveryMethod === 'speedy_office' && options.speedyOffice) {
+    return {
+      full_name: address.fullName.trim(),
+      phone: address.phone.trim() || null,
+      city: '',
+      postal_code: '',
+      street_address: '',
+      building_entrance: null,
+      floor: null,
+      apartment: null,
+      delivery_notes: address.deliveryNotes.trim() || null,
+      delivery_method: 'speedy_office',
+      speedy_office_id: options.speedyOffice.id,
+      speedy_office_name: options.speedyOffice.name,
+      speedy_office_address: options.speedyOffice.address,
+    };
+  }
+
+  return base;
 }
 
 // ============================================================================
@@ -70,8 +95,12 @@ export function transformOrderToPersistedFormat(
     customer_phone: input.phone.trim() || null,
 
     // Address
-    shipping_address: addressInputToSnapshot(input.address),
+    shipping_address: addressInputToSnapshot(input.address, {
+      deliveryMethod: input.deliveryMethod,
+      speedyOffice: input.speedyOffice,
+    }),
     address_id: addressId,
+    delivery_method: input.deliveryMethod ?? 'address',
 
     // Box selection
     box_type: input.boxType,
@@ -133,6 +162,12 @@ export function transformOrderToApiRequest(input: OrderUserInput): OrderApiReque
     request.selectedAddressId = input.selectedAddressId;
   } else {
     request.address = input.address;
+  }
+
+  // Delivery method
+  request.deliveryMethod = input.deliveryMethod ?? 'address';
+  if (input.deliveryMethod === 'speedy_office' && input.speedyOffice) {
+    request.speedyOffice = input.speedyOffice;
   }
 
   // Preferences (only if personalization is wanted)
@@ -225,6 +260,8 @@ export const INITIAL_ORDER_INPUT: OrderUserInput = {
   phone: '',
   selectedAddressId: null,
   address: { ...INITIAL_ADDRESS_INPUT },
+  deliveryMethod: 'speedy_office' as DeliveryMethod,
+  speedyOffice: null,
 
   // Promo
   promoCode: null,
