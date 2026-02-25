@@ -5,7 +5,7 @@
  * Used by both client (UI hints) and server (enforcement).
  */
 
-import type { OrderUserInput, AddressInput } from './types';
+import type { OrderUserInput, AddressInput, SpeedyOfficeSelection } from './types';
 import type { ValidationResult, ValidationError } from '@/lib/catalog';
 import { isPremiumBox, isSubscriptionBox, isValidEmail, isValidPhone } from '@/lib/catalog';
 
@@ -86,6 +86,61 @@ export function validateAddress(address: AddressInput): ValidationResult {
       field: 'streetAddress',
       message: 'Адресът трябва да е поне 3 символа',
       code: 'too_short',
+    });
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors,
+  };
+}
+
+/**
+ * Validate Speedy office delivery selection.
+ * Requires: fullName, phone (mandatory for Speedy), and a selected office.
+ */
+export function validateSpeedyOffice(
+  address: AddressInput,
+  speedyOffice: SpeedyOfficeSelection | null,
+): ValidationResult {
+  const errors: ValidationError[] = [];
+
+  // Full name still required
+  if (!address.fullName.trim()) {
+    errors.push({
+      field: 'fullName',
+      message: 'Името е задължително',
+      code: 'required',
+    });
+  } else if (address.fullName.trim().length < 2) {
+    errors.push({
+      field: 'fullName',
+      message: 'Името трябва да е поне 2 символа',
+      code: 'too_short',
+    });
+  }
+
+  // Phone is REQUIRED for Speedy office delivery
+  if (!address.phone.trim()) {
+    errors.push({
+      field: 'phone',
+      message: 'Телефонът е задължителен за доставка до офис на Speedy',
+      code: 'required',
+    });
+  } else if (!isValidPhone(address.phone)) {
+    errors.push({
+      field: 'phone',
+      message: 'Невалиден телефонен номер',
+      code: 'invalid_format',
+    });
+  }
+
+  // Office selection required
+  if (!speedyOffice) {
+    errors.push({
+      field: 'speedyOffice',
+      message: 'Моля, изберете офис на Speedy',
+      code: 'required',
     });
   }
 
@@ -176,30 +231,34 @@ export function validateOrderStep3(input: OrderUserInput): boolean {
     return false;
   }
 
-  if (input.isGuest) {
-    // Guest: validate contact info
-    if (!input.fullName.trim() || input.fullName.trim().length < 2) {
-      return false;
-    }
-    if (!input.email.trim() || !isValidEmail(input.email)) {
-      return false;
-    }
-    if (!input.phone.trim() || !isValidPhone(input.phone)) {
-      return false;
-    }
+  // --- Office delivery branch ---
+  if (input.deliveryMethod === 'speedy_office') {
+    const officeResult = validateSpeedyOffice(input.address, input.speedyOffice);
+    if (!officeResult.valid) return false;
 
-    // Guest: must have valid inline address
+    // Guest must also have valid contact info
+    if (input.isGuest) {
+      if (!input.fullName.trim() || input.fullName.trim().length < 2) return false;
+      if (!input.email.trim() || !isValidEmail(input.email)) return false;
+      if (!input.phone.trim() || !isValidPhone(input.phone)) return false;
+    }
+    return true;
+  }
+
+  // --- Address delivery branch (existing logic, unchanged) ---
+  if (input.isGuest) {
+    if (!input.fullName.trim() || input.fullName.trim().length < 2) return false;
+    if (!input.email.trim() || !isValidEmail(input.email)) return false;
+    if (!input.phone.trim() || !isValidPhone(input.phone)) return false;
     const addressResult = validateAddress(input.address);
     return addressResult.valid;
   }
 
   // Authenticated user
   if (input.selectedAddressId) {
-    // Using a saved address — valid
     return true;
   }
 
-  // Authenticated without saved address — validate inline address
   const addressResult = validateAddress(input.address);
   return addressResult.valid;
 }
@@ -347,7 +406,13 @@ export function validateOrderSubmission(input: OrderUserInput): ValidationResult
   }
 
   // Address validation
-  if (!input.selectedAddressId) {
+  if (input.deliveryMethod === 'speedy_office') {
+    const officeResult = validateSpeedyOffice(input.address, input.speedyOffice ?? null);
+    errors.push(...officeResult.errors.map((e) => ({
+      ...e,
+      field: e.field === 'speedyOffice' ? e.field : `address.${e.field}`,
+    })));
+  } else if (!input.selectedAddressId) {
     const addressResult = validateAddress(input.address);
     errors.push(...addressResult.errors.map((e) => ({
       ...e,
@@ -398,6 +463,11 @@ export function getAddressFieldError(field: string, address: AddressInput): stri
     case 'streetAddress':
       if (!address.streetAddress.trim()) return 'Адресът е задължителен';
       if (address.streetAddress.trim().length < 3) return 'Адресът трябва да е поне 3 символа';
+      return null;
+
+    case 'phone':
+      // Phone validation is context-dependent (required for office delivery)
+      // Return null here — office-specific validation is in validateSpeedyOffice
       return null;
 
     default:
