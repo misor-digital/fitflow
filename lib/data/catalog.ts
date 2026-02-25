@@ -5,20 +5,22 @@
  */
 
 import { cache } from 'react';
-import { supabase } from '@/lib/supabase/client';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 import type { BoxTypeRow, OptionRow, OptionSetId } from '@/lib/supabase';
-import type { PriceInfo } from '@/lib/preorder';
+import type { PriceInfo } from '@/lib/catalog';
 
 // ============================================================================
 // Box Types
 // ============================================================================
 
 /**
- * Get all enabled box types, sorted by sort_order
- * Cached for the duration of the request
+ * Get all enabled box types, sorted by sort_order.
+ * Cached for the duration of a single request (RSC render or Route Handler).
+ * React.cache() does NOT cache across requests — each request hits Supabase.
+ * For cross-request caching, add Cache-Control headers to API responses.
  */
 export const getBoxTypes = cache(async (): Promise<BoxTypeRow[]> => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('box_types')
     .select('*')
     .eq('is_enabled', true)
@@ -40,7 +42,7 @@ export const getBoxTypes = cache(async (): Promise<BoxTypeRow[]> => {
  * Get a single box type by ID
  */
 export const getBoxTypeById = cache(async (id: string): Promise<BoxTypeRow | null> => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('box_types')
     .select('*')
     .eq('id', id)
@@ -89,7 +91,7 @@ export const getBoxTypeNames = cache(async (): Promise<Record<string, string>> =
  * Get all enabled options for a specific option set
  */
 export const getOptions = cache(async (optionSetId: OptionSetId): Promise<OptionRow[]> => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('options')
     .select('*')
     .eq('option_set_id', optionSetId)
@@ -148,7 +150,7 @@ export const getColorNames = cache(async (): Promise<Record<string, string>> => 
  * Get a site config value by key
  */
 export const getSiteConfig = cache(async (key: string): Promise<string | null> => {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAdmin
     .from('site_config')
     .select('value')
     .eq('key', key)
@@ -160,6 +162,21 @@ export const getSiteConfig = cache(async (key: string): Promise<string | null> =
 
   return (data as { value: string }).value;
 });
+
+/**
+ * Upsert a site config value (insert or update on conflict).
+ * Uses service-role client — bypasses RLS.
+ */
+export async function upsertSiteConfig(key: string, value: string): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('site_config')
+    .upsert({ key, value }, { onConflict: 'key' });
+
+  if (error) {
+    console.error(`Error upserting site_config key "${key}":`, error);
+    throw error;
+  }
+}
 
 /**
  * Get EUR to BGN conversion rate
@@ -181,29 +198,15 @@ export const getEurToBgnRate = cache(async (): Promise<number> => {
 // Price Calculation (Server-side only)
 // ============================================================================
 
-// PriceInfo is now imported from @/lib/preorder/types and re-exported above
-
-interface RpcBoxPriceRow {
-  box_type_id: string;
-  box_type_name: string;
-  original_price_eur: number;
-  original_price_bgn: number;
-  discount_percent: number;
-  discount_amount_eur: number;
-  discount_amount_bgn: number;
-  final_price_eur: number;
-  final_price_bgn: number;
-}
+// PriceInfo is now imported from @/lib/catalog/types and re-exported above
 
 /**
  * Get all box prices in a single database call using Supabase RPC
  * This is the optimized version that eliminates multiple round-trips
  */
 export const getAllBoxPrices = cache(async (promoCode: string | null | undefined): Promise<PriceInfo[]> => {
-  // Use type assertion to work around Supabase client type limitations
-  const { data, error } = await supabase.rpc('calculate_box_prices', {
-    p_promo_code: promoCode || null,
-  } as unknown as undefined) as { data: RpcBoxPriceRow[] | null; error: Error | null };
+  const { data, error } = await supabaseAdmin
+    .rpc('calculate_box_prices', { p_promo_code: promoCode || null });
 
   if (error) {
     console.error('Error calling calculate_box_prices:', error);
@@ -256,13 +259,6 @@ export async function calculatePrice(
   }
 
   return price;
-}
-
-/**
- * Format price with 2 decimal places
- */
-export function formatPrice(price: number): string {
-  return price.toFixed(2);
 }
 
 /**

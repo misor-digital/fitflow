@@ -101,6 +101,9 @@ export async function sendTemplateEmail(options: SendTemplateEmailOptions): Prom
     sendSmtpEmail.templateId = options.templateId;
     sendSmtpEmail.sender = options.sender || DEFAULT_SENDER;
     
+    if (options.subject) {
+      sendSmtpEmail.subject = options.subject;
+    }
     if (options.params) {
       sendSmtpEmail.params = options.params;
     }
@@ -143,7 +146,7 @@ export async function sendTemplateEmail(options: SendTemplateEmailOptions): Prom
 
 /**
  * Create or update a contact in Brevo
- * Useful for adding preorder customers to mailing lists
+ * Useful for adding customers to mailing lists
  */
 export async function createOrUpdateContact(data: ContactData): Promise<ContactResult> {
   try {

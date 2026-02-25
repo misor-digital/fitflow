@@ -50,7 +50,7 @@ This document describes the refactoring of FitFlow to move hardcoded business da
 ## Modified Files
 
 ### Updated to Use DB
-- `app/api/preorder/route.ts` - Uses DB-backed price calculation
+- `app/api/order/route.ts` - Uses DB-backed price calculation
 - `lib/email/templates.ts` - Consolidated label maps (fallbacks)
 - `lib/promo/promoService.ts` - Deprecated, delegates to lib/data
 
@@ -103,7 +103,7 @@ SELECT * FROM promo_codes; -- Should return empty or error
 2. **Step 1**: Select a box type, verify price updates
 3. **Step 2**: Verify all options (sports, colors, flavors, dietary) load
 4. **Step 4**: Apply promo code, verify discount calculation
-5. **Submit Order**: Complete a test preorder, verify:
+5. **Submit Order**: Complete a test order, verify:
    - Promo code is validated server-side
    - Price is calculated server-side
    - Promo usage count increments
@@ -145,7 +145,7 @@ If issues occur:
    - `lib/promo/promoService.ts` (BOX_PRICES_EUR constant)
 
 2. To fully rollback:
-   - Revert `app/api/preorder/route.ts` to use `lib/promo` instead of `lib/data`
+   - Revert `app/api/order/route.ts` to use `lib/promo` instead of `lib/data`
    - The deprecated functions in `lib/promo/promoService.ts` will still work
 
 ## Frontend Components Updated
@@ -161,7 +161,7 @@ All frontend components have been updated to fetch data from the API instead of 
 
 ### Components Not Changed (No Business Data)
 - `app/step-3/page.tsx` - Contact form only
-- `app/thank-you/preorder/page.tsx` - Confirmation page only
+- `app/order/thank-you/page.tsx` - Confirmation page only
 - `app/about/page.tsx` - Static content
 - `app/faqs/page.tsx` - Static FAQ content (could be moved to DB in future)
 - `components/Footer.tsx` - Static links

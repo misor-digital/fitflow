@@ -1,7 +1,13 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
+import OrderTrackingWidget from "@/components/OrderTrackingWidget";
 import ConditionalScripts from "@/components/ConditionalScripts";
+import AuthProvider from "@/components/AuthProvider";
+import { initializeEmailSystem } from "@/lib/data";
+
+// Wire DAL callbacks into Brevo wrapper (idempotent)
+initializeEmailSystem();
 
 export const metadata: Metadata = {
   title: "FitFlow - Кутия за АКТИВНИ дами",
@@ -23,12 +29,15 @@ export default function RootLayout({
   return (
     <html lang="bg">
       <body className="antialiased">
-        {children}
+        <AuthProvider>
+          {children}
+        </AuthProvider>
         <CookieConsentBanner />
+        <OrderTrackingWidget />
         <ConditionalScripts 
-          googleAnalyticsId="G-P4N3Y0W613"
-          facebookPixelId="878687741371287"
-          googleAdsId="AW-XXXXXXXXXX"
+          googleAnalyticsId={process.env.NEXT_PUBLIC_GA_ID ?? ''}
+          facebookPixelId={process.env.NEXT_PUBLIC_META_PIXEL_ID ?? ''}
+          googleAdsId={process.env.NEXT_PUBLIC_GOOGLE_ADS_ID ?? ''}
         />
       </body>
     </html>
