@@ -93,7 +93,7 @@ export default async function OrderPage({ searchParams }: OrderPageProps) {
   return (
     <>
       <Navigation />
-      <main className="min-h-screen bg-white">
+      <main className="min-h-screen bg-white pt-16">
         <OrderFlow
           initialPrices={prices}
           boxTypeNames={boxTypeNames}

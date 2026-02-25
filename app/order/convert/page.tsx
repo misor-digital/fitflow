@@ -159,7 +159,7 @@ export default async function ConvertPage({ searchParams }: ConvertPageProps) {
   return (
     <>
       <Navigation />
-      <main className="min-h-screen bg-white">
+      <main className="min-h-screen bg-white pt-16">
         <ConversionFlow
           source={conversionSource}
           priceInfo={priceInfo}

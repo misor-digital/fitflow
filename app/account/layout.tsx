@@ -12,7 +12,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
   return (
     <>
       <Navigation />
-      <main className="min-h-screen pt-16 pb-12">
+      <main className="min-h-screen pt-16 pb-12 bg-white">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <AccountNav />
           {children}
