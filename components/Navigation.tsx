@@ -114,7 +114,8 @@ export default function Navigation() {
                 Кутии ▾
               </button>
               {boxDropdownOpen && (
-                <div className="absolute left-0 top-full mt-1 w-48 bg-white rounded-lg shadow-lg border py-2 z-50">
+                <div className="absolute left-0 top-full pt-1 w-48 z-50">
+                  <div className="bg-white rounded-lg shadow-lg border py-2">
                   <Link
                     href="/box/mystery"
                     onClick={() => setBoxDropdownOpen(false)}
@@ -131,6 +132,14 @@ export default function Navigation() {
                       👀 Разкрита кутия
                     </Link>
                   )}
+                  <Link
+                    href="/order/track"
+                    onClick={() => setBoxDropdownOpen(false)}
+                    className="block px-4 py-2 text-sm font-medium text-[var(--color-brand-navy)] hover:bg-gray-50 hover:text-[var(--color-brand-orange)] transition-colors"
+                  >
+                    📦 Проследи поръчка
+                  </Link>
+                  </div>
                 </div>
               )}
             </div>
@@ -159,7 +168,7 @@ export default function Navigation() {
             aria-label="Toggle menu"
           >
             <svg
-              className="w-5 h-5 sm:w-6 sm:h-6"
+              className="w-6 h-6 sm:w-6 sm:h-6"
               fill="none"
               strokeLinecap="round"
               strokeLinejoin="round"
@@ -237,12 +246,6 @@ export default function Navigation() {
                     >
                       Вход
                     </Link>
-                    <Link
-                      href="/register"
-                      className="text-sm font-medium bg-[var(--color-brand-orange)] text-white px-3 py-1.5 rounded-lg hover:opacity-90 transition-opacity"
-                    >
-                      Регистрация
-                    </Link>
                   </div>
                 )}
               </>
@@ -253,11 +256,11 @@ export default function Navigation() {
             <Link
               href="/order"
               onClick={() => trackCTAClick({ cta_text: 'Запиши поръчка', cta_location: 'navigation', destination: '/order' })}
-              className="bg-[var(--color-brand-navy)] hover:bg-[var(--color-brand-orange)] px-2.5 sm:px-4 py-1.5 sm:py-2 rounded-lg transition-colors block"
+              className="bg-[var(--color-brand-navy)] hover:bg-[var(--color-brand-orange)] px-2.5 sm:px-2.5 py-2 sm:py-2 rounded-lg transition-colors block"
               aria-label="Запиши поръчка"
             >
               <svg
-                className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-white"
+                className="w-5 h-5 sm:w-4 sm:h-4 md:w-5 md:h-5 text-white"
                 fill="none"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -324,19 +327,22 @@ export default function Navigation() {
                   👀 Разкрита кутия
                 </Link>
               )}
+              <Link
+                href="/order/track"
+                onClick={() => setIsOpen(false)}
+                className={`text-sm sm:text-base font-semibold transition-colors ${
+                  isActive('/order/track') ? 'text-[var(--color-brand-orange)]' : 'text-[var(--color-brand-navy)] hover:text-[var(--color-brand-orange)]'
+                }`}
+              >
+                📦 Проследи поръчка
+              </Link>
 
               {/* Mobile auth links */}
               {!isLoading && !user && (
-                <>
-                  <Link href="/login" onClick={() => setIsOpen(false)}
-                    className="text-sm font-semibold text-[var(--color-brand-navy)]">
-                    Вход
-                  </Link>
-                  <Link href="/register" onClick={() => setIsOpen(false)}
-                    className="text-sm font-semibold text-[var(--color-brand-orange)]">
-                    Регистрация
-                  </Link>
-                </>
+                <Link href="/login" onClick={() => setIsOpen(false)}
+                  className="text-sm font-semibold text-[var(--color-brand-navy)]">
+                  Вход
+                </Link>
               )}
             </div>
           </div>
