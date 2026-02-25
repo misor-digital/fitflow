@@ -64,6 +64,21 @@ export function formatOrderNumber(orderNumber: string): string {
  *   1000 София
  */
 export function formatShippingAddress(address: ShippingAddressSnapshot): string {
+  // Speedy office delivery
+  if (address.delivery_method === 'speedy_office' && address.speedy_office_name) {
+    const lines: string[] = [];
+    lines.push(address.full_name);
+    lines.push(`Офис на Speedy: ${address.speedy_office_name}`);
+    if (address.speedy_office_address) {
+      lines.push(address.speedy_office_address);
+    }
+    if (address.phone) {
+      lines.push(`Тел: ${address.phone}`);
+    }
+    return lines.join('\n');
+  }
+
+  // Address delivery (existing logic)
   const lines: string[] = [];
 
   // Line 1: Full name
@@ -89,10 +104,29 @@ export function formatShippingAddress(address: ShippingAddressSnapshot): string 
  *   ул. Витоша 1, 1000 София
  */
 export function formatShippingAddressOneLine(address: ShippingAddressSnapshot): string {
+  // Speedy office delivery
+  if (address.delivery_method === 'speedy_office' && address.speedy_office_name) {
+    return `Офис на Speedy: ${address.speedy_office_name}`;
+  }
+
+  // Address delivery (existing logic)
   const parts: string[] = [address.street_address];
   if (address.building_entrance) parts.push(`Вход ${address.building_entrance}`);
   if (address.floor) parts.push(`ет. ${address.floor}`);
   if (address.apartment) parts.push(`ап. ${address.apartment}`);
   parts.push(`${address.postal_code} ${address.city}`);
   return parts.join(', ');
+}
+
+/**
+ * Get the Bulgarian label for a delivery method.
+ */
+export function formatDeliveryMethodLabel(method: 'address' | 'speedy_office' | undefined): string {
+  switch (method) {
+    case 'speedy_office':
+      return 'До офис на Speedy';
+    case 'address':
+    default:
+      return 'Доставка до адрес';
+  }
 }
