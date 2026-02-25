@@ -330,7 +330,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // ------------------------------------------------------------------
     let addressSnapshot: ShippingAddressSnapshot;
     let addressId: string | null = null;
-    const effectiveDeliveryMethod = deliveryMethod ?? 'address';
+    const effectiveDeliveryMethod: 'address' | 'speedy_office' =
+      deliveryMethod === 'speedy_office' ? 'speedy_office' : 'address';
 
     if (effectiveDeliveryMethod === 'speedy_office') {
       // ── Office delivery ──────────────────────────────────────────
@@ -575,10 +576,24 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         discountPercent: priceInfo.discountPercent ?? undefined,
         originalPriceEur: priceInfo.originalPriceEur ?? undefined,
         finalPriceEur: priceInfo.finalPriceEur ?? undefined,
+        deliveryMethod: effectiveDeliveryMethod as 'address' | 'speedy_office',
+        speedyOfficeName: addressSnapshot.speedy_office_name ?? null,
+        speedyOfficeAddress: addressSnapshot.speedy_office_address ?? null,
+        shippingAddress: {
+          fullName: addressSnapshot.full_name,
+          phone: addressSnapshot.phone,
+          city: addressSnapshot.city,
+          postalCode: addressSnapshot.postal_code,
+          streetAddress: addressSnapshot.street_address,
+          buildingEntrance: addressSnapshot.building_entrance,
+          floor: addressSnapshot.floor,
+          apartment: addressSnapshot.apartment,
+          deliveryNotes: addressSnapshot.delivery_notes,
+        },
       };
 
       // Determine email type based on whether this is a conversion
-      const emailType = preorder ? 'legacy' : 'order';
+      const emailType = 'order';
 
       // Generate HTML
       const htmlContent = generateConfirmationEmail(emailData, emailType);
@@ -586,12 +601,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       // Send via Brevo wrapper (auto-logs to email_send_log)
       const result = await sendTransactionalEmail({
         to: { email: email.trim().toLowerCase(), name: fullName.trim() },
-        subject: preorder
-          ? 'FitFlow — Поръчката ви от предварителна заявка е потвърдена!'
-          : 'FitFlow — Поръчката ви е потвърдена!',
+        subject: 'FitFlow — Поръчката ви е потвърдена!',
         htmlContent,
         tags: ['order', preorder ? 'preorder-conversion' : 'confirmation'],
-        category: preorder ? 'preorder-conversion-confirmation' : 'order-confirmation',
+        category: 'order-confirmation',
         relatedEntityType: 'order',
         relatedEntityId: order.id,
       });

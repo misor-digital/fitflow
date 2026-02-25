@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useOrderStore, useOrderInput } from '@/store/orderStore';
+import { useOrderStore, useOrderInput, getOrderInput } from '@/store/orderStore';
 import { useAuthStore } from '@/store/authStore';
 import { computeOrderDerivedState, transformOrderToApiRequest } from '@/lib/order';
 import type { OrderStep, PricesMap } from '@/lib/order';
@@ -162,20 +162,24 @@ export default function OrderFlow({
   }, [currentStep, activeSteps, setStep]);
 
   const handleNextStep = useCallback(() => {
+    // Read fresh state from the store to avoid stale-closure issues
+    // (child components update the store right before calling onNext)
+    const freshDerived = computeOrderDerivedState(getOrderInput());
+
     // Validate current step before advancing
     switch (currentStep) {
       case 1:
-        if (!derived.isStep1Valid) return;
+        if (!freshDerived.isStep1Valid) return;
         break;
       case 2:
-        if (!derived.isStep2Valid) return;
+        if (!freshDerived.isStep2Valid) return;
         break;
       case 3:
-        if (!derived.isStep3Valid) return;
+        if (!freshDerived.isStep3Valid) return;
         break;
     }
     goToNextActiveStep();
-  }, [currentStep, derived, goToNextActiveStep]);
+  }, [currentStep, goToNextActiveStep]);
 
   // ---------------------------------------------------------------------------
   // Order submission
@@ -185,31 +189,8 @@ export default function OrderFlow({
     setSubmitError(null);
 
     try {
-      const currentInput = useOrderStore.getState();
-      const apiRequest = transformOrderToApiRequest({
-        boxType: currentInput.boxType,
-        wantsPersonalization: currentInput.wantsPersonalization,
-        sports: currentInput.sports,
-        sportOther: currentInput.sportOther,
-        colors: currentInput.colors,
-        flavors: currentInput.flavors,
-        flavorOther: currentInput.flavorOther,
-        sizeUpper: currentInput.sizeUpper,
-        sizeLower: currentInput.sizeLower,
-        dietary: currentInput.dietary,
-        dietaryOther: currentInput.dietaryOther,
-        additionalNotes: currentInput.additionalNotes,
-        isGuest: currentInput.isGuest,
-        fullName: currentInput.fullName,
-        email: currentInput.email,
-        phone: currentInput.phone,
-        selectedAddressId: currentInput.selectedAddressId,
-        address: currentInput.address,
-        promoCode: currentInput.promoCode,
-        conversionToken: currentInput.conversionToken,
-        deliveryCycleId: currentInput.deliveryCycleId,
-        orderType: currentInput.orderType,
-      });
+      const currentInput = getOrderInput();
+      const apiRequest = transformOrderToApiRequest(currentInput);
 
       const response = await fetch('/api/order', {
         method: 'POST',
@@ -233,6 +214,9 @@ export default function OrderFlow({
           isGuest: currentInput.isGuest,
         }),
       );
+
+      // Clear order store so next visit starts fresh
+      useOrderStore.getState().reset();
 
       router.push('/order/thank-you');
     } catch (err) {

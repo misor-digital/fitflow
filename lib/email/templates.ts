@@ -103,6 +103,59 @@ function generateColorSwatchesHtml(colors: string[], colorLabels: LabelMap): str
 }
 
 /**
+ * Generate delivery info section HTML for email
+ */
+function generateDeliverySection(data: ConfirmationEmailData): string {
+  if (!data.deliveryMethod) return '';
+
+  let addressHtml = '';
+
+  if (data.deliveryMethod === 'speedy_office') {
+    addressHtml = `
+      <p style="margin: 5px 0;"><strong>Метод на доставка:</strong> До офис на Speedy</p>
+      ${data.speedyOfficeName ? `<p style="margin: 5px 0;"><strong>Офис:</strong> ${escapeHtml(data.speedyOfficeName)}</p>` : ''}
+      ${data.speedyOfficeAddress ? `<p style="margin: 5px 0; color: #6c757d; font-size: 14px;">${escapeHtml(data.speedyOfficeAddress)}</p>` : ''}
+    `;
+  } else {
+    const addr = data.shippingAddress;
+    if (addr) {
+      const parts: string[] = [];
+      if (addr.streetAddress) parts.push(escapeHtml(addr.streetAddress));
+      if (addr.buildingEntrance) parts.push(`Вход ${escapeHtml(addr.buildingEntrance)}`);
+      if (addr.floor) parts.push(`ет. ${escapeHtml(addr.floor)}`);
+      if (addr.apartment) parts.push(`ап. ${escapeHtml(addr.apartment)}`);
+      const line1 = parts.join(', ');
+      const line2 = `${addr.postalCode ? escapeHtml(addr.postalCode) : ''} ${addr.city ? escapeHtml(addr.city) : ''}`.trim();
+
+      addressHtml = `
+        <p style="margin: 5px 0;"><strong>Метод на доставка:</strong> Доставка до адрес</p>
+        ${line1 ? `<p style="margin: 5px 0;">${line1}</p>` : ''}
+        ${line2 ? `<p style="margin: 5px 0;">${line2}</p>` : ''}
+      `;
+    }
+  }
+
+  const recipient = data.shippingAddress;
+  const recipientHtml = recipient ? `
+    ${recipient.fullName ? `<p style="margin: 5px 0;"><strong>Получател:</strong> ${escapeHtml(recipient.fullName)}</p>` : ''}
+    ${recipient.phone ? `<p style="margin: 5px 0;"><strong>Телефон:</strong> ${escapeHtml(recipient.phone)}</p>` : ''}
+  ` : '';
+
+  const notesHtml = recipient?.deliveryNotes
+    ? `<p style="margin: 5px 0; color: #6c757d; font-size: 14px;"><strong>Бележки:</strong> ${escapeHtml(recipient.deliveryNotes)}</p>`
+    : '';
+
+  return `
+    <div style="background-color: #f0f7ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
+      <h3 style="color: #363636; margin-top: 0;">🚚 Данни за доставка</h3>
+      ${recipientHtml}
+      ${addressHtml}
+      ${notesHtml}
+    </div>
+  `;
+}
+
+/**
  * Generate promo code section HTML for email
  */
 function generatePromoCodeSection(data: ConfirmationEmailData): string {
@@ -217,6 +270,8 @@ export function generateConfirmationEmail(
               <p style="margin: 5px 0;"><strong>Избрана кутия:</strong> ${data.boxTypeDisplay}${!data.hasPromoCode ? ` (${formatPriceDual(data.originalPriceEur ?? 0, data.originalPriceBgn ?? 0)})` : ''}</p>
               <p style="margin: 5px 0;"><strong>Персонализация:</strong> ${data.wantsPersonalization ? 'Да' : 'Не'}</p>
             </div>
+            
+            ${generateDeliverySection(data)}
             
             ${promoCodeSection}
             

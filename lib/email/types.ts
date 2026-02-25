@@ -97,6 +97,21 @@ export interface ConfirmationEmailData {
   originalPriceBgn?: number | null;
   finalPriceBgn?: number | null;
   discountAmountBgn?: number | null;
+  // Delivery fields
+  deliveryMethod?: 'address' | 'speedy_office';
+  speedyOfficeName?: string | null;
+  speedyOfficeAddress?: string | null;
+  shippingAddress?: {
+    fullName: string;
+    phone?: string | null;
+    city?: string;
+    postalCode?: string;
+    streetAddress?: string;
+    buildingEntrance?: string | null;
+    floor?: string | null;
+    apartment?: string | null;
+    deliveryNotes?: string | null;
+  } | null;
 }
 
 // ============================================================================

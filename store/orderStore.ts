@@ -166,12 +166,8 @@ export const useOrderStore = create<OrderStore>()(
   ),
 );
 
-/**
- * Hook to get user input as OrderUserInput type.
- * Useful for passing to derived state / validation functions.
- */
-export function useOrderInput(): OrderUserInput {
-  const store = useOrderStore();
+/** Map store state to OrderUserInput shape. */
+function mapStoreToInput(store: OrderStore): OrderUserInput {
   return {
     boxType: store.boxType,
     wantsPersonalization: store.wantsPersonalization,
@@ -198,4 +194,21 @@ export function useOrderInput(): OrderUserInput {
     deliveryCycleId: store.deliveryCycleId,
     orderType: store.orderType,
   };
+}
+
+/**
+ * Hook to get user input as OrderUserInput type.
+ * Useful for passing to derived state / validation functions.
+ */
+export function useOrderInput(): OrderUserInput {
+  const store = useOrderStore();
+  return mapStoreToInput(store);
+}
+
+/**
+ * Non-hook getter: reads the latest store state synchronously.
+ * Use inside callbacks to avoid stale-closure issues.
+ */
+export function getOrderInput(): OrderUserInput {
+  return mapStoreToInput(useOrderStore.getState() as OrderStore);
 }

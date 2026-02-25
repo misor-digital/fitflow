@@ -240,16 +240,18 @@ export function validateOrderStep3(input: OrderUserInput): boolean {
     if (input.isGuest) {
       if (!input.fullName.trim() || input.fullName.trim().length < 2) return false;
       if (!input.email.trim() || !isValidEmail(input.email)) return false;
-      if (!input.phone.trim() || !isValidPhone(input.phone)) return false;
+      // Phone is optional — only reject if provided but invalid
+      if (input.phone.trim() && !isValidPhone(input.phone)) return false;
     }
     return true;
   }
 
-  // --- Address delivery branch (existing logic, unchanged) ---
+  // --- Address delivery branch ---
   if (input.isGuest) {
     if (!input.fullName.trim() || input.fullName.trim().length < 2) return false;
     if (!input.email.trim() || !isValidEmail(input.email)) return false;
-    if (!input.phone.trim() || !isValidPhone(input.phone)) return false;
+    // Phone is optional — only reject if provided but invalid
+    if (input.phone.trim() && !isValidPhone(input.phone)) return false;
     const addressResult = validateAddress(input.address);
     return addressResult.valid;
   }
