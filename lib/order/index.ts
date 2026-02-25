@@ -37,6 +37,10 @@ export type {
 
   // Tracking
   OrderTrackingData,
+
+  // Delivery method
+  DeliveryMethod,
+  SpeedyOfficeSelection,
 } from './types';
 
 // ============================================================================
@@ -74,6 +78,9 @@ export {
 
   // Per-field error
   getAddressFieldError,
+
+  // Speedy office validation
+  validateSpeedyOffice,
 } from './validation';
 
 // ============================================================================
@@ -92,6 +99,9 @@ export {
   // Address formatting
   formatShippingAddress,
   formatShippingAddressOneLine,
+
+  // Delivery method formatting
+  formatDeliveryMethodLabel,
 } from './format';
 
 // ============================================================================
