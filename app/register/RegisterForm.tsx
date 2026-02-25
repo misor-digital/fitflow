@@ -182,7 +182,7 @@ export default function RegisterForm() {
       <div className="text-center text-sm text-gray-600">
         Вече имате акаунт?{' '}
         <Link href="/login" className="text-[var(--color-brand-orange)] hover:underline font-semibold">
-          Вписване
+          Вход
         </Link>
       </div>
     </form>

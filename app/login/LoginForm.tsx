@@ -63,7 +63,7 @@ export default function LoginForm() {
       <div className="bg-green-50 text-green-700 p-6 rounded-lg text-center">
         <p className="font-semibold mb-2">Линкът е изпратен!</p>
         <p className="text-sm">
-          Проверете имейла си ({email}) за магически линк за вписване.
+          Проверете имейла си ({email}) за магически линк за вход във системата.
         </p>
         <button
           type="button"
@@ -119,7 +119,7 @@ export default function LoginForm() {
         disabled={loading}
         className="w-full bg-[var(--color-brand-navy)] text-white py-3 rounded-lg font-semibold hover:bg-[var(--color-brand-orange)] transition-colors disabled:opacity-50"
       >
-        {loading ? 'Зареждане...' : 'Вписване'}
+        {loading ? 'Зареждане...' : 'Вход'}
       </button>
 
       <div className="text-center">
@@ -129,7 +129,7 @@ export default function LoginForm() {
           disabled={loading}
           className="text-sm text-[var(--color-brand-orange)] hover:underline"
         >
-          Вписване с магически линк
+          Вход с магически линк
         </button>
       </div>
 

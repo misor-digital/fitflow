@@ -3,7 +3,7 @@ import { verifySession } from '@/lib/auth';
 import LoginForm from './LoginForm';
 
 export const metadata = {
-  title: 'Вписване | FitFlow',
+  title: 'Вход | FitFlow',
 };
 
 export default async function LoginPage() {
@@ -17,7 +17,7 @@ export default async function LoginPage() {
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         <h1 className="text-3xl font-bold text-center text-[var(--color-brand-navy)] mb-8">
-          Вписване
+          Вход
         </h1>
         <LoginForm />
       </div>

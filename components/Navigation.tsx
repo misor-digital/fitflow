@@ -235,7 +235,7 @@ export default function Navigation() {
                       href="/login"
                       className="text-sm font-medium text-[var(--color-brand-navy)] hover:text-[var(--color-brand-orange)] transition-colors"
                     >
-                      Вписване
+                      Вход
                     </Link>
                     <Link
                       href="/register"
@@ -330,7 +330,7 @@ export default function Navigation() {
                 <>
                   <Link href="/login" onClick={() => setIsOpen(false)}
                     className="text-sm font-semibold text-[var(--color-brand-navy)]">
-                    Вписване
+                    Вход
                   </Link>
                   <Link href="/register" onClick={() => setIsOpen(false)}
                     className="text-sm font-semibold text-[var(--color-brand-orange)]">

@@ -38,7 +38,7 @@ export default function ForgotPasswordForm() {
           Проверете имейла си ({email}) за линк за нулиране на паролата.
         </p>
         <Link href="/login" className="mt-4 inline-block text-sm text-[var(--color-brand-orange)] hover:underline">
-          Обратно към вписване
+          Обратно към вход
         </Link>
       </div>
     );
@@ -81,7 +81,7 @@ export default function ForgotPasswordForm() {
 
       <div className="text-center text-sm">
         <Link href="/login" className="text-gray-500 hover:underline">
-          Обратно към вписване
+          Обратно към вход
         </Link>
       </div>
     </form>
