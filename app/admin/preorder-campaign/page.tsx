@@ -3,7 +3,7 @@ import PreorderCampaignPage from '@/components/admin/PreorderCampaignPage';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Предпоръчки кампания | FitFlow Admin',
+  title: 'Кампания за предварителни поръчки | FitFlow Admin',
 };
 
 export default async function Page() {

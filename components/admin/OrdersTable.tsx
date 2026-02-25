@@ -479,7 +479,7 @@ function OrderRowDetail({
 
         {order.converted_from_preorder_id && (
           <p className="mt-3 text-xs text-indigo-600">
-            Преобразувана от предпоръчка
+            Преобразувана от предварителна поръчка
           </p>
         )}
       </div>

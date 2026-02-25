@@ -27,7 +27,7 @@
                 <td style="padding:40px 30px;border:1px solid transparent;background:unset;">
                   <!-- Greeting -->
                   <h2 style="color:#363636;margin-top:0;font-size:24px;">
-                    Здравей, {{ contact.FIRSTNAME }} {{ contact.LASTNAME }}
+                    Здравей, {{firstName}} {{lastName}}
                   </h2>
 
                   <!-- New intro text -->
@@ -58,36 +58,34 @@
                     </h3>
 
                     <p style="margin:6px 0;font-family:Arial;">
-                      <strong style="font-weight:700;">Номер на предварителната поръчка:</strong> {{ preorder_number }}
+                      <strong style="font-weight:700;">Номер на предварителната поръчка:</strong> {{preorder_number}}
                     </p>
                     <p style="margin:6px 0;font-family:Arial;">
-                      <strong style="font-weight:700;">Избрана кутия:</strong> {{ box_name }} ({{ box_price }})
+                      <strong style="font-weight:700;">Избрана кутия:</strong> {{box_name}} ({{box_price}})
                     </p>
                     <p style="margin:6px 0;font-family:Arial;">
-                      <strong style="font-weight:700;">Персонализация:</strong> {{ personalization }}
+                      <strong style="font-weight:700;">Персонализация:</strong> {{personalization}}
                     </p>
 
-                    <!-- Ако персонализация = "да" (настрой името/стойността според твоите полета в Brevo) -->
-                    {% if personalization == "да" or personalization == "Да" or personalization == "YES" or
-                    personalization == "yes" %}
+                    {{#wantsPersonalization}}
                     <div style="margin-top:12px;padding-top:12px;border-top:1px solid #f2d6c6;">
                       <p style="margin:6px 0;font-family:Arial;">
-                        <strong style="font-weight:700;">Спорт:</strong> {{ sport }}
+                        <strong style="font-weight:700;">Спорт:</strong> {{sport}}
                       </p>
                       <p style="margin:6px 0;font-family:Arial;">
-                        <strong style="font-weight:700;">Цветове:</strong> {{ colors }}
+                        <strong style="font-weight:700;">Цветове:</strong> {{colors}}
                       </p>
                       <p style="margin:6px 0;font-family:Arial;">
-                        <strong style="font-weight:700;">Вкусове:</strong> {{ flavors }}
+                        <strong style="font-weight:700;">Вкусове:</strong> {{flavors}}
                       </p>
                       <p style="margin:6px 0;font-family:Arial;">
-                        <strong style="font-weight:700;">Размер:</strong> {{ size }}
+                        <strong style="font-weight:700;">Размер:</strong> {{size}}
                       </p>
                       <p style="margin:6px 0;font-family:Arial;">
-                        <strong style="font-weight:700;">Хранителни ограничения:</strong> {{ dietary_restrictions }}
+                        <strong style="font-weight:700;">Хранителни ограничения:</strong> {{dietary_restrictions}}
                       </p>
                     </div>
-                    {% endif %}
+                    {{/wantsPersonalization}}
                   </div>
 
                   <!-- Then green free shipping -->
@@ -110,7 +108,7 @@
                       Натисни ТУК, за да добавиш адрес за доставка:
                     </p>
 
-                    <a href="{{ custom_link }}" target="_blank"
+                    <a href="{{{custom_link}}}" target="_blank"
                       style="display:inline-block;background-color:#ff6a00;color:#ffffff;text-decoration:none;font-weight:700;font-family:Arial;padding:12px 18px;border-radius:10px;">
                       Добави адрес за доставка
                     </a>

@@ -8,11 +8,6 @@ const TYPE_CONFIG: Record<
   EmailCampaignTypeEnum,
   { label: string; icon: string; className: string }
 > = {
-  'preorder-conversion': {
-    label: 'Предпоръчки',
-    icon: '🔄',
-    className: 'bg-purple-100 text-purple-800',
-  },
   lifecycle: {
     label: 'Абонаменти',
     icon: '🔁',

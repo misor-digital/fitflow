@@ -71,7 +71,7 @@ export async function getEligiblePreorderRecipients(): Promise<PreorderRecipient
     .eq('conversion_status', 'pending')
     .not('conversion_token', 'is', null)
     .gt('conversion_token_expires_at', new Date().toISOString())
-    .eq('email_consent', true)
+    // .eq('email_consent', true)
     .limit(MAX_RECIPIENTS);
 
   if (error) {

@@ -61,7 +61,7 @@ export default function ConversionSummary({
     <div className="space-y-4 sm:space-y-5 md:space-y-6">
       {/* Header */}
       <h2 className="text-xl sm:text-2xl font-bold text-[var(--color-brand-navy)]">
-        Вашата предпоръчка
+        Вашата предварителна поръчка
       </h2>
 
       {/* Box Type Card */}
@@ -261,7 +261,7 @@ export default function ConversionSummary({
 
       {/* Legacy order reference */}
       <div className="text-sm text-gray-500 text-center">
-        Предпоръчка #{source.orderId}
+        предварителна поръчка #{source.orderId}
       </div>
     </div>
   );

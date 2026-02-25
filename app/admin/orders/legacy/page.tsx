@@ -7,7 +7,7 @@ import type { PreorderConversionStatus } from '@/lib/supabase/types';
 import { LegacyPreordersTable } from '@/components/admin/LegacyPreordersTable';
 
 export const metadata: Metadata = {
-  title: 'Стари предпоръчки | Администрация | FitFlow',
+  title: 'Стари предварителни поръчки | Администрация | FitFlow',
 };
 
 const PER_PAGE = 20;
@@ -49,7 +49,7 @@ export default async function LegacyPreordersPage({ searchParams }: LegacyPreord
       <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold text-[var(--color-brand-navy)]">
-            Стари предпоръчки
+            Стари предварителни поръчки
           </h1>
           <span className="bg-gray-500 text-white text-xs font-semibold px-2.5 py-1 rounded-full">
             {total}
@@ -65,14 +65,14 @@ export default async function LegacyPreordersPage({ searchParams }: LegacyPreord
 
       {/* Info banner */}
       <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mb-6 text-sm text-blue-800">
-        Тази страница показва исторически предпоръчки. Новите поръчки са в раздел{' '}
+        Тази страница показва исторически предварителни поръчки. Новите поръчки са в раздел{' '}
         <Link href="/admin/orders" className="font-semibold underline">Поръчки</Link>.
       </div>
 
       {/* Table */}
       {preorders.length === 0 ? (
         <div className="text-center py-16 text-gray-500">
-          <p className="text-lg">Няма предпоръчки.</p>
+          <p className="text-lg">Няма предварителни поръчки.</p>
         </div>
       ) : (
         <>

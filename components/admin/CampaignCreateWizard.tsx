@@ -315,7 +315,7 @@ export default function CampaignCreateWizard() {
                 value={formData.name}
                 onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                 className="w-full border rounded-lg px-3 py-2 text-sm"
-                placeholder="напр. Февруари 2026 — преобразуване предпоръчки"
+                placeholder="напр. Февруари 2026 — маркетингова кампания"
               />
             </div>
 

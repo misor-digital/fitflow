@@ -17,7 +17,7 @@ import type { ConversionSource } from '@/components/order/ConversionSummary';
 
 export const metadata: Metadata = {
   title: 'Завършете поръчката | FitFlow',
-  description: 'Превърнете предпоръчката си в поръчка',
+  description: 'Превърнете предварителната си поръчката в поръчка',
 };
 
 /** UUID v4 regex for basic format validation */

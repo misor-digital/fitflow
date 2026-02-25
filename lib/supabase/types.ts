@@ -600,7 +600,7 @@ export interface SubscriptionHistoryInsert {
 // Email Campaign Types
 // ============================================================================
 
-export type EmailCampaignTypeEnum = 'one-off' | 'preorder-conversion' | 'promotional' | 'lifecycle';
+export type EmailCampaignTypeEnum = 'one-off' | 'promotional' | 'lifecycle';
 export type EmailCampaignStatusEnum = 'draft' | 'scheduled' | 'sending' | 'sent' | 'paused' | 'cancelled' | 'failed';
 export type EmailRecipientStatusEnum = 'pending' | 'sent' | 'delivered' | 'opened' | 'clicked' | 'bounced' | 'failed' | 'skipped';
 export type EmailLogStatusEnum = 'sent' | 'delivered' | 'opened' | 'clicked' | 'bounced' | 'failed' | 'spam' | 'blocked';

@@ -41,7 +41,9 @@ const BOX_TYPE_LABELS: Record<string, string> = {
   'monthly-standard': 'Стандартна',
   'monthly-premium': 'Премиум',
   'monthly-premium-monthly': 'Премиум (месечна)',
-  'monthly-premium-seasonal': 'Премиум (сезонна)',
+  'monthly-premium-seasonal': 'Премиум (сезонна)', 
+  'onetime-standard': 'Еднократна (стандартна)',
+  'onetime-premium': 'Еднократна (премиум)',
 };
 
 /* ------------------------------------------------------------------ */
@@ -125,10 +127,10 @@ export default function PreorderCampaignPage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">
-          Предпоръчки — Конверсионна кампания
+          предварителни поръчки — Конверсионна кампания
         </h1>
         <p className="mt-1 text-sm text-gray-600">
-          Изпращане на имейли за конвертиране на предпоръчки в поръчки.
+          Изпращане на имейли за конвертиране на предварителни поръчки в поръчки.
         </p>
       </div>
 
@@ -203,7 +205,7 @@ export default function PreorderCampaignPage() {
         </div>
       ) : total === 0 ? (
         <div className="text-center py-12 text-sm text-gray-500">
-          Няма отговарящи на условията предпоръчки.
+          Няма отговарящи на условията предварителни поръчки.
         </div>
       ) : (
         <>

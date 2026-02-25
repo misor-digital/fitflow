@@ -2,16 +2,18 @@
  * Preorder Campaign — Template Renderer
  *
  * Server-only module that reads the HTML template and renders it
- * with recipient-specific data. All user-provided values are HTML-escaped
- * to prevent XSS. The template uses Jinja-style {{ }} and {% %} syntax
- * which is rendered locally before sending to Brevo as final HTML.
+ * with recipient-specific data via Mustache.
+ *
+ * - `{{var}}` placeholders are auto-escaped by Mustache (XSS-safe).
+ * - `{{{var}}}` (triple-stache) is used for the pre-validated conversion URL.
+ * - `{{#flag}}...{{/flag}}` sections handle conditional blocks.
  */
 
 import 'server-only';
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { escapeHtml } from '@/lib/utils/sanitize';
+import Mustache from 'mustache';
 import type { PreorderRecipient } from './recipients';
 
 // ---------------------------------------------------------------------------
@@ -37,7 +39,14 @@ let cachedTemplate: string | null = null;
 function getTemplate(): string {
   if (cachedTemplate) return cachedTemplate;
 
-  const templatePath = path.join(__dirname, 'templates', 'preorder-campaign-template.html');
+  const templatePath = path.join(
+    process.cwd(),
+    'lib',
+    'email',
+    'preorder-campaign',
+    'templates',
+    'preorder-campaign-template.html',
+  );
   cachedTemplate = fs.readFileSync(templatePath, 'utf-8');
   return cachedTemplate;
 }
@@ -102,17 +111,16 @@ function formatDietary(dietary: string[] | null, dietaryOther: string | null): s
 /**
  * Render the preorder conversion email template with recipient-specific data.
  *
- * - All user-provided values are HTML-escaped to prevent XSS.
- * - The conversion URL is NOT escaped (validated to start with SITE_URL instead).
- * - Conditional {% if %} blocks are resolved based on personalization status.
+ * - `{{var}}` values are auto-escaped by Mustache to prevent XSS.
+ * - The conversion URL uses `{{{custom_link}}}` (triple-stache, unescaped)
+ *   and is validated to start with SITE_URL before rendering.
+ * - `{{#wantsPersonalization}}...{{/wantsPersonalization}}` sections are
+ *   conditionally rendered by Mustache.
  */
 export function renderPreorderEmail(recipient: PreorderRecipient): string {
-  let html = getTemplate();
+  const template = getTemplate();
 
   const { firstName, lastName } = splitName(recipient.fullName);
-  const personalizationValue = recipient.wantsPersonalization ? 'да' : 'не';
-  const boxLabel = BOX_TYPE_LABELS[recipient.boxType] ?? recipient.boxType;
-  const priceStr = formatPrice(recipient.finalPriceEur, recipient.originalPriceEur);
 
   // Validate conversion URL starts with SITE_URL
   if (!recipient.conversionUrl.startsWith(SITE_URL)) {
@@ -121,35 +129,20 @@ export function renderPreorderEmail(recipient: PreorderRecipient): string {
     );
   }
 
-  // --- Simple placeholder replacements (escaped) ---
-  const replacements: [string, string][] = [
-    ['{{ contact.FIRSTNAME }}', escapeHtml(firstName)],
-    ['{{ contact.LASTNAME }}', escapeHtml(lastName)],
-    ['{{ preorder_number }}', escapeHtml(recipient.orderId)],
-    ['{{ box_name }}', escapeHtml(boxLabel)],
-    ['{{ box_price }}', escapeHtml(priceStr)],
-    ['{{ personalization }}', escapeHtml(personalizationValue)],
-    ['{{ sport }}', escapeHtml(formatSports(recipient.sports, recipient.sportOther))],
-    ['{{ colors }}', escapeHtml(recipient.colors?.join(', ') || '—')],
-    ['{{ flavors }}', escapeHtml(formatFlavors(recipient.flavors, recipient.flavorOther))],
-    ['{{ size }}', escapeHtml(formatSize(recipient.sizeUpper, recipient.sizeLower))],
-    ['{{ dietary_restrictions }}', escapeHtml(formatDietary(recipient.dietary, recipient.dietaryOther))],
-    // URL is NOT escaped — validated above instead
-    ['{{ custom_link }}', recipient.conversionUrl],
-  ];
-
-  for (const [placeholder, value] of replacements) {
-    // Replace all occurrences of each placeholder
-    html = html.replaceAll(placeholder, value);
-  }
-
-  // --- Conditional block: {% if personalization == "да" ... %}...{% endif %} ---
-  html = html.replace(
-    /\{%\s*if\s+personalization\s*==.*?%\}([\s\S]*?)\{%\s*endif\s*%\}/g,
-    (_match, innerContent: string) => {
-      return recipient.wantsPersonalization ? innerContent : '';
-    },
-  );
-
-  return html;
+  return Mustache.render(template, {
+    firstName,
+    lastName,
+    preorder_number: recipient.orderId,
+    box_name: BOX_TYPE_LABELS[recipient.boxType] ?? recipient.boxType,
+    box_price: formatPrice(recipient.finalPriceEur, recipient.originalPriceEur),
+    personalization: recipient.wantsPersonalization ? 'да' : 'не',
+    wantsPersonalization: recipient.wantsPersonalization,
+    sport: formatSports(recipient.sports, recipient.sportOther),
+    colors: recipient.colors?.join(', ') || '—',
+    flavors: formatFlavors(recipient.flavors, recipient.flavorOther),
+    size: formatSize(recipient.sizeUpper, recipient.sizeLower),
+    dietary_restrictions: formatDietary(recipient.dietary, recipient.dietaryOther),
+    // Used as {{{custom_link}}} in template — unescaped, validated above
+    custom_link: recipient.conversionUrl,
+  });
 }

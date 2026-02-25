@@ -49,7 +49,6 @@ const STATUS_OPTIONS: [EmailCampaignStatusEnum, string][] = [
 ];
 
 const TYPE_OPTIONS: [EmailCampaignTypeEnum, string][] = [
-  ['preorder-conversion', 'Преобразуване на предпоръчки'],
   ['lifecycle', 'Абонаменти'],
   ['promotional', 'Промоционална'],
   ['one-off', 'Известие'],

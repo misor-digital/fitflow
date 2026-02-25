@@ -77,7 +77,7 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
           href="/admin/orders/legacy"
           className="text-sm text-[var(--color-brand-navy)] border border-[var(--color-brand-navy)] px-4 py-2 rounded-lg hover:bg-[var(--color-brand-navy)] hover:text-white transition-colors"
         >
-          Стари предпоръчки →
+          Стари предварителни поръчки →
         </Link>
       </div>
 
