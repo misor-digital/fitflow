@@ -8,6 +8,7 @@ import PriceDisplay from '@/components/PriceDisplay';
 import type { PricesMap, CatalogData, PriceInfo } from '@/lib/catalog';
 import { formatPriceDual, formatSavings, isPremiumBox, isSubscriptionBox } from '@/lib/catalog';
 import type { OrderStep } from '@/lib/order';
+import { formatDeliveryMethodLabel } from '@/lib/order';
 
 interface OrderStepConfirmProps {
   prices: PricesMap;
@@ -265,8 +266,28 @@ export default function OrderStepConfirm({
               </div>
             )}
 
-            {/* Address display */}
-            {store.selectedAddressId ? (
+            {/* Delivery method label */}
+            <div className="text-sm sm:text-base">
+              <span className="font-semibold text-[var(--color-brand-navy)]">Доставка:</span>
+              <span className="ml-1.5 sm:ml-2 text-gray-600">
+                {formatDeliveryMethodLabel(store.deliveryMethod)}
+              </span>
+            </div>
+
+            {/* Address / Office display */}
+            {store.deliveryMethod === 'speedy_office' && store.speedyOffice ? (
+              <div className="mt-2 pt-2 border-t border-gray-100">
+                <div className="text-sm sm:text-base font-semibold text-[var(--color-brand-navy)] mb-1">
+                  Офис на Speedy:
+                </div>
+                <div className="text-sm sm:text-base text-gray-600">
+                  <div className="font-medium">{store.speedyOffice.name}</div>
+                  {store.speedyOffice.address && (
+                    <div className="text-sm text-gray-500 mt-0.5">{store.speedyOffice.address}</div>
+                  )}
+                </div>
+              </div>
+            ) : store.selectedAddressId ? (
               <div className="text-sm sm:text-base">
                 <span className="font-semibold text-[var(--color-brand-navy)]">Адрес:</span>
                 <span className="ml-1.5 sm:ml-2 text-gray-600">Запазен адрес</span>
