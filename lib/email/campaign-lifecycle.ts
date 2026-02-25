@@ -19,7 +19,6 @@ import { getRecipientStats } from '@/lib/data/email-recipients';
 import { processCampaign } from './campaign-engine';
 import { assignRecipientsToVariants, getABVariants } from './ab-testing';
 import {
-  buildPreorderConversionRecipients,
   buildSubscriberRecipients,
   buildCustomerRecipients,
 } from './recipient-builder';
@@ -288,12 +287,6 @@ export async function duplicateCampaign(
   let recipientCount = 0;
 
   switch (original.campaign_type) {
-    case 'preorder-conversion':
-      recipientCount = await buildPreorderConversionRecipients(
-        newCampaign.id,
-        original.target_filter as never,
-      );
-      break;
     case 'lifecycle':
       recipientCount = await buildSubscriberRecipients(
         newCampaign.id,

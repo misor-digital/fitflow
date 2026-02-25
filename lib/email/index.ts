@@ -71,7 +71,6 @@ export {
   completeCampaign,
 } from './campaign-lifecycle';
 export {
-  buildPreorderConversionRecipients,
   buildSubscriberRecipients,
   buildCustomerRecipients,
 } from './recipient-builder';

@@ -13,7 +13,7 @@ import 'server-only';
 
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { addRecipients } from '@/lib/data/email-recipients';
-import type { EmailCampaignRecipientInsert, BoxType, SubscriptionStatus } from '@/lib/supabase/types';
+import type { EmailCampaignRecipientInsert, SubscriptionStatus, BoxType } from '@/lib/supabase/types';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -27,66 +27,6 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://fitflow.bg';
  * prevents runaway memory usage.
  */
 const MAX_RECIPIENTS = 10_000;
-
-// ---------------------------------------------------------------------------
-// Preorder conversion recipients
-// ---------------------------------------------------------------------------
-
-/**
- * Build recipients from preorders that:
- *  - have conversion_status = 'pending'
- *  - have a non-null conversion_token
- *  - have a non-expired conversion_token_expires_at
- *  - have email_consent = true (GDPR)
- *
- * Each recipient gets per-recipient params containing the personalised
- * conversion URL, price info, and promo code.
- *
- * @returns The number of recipients inserted.
- */
-export async function buildPreorderConversionRecipients(
-  campaignId: string,
-  filter?: { boxType?: BoxType },
-): Promise<number> {
-  let query = supabaseAdmin
-    .from('preorders')
-    .select(
-      'id, full_name, email, box_type, conversion_token, promo_code, original_price_eur, final_price_eur, email_consent',
-    )
-    .eq('conversion_status', 'pending')
-    .not('conversion_token', 'is', null)
-    .gt('conversion_token_expires_at', new Date().toISOString())
-    .eq('email_consent', true)
-    .limit(MAX_RECIPIENTS);
-
-  if (filter?.boxType) {
-    query = query.eq('box_type', filter.boxType);
-  }
-
-  const { data: preorders, error } = await query;
-
-  if (error) {
-    throw new Error(`Failed to fetch preorders: ${error.message}`);
-  }
-  if (!preorders?.length) return 0;
-
-  const recipients: EmailCampaignRecipientInsert[] = preorders.map((p) => ({
-    campaign_id: campaignId,
-    email: p.email.trim().toLowerCase(),
-    full_name: p.full_name,
-    preorder_id: p.id,
-    params: {
-      fullName: p.full_name,
-      boxType: p.box_type,
-      conversionUrl: `${SITE_URL}/order/convert?token=${p.conversion_token}`,
-      promoCode: p.promo_code ?? null,
-      originalPriceEur: p.original_price_eur ?? null,
-      finalPriceEur: p.final_price_eur ?? null,
-    },
-  }));
-
-  return addRecipients(recipients);
-}
 
 // ---------------------------------------------------------------------------
 // Subscriber recipients

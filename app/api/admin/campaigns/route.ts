@@ -12,16 +12,13 @@ import {
 } from '@/lib/data/email-campaigns';
 import { recordCampaignAction } from '@/lib/data/email-campaign-history';
 import {
-  buildPreorderConversionRecipients,
   buildSubscriberRecipients,
   buildCustomerRecipients,
 } from '@/lib/email/recipient-builder';
-import { EMAIL_CONFIG } from '@/lib/email/client';
 import type {
   EmailCampaignTypeEnum,
   EmailCampaignStatusEnum,
   TargetListTypeEnum,
-  BoxType,
 } from '@/lib/supabase/types';
 
 // ---------------------------------------------------------------------------
@@ -33,8 +30,6 @@ import type {
  */
 function targetListTypeFor(type: EmailCampaignTypeEnum): TargetListTypeEnum {
   switch (type) {
-    case 'preorder-conversion':
-      return 'preorder-holders';
     case 'lifecycle':
       return 'subscribers';
     case 'promotional':
@@ -48,14 +43,10 @@ function targetListTypeFor(type: EmailCampaignTypeEnum): TargetListTypeEnum {
  * Resolve the template ID: explicit value from body > type-specific default.
  */
 function resolveTemplateId(
-  type: EmailCampaignTypeEnum,
+  _type: EmailCampaignTypeEnum,
   explicit?: number | null,
 ): number | null {
   if (explicit !== undefined && explicit !== null) return explicit;
-  if (type === 'preorder-conversion') {
-    const id = EMAIL_CONFIG.templates.preorderConversion;
-    return id > 0 ? id : null;
-  }
   return null;
 }
 
@@ -96,7 +87,6 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
 const VALID_TYPES: EmailCampaignTypeEnum[] = [
   'one-off',
-  'preorder-conversion',
   'promotional',
   'lifecycle',
 ];
@@ -149,14 +139,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const campaignType = type as EmailCampaignTypeEnum;
     const resolvedTemplateId = resolveTemplateId(campaignType, templateId as number | null);
 
-    // For preorder-conversion, a template is required
-    if (campaignType === 'preorder-conversion' && !resolvedTemplateId) {
-      return NextResponse.json(
-        { error: 'Preorder-conversion кампаниите изискват конфигуриран шаблон (BREVO_TEMPLATE_PREORDER_CONVERSION).' },
-        { status: 400 },
-      );
-    }
-
     // Create campaign in draft status
     const campaign = await createCampaign({
       name: name as string,
@@ -173,12 +155,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     let recipientCount = 0;
 
     switch (campaignType) {
-      case 'preorder-conversion':
-        recipientCount = await buildPreorderConversionRecipients(
-          campaign.id,
-          filter as { boxType?: BoxType },
-        );
-        break;
       case 'lifecycle':
         recipientCount = await buildSubscriberRecipients(campaign.id, filter as never);
         break;

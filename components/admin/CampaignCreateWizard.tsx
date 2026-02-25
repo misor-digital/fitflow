@@ -42,12 +42,6 @@ const TYPE_CARDS: {
   description: string;
 }[] = [
   {
-    value: 'preorder-conversion',
-    label: 'Преобразуване на предпоръчки',
-    icon: '🔄',
-    description: 'Изпратете имейл на клиенти с предварителни поръчки да завършат покупката',
-  },
-  {
     value: 'lifecycle',
     label: 'Абонаментна кампания',
     icon: '🔁',
@@ -376,11 +370,6 @@ export default function CampaignCreateWizard() {
                 className="w-full border rounded-lg px-3 py-2 text-sm"
                 placeholder="напр. 12"
               />
-              {formData.type === 'preorder-conversion' && !formData.templateId && (
-                <p className="text-xs text-amber-600 mt-1">
-                  Ще се използва шаблонът по подразбиране за преобразуване на предпоръчки.
-                </p>
-              )}
             </div>
 
             <div>
@@ -539,28 +528,6 @@ export default function CampaignCreateWizard() {
           <h2 className="text-xl font-bold text-[var(--color-brand-navy)] mb-4">
             Аудитория
           </h2>
-
-          {formData.type === 'preorder-conversion' && (
-            <div className="space-y-4 max-w-md">
-              <p className="text-sm text-gray-600">
-                Ще бъдат включени клиенти с предварителни поръчки, които все още не са завършили покупката.
-              </p>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Филтър по тип кутия
-                </label>
-                <select
-                  value={(formData.filter.boxType as string) ?? ''}
-                  onChange={(e) => updateFilter('boxType', e.target.value)}
-                  className="border rounded-lg px-3 py-2 text-sm bg-white w-full"
-                >
-                  {BOX_TYPE_FILTER_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          )}
 
           {formData.type === 'lifecycle' && (
             <div className="space-y-4 max-w-md">

@@ -14,7 +14,6 @@ import {
 import { getRecipientStats, deleteRecipientsByCampaign } from '@/lib/data/email-recipients';
 import { recordCampaignAction } from '@/lib/data/email-campaign-history';
 import {
-  buildPreorderConversionRecipients,
   buildSubscriberRecipients,
   buildCustomerRecipients,
 } from '@/lib/email/recipient-builder';
@@ -117,9 +116,6 @@ export async function PATCH(
 
       let count = 0;
       switch (campaign.campaign_type) {
-        case 'preorder-conversion':
-          count = await buildPreorderConversionRecipients(id, filter as never);
-          break;
         case 'lifecycle':
           count = await buildSubscriberRecipients(id, filter as never);
           break;
