@@ -4,6 +4,10 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --color-brand-orange: #FB7D00;
+  --color-brand-orange-dark: #e67100;
+  --color-brand-navy: #023047;
+  --color-brand-light-blue: #f0f9ff;
 }
 
 @theme inline {
@@ -16,7 +20,7 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
-    --foreground: #ededed;
+    --foreground: #525252;
   }
 }
 
@@ -38,4 +42,13 @@ body {
 
 .sliding-banner-content {
   animation: slide 45s linear infinite;
+}
+
+/* Gentle pulse animation for promo discount prompt (replaces JS setInterval) */
+@keyframes pulse-gentle {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+.animate-pulse-gentle {
+  animation: pulse-gentle 4s ease-in-out infinite;
 }

@@ -36,6 +36,8 @@ export interface SendTemplateEmailOptions {
   to: EmailRecipient | EmailRecipient[];
   templateId: number;
   params?: Record<string, string | number | boolean | string[]>;
+  /** Override the template's default subject line (useful for test emails) */
+  subject?: string;
   sender?: EmailSender;
   replyTo?: EmailRecipient;
   cc?: EmailRecipient[];
@@ -65,14 +67,15 @@ export interface ContactResult {
   error?: string;
 }
 
-// Preorder-specific email data
-export interface PreorderEmailData {
+// Confirmation email data (shared by all confirmation emails)
+export interface ConfirmationEmailData {
   fullName: string;
   email: string;
   boxType: string;
   boxTypeDisplay: string;
   wantsPersonalization: boolean;
-  preorderId: string;
+  /** Human-readable order number (e.g. FF-201224-A7K2) */
+  orderId: string;
   sports?: string[];
   sportOther?: string;
   colors?: string[];
@@ -94,4 +97,64 @@ export interface PreorderEmailData {
   originalPriceBgn?: number | null;
   finalPriceBgn?: number | null;
   discountAmountBgn?: number | null;
+  // Delivery fields
+  deliveryMethod?: 'address' | 'speedy_office';
+  speedyOfficeName?: string | null;
+  speedyOfficeAddress?: string | null;
+  shippingAddress?: {
+    fullName: string;
+    phone?: string | null;
+    city?: string;
+    postalCode?: string;
+    streetAddress?: string;
+    buildingEntrance?: string | null;
+    floor?: string | null;
+    apartment?: string | null;
+    deliveryNotes?: string | null;
+  } | null;
 }
+
+// ============================================================================
+// Email Campaign Types
+// ============================================================================
+
+export type EmailCampaignType = 'one-off' | 'preorder-conversion' | 'promotional' | 'lifecycle';
+
+export type EmailCampaignStatus = 'draft' | 'scheduled' | 'sending' | 'sent' | 'paused' | 'cancelled' | 'failed';
+
+export type EmailRecipientStatus = 'pending' | 'sent' | 'delivered' | 'opened' | 'clicked' | 'bounced' | 'failed' | 'skipped';
+
+export type EmailLogStatus = 'sent' | 'delivered' | 'opened' | 'clicked' | 'bounced' | 'failed';
+
+export type EmailLogType = 'transactional' | 'campaign';
+
+export type TargetListType = 'preorder-holders' | 'subscribers' | 'all-customers' | 'custom-list';
+
+/** Input for the email_send_log table */
+export interface EmailSendLogInput {
+  emailType: EmailLogType;
+  emailCategory: string;
+  recipientEmail: string;
+  recipientName: string | null;
+  subject: string | null;
+  templateId: number | null;
+  brevoMessageId: string | null;
+  campaignId: string | null;
+  status: EmailLogStatus;
+  params: Record<string, unknown> | null;
+  error: string | null;
+  relatedEntityType: string | null;
+  relatedEntityId: string | null;
+}
+
+/** Campaign history action types */
+export type CampaignHistoryAction =
+  | 'created'
+  | 'updated'
+  | 'scheduled'
+  | 'started'
+  | 'paused'
+  | 'resumed'
+  | 'cancelled'
+  | 'completed'
+  | 'failed';

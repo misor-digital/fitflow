@@ -1,24 +1,33 @@
-// Supabase client
-export { supabase } from './client';
+// Clients
+export { createClient as createBrowserClient } from './browser';
+export { createClient as createServerClient } from './server';
+export { supabaseAdmin } from './admin';
 
 // Types
 export type {
   Database,
   Preorder,
   PreorderInsert,
+  PreorderConversionStatus,
+  OrderRow,
+  OrderInsert,
+  OrderUpdate,
+  OrderStatus,
+  OrderStatusHistoryRow,
+  OrderStatusHistoryInsert,
   BoxType,
   BoxTypeRow,
   OptionRow,
   OptionSetId,
   PromoCodeRow,
+  PromoCodeInsert,
+  PromoCodeUpdate,
+  PromoCodeUsageRow,
+  UserType,
+  StaffRole,
+  UserProfileRow,
+  UserProfileInsert,
+  UserProfileUpdate,
 } from './types';
 
-// Services
-export { 
-  createPreorder, 
-  getPreorderById, 
-  getPreorderByOrderId, 
-  getPreorderByEmail, 
-  getAllPreorders, 
-  type PreorderFormData 
-} from './preorderService';
+

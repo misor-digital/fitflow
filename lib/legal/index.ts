@@ -1,4 +1,4 @@
-import fs from 'fs';
+import fs from 'fs/promises';
 import path from 'path';
 import matter from 'gray-matter';
 import { remark } from 'remark';
@@ -65,7 +65,7 @@ export async function getLegalDocument(slug: LegalDocumentSlug): Promise<LegalDo
   const fullPath = path.join(getContentDirectory(), fileName);
   
   // Read the markdown file
-  const fileContents = fs.readFileSync(fullPath, 'utf8');
+  const fileContents = await fs.readFile(fullPath, 'utf8');
   
   // Parse frontmatter (if any) and content
   const { content } = matter(fileContents);

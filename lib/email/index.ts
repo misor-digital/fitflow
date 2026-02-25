@@ -1,6 +1,7 @@
 /**
- * Email service module for FitFlow
- * Uses Brevo API for transactional emails and contact management
+ * Email Module — Barrel Exports
+ *
+ * Core email service + Brevo API wrappers + usage tracking
  */
 
 // Core email service functions
@@ -14,16 +15,11 @@ export {
   DEFAULT_SENDER,
 } from './emailService';
 
-// Preorder-specific email functions
-export {
-  sendPreorderConfirmationEmail,
-  addPreorderCustomerToContacts,
-  handlePreorderEmailWorkflow,
-} from './preorderEmails';
+
 
 // Email templates and utilities
 export {
-  generatePreorderConfirmationEmail,
+  generateConfirmationEmail,
   generateOrderConfirmationEmail,
   formatOptionsWithOther,
 } from './templates';
@@ -34,7 +30,7 @@ export type {
   EmailLabelMaps,
 } from './templates';
 
-// Types
+// Types (existing + new)
 export type {
   EmailRecipient,
   EmailSender,
@@ -44,5 +40,37 @@ export type {
   EmailResult,
   ContactData,
   ContactResult,
-  PreorderEmailData,
+  ConfirmationEmailData,
+  // New types
+  EmailCampaignType,
+  EmailCampaignStatus,
+  EmailRecipientStatus,
+  EmailLogStatus,
+  EmailLogType,
+  TargetListType,
+  EmailSendLogInput,
+  CampaignHistoryAction,
 } from './types';
+
+// Brevo API wrappers (new)
+export * from './brevo';
+
+// Usage tracking (new)
+export { checkUsage, setUsageChecker, getWarningLevel } from './usage';
+export type { UsageCheck, UsageChecker } from './usage';
+
+// Campaign engine
+export { processCampaign } from './campaign-engine';
+export type { ProcessCampaignResult } from './campaign-engine';
+export {
+  startCampaign,
+  scheduleCampaign,
+  pauseCampaign,
+  resumeCampaign,
+  cancelCampaign,
+  completeCampaign,
+} from './campaign-lifecycle';
+export {
+  buildSubscriberRecipients,
+  buildCustomerRecipients,
+} from './recipient-builder';
