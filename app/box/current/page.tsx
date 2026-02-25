@@ -10,6 +10,8 @@ import RevealedBoxContent from '@/components/box/RevealedBoxContent';
 import { redirect } from 'next/navigation';
 import type { Metadata } from 'next';
 
+export const dynamic = 'force-dynamic';
+
 export async function generateMetadata(): Promise<Metadata> {
   const cycle = await getCurrentRevealedCycle();
   const monthYear = cycle ? formatMonthYear(cycle.delivery_date) : '';

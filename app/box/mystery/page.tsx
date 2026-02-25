@@ -3,6 +3,8 @@ import { getDeliveryConfig, formatDeliveryDate, calculateNextDeliveryDate } from
 import MysteryBoxContent from '@/components/box/MysteryBoxContent';
 import type { Metadata } from 'next';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: 'Мистериозна кутия | FitFlow',
   description: 'Поръчай еднократна FitFlow кутия — доставка на следващата дата за абонаменти. Съдържанието е изненада!',
