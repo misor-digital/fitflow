@@ -40,12 +40,15 @@ export default function SpeedyOfficeSelector({
         const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
 
         // The widget postMessage payload includes office details
-        // Adapt field names based on actual widget response
-        if (data && (data.id || data.officeId)) {
+        // Actual widget response has: siteId, siteName, fullAddressString, address (object), etc.
+        if (data && (data.id || data.officeId || data.siteId)) {
           const office: SpeedyOfficeSelection = {
-            id: String(data.id || data.officeId),
-            name: data.name || data.officeName || '',
-            address: data.address || data.fullAddress || '',
+            id: String(data.id || data.officeId || data.siteId),
+            name: data.name || data.officeName || data.siteName || '',
+            address:
+              typeof data.address === 'string'
+                ? data.address
+                : data.fullAddressString || data.fullAddress || data.address?.fullAddressString || '',
           };
           onSelect(office);
           setShowWidget(false);
