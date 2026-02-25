@@ -13,6 +13,20 @@ export type { OrderStatus, ShippingAddressSnapshot };
 export type { BoxTypeId, PriceInfo, PriceDisplayInfo, PricesMap };
 
 // ============================================================================
+// Delivery Method
+// ============================================================================
+
+/** Delivery method discriminator */
+export type DeliveryMethod = 'address' | 'speedy_office';
+
+/** Selected Speedy office data from the widget */
+export interface SpeedyOfficeSelection {
+  id: string;       // Speedy office ID from widget postMessage
+  name: string;     // Office name (e.g. "София - Офис Витоша")
+  address: string;  // Full address string from widget
+}
+
+// ============================================================================
 // Address Input
 // ============================================================================
 
@@ -63,6 +77,8 @@ export interface OrderUserInput {
   phone: string;
   selectedAddressId: string | null;  // for authenticated users with saved addresses
   address: AddressInput;             // inline address (new or guest)
+  deliveryMethod: DeliveryMethod;
+  speedyOffice: SpeedyOfficeSelection | null;
 
   // Promo
   promoCode: string | null;
@@ -114,6 +130,7 @@ export interface OrderPersistData {
   customer_phone: string | null;
   shipping_address: ShippingAddressSnapshot;
   address_id: string | null;
+  delivery_method: DeliveryMethod;
   box_type: string;
   wants_personalization: boolean;
   sports: string[] | null;
@@ -147,6 +164,9 @@ export interface OrderApiRequest {
   // Address
   selectedAddressId?: string | null;
   address?: AddressInput;
+  // Delivery method
+  deliveryMethod?: DeliveryMethod;
+  speedyOffice?: SpeedyOfficeSelection | null;
 
   // Box
   boxType: BoxTypeId;
@@ -198,6 +218,7 @@ export interface OrderTrackingData {
   boxType: string;
   boxTypeName: string;
   shippingAddress: ShippingAddressSnapshot;
+  deliveryMethod: 'address' | 'speedy_office';
   finalPriceEur: number | null;
   createdAt: string;
   statusHistory: Array<{
