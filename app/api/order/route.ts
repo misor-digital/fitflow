@@ -81,13 +81,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       email,
       phone,
       isGuest,
+      selectedAddressId,
+      address,
+      deliveryMethod,
+      speedyOffice,
       boxType,
       wantsPersonalization,
       preferences,
       sizes,
       promoCode,
-      selectedAddressId,
-      address,
       conversionToken,
       orderType: rawOrderType,
       deliveryCycleId,
@@ -96,6 +98,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       email?: string;
       phone?: string;
       isGuest?: boolean;
+      selectedAddressId?: string | null;
+      address?: AddressInput;
+      deliveryMethod?: string;
+      speedyOffice?: { id: string; name: string; address?: string };
       boxType?: string;
       wantsPersonalization?: boolean;
       preferences?: {
@@ -110,8 +116,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       };
       sizes?: { upper?: string; lower?: string };
       promoCode?: string | null;
-      selectedAddressId?: string | null;
-      address?: AddressInput;
       conversionToken?: string | null;
       orderType?: string;
       deliveryCycleId?: string | null;
@@ -326,9 +330,54 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // ------------------------------------------------------------------
     let addressSnapshot: ShippingAddressSnapshot;
     let addressId: string | null = null;
+    const effectiveDeliveryMethod = deliveryMethod ?? 'address';
 
-    if (userId && selectedAddressId) {
-      // Authenticated user with saved address — verify ownership
+    if (effectiveDeliveryMethod === 'speedy_office') {
+      // ── Office delivery ──────────────────────────────────────────
+      if (!speedyOffice || !speedyOffice.id || !speedyOffice.name) {
+        return NextResponse.json(
+          { error: 'Моля, изберете офис на Speedy.' },
+          { status: 400 },
+        );
+      }
+
+      // Phone is required for Speedy office
+      const recipientPhone = phone?.trim() || address?.phone?.trim();
+      if (!recipientPhone) {
+        return NextResponse.json(
+          { error: 'Телефонът е задължителен за доставка до офис на Speedy.' },
+          { status: 400 },
+        );
+      }
+
+      const recipientName = fullName?.trim() || address?.fullName?.trim();
+      if (!recipientName) {
+        return NextResponse.json(
+          { error: 'Името на получателя е задължително.' },
+          { status: 400 },
+        );
+      }
+
+      addressSnapshot = {
+        full_name: recipientName,
+        phone: recipientPhone,
+        city: '',
+        postal_code: '',
+        street_address: '',
+        building_entrance: null,
+        floor: null,
+        apartment: null,
+        delivery_notes: address?.deliveryNotes?.trim() || null,
+        delivery_method: 'speedy_office',
+        speedy_office_id: speedyOffice.id,
+        speedy_office_name: speedyOffice.name,
+        speedy_office_address: speedyOffice.address || '',
+      };
+      // No address to save for office delivery
+      addressId = null;
+
+    } else if (userId && selectedAddressId) {
+      // ── Authenticated user with saved address ────────────────────
       const savedAddress = await getAddressById(selectedAddressId, userId);
       if (!savedAddress) {
         return NextResponse.json(
@@ -349,8 +398,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         delivery_notes: savedAddress.delivery_notes,
       };
       addressId = selectedAddressId;
+
     } else if (address) {
-      // Inline address — validate BG format
+      // ── Inline address ───────────────────────────────────────────
       const addressValidation = validateAddress(address);
       if (!addressValidation.valid) {
         return NextResponse.json(
@@ -417,6 +467,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       customer_phone: phone?.trim() || null,
       shipping_address: addressSnapshot,
       address_id: addressId,
+      delivery_method: effectiveDeliveryMethod,
       box_type: effectiveBoxType,
       wants_personalization: effectiveWantsPersonalization,
       sports: effectivePreferences?.sports || null,
