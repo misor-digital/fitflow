@@ -85,6 +85,7 @@ export async function GET(request: Request): Promise<NextResponse> {
       boxType: order.box_type,
       boxTypeName: boxTypeNames[order.box_type] ?? order.box_type,
       shippingAddress: order.shipping_address,
+      deliveryMethod: order.delivery_method ?? 'address',
       finalPriceEur: order.final_price_eur,
       finalPriceBgn,
       createdAt: order.created_at,

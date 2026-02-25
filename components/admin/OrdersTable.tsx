@@ -2,11 +2,12 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import type { OrderRow, OrderStatus, OrderStatusHistoryRow, ShippingAddressSnapshot } from '@/lib/supabase/types';
+import type { OrderRow, OrderStatus, OrderStatusHistoryRow } from '@/lib/supabase/types';
 import {
   ORDER_STATUS_LABELS,
   ORDER_STATUS_COLORS,
 } from '@/lib/order/format';
+import { formatShippingAddressOneLine } from '@/lib/order';
 
 // ============================================================================
 // Types
@@ -86,18 +87,7 @@ function formatDateTime(iso: string) {
   });
 }
 
-// ============================================================================
-// Address formatting (client-side)
-// ============================================================================
 
-function formatAddressOneLine(address: ShippingAddressSnapshot): string {
-  const parts: string[] = [address.street_address];
-  if (address.building_entrance) parts.push(`Вход ${address.building_entrance}`);
-  if (address.floor) parts.push(`ет. ${address.floor}`);
-  if (address.apartment) parts.push(`ап. ${address.apartment}`);
-  parts.push(`${address.postal_code} ${address.city}`);
-  return parts.join(', ');
-}
 
 // ============================================================================
 // Component
@@ -440,7 +430,12 @@ function OrderRowDetail({
       {/* Column 2: Shipping + Promo */}
       <div>
         <h4 className="font-semibold text-[var(--color-brand-navy)] mb-2">Доставка</h4>
-        <p className="text-gray-800 mb-1">{formatAddressOneLine(order.shipping_address)}</p>
+        {order.delivery_method === 'speedy_office' && (
+          <span className="inline-block text-xs px-2 py-0.5 rounded-full font-semibold bg-blue-100 text-blue-700 mr-2 mb-1">
+            Офис Speedy
+          </span>
+        )}
+        <p className="text-gray-800 mb-1">{formatShippingAddressOneLine(order.shipping_address)}</p>
         {order.shipping_address.phone && (
           <p className="text-gray-500 text-xs">Тел: {order.shipping_address.phone}</p>
         )}
