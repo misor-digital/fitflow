@@ -11,7 +11,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { BoxTypeId, UserInput } from '@/lib/catalog';
-import type { OrderUserInput, OrderStep, AddressInput } from '@/lib/order';
+import type { OrderUserInput, OrderStep, AddressInput, DeliveryMethod, SpeedyOfficeSelection } from '@/lib/order';
 import { INITIAL_ORDER_INPUT } from '@/lib/order';
 
 /**
@@ -41,6 +41,8 @@ interface OrderStore extends OrderUserInput {
   setContactInfo: (name: string, email: string, phone: string) => void;
   setSelectedAddressId: (id: string | null) => void;
   setAddress: (address: Partial<AddressInput>) => void;
+  setDeliveryMethod: (method: DeliveryMethod) => void;
+  setSpeedyOffice: (office: SpeedyOfficeSelection | null) => void;
 
   // Promo
   setPromoCode: (code: string | null) => void;
@@ -97,6 +99,16 @@ export const useOrderStore = create<OrderStore>()(
         set((state) => ({
           address: { ...state.address, ...partial },
         })),
+
+      // Delivery method
+      setDeliveryMethod: (method) => {
+        if (method === 'address') {
+          set({ deliveryMethod: method, speedyOffice: null });
+        } else {
+          set({ deliveryMethod: method, selectedAddressId: null });
+        }
+      },
+      setSpeedyOffice: (office) => set({ speedyOffice: office }),
 
       // Promo
       setPromoCode: (code) => set({ promoCode: code }),
@@ -179,6 +191,8 @@ export function useOrderInput(): OrderUserInput {
     phone: store.phone,
     selectedAddressId: store.selectedAddressId,
     address: store.address,
+    deliveryMethod: store.deliveryMethod,
+    speedyOffice: store.speedyOffice,
     promoCode: store.promoCode,
     conversionToken: store.conversionToken,
     deliveryCycleId: store.deliveryCycleId,
