@@ -6,8 +6,10 @@ import { useAuthStore } from '@/store/authStore';
 import { trackFunnelStep, trackFormInteraction } from '@/lib/analytics';
 import { isValidEmail, isValidPhone, getEmailError, getPhoneError } from '@/lib/catalog';
 import { isSubscriptionBox } from '@/lib/catalog';
-import { getAddressFieldError, validateAddress } from '@/lib/order';
-import type { AddressInput } from '@/lib/order';
+import { getAddressFieldError, validateAddress, validateSpeedyOffice } from '@/lib/order';
+import type { AddressInput, DeliveryMethod, SpeedyOfficeSelection } from '@/lib/order';
+import DeliveryMethodToggle from './DeliveryMethodToggle';
+import SpeedyOfficeSelector from './SpeedyOfficeSelector';
 import Link from 'next/link';
 
 interface OrderStepDetailsProps {
@@ -63,6 +65,11 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(store.selectedAddressId);
   const [showNewAddressForm, setShowNewAddressForm] = useState(false);
   const [loadingAddresses, setLoadingAddresses] = useState(false);
+
+  // Delivery method state
+  const [deliveryMethod, setDeliveryMethodLocal] = useState<DeliveryMethod>(store.deliveryMethod);
+  const [speedyOffice, setSpeedyOfficeLocal] = useState<SpeedyOfficeSelection | null>(store.speedyOffice);
+  const [officeError, setOfficeError] = useState<string | null>(null);
 
   // Validation state
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
@@ -129,6 +136,21 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
     }
   }, [hasAttemptedSubmit, address]);
 
+  // Delivery method change handler
+  const handleDeliveryMethodChange = useCallback((method: DeliveryMethod) => {
+    setDeliveryMethodLocal(method);
+    setOfficeError(null);
+    // Clear address errors when switching
+    setAddressErrors({});
+    setHasAttemptedSubmit(false);
+  }, []);
+
+  // Speedy office selection handler
+  const handleOfficeSelect = useCallback((office: SpeedyOfficeSelection) => {
+    setSpeedyOfficeLocal(office);
+    setOfficeError(null);
+  }, []);
+
   // Validate contact info (guest only)
   const validateContactInfo = useCallback((): boolean => {
     const errors: Record<string, string> = {};
@@ -179,6 +201,46 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
       return;
     }
 
+    // --- SPEEDY OFFICE DELIVERY ---
+    if (deliveryMethod === 'speedy_office') {
+      // Validate office selection + required fields (fullName, phone)
+      const officeResult = validateSpeedyOffice(address, speedyOffice);
+      if (!officeResult.valid) {
+        const errors: Record<string, string> = {};
+        officeResult.errors.forEach(e => {
+          if (e.field === 'speedyOffice') {
+            setOfficeError(e.message);
+          } else {
+            errors[e.field] = e.message;
+          }
+        });
+        setAddressErrors(errors);
+        return;
+      }
+
+      // Guest: also validate contact info
+      if (!isAuthenticated && isGuest) {
+        const contactValid = validateContactInfo();
+        if (!contactValid) return;
+        store.setGuestMode(true);
+        store.setContactInfo(fullName.trim(), email.trim(), phone.trim());
+      } else if (isAuthenticated) {
+        store.setGuestMode(false);
+        store.setContactInfo(fullName.trim(), email.trim(), phone.trim());
+      }
+
+      store.setDeliveryMethod('speedy_office');
+      store.setSpeedyOffice(speedyOffice);
+      store.setSelectedAddressId(null);
+      store.setAddress({
+        fullName: address.fullName,
+        phone: address.phone,
+      });
+      onNext();
+      return;
+    }
+
+    // --- ADDRESS DELIVERY (existing logic) ---
     if (!isAuthenticated && isGuest) {
       // Branch B: Guest checkout
       const contactValid = validateContactInfo();
@@ -188,24 +250,28 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
       store.setGuestMode(true);
       store.setContactInfo(fullName.trim(), email.trim(), phone.trim());
       store.setSelectedAddressId(null);
+      store.setDeliveryMethod('address');
+      store.setSpeedyOffice(null);
       store.setAddress(address);
       onNext();
     } else if (isAuthenticated) {
       // Branch C: Authenticated
       if (selectedAddressId && !showNewAddressForm) {
-        // Using a saved address
         store.setGuestMode(false);
         store.setContactInfo(fullName.trim(), email.trim(), phone.trim());
         store.setSelectedAddressId(selectedAddressId);
+        store.setDeliveryMethod('address');
+        store.setSpeedyOffice(null);
         onNext();
       } else {
-        // New address form
         const addressValid = validateAddressForm();
         if (!addressValid) return;
 
         store.setGuestMode(false);
         store.setContactInfo(fullName.trim(), email.trim(), phone.trim());
         store.setSelectedAddressId(null);
+        store.setDeliveryMethod('address');
+        store.setSpeedyOffice(null);
         store.setAddress(address);
         onNext();
       }
@@ -262,6 +328,30 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
       </div>
     );
   };
+
+  // Speedy office delivery form
+  const renderOfficeForm = () => (
+    <div className="space-y-3 sm:space-y-4">
+      {/* Name + Phone (required for Speedy) */}
+      {renderField('Име на получател', 'fullName', address.fullName, (v) => handleAddressChange('fullName', v), true, addressErrors)}
+      {renderField('Телефон', 'phone', address.phone, (v) => handleAddressChange('phone', v), true, addressErrors, 'tel')}
+
+      {/* Speedy Office Widget */}
+      <div>
+        <label className="block text-sm sm:text-base font-semibold text-[var(--color-brand-navy)] mb-1.5">
+          Офис на Speedy <span className="text-red-500">*</span>
+        </label>
+        <SpeedyOfficeSelector
+          selectedOffice={speedyOffice}
+          onSelect={handleOfficeSelect}
+          error={hasAttemptedSubmit ? officeError : null}
+        />
+      </div>
+
+      {/* Optional delivery notes */}
+      {renderField('Бележки за доставка', 'deliveryNotes', address.deliveryNotes, (v) => handleAddressChange('deliveryNotes', v), false, addressErrors, 'text', 'Напр. позвънете преди доставка...', 500)}
+    </div>
+  );
 
   // Address form fields
   const renderAddressForm = () => (
@@ -377,12 +467,20 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
               </div>
             </div>
 
-            {/* Address Form */}
+            {/* Delivery Method Toggle */}
             <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg">
               <h3 className="text-lg sm:text-xl font-bold text-[var(--color-brand-navy)] mb-4 border-b pb-2">
-                Адрес за доставка
+                Метод на доставка
               </h3>
-              {renderAddressForm()}
+              <DeliveryMethodToggle value={deliveryMethod} onChange={handleDeliveryMethodChange} />
+            </div>
+
+            {/* Address / Office Form */}
+            <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg">
+              <h3 className="text-lg sm:text-xl font-bold text-[var(--color-brand-navy)] mb-4 border-b pb-2">
+                {deliveryMethod === 'speedy_office' ? 'Данни за получаване' : 'Адрес за доставка'}
+              </h3>
+              {deliveryMethod === 'speedy_office' ? renderOfficeForm() : renderAddressForm()}
             </div>
           </div>
         )}
@@ -424,80 +522,97 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
         </p>
       </div>
 
-      {/* Address section */}
-      <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg">
+      {/* Delivery Method Toggle */}
+      <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg mb-6">
         <h3 className="text-lg sm:text-xl font-bold text-[var(--color-brand-navy)] mb-4 border-b pb-2">
-          Адрес за доставка
+          Метод на доставка
         </h3>
+        <DeliveryMethodToggle value={deliveryMethod} onChange={handleDeliveryMethodChange} />
+      </div>
 
-        {loadingAddresses ? (
-          <div className="flex items-center justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--color-brand-orange)]"></div>
-          </div>
-        ) : savedAddresses.length > 0 && !showNewAddressForm ? (
-          <div className="space-y-3">
-            {savedAddresses.map((addr) => (
-              <div
-                key={addr.id}
-                onClick={() => setSelectedAddressId(addr.id)}
-                className={`rounded-xl p-4 cursor-pointer transition-all border-3 ${
-                  selectedAddressId === addr.id
-                    ? 'border-[var(--color-brand-orange)] bg-gradient-to-br from-[var(--color-brand-orange)]/5 to-[var(--color-brand-orange)]/2'
-                    : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
-                }`}
-              >
-                <div className="flex items-start gap-3">
-                  <div className={`mt-1 w-5 h-5 rounded-full border-3 flex-shrink-0 ${
-                    selectedAddressId === addr.id ? 'border-[var(--color-brand-orange)]' : 'border-gray-300'
-                  }`}>
-                    {selectedAddressId === addr.id && (
-                      <div className="w-full h-full rounded-full bg-[var(--color-brand-orange)] scale-[0.5]" />
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    {addr.label && (
-                      <div className="text-xs font-semibold text-[var(--color-brand-orange)] uppercase tracking-wide mb-1">
-                        {addr.label}
+      {/* Address section - only show when delivery method is 'address' */}
+      {deliveryMethod === 'address' ? (
+        <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg">
+          <h3 className="text-lg sm:text-xl font-bold text-[var(--color-brand-navy)] mb-4 border-b pb-2">
+            Адрес за доставка
+          </h3>
+
+          {loadingAddresses ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--color-brand-orange)]"></div>
+            </div>
+          ) : savedAddresses.length > 0 && !showNewAddressForm ? (
+            <div className="space-y-3">
+              {savedAddresses.map((addr) => (
+                <div
+                  key={addr.id}
+                  onClick={() => setSelectedAddressId(addr.id)}
+                  className={`rounded-xl p-4 cursor-pointer transition-all border-3 ${
+                    selectedAddressId === addr.id
+                      ? 'border-[var(--color-brand-orange)] bg-gradient-to-br from-[var(--color-brand-orange)]/5 to-[var(--color-brand-orange)]/2'
+                      : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className={`mt-1 w-5 h-5 rounded-full border-3 flex-shrink-0 ${
+                      selectedAddressId === addr.id ? 'border-[var(--color-brand-orange)]' : 'border-gray-300'
+                    }`}>
+                      {selectedAddressId === addr.id && (
+                        <div className="w-full h-full rounded-full bg-[var(--color-brand-orange)] scale-[0.5]" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      {addr.label && (
+                        <div className="text-xs font-semibold text-[var(--color-brand-orange)] uppercase tracking-wide mb-1">
+                          {addr.label}
+                        </div>
+                      )}
+                      <div className="text-sm sm:text-base font-semibold text-[var(--color-brand-navy)]">
+                        {addr.full_name}
                       </div>
-                    )}
-                    <div className="text-sm sm:text-base font-semibold text-[var(--color-brand-navy)]">
-                      {addr.full_name}
-                    </div>
-                    <div className="text-sm text-gray-600 mt-0.5">
-                      {addr.street_address}
-                      {addr.building_entrance && `, Вход ${addr.building_entrance}`}
-                      {addr.floor && `, ет. ${addr.floor}`}
-                      {addr.apartment && `, ап. ${addr.apartment}`}
-                    </div>
-                    <div className="text-sm text-gray-600">
-                      {addr.postal_code} {addr.city}
+                      <div className="text-sm text-gray-600 mt-0.5">
+                        {addr.street_address}
+                        {addr.building_entrance && `, Вход ${addr.building_entrance}`}
+                        {addr.floor && `, ет. ${addr.floor}`}
+                        {addr.apartment && `, ап. ${addr.apartment}`}
+                      </div>
+                      <div className="text-sm text-gray-600">
+                        {addr.postal_code} {addr.city}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
 
-            <button
-              onClick={() => setShowNewAddressForm(true)}
-              className="w-full py-3 border-2 border-dashed border-gray-300 rounded-xl text-sm sm:text-base font-semibold text-[var(--color-brand-navy)] hover:border-[var(--color-brand-orange)] hover:text-[var(--color-brand-orange)] transition-all"
-            >
-              + Добави нов адрес
-            </button>
-          </div>
-        ) : (
-          <div>
-            {savedAddresses.length > 0 && showNewAddressForm && (
               <button
-                onClick={() => setShowNewAddressForm(false)}
-                className="text-sm text-[var(--color-brand-orange)] font-semibold mb-4 hover:underline"
+                onClick={() => setShowNewAddressForm(true)}
+                className="w-full py-3 border-2 border-dashed border-gray-300 rounded-xl text-sm sm:text-base font-semibold text-[var(--color-brand-navy)] hover:border-[var(--color-brand-orange)] hover:text-[var(--color-brand-orange)] transition-all"
               >
-                ← Назад към запазените адреси
+                + Добави нов адрес
               </button>
-            )}
-            {renderAddressForm()}
-          </div>
-        )}
-      </div>
+            </div>
+          ) : (
+            <div>
+              {savedAddresses.length > 0 && showNewAddressForm && (
+                <button
+                  onClick={() => setShowNewAddressForm(false)}
+                  className="text-sm text-[var(--color-brand-orange)] font-semibold mb-4 hover:underline"
+                >
+                  ← Назад към запазените адреси
+                </button>
+              )}
+              {renderAddressForm()}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg">
+          <h3 className="text-lg sm:text-xl font-bold text-[var(--color-brand-navy)] mb-4 border-b pb-2">
+            Данни за получаване
+          </h3>
+          {renderOfficeForm()}
+        </div>
+      )}
 
       {/* Navigation */}
       <div className="flex gap-2 sm:gap-4 justify-center mt-6 sm:mt-8">
