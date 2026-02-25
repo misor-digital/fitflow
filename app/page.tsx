@@ -230,9 +230,8 @@ function HomeContent() {
       </section>
 
       {/* Mystery Box Section */}
-      <section className="py-10 sm:py-12 md:py-16 px-4 sm:px-5 bg-gradient-to-b from-[var(--color-brand-lightBlue)]/20 to-white">
+      <section className="py-10 sm:py-12 md:py-16 px-4 sm:px-5 bg-gradient-to-b from-[#e8f4f8] to-white">
         <div className="max-w-3xl mx-auto text-center">
-          <div className="text-4xl sm:text-5xl mb-4 sm:mb-6">🎁</div>
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[var(--color-brand-navy)] mb-3 sm:mb-4 relative after:content-[''] after:block after:w-12 sm:after:w-16 after:h-1 after:bg-[var(--color-brand-orange)] after:mx-auto after:mt-3 sm:after:mt-4 after:rounded">
             Мистериозна Кутия
           </h2>
