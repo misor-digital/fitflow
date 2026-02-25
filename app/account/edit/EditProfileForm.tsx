@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { updateProfile } from './actions';
+import { useAuthStore } from '@/store/authStore';
 
 interface Props {
   initialName: string;
@@ -30,6 +31,11 @@ export default function EditProfileForm({ initialName, initialPhone, email }: Pr
       setError(result.error);
     } else {
       setSuccess(true);
+      // Update nav menu name immediately
+      const currentUser = useAuthStore.getState().user;
+      if (currentUser) {
+        useAuthStore.getState().setUser({ ...currentUser, fullName });
+      }
       router.refresh(); // Refresh server data
     }
 
