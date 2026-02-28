@@ -489,3 +489,167 @@ export function generateStaffInviteEmail(name: string, role: string, setupUrl: s
 </table>
   `.trim();
 }
+
+// ============================================================================
+// Magic Link Email Templates
+// ============================================================================
+
+/**
+ * Generate a magic-link registration email HTML.
+ * Sent to new users who register via magic-link mode.
+ * The link activates their account and takes them to /setup-password
+ * where they can optionally set a password.
+ *
+ * @param name - The new user's display name
+ * @param setupUrl - URL to activate account and optionally set a password
+ * @returns HTML string for the email
+ */
+export function generateMagicRegistrationEmail(name: string, setupUrl: string): string {
+  return `
+<table role="presentation" style="width: 100%; border-collapse: collapse; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f6f3f0;">
+  <tr>
+    <td align="center" style="padding: 40px 0;">
+      <table role="presentation" style="width: 600px; max-width: 100%; border-collapse: collapse; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+
+        <!-- Header -->
+        <tr>
+          <td style="background: linear-gradient(135deg, #9c3b00 0%, #ff6a00 100%); padding: 40px 30px; text-align: center; border-radius: 12px 12px 0px 0px;">
+            <h1 style="color: #ffffff; margin: 0; font-size: 36px; font-weight: 700;">FitFlow</h1>
+            <p style="color: #ffffff; margin: 10px 0 0 0; font-size: 14px; opacity: 0.9;">
+              Защото можем
+            </p>
+          </td>
+        </tr>
+
+        <!-- Main Content -->
+        <tr>
+          <td style="padding: 40px 30px;">
+            <h2 style="color: #363636; margin-top: 0; font-size: 24px;">
+              Здравейте, ${escapeHtml(name)}!
+            </h2>
+
+            <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
+              Благодарим ви за регистрацията във FitFlow!
+            </p>
+
+            <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
+              Кликнете бутона по-долу, за да активирате акаунта си. След това можете по желание да зададете парола или да продължите да влизате с магически линк.
+            </p>
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${setupUrl}" style="display: inline-block; background-color: #ff6a00; color: #ffffff; padding: 14px 32px; border-radius: 8px; font-weight: bold; font-size: 16px; text-decoration: none;">
+                Активирайте акаунта си
+              </a>
+            </div>
+
+            <p style="color: #6b7280; font-size: 14px; line-height: 1.6;">
+              Ако не сте заявили тази регистрация, моля игнорирайте този имейл.
+            </p>
+
+            <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
+              Ако имате въпроси, свържете се с нас на
+              <a href="mailto:info@fitflow.bg" style="color: #ff6a00; font-weight: 600;">
+                info@fitflow.bg
+              </a>
+            </p>
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="background-color: #fdf6f1; padding: 30px; text-align: center; border-radius: 0 0 12px 12px;">
+            <p style="color: #7a4a2a; font-size: 14px; margin: 0 0 10px 0;">
+              С любов към спорта,<br>
+              <strong>Екипът на FitFlow</strong> 💪
+            </p>
+            <p style="color: #b08968; font-size: 12px; margin: 0;">
+              © ${new Date().getFullYear()} FitFlow. Всички права запазени.
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+  `.trim();
+}
+
+/**
+ * Generate a magic-link login email HTML.
+ * Sent to existing users who request a magic-link login.
+ * The link logs them directly into their account.
+ *
+ * @param loginUrl - URL that logs the user into their account
+ * @returns HTML string for the email
+ */
+export function generateMagicLinkLoginEmail(loginUrl: string): string {
+  return `
+<table role="presentation" style="width: 100%; border-collapse: collapse; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f6f3f0;">
+  <tr>
+    <td align="center" style="padding: 40px 0;">
+      <table role="presentation" style="width: 600px; max-width: 100%; border-collapse: collapse; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+
+        <!-- Header -->
+        <tr>
+          <td style="background: linear-gradient(135deg, #9c3b00 0%, #ff6a00 100%); padding: 40px 30px; text-align: center; border-radius: 12px 12px 0px 0px;">
+            <h1 style="color: #ffffff; margin: 0; font-size: 36px; font-weight: 700;">FitFlow</h1>
+            <p style="color: #ffffff; margin: 10px 0 0 0; font-size: 14px; opacity: 0.9;">
+              Защото можем
+            </p>
+          </td>
+        </tr>
+
+        <!-- Main Content -->
+        <tr>
+          <td style="padding: 40px 30px;">
+            <h2 style="color: #363636; margin-top: 0; font-size: 24px;">
+              Здравейте,
+            </h2>
+
+            <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
+              Получихме заявка за вход във вашия FitFlow акаунт.
+            </p>
+
+            <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
+              Кликнете бутона по-долу, за да влезете.
+            </p>
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${loginUrl}" style="display: inline-block; background-color: #ff6a00; color: #ffffff; padding: 14px 32px; border-radius: 8px; font-weight: bold; font-size: 16px; text-decoration: none;">
+                Влезте в акаунта
+              </a>
+            </div>
+
+            <p style="color: #6b7280; font-size: 14px; line-height: 1.6;">
+              Линкът е валиден за ограничено време. Ако не сте заявили този линк, можете спокойно да игнорирате този имейл.
+            </p>
+
+            <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
+              Ако имате въпроси, свържете се с нас на
+              <a href="mailto:info@fitflow.bg" style="color: #ff6a00; font-weight: 600;">
+                info@fitflow.bg
+              </a>
+            </p>
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="background-color: #fdf6f1; padding: 30px; text-align: center; border-radius: 0 0 12px 12px;">
+            <p style="color: #7a4a2a; font-size: 14px; margin: 0 0 10px 0;">
+              С любов към спорта,<br>
+              <strong>Екипът на FitFlow</strong> 💪
+            </p>
+            <p style="color: #b08968; font-size: 12px; margin: 0;">
+              © ${new Date().getFullYear()} FitFlow. Всички права запазени.
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+  `.trim();
+}
