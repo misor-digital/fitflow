@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useOrderStore, useOrderInput } from '@/store/orderStore';
+import { useOrderStore } from '@/store/orderStore';
 import { useAuthStore } from '@/store/authStore';
-import { computeOrderDerivedState, transformOrderToApiRequest } from '@/lib/order';
+import { transformOrderToApiRequest } from '@/lib/order';
 import type { PricesMap, CatalogData, PriceInfo } from '@/lib/catalog';
 import type { ConversionSource } from './ConversionSummary';
 import ConversionSummary from './ConversionSummary';
@@ -95,15 +95,12 @@ export default function ConversionFlow({
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [conversionStep]);
 
-  // Derive validation state from the store
-  const input = useOrderInput();
-  const derived = computeOrderDerivedState(input);
-
   // Address step → confirm
+  // Note: OrderStepDetails.handleContinue already validates before calling
+  // onNext, so no additional gate is needed here.
   const handleAddressNext = useCallback(() => {
-    if (!derived.isStep3Valid) return;
     setConversionStep('confirm');
-  }, [derived.isStep3Valid]);
+  }, []);
 
   // Confirm → back to address
   const handleConfirmBack = useCallback(() => {
