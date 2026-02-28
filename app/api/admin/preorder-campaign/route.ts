@@ -35,6 +35,7 @@ export async function GET(): Promise<NextResponse> {
       preorderId: r.preorderId,
       orderId: r.orderId,
       email: maskEmail(r.email),
+      fullEmail: r.email,
       fullName: r.fullName,
       boxType: r.boxType,
       conversionUrl: r.conversionUrl,

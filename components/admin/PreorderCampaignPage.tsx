@@ -10,6 +10,7 @@ interface Recipient {
   preorderId: string;
   orderId: string;
   email: string;
+  fullEmail: string;
   fullName: string;
   boxType: string;
   wantsPersonalization: boolean;
@@ -58,6 +59,9 @@ export default function PreorderCampaignPage() {
   const [result, setResult] = useState<SendResultResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  /* ---- Row selection state ---- */
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+
   /* ---- Filter state ---- */
   const [boxTypeFilters, setBoxTypeFilters] = useState<Record<string, boolean>>(
     () => Object.fromEntries(Object.keys(BOX_TYPE_LABELS).map((k) => [k, true])),
@@ -85,6 +89,43 @@ export default function PreorderCampaignPage() {
     });
   }, [recipients, boxTypeFilters, showOnlyWithPromo, searchQuery]);
 
+  /* ---- Derived: selected recipients within filtered set ---- */
+  const selectedFilteredRecipients = useMemo(
+    () => filteredRecipients.filter((r) => selectedIds.has(r.preorderId)),
+    [filteredRecipients, selectedIds],
+  );
+
+  /* ---- Selection helpers ---- */
+  const allFilteredSelected =
+    filteredRecipients.length > 0 &&
+    filteredRecipients.every((r) => selectedIds.has(r.preorderId));
+
+  const someFilteredSelected =
+    !allFilteredSelected && filteredRecipients.some((r) => selectedIds.has(r.preorderId));
+
+  const toggleSelectAll = useCallback(() => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (allFilteredSelected) {
+        // Deselect all currently filtered
+        for (const r of filteredRecipients) next.delete(r.preorderId);
+      } else {
+        // Select all currently filtered
+        for (const r of filteredRecipients) next.add(r.preorderId);
+      }
+      return next;
+    });
+  }, [allFilteredSelected, filteredRecipients]);
+
+  const toggleSelectOne = useCallback((id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
   const resetFilters = useCallback(() => {
     setBoxTypeFilters(
       Object.fromEntries(Object.keys(BOX_TYPE_LABELS).map((k) => [k, true])),
@@ -108,6 +149,8 @@ export default function PreorderCampaignPage() {
         if (!cancelled) {
           setRecipients(data.recipients);
           setTotal(data.total);
+          // Select all recipients by default
+          setSelectedIds(new Set((data.recipients as Recipient[]).map((r) => r.preorderId)));
         }
       } catch (err) {
         if (!cancelled) {
@@ -125,7 +168,7 @@ export default function PreorderCampaignPage() {
   /* ---- Send / Dry-run handler ---- */
   const handleSend = useCallback(
     async (dryRun: boolean) => {
-      const count = filteredRecipients.length;
+      const count = selectedFilteredRecipients.length;
       if (dryRun) {
         if (!window.confirm(`Dry run ще логне ${count} получателя без реално изпращане. Продължи?`)) return;
       } else {
@@ -142,7 +185,7 @@ export default function PreorderCampaignPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             dryRun,
-            includeIds: filteredRecipients.map((r) => r.preorderId),
+            includeIds: selectedFilteredRecipients.map((r) => r.preorderId),
           }),
         });
         if (!res.ok) {
@@ -157,7 +200,7 @@ export default function PreorderCampaignPage() {
         setSending(false);
       }
     },
-    [filteredRecipients],
+    [selectedFilteredRecipients],
   );
 
   /* ---- Render ---- */
@@ -243,6 +286,8 @@ export default function PreorderCampaignPage() {
             {filteredRecipients.length < recipients.length && (
               <span className="ml-1 text-orange-600">(филтрирани)</span>
             )}
+            {' · '}
+            Избрани: <strong className="text-gray-700">{selectedFilteredRecipients.length}</strong>
           </p>
         </div>
       )}
@@ -251,19 +296,19 @@ export default function PreorderCampaignPage() {
       <div className="flex items-center gap-3">
         <button
           type="button"
-          disabled={sending || filteredRecipients.length === 0}
+          disabled={sending || selectedFilteredRecipients.length === 0}
           onClick={() => handleSend(true)}
           className="inline-flex items-center gap-2 rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          {sending ? 'Обработка...' : '🧪 Dry Run'}
+          {sending ? 'Обработка...' : `🧪 Dry Run (${selectedFilteredRecipients.length})`}
         </button>
         <button
           type="button"
-          disabled={sending || filteredRecipients.length === 0}
+          disabled={sending || selectedFilteredRecipients.length === 0}
           onClick={() => handleSend(false)}
           className="inline-flex items-center gap-2 rounded-lg bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          {sending ? 'Изпращане...' : `📧 Изпрати на ${filteredRecipients.length} получателя`}
+          {sending ? 'Изпращане...' : `📧 Изпрати на ${selectedFilteredRecipients.length} получателя`}
         </button>
       </div>
 
@@ -320,6 +365,16 @@ export default function PreorderCampaignPage() {
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50 sticky top-0">
                 <tr>
+                  <th className="px-4 py-3 text-center">
+                    <input
+                      type="checkbox"
+                      checked={allFilteredSelected}
+                      ref={(el) => { if (el) el.indeterminate = someFilteredSelected; }}
+                      onChange={toggleSelectAll}
+                      className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                      title="Избери / Премахни всички"
+                    />
+                  </th>
                   {['#', 'Имейл', 'Име', 'Кутия', 'Персонализация', 'Промо код', 'Цена', 'Поръчка'].map(
                     (header) => (
                       <th
@@ -334,9 +389,17 @@ export default function PreorderCampaignPage() {
               </thead>
               <tbody className="divide-y divide-gray-200 bg-white">
                 {filteredRecipients.map((r, idx) => (
-                  <tr key={r.preorderId} className="even:bg-gray-50">
+                  <tr key={r.preorderId} className={`${selectedIds.has(r.preorderId) ? '' : 'opacity-50'} even:bg-gray-50`}>
+                    <td className="px-4 py-3 text-center">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(r.preorderId)}
+                        onChange={() => toggleSelectOne(r.preorderId)}
+                        className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                      />
+                    </td>
                     <td className="px-4 py-3 text-sm text-gray-500">{idx + 1}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{r.email}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900" title={r.fullEmail}>{r.email}</td>
                     <td className="px-4 py-3 text-sm text-gray-900">{r.fullName}</td>
                     <td className="px-4 py-3 text-sm text-gray-900">
                       {BOX_TYPE_LABELS[r.boxType] ?? r.boxType}
@@ -363,6 +426,8 @@ export default function PreorderCampaignPage() {
 
           <p className="text-sm text-gray-600">
             Показани: <strong>{filteredRecipients.length}</strong> от <strong>{recipients.length}</strong> получателя
+            {' · '}
+            Избрани: <strong>{selectedFilteredRecipients.length}</strong>
           </p>
         </>
       )}
