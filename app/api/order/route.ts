@@ -1,6 +1,8 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { verifySession } from '@/lib/auth';
+import { STAFF_MANAGEMENT_ROLES } from '@/lib/auth/permissions';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 import {
   createOrder,
   createAddress,
@@ -93,6 +95,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       conversionToken,
       orderType: rawOrderType,
       deliveryCycleId,
+      onBehalfOfUserId,
     } = data as {
       fullName?: string;
       email?: string;
@@ -119,6 +122,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       conversionToken?: string | null;
       orderType?: string;
       deliveryCycleId?: string | null;
+      onBehalfOfUserId?: string | null;
     };
 
     // Required fields
@@ -272,6 +276,24 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       validatedCycleId = cycle.id;
     }
 
+    // Validate onBehalfOfUserId if present
+    if (onBehalfOfUserId !== undefined && onBehalfOfUserId !== null) {
+      if (typeof onBehalfOfUserId !== 'string' || onBehalfOfUserId.length === 0) {
+        return NextResponse.json(
+          { error: 'Невалиден идентификатор на клиент.' },
+          { status: 400 },
+        );
+      }
+    }
+
+    // onBehalfOfUserId overrides guest mode
+    if (onBehalfOfUserId && isGuest) {
+      return NextResponse.json(
+        { error: 'Не може да се прави поръчка от името на клиент в гост режим.' },
+        { status: 400 },
+      );
+    }
+
     // ------------------------------------------------------------------
     // Step 3: Authentication Check
     // ------------------------------------------------------------------
@@ -287,6 +309,44 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
     // isGuest === true && no session → userId stays null
+
+    // ------------------------------------------------------------------
+    // Step 3b: On-Behalf-Of Check (admin placing order for a customer)
+    // ------------------------------------------------------------------
+    if (onBehalfOfUserId) {
+      // Verify the caller is an admin
+      if (
+        !session ||
+        session.profile.user_type !== 'staff' ||
+        !session.profile.staff_role ||
+        !STAFF_MANAGEMENT_ROLES.has(session.profile.staff_role)
+      ) {
+        return NextResponse.json(
+          { error: 'Нямате право да правите поръчки от името на друг потребител.' },
+          { status: 403 },
+        );
+      }
+
+      // Verify the target customer exists
+      const { data: targetUser, error: targetError } = await supabaseAdmin.auth.admin.getUserById(onBehalfOfUserId);
+      if (targetError || !targetUser?.user) {
+        return NextResponse.json(
+          { error: 'Клиентският акаунт не беше намерен.' },
+          { status: 404 },
+        );
+      }
+
+      // Override userId to the customer's
+      console.log('[AdminAudit] On-behalf order', {
+        action: 'on_behalf_order',
+        adminId: session.userId,
+        customerId: onBehalfOfUserId,
+        customerEmail: targetUser.user.email,
+        timestamp: new Date().toISOString(),
+      });
+
+      userId = onBehalfOfUserId;
+    }
 
     // ------------------------------------------------------------------
     // Step 4: Handle Conversion Token (if present)
