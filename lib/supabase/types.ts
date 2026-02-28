@@ -423,6 +423,42 @@ export interface OrderUpdate {
 }
 
 // ============================================================================
+// Order Price History Table (audit trail for admin promo/pricing changes)
+// ============================================================================
+
+export interface OrderPriceHistoryRow {
+  id: string;
+  order_id: string;
+  changed_by: string | null;
+  change_type: string;
+  prev_promo_code: string | null;
+  prev_discount_percent: number | null;
+  prev_original_price_eur: number | null;
+  prev_final_price_eur: number | null;
+  new_promo_code: string | null;
+  new_discount_percent: number | null;
+  new_original_price_eur: number | null;
+  new_final_price_eur: number | null;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface OrderPriceHistoryInsert {
+  order_id: string;
+  changed_by?: string | null;
+  change_type: string;
+  prev_promo_code?: string | null;
+  prev_discount_percent?: number | null;
+  prev_original_price_eur?: number | null;
+  prev_final_price_eur?: number | null;
+  new_promo_code?: string | null;
+  new_discount_percent?: number | null;
+  new_original_price_eur?: number | null;
+  new_final_price_eur?: number | null;
+  notes?: string | null;
+}
+
+// ============================================================================
 // Order Status History Table
 // ============================================================================
 
@@ -995,6 +1031,17 @@ export interface Database {
           foreignKeyName: 'delivery_cycle_items_delivery_cycle_id_fkey';
           columns: ['delivery_cycle_id'];
           referencedRelation: 'delivery_cycles';
+          referencedColumns: ['id'];
+        }];
+      };
+      order_price_history: {
+        Row: ToRecord<OrderPriceHistoryRow>;
+        Insert: ToRecord<OrderPriceHistoryInsert>;
+        Update: ToRecord<Partial<OrderPriceHistoryInsert>>;
+        Relationships: [{
+          foreignKeyName: 'order_price_history_order_id_fkey';
+          columns: ['order_id'];
+          referencedRelation: 'orders';
           referencedColumns: ['id'];
         }];
       };

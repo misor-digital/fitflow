@@ -68,6 +68,7 @@ export {
   getOrderByNumberAndEmail,
   getOrdersByUser,
   updateOrderStatus,
+  applyPromoToOrder,
   getOrderStatusHistory,
   getOrdersCount,
   getOrdersPaginated,

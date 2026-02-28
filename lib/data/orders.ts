@@ -9,10 +9,17 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import type {
   OrderRow,
   OrderInsert,
+  OrderUpdate,
   OrderStatus,
   OrderStatusHistoryRow,
   OrderStatusHistoryInsert,
 } from '@/lib/supabase/types';
+import {
+  validatePromoCode,
+  incrementPromoCodeUsage,
+  decrementPromoCodeUsage,
+} from './promo';
+import { calculatePrice } from './catalog';
 
 // ============================================================================
 // Write operations
@@ -108,6 +115,143 @@ export async function updateOrderStatus(
   if (historyError) {
     console.error('Error recording status history:', historyError);
     // Non-fatal — the status was already updated successfully
+  }
+
+  return updated;
+}
+
+/**
+ * Apply, replace, or remove a promo code on an existing order.
+ *
+ * Security: Only callable by admin (enforced at API layer).
+ * Constraint: Only orders in 'pending' or 'confirmed' status can be modified.
+ *
+ * Flow:
+ *   1. Fetch order, validate status
+ *   2. Validate the new promo code (if applying)
+ *   3. Recalculate price via authoritative calculatePrice()
+ *   4. Update order row with new pricing
+ *   5. Decrement old promo usage (if replacing/removing)
+ *   6. Increment new promo usage (if applying/replacing)
+ *   7. Record audit trail in order_price_history
+ */
+export async function applyPromoToOrder(
+  orderId: string,
+  promoCode: string | null,
+  adminUserId: string,
+  notes?: string,
+): Promise<OrderRow> {
+  // 1. Fetch the current order
+  const order = await getOrderById(orderId);
+  if (!order) {
+    throw new Error('Order not found.');
+  }
+
+  // 2. Only allow on mutable orders (not yet being processed/shipped/delivered)
+  const MUTABLE_STATUSES: OrderStatus[] = ['pending', 'confirmed'];
+  if (!MUTABLE_STATUSES.includes(order.status)) {
+    throw new Error(
+      `Cannot modify pricing on an order with status "${order.status}". ` +
+        `Only pending or confirmed orders can be updated.`,
+    );
+  }
+
+  // 3. Normalize codes for comparison
+  const oldCode = order.promo_code?.trim().toUpperCase() ?? null;
+  const newCode = promoCode?.trim().toUpperCase() || null;
+
+  // 4. Prevent no-op
+  if (oldCode === newCode) {
+    throw new Error('This promo code is already applied to the order.');
+  }
+
+  // 5. Validate the new promo code (skip for removal)
+  if (newCode) {
+    // Admin-applied: skip per-user limit (don't pass userId) but enforce
+    // enabled, date range, and global usage cap
+    const validatedPromo = await validatePromoCode(newCode);
+    if (!validatedPromo) {
+      throw new Error(
+        `Promo code "${newCode}" is invalid, disabled, expired, or exhausted.`,
+      );
+    }
+  }
+
+  // 6. Recalculate price using the authoritative server-side price calculator
+  const priceInfo = await calculatePrice(order.box_type, newCode ?? undefined);
+
+  // 7. Determine change type for audit
+  let changeType: string;
+  if (oldCode && newCode) changeType = 'promo_replaced';
+  else if (newCode) changeType = 'promo_applied';
+  else changeType = 'promo_removed';
+
+  // 8. Update order row with new pricing
+  const updatePayload: OrderUpdate = {
+    promo_code: newCode,
+    discount_percent:
+      priceInfo.discountPercent > 0 ? priceInfo.discountPercent : null,
+    original_price_eur: priceInfo.originalPriceEur,
+    final_price_eur: priceInfo.finalPriceEur,
+  };
+
+  const { data: updated, error: updateError } = await supabaseAdmin
+    .from('orders')
+    .update(updatePayload)
+    .eq('id', orderId)
+    .select()
+    .single();
+
+  if (updateError || !updated) {
+    console.error('Error updating order pricing:', updateError);
+    throw new Error('Failed to update order pricing.');
+  }
+
+  // 9. Decrement old promo usage (if replacing or removing an existing promo)
+  if (oldCode) {
+    try {
+      await decrementPromoCodeUsage(
+        oldCode,
+        order.user_id ?? undefined,
+        orderId,
+      );
+    } catch (err) {
+      // Non-fatal: the order was already updated, log and continue
+      console.error('Failed to decrement old promo usage:', err);
+    }
+  }
+
+  // 10. Increment new promo usage (if applying or replacing)
+  if (newCode) {
+    await incrementPromoCodeUsage(
+      newCode,
+      order.user_id ?? undefined,
+      orderId,
+    );
+  }
+
+  // 11. Record audit trail
+  const { error: historyError } = await supabaseAdmin
+    .from('order_price_history')
+    .insert({
+      order_id: orderId,
+      changed_by: adminUserId,
+      change_type: changeType,
+      prev_promo_code: order.promo_code,
+      prev_discount_percent: order.discount_percent,
+      prev_original_price_eur: order.original_price_eur,
+      prev_final_price_eur: order.final_price_eur,
+      new_promo_code: newCode,
+      new_discount_percent:
+        priceInfo.discountPercent > 0 ? priceInfo.discountPercent : null,
+      new_original_price_eur: priceInfo.originalPriceEur,
+      new_final_price_eur: priceInfo.finalPriceEur,
+      notes: notes?.trim().slice(0, 1000) || null,
+    });
+
+  if (historyError) {
+    console.error('Error recording price change history:', historyError);
+    // Non-fatal — the order was already updated successfully
   }
 
   return updated;
