@@ -415,6 +415,11 @@ export interface OrderUpdate {
   status?: OrderStatus;
   shipping_address?: ShippingAddressSnapshot;
   address_id?: string | null;
+  // Pricing / promo fields (admin-only mutations via applyPromoToOrder)
+  promo_code?: string | null;
+  discount_percent?: number | null;
+  original_price_eur?: number | null;
+  final_price_eur?: number | null;
 }
 
 // ============================================================================
