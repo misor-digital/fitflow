@@ -15,7 +15,7 @@ export default async function SetupPasswordPage() {
           Добре дошли, {session.profile.full_name}!
         </h1>
         <p className="text-center text-gray-600 mb-8">
-          Моля, задайте парола за вашия акаунт.
+          Задайте парола за вашия акаунт или продължете без нея.
         </p>
         <SetPasswordForm />
       </div>
