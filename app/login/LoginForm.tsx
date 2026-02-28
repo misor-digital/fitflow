@@ -5,7 +5,14 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/browser';
 
-export default function LoginForm() {
+interface LoginFormProps {
+  /** Server-resolved error message from auth callback failures. */
+  callbackError?: string | null;
+  /** Intended destination after login (preserved from failed callback). */
+  next?: string;
+}
+
+export default function LoginForm({ callbackError, next }: LoginFormProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -27,7 +34,7 @@ export default function LoginForm() {
       return;
     }
 
-    router.push('/');
+    router.push(next ?? '/');
     router.refresh();
   }
 
@@ -87,6 +94,12 @@ export default function LoginForm() {
 
   return (
     <form onSubmit={handleEmailLogin} className="space-y-6">
+      {callbackError && !error && (
+        <div className="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-lg text-sm">
+          {callbackError}
+        </div>
+      )}
+
       {error && (
         <div className="bg-red-50 text-red-700 p-3 rounded-lg text-sm">
           {error}
