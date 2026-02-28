@@ -79,6 +79,13 @@ export default function ConversionFlow({
       source.phone ?? '',
     );
 
+    // Prefill address name/phone from the preorder so the delivery form
+    // doesn't start empty when an admin converts on behalf of a customer.
+    store.setAddress({
+      fullName: source.fullName,
+      phone: source.phone ?? '',
+    });
+
     // Set conversion token
     store.setConversionToken(source.conversionToken);
   }, [source]);
