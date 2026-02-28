@@ -175,6 +175,74 @@ export default function PreorderCampaignPage() {
         Всички изпратени имейли се записват в лога.
       </div>
 
+      {/* Filter bar */}
+      {!loading && total > 0 && (
+        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 space-y-3">
+          {/* Header row */}
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-gray-700">🔍 Филтри</h2>
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="text-xs text-blue-600 hover:text-blue-800 hover:underline"
+            >
+              Нулирай
+            </button>
+          </div>
+
+          {/* Box type checkboxes */}
+          <div>
+            <p className="text-xs font-medium text-gray-500 mb-1.5">Тип кутия:</p>
+            <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+              {Object.entries(BOX_TYPE_LABELS).map(([key, label]) => (
+                <label key={key} className="inline-flex items-center gap-1.5 text-sm text-gray-700 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={boxTypeFilters[key] ?? true}
+                    onChange={(e) =>
+                      setBoxTypeFilters((prev) => ({ ...prev, [key]: e.target.checked }))
+                    }
+                    className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                  />
+                  {label}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Promo code toggle */}
+          <label className="inline-flex items-center gap-1.5 text-sm text-gray-700 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={showOnlyWithPromo}
+              onChange={(e) => setShowOnlyWithPromo(e.target.checked)}
+              className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+            />
+            Само с промо код
+          </label>
+
+          {/* Search input */}
+          <div>
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Търсене по име или имейл..."
+              className="w-full max-w-xs px-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-orange-500 focus:border-orange-500"
+            />
+          </div>
+
+          {/* Count summary */}
+          <p className="text-xs text-gray-500">
+            Показване: <strong className="text-gray-700">{filteredRecipients.length}</strong> от{' '}
+            <strong className="text-gray-700">{recipients.length}</strong> получателя
+            {filteredRecipients.length < recipients.length && (
+              <span className="ml-1 text-orange-600">(филтрирани)</span>
+            )}
+          </p>
+        </div>
+      )}
+
       {/* Action buttons */}
       <div className="flex items-center gap-3">
         <button
