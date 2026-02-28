@@ -33,6 +33,12 @@ export default function AdminCustomerPanel({
         setUserId(data.userId);
         setStatus('exists');
         useOrderStore.getState().setOnBehalfOfUserId(data.userId);
+        // Keep the order store's contact info in sync with the customer
+        useOrderStore.getState().setContactInfo(
+          fullName.trim(),
+          emailToCheck.trim().toLowerCase(),
+          '',
+        );
       } else {
         setStatus('ready');
       }
@@ -70,6 +76,13 @@ export default function AdminCustomerPanel({
       setUserId(data.userId);
       setStatus(data.alreadyExisted ? 'exists' : 'created');
       useOrderStore.getState().setOnBehalfOfUserId(data.userId);
+      // Sync the (possibly edited) customer name/email back to the order store
+      // so the confirmation step displays the customer's identity, not the admin's.
+      useOrderStore.getState().setContactInfo(
+        fullName.trim(),
+        email.trim().toLowerCase(),
+        '',
+      );
     } catch {
       setError('Грешка при създаване на акаунт. Опитайте отново.');
     } finally {

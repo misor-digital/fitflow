@@ -39,6 +39,7 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
   const { user } = useAuthStore();
   const isAuthenticated = !!user;
   const onBehalfOfUserId = useOrderStore((s) => s.onBehalfOfUserId);
+  const conversionToken = useOrderStore((s) => s.conversionToken);
   const hasTrackedStep = useRef(false);
 
   // Track funnel step on mount
@@ -113,13 +114,16 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
     return () => controller.abort();
   }, [isAuthenticated, selectedAddressId]);
 
-  // Pre-fill contact info from auth profile
+  // Pre-fill contact info from auth profile — but NOT during a conversion
+  // flow where the store already holds the customer's details from the
+  // preorder. We check conversionToken (set synchronously at prefill) rather
+  // than onBehalfOfUserId (set asynchronously after a lookup/create call).
   useEffect(() => {
-    if (isAuthenticated && user) {
+    if (isAuthenticated && user && !conversionToken) {
       setFullName(user.fullName || '');
       setEmail(user.email || '');
     }
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, conversionToken]);
 
   // Address field change handler
   const handleAddressChange = useCallback((field: keyof AddressInput, value: string) => {
@@ -209,6 +213,18 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
       return;
     }
 
+    // Resolve the correct contact info to persist.
+    // When admin acts on behalf of a customer, name/email were set by
+    // AdminCustomerPanel directly on the store, and phone comes from the
+    // address form (the admin on-behalf UI has no separate phone field).
+    const resolveContact = (): [string, string, string] => {
+      if (onBehalfOfUserId) {
+        const s = useOrderStore.getState();
+        return [s.fullName, s.email, address.phone.trim()];
+      }
+      return [fullName.trim(), email.trim(), phone.trim()];
+    };
+
     // --- SPEEDY OFFICE DELIVERY ---
     if (deliveryMethod === 'speedy_office') {
       // Validate office selection + required fields (fullName, phone)
@@ -231,10 +247,10 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
         const contactValid = validateContactInfo();
         if (!contactValid) return;
         store.setGuestMode(true);
-        store.setContactInfo(fullName.trim(), email.trim(), phone.trim());
+        store.setContactInfo(...resolveContact());
       } else if (isAuthenticated) {
         store.setGuestMode(false);
-        store.setContactInfo(fullName.trim(), email.trim(), phone.trim());
+        store.setContactInfo(...resolveContact());
       }
 
       store.setDeliveryMethod('speedy_office');
@@ -256,7 +272,7 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
       if (!contactValid || !addressValid) return;
 
       store.setGuestMode(true);
-      store.setContactInfo(fullName.trim(), email.trim(), phone.trim());
+      store.setContactInfo(...resolveContact());
       store.setSelectedAddressId(null);
       store.setDeliveryMethod('address');
       store.setSpeedyOffice(null);
@@ -266,7 +282,7 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
       // Branch C: Authenticated
       if (selectedAddressId && !showNewAddressForm) {
         store.setGuestMode(false);
-        store.setContactInfo(fullName.trim(), email.trim(), phone.trim());
+        store.setContactInfo(...resolveContact());
         store.setSelectedAddressId(selectedAddressId);
         store.setDeliveryMethod('address');
         store.setSpeedyOffice(null);
@@ -276,7 +292,7 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
         if (!addressValid) return;
 
         store.setGuestMode(false);
-        store.setContactInfo(fullName.trim(), email.trim(), phone.trim());
+        store.setContactInfo(...resolveContact());
         store.setSelectedAddressId(null);
         store.setDeliveryMethod('address');
         store.setSpeedyOffice(null);
