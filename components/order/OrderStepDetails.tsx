@@ -76,6 +76,11 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
   const [speedyOffice, setSpeedyOfficeLocal] = useState<SpeedyOfficeSelection | null>(store.speedyOffice);
   const [officeError, setOfficeError] = useState<string | null>(null);
 
+  // Track whether the guest has directly edited the address name/phone fields.
+  // When untouched, these are auto-synced from the contact section above.
+  const addressNameTouched = useRef(false);
+  const addressPhoneTouched = useRef(false);
+
   // Validation state
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
   const [contactErrors, setContactErrors] = useState<Record<string, string>>({});
@@ -133,8 +138,25 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
     }
   }, [isAuthenticated, user, conversionToken]);
 
+  // Guest flow: sync contact name/phone into the address recipient fields
+  // as the user types, so they don't have to enter the same info twice.
+  // Stops syncing once the address field has been directly edited.
+  useEffect(() => {
+    if (!isAuthenticated && isGuest) {
+      setAddressLocal(prev => {
+        const next = { ...prev };
+        if (!addressNameTouched.current) next.fullName = fullName;
+        if (!addressPhoneTouched.current) next.phone = phone;
+        return next;
+      });
+    }
+  }, [isAuthenticated, isGuest, fullName, phone]);
+
   // Address field change handler
   const handleAddressChange = useCallback((field: keyof AddressInput, value: string) => {
+    // Mark address name/phone as directly edited so auto-sync stops
+    if (field === 'fullName') addressNameTouched.current = true;
+    if (field === 'phone') addressPhoneTouched.current = true;
     setAddressLocal(prev => ({ ...prev, [field]: value }));
 
     // Clear error on change
