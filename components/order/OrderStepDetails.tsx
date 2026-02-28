@@ -10,6 +10,7 @@ import { getAddressFieldError, validateAddress, validateSpeedyOffice } from '@/l
 import type { AddressInput, DeliveryMethod, SpeedyOfficeSelection } from '@/lib/order';
 import DeliveryMethodToggle from './DeliveryMethodToggle';
 import SpeedyOfficeSelector from './SpeedyOfficeSelector';
+import AdminCustomerPanel from './AdminCustomerPanel';
 import Link from 'next/link';
 
 interface OrderStepDetailsProps {
@@ -37,6 +38,7 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
   const store = useOrderStore();
   const { user } = useAuthStore();
   const isAuthenticated = !!user;
+  const onBehalfOfUserId = useOrderStore((s) => s.onBehalfOfUserId);
   const hasTrackedStep = useRef(false);
 
   // Track funnel step on mount
@@ -48,6 +50,8 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
   }, []);
 
   const isSubscription = isSubscriptionBox(store.boxType);
+  const isAdminUser = isAuthenticated && user?.userType === 'staff'
+    && (user?.staffRole === 'admin' || user?.staffRole === 'super_admin');
 
   // Guest toggle state
   const [isGuest, setIsGuest] = useState(!isAuthenticated ? store.isGuest : false);
@@ -198,6 +202,10 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
 
     // Branch A: Subscription + not authenticated → block
     if (isSubscription && !isAuthenticated) {
+      return;
+    }
+    // Admin on-behalf: require customer account to be set
+    if (isSubscription && isAdminUser && !onBehalfOfUserId) {
       return;
     }
 
@@ -371,6 +379,78 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
       {renderField('Бележки за доставка', 'deliveryNotes', address.deliveryNotes, (v) => handleAddressChange('deliveryNotes', v), false, addressErrors, 'text', 'Напр. звънец, код за вход...', 500)}
     </div>
   );
+
+  // =========================================================================
+  // Branch A0: Subscription + admin on-behalf-of flow
+  // =========================================================================
+  if (isSubscription && isAdminUser) {
+    return (
+      <div>
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[var(--color-brand-navy)] text-center mb-8 sm:mb-10 md:mb-12 relative after:content-[''] after:block after:w-12 sm:after:w-16 after:h-1 after:bg-[var(--color-brand-orange)] after:mx-auto after:mt-3 sm:after:mt-4 after:rounded">
+          Данни за доставка
+        </h2>
+
+        {/* Admin: Create or link customer account */}
+        <AdminCustomerPanel
+          defaultFullName={store.fullName}
+          defaultEmail={store.email}
+        />
+
+        {/* Show address form only after customer account is set */}
+        {onBehalfOfUserId ? (
+          <>
+            {/* Delivery Method Toggle */}
+            <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg mb-6 mt-6">
+              <h3 className="text-lg sm:text-xl font-bold text-[var(--color-brand-navy)] mb-4 border-b pb-2">
+                Метод на доставка
+              </h3>
+              <DeliveryMethodToggle value={deliveryMethod} onChange={handleDeliveryMethodChange} />
+            </div>
+
+            {/* Address / Office Form */}
+            <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg">
+              <h3 className="text-lg sm:text-xl font-bold text-[var(--color-brand-navy)] mb-4 border-b pb-2">
+                {deliveryMethod === 'speedy_office' ? 'Данни за получаване' : 'Адрес за доставка'}
+              </h3>
+              {deliveryMethod === 'speedy_office' ? renderOfficeForm() : renderAddressForm()}
+            </div>
+
+            {/* Navigation buttons */}
+            <div className="flex gap-2 sm:gap-4 justify-center mt-6 sm:mt-8">
+              <button
+                onClick={onBack}
+                className="bg-gray-300 text-[var(--color-brand-navy)] px-6 sm:px-8 md:px-10 py-3 sm:py-4 rounded-full text-sm sm:text-base md:text-lg font-semibold uppercase tracking-wide hover:bg-gray-400 transition-all"
+              >
+                Назад
+              </button>
+              <button
+                onClick={handleContinue}
+                className="bg-[var(--color-brand-orange)] text-white px-8 sm:px-10 md:px-12 py-3 sm:py-4 rounded-full text-sm sm:text-base md:text-lg font-semibold uppercase tracking-wide shadow-lg hover:bg-[#e67100] transition-all hover:-translate-y-0.5 hover:shadow-xl"
+              >
+                Напред
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="text-center text-gray-500 mt-4 p-4 bg-gray-50 rounded-lg">
+              <p className="text-sm">Моля, създайте или свържете акаунт на клиента, за да продължите.</p>
+            </div>
+
+            {/* Back button (always visible) */}
+            <div className="flex justify-center mt-6">
+              <button
+                onClick={onBack}
+                className="bg-gray-300 text-[var(--color-brand-navy)] px-6 sm:px-8 md:px-10 py-3 sm:py-4 rounded-full text-sm sm:text-base md:text-lg font-semibold uppercase tracking-wide hover:bg-gray-400 transition-all"
+              >
+                Назад
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
 
   // =========================================================================
   // Branch A: Subscription + not authenticated
