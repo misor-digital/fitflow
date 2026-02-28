@@ -39,23 +39,32 @@ export default function LoginForm() {
     setLoading(true);
     setError(null);
 
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-        shouldCreateUser: false,
-      },
-    });
+    try {
+      const res = await fetch('/api/auth/magic-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim() }),
+      });
 
-    if (error) {
-      setError('Не е намерен акаунт с този имейл. Моля, регистрирайте се първо.');
+      if (res.status === 429) {
+        setError('Твърде много опити. Моля, опитайте по-късно.');
+        setLoading(false);
+        return;
+      }
+
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || 'Грешка при изпращане на линк. Опитайте отново.');
+        setLoading(false);
+        return;
+      }
+
+      setMagicLinkSent(true);
+    } catch {
+      setError('Грешка при изпращане на линк. Опитайте отново.');
+    } finally {
       setLoading(false);
-      return;
     }
-
-    setMagicLinkSent(true);
-    setLoading(false);
   }
 
   if (magicLinkSent) {
