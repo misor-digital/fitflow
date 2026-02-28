@@ -29,6 +29,7 @@ export default function OrderPromoAction({
   const [success, setSuccess] = useState<string | null>(null);
   const [promoOptions, setPromoOptions] = useState<PromoOption[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(false);
+  const [showRemoveModal, setShowRemoveModal] = useState(false);
 
   // Fetch active promo codes for dropdown
   useEffect(() => {
@@ -92,13 +93,7 @@ export default function OrderPromoAction({
   };
 
   const handleRemove = async () => {
-    if (
-      !window.confirm(
-        `Премахване на промо код "${currentPromo}" и преизчисляване на цената?`,
-      )
-    )
-      return;
-
+    setShowRemoveModal(false);
     setError(null);
     setSuccess(null);
     setLoading('remove');
@@ -165,7 +160,7 @@ export default function OrderPromoAction({
           </span>
           <button
             type="button"
-            onClick={handleRemove}
+            onClick={() => setShowRemoveModal(true)}
             disabled={disabled}
             className="rounded border border-red-200 bg-red-50 px-3 py-1.5 text-sm text-red-700 hover:bg-red-100 disabled:opacity-50"
           >
@@ -176,6 +171,41 @@ export default function OrderPromoAction({
 
       {error && <p className="text-xs text-red-600">{error}</p>}
       {success && <p className="text-xs text-green-600">{success}</p>}
+
+      {/* Remove promo confirmation modal */}
+      {showRemoveModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="mx-4 w-full max-w-sm rounded-xl bg-white p-5 shadow-xl">
+            <h3 className="mb-2 text-base font-semibold text-[var(--color-brand-navy)]">
+              Премахване на промо код
+            </h3>
+            <p className="mb-4 text-sm text-gray-700">
+              Сигурни ли сте, че искате да премахнете промо код{' '}
+              <strong className="font-mono">{currentPromo}</strong>
+              {currentDiscount != null && (
+                <span className="text-green-600"> (-{currentDiscount}%)</span>
+              )}{' '}
+              и да преизчислите цената на поръчката?
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowRemoveModal(false)}
+                className="rounded border px-4 py-2 text-sm hover:bg-gray-50"
+              >
+                Отказ
+              </button>
+              <button
+                type="button"
+                onClick={handleRemove}
+                className="rounded bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700"
+              >
+                Премахни
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
