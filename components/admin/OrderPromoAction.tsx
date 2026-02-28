@@ -10,6 +10,11 @@ interface OrderPromoActionProps {
   onSuccess: () => void;
 }
 
+interface PromoOption {
+  code: string;
+  discount_percent: number;
+}
+
 export default function OrderPromoAction({
   orderId,
   currentPromo,
@@ -22,6 +27,23 @@ export default function OrderPromoAction({
   const [loading, setLoading] = useState<'apply' | 'remove' | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [promoOptions, setPromoOptions] = useState<PromoOption[]>([]);
+  const [loadingOptions, setLoadingOptions] = useState(false);
+
+  // Fetch active promo codes for dropdown
+  useEffect(() => {
+    if (orderStatus !== 'pending' && orderStatus !== 'confirmed') return;
+    let cancelled = false;
+    setLoadingOptions(true);
+    fetch('/api/admin/promo?status=active&limit=100&sort=code-asc')
+      .then((res) => (res.ok ? res.json() : Promise.reject()))
+      .then((data: { promos: PromoOption[] }) => {
+        if (!cancelled) setPromoOptions(data.promos);
+      })
+      .catch(() => { /* non-critical */ })
+      .finally(() => { if (!cancelled) setLoadingOptions(false); });
+    return () => { cancelled = true; };
+  }, [orderStatus]);
 
   useEffect(() => {
     if (!success) return;
@@ -103,14 +125,21 @@ export default function OrderPromoAction({
       <p className="font-medium text-[var(--color-brand-navy)]">Промо код</p>
 
       <div className="flex flex-wrap items-end gap-2">
-        <input
-          type="text"
+        <select
           value={code}
-          onChange={(e) => setCode(e.target.value.toUpperCase())}
-          placeholder="КОД"
-          disabled={disabled}
-          className="w-36 rounded border px-2 py-1.5 font-mono text-sm uppercase disabled:opacity-50"
-        />
+          onChange={(e) => setCode(e.target.value)}
+          disabled={disabled || loadingOptions}
+          className="w-48 rounded border bg-white px-2 py-1.5 font-mono text-sm disabled:opacity-50"
+        >
+          <option value="">
+            {loadingOptions ? 'Зареждане...' : '— Избери код —'}
+          </option>
+          {promoOptions.map((p) => (
+            <option key={p.code} value={p.code}>
+              {p.code} (-{p.discount_percent}%)
+            </option>
+          ))}
+        </select>
         <input
           type="text"
           value={notes}
