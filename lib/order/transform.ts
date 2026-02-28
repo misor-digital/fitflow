@@ -210,6 +210,11 @@ export function transformOrderToApiRequest(input: OrderUserInput): OrderApiReque
     request.orderType = input.orderType;
   }
 
+  // Admin: on-behalf ordering
+  if (input.onBehalfOfUserId) {
+    request.onBehalfOfUserId = input.onBehalfOfUserId;
+  }
+
   return request;
 }
 
@@ -272,4 +277,7 @@ export const INITIAL_ORDER_INPUT: OrderUserInput = {
   // Delivery cycle
   deliveryCycleId: null,
   orderType: null,
+
+  // Admin: on-behalf ordering
+  onBehalfOfUserId: null,
 };

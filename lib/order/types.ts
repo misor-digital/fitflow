@@ -89,6 +89,9 @@ export interface OrderUserInput {
   // Delivery cycle (for mystery box orders)
   deliveryCycleId: string | null;
   orderType: string | null; // 'onetime-mystery' | 'onetime-revealed' | null
+
+  // Admin: place order on behalf of a customer (null for self-orders)
+  onBehalfOfUserId: string | null;
 }
 
 // ============================================================================
@@ -197,6 +200,9 @@ export interface OrderApiRequest {
   // Delivery cycle
   deliveryCycleId?: string | null;
   orderType?: string | null;
+
+  // Admin: place order on behalf of a customer
+  onBehalfOfUserId?: string | null;
 }
 
 export interface OrderSubmitResponse {

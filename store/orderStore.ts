@@ -56,6 +56,9 @@ interface OrderStore extends OrderUserInput {
   setOrderType: (type: string | null) => void;
   resetSubscriptionFields: () => void;
 
+  // Admin: on-behalf ordering
+  setOnBehalfOfUserId: (id: string | null) => void;
+
   // Navigation
   setStep: (step: OrderStep) => void;
   goToNextStep: () => void;
@@ -141,6 +144,9 @@ export const useOrderStore = create<OrderStore>()(
         deliveryCycleId: null,
       }),
 
+      // Admin: on-behalf ordering
+      setOnBehalfOfUserId: (id) => set({ onBehalfOfUserId: id }),
+
       // Navigation
       setStep: (step) => set({ currentStep: step }),
       goToNextStep: () => {
@@ -193,6 +199,7 @@ function mapStoreToInput(store: OrderStore): OrderUserInput {
     conversionToken: store.conversionToken,
     deliveryCycleId: store.deliveryCycleId,
     orderType: store.orderType,
+    onBehalfOfUserId: store.onBehalfOfUserId,
   };
 }
 

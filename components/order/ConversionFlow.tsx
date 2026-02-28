@@ -140,6 +140,7 @@ export default function ConversionFlow({
         orderType: currentInput.orderType,
         deliveryMethod: currentInput.deliveryMethod,
         speedyOffice: currentInput.speedyOffice,
+        onBehalfOfUserId: currentInput.onBehalfOfUserId,
       });
 
       const response = await fetch('/api/order', {
