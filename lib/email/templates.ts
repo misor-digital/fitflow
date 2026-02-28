@@ -326,3 +326,166 @@ export function generateOrderConfirmationEmail(
 ): string {
   return generateConfirmationEmail(data, 'order', labels);
 }
+
+// ============================================================================
+// Invite Email Templates
+// ============================================================================
+
+/**
+ * Generate a customer invite email HTML.
+ * Sent when an admin creates a customer account on their behalf.
+ *
+ * @param name - Customer's display name
+ * @param setupUrl - URL to set up their password
+ * @returns HTML string for the email
+ */
+export function generateCustomerInviteEmail(name: string, setupUrl: string): string {
+  return `
+<table role="presentation" style="width: 100%; border-collapse: collapse; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f6f3f0;">
+  <tr>
+    <td align="center" style="padding: 40px 0;">
+      <table role="presentation" style="width: 600px; max-width: 100%; border-collapse: collapse; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+
+        <!-- Header -->
+        <tr>
+          <td style="background: linear-gradient(135deg, #9c3b00 0%, #ff6a00 100%); padding: 40px 30px; text-align: center; border-radius: 12px 12px 0px 0px;">
+            <h1 style="color: #ffffff; margin: 0; font-size: 36px; font-weight: 700;">FitFlow</h1>
+            <p style="color: #ffffff; margin: 10px 0 0 0; font-size: 14px; opacity: 0.9;">
+              Защото можем
+            </p>
+          </td>
+        </tr>
+
+        <!-- Main Content -->
+        <tr>
+          <td style="padding: 40px 30px;">
+            <h2 style="color: #363636; margin-top: 0; font-size: 24px;">
+              Здравейте, ${escapeHtml(name)}!
+            </h2>
+
+            <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
+              Създадохме акаунт за вас във FitFlow, за да можете да управлявате поръчките и абонамента си.
+            </p>
+
+            <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
+              Моля, задайте парола за вашия акаунт, като кликнете на бутона по-долу.
+            </p>
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${setupUrl}" style="display: inline-block; background-color: #ff6a00; color: #ffffff; padding: 14px 32px; border-radius: 8px; font-weight: bold; font-size: 16px; text-decoration: none;">
+                Задайте парола
+              </a>
+            </div>
+
+            <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
+              Ако не сте поискали създаване на акаунт, моля игнорирайте този имейл.
+            </p>
+
+            <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
+              Ако имате въпроси, свържете се с нас на
+              <a href="mailto:info@fitflow.bg" style="color: #ff6a00; font-weight: 600;">
+                info@fitflow.bg
+              </a>
+            </p>
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="background-color: #fdf6f1; padding: 30px; text-align: center; border-radius: 0 0 12px 12px;">
+            <p style="color: #7a4a2a; font-size: 14px; margin: 0 0 10px 0;">
+              С любов към спорта,<br>
+              <strong>Екипът на FitFlow</strong> 💪
+            </p>
+            <p style="color: #b08968; font-size: 12px; margin: 0;">
+              © ${new Date().getFullYear()} FitFlow. Всички права запазени.
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+  `.trim();
+}
+
+/**
+ * Generate a staff invite email HTML.
+ * Sent when a staff member is invited to the admin panel.
+ *
+ * @param name - Staff member's display name
+ * @param role - The role they are being invited as (e.g. "Администратор")
+ * @param setupUrl - URL to set up their password
+ * @returns HTML string for the email
+ */
+export function generateStaffInviteEmail(name: string, role: string, setupUrl: string): string {
+  return `
+<table role="presentation" style="width: 100%; border-collapse: collapse; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f6f3f0;">
+  <tr>
+    <td align="center" style="padding: 40px 0;">
+      <table role="presentation" style="width: 600px; max-width: 100%; border-collapse: collapse; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+
+        <!-- Header -->
+        <tr>
+          <td style="background: linear-gradient(135deg, #9c3b00 0%, #ff6a00 100%); padding: 40px 30px; text-align: center; border-radius: 12px 12px 0px 0px;">
+            <h1 style="color: #ffffff; margin: 0; font-size: 36px; font-weight: 700;">FitFlow</h1>
+            <p style="color: #ffffff; margin: 10px 0 0 0; font-size: 14px; opacity: 0.9;">
+              Защото можем
+            </p>
+          </td>
+        </tr>
+
+        <!-- Main Content -->
+        <tr>
+          <td style="padding: 40px 30px;">
+            <h2 style="color: #363636; margin-top: 0; font-size: 24px;">
+              Добре дошли в екипа на FitFlow, ${escapeHtml(name)}!
+            </h2>
+
+            <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
+              Поканени сте като <strong>${escapeHtml(role)}</strong> в административния панел на FitFlow.
+            </p>
+
+            <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
+              Моля, задайте парола за вашия акаунт, като кликнете на бутона по-долу.
+            </p>
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${setupUrl}" style="display: inline-block; background-color: #ff6a00; color: #ffffff; padding: 14px 32px; border-radius: 8px; font-weight: bold; font-size: 16px; text-decoration: none;">
+                Задайте парола
+              </a>
+            </div>
+
+            <p style="color: #6b7280; font-size: 14px; line-height: 1.6;">
+              След задаване на парола ще бъдете пренасочени към админ панела.
+            </p>
+
+            <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
+              Ако имате въпроси, свържете се с нас на
+              <a href="mailto:info@fitflow.bg" style="color: #ff6a00; font-weight: 600;">
+                info@fitflow.bg
+              </a>
+            </p>
+          </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+          <td style="background-color: #fdf6f1; padding: 30px; text-align: center; border-radius: 0 0 12px 12px;">
+            <p style="color: #7a4a2a; font-size: 14px; margin: 0 0 10px 0;">
+              С любов към спорта,<br>
+              <strong>Екипът на FitFlow</strong> 💪
+            </p>
+            <p style="color: #b08968; font-size: 12px; margin: 0;">
+              © ${new Date().getFullYear()} FitFlow. Всички права запазени.
+            </p>
+          </td>
+        </tr>
+
+      </table>
+    </td>
+  </tr>
+</table>
+  `.trim();
+}
