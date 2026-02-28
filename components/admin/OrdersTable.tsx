@@ -8,6 +8,7 @@ import {
   ORDER_STATUS_COLORS,
 } from '@/lib/order/format';
 import { formatShippingAddressOneLine } from '@/lib/order';
+import OrderPromoAction from './OrderPromoAction';
 
 // ============================================================================
 // Types
@@ -292,6 +293,7 @@ export function OrdersTable({
                           boxTypeName={boxTypeNames[order.box_type] ?? order.box_type}
                           history={statusHistory[order.id]}
                           loadingHistory={loadingHistory === order.id}
+                          onRefresh={() => router.refresh()}
                         />
                       </td>
                     </tr>
@@ -377,11 +379,13 @@ function OrderRowDetail({
   boxTypeName,
   history,
   loadingHistory,
+  onRefresh,
 }: {
   order: OrderRow;
   boxTypeName: string;
   history?: OrderStatusHistoryRow[];
   loadingHistory: boolean;
+  onRefresh: () => void;
 }) {
   // Personalization fields
   const personalizationEntries: [string, string | string[] | null | undefined][] = [
@@ -477,6 +481,15 @@ function OrderRowDetail({
             Преобразувана от предварителна поръчка
           </p>
         )}
+
+        {/* Admin promo management */}
+        <OrderPromoAction
+          orderId={order.id}
+          currentPromo={order.promo_code}
+          currentDiscount={order.discount_percent}
+          orderStatus={order.status}
+          onSuccess={onRefresh}
+        />
       </div>
 
       {/* Column 3: Status History */}
