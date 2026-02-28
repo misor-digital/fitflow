@@ -71,8 +71,9 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     const body = await request.json();
     const dryRun = typeof body.dryRun === 'boolean' ? body.dryRun : true;
+    const includeIds: string[] | undefined = Array.isArray(body.includeIds) ? body.includeIds : undefined;
 
-    const result = await sendPreorderConversionEmails({ dryRun });
+    const result = await sendPreorderConversionEmails({ dryRun, includeIds });
 
     // Mask emails in the recipient list before returning
     const maskedRecipients = result.recipients.map((r) => ({
