@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -57,6 +57,41 @@ export default function PreorderCampaignPage() {
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<SendResultResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  /* ---- Filter state ---- */
+  const [boxTypeFilters, setBoxTypeFilters] = useState<Record<string, boolean>>(
+    () => Object.fromEntries(Object.keys(BOX_TYPE_LABELS).map((k) => [k, true])),
+  );
+  const [showOnlyWithPromo, setShowOnlyWithPromo] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  /* ---- Derived: filtered recipients ---- */
+  const filteredRecipients = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+
+    return recipients.filter((r) => {
+      // Box type filter
+      if (!boxTypeFilters[r.boxType]) return false;
+
+      // Promo code filter
+      if (showOnlyWithPromo && !r.promoCode) return false;
+
+      // Search filter (name or email)
+      if (q && !r.fullName.toLowerCase().includes(q) && !r.email.toLowerCase().includes(q)) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [recipients, boxTypeFilters, showOnlyWithPromo, searchQuery]);
+
+  const resetFilters = useCallback(() => {
+    setBoxTypeFilters(
+      Object.fromEntries(Object.keys(BOX_TYPE_LABELS).map((k) => [k, true])),
+    );
+    setShowOnlyWithPromo(false);
+    setSearchQuery('');
+  }, []);
 
   /* ---- Fetch recipients on mount ---- */
   useEffect(() => {
