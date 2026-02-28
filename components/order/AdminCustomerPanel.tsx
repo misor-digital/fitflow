@@ -7,6 +7,8 @@ interface AdminCustomerPanelProps {
   /** Pre-filled from preorder data via order store */
   defaultFullName: string;
   defaultEmail: string;
+  /** When true, account creation is optional — the admin can skip it */
+  optional?: boolean;
 }
 
 type PanelStatus = 'checking' | 'ready' | 'exists' | 'created' | 'error';
@@ -14,6 +16,7 @@ type PanelStatus = 'checking' | 'ready' | 'exists' | 'created' | 'error';
 export default function AdminCustomerPanel({
   defaultFullName,
   defaultEmail,
+  optional = false,
 }: AdminCustomerPanelProps) {
   const [fullName, setFullName] = useState(defaultFullName);
   const [email, setEmail] = useState(defaultEmail);
@@ -108,6 +111,11 @@ export default function AdminCustomerPanel({
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-bold text-[var(--color-brand-navy)]">
           👤 Акаунт на клиента
+          {optional && (
+            <span className="ml-2 text-xs font-normal text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+              по избор
+            </span>
+          )}
         </h3>
         <StatusBadge status={status} />
       </div>
@@ -169,14 +177,21 @@ export default function AdminCustomerPanel({
       {/* Actions */}
       <div className="mt-4">
         {status === 'ready' && (
-          <button
-            type="button"
-            onClick={handleCreate}
-            disabled={isCreating || !email.trim() || !fullName.trim()}
-            className="bg-[var(--color-brand-orange)] text-white px-6 py-3 rounded-full font-semibold hover:bg-[#e67100] transition-all disabled:opacity-50"
-          >
-            {isCreating ? 'Създаване...' : 'Създай акаунт'}
-          </button>
+          <div className="space-y-3">
+            <button
+              type="button"
+              onClick={handleCreate}
+              disabled={isCreating || !email.trim() || !fullName.trim()}
+              className="bg-[var(--color-brand-orange)] text-white px-6 py-3 rounded-full font-semibold hover:bg-[#e67100] transition-all disabled:opacity-50"
+            >
+              {isCreating ? 'Създаване...' : 'Създай акаунт'}
+            </button>
+            {optional && (
+              <p className="text-sm text-gray-500">
+                💡 Ако клиентът не иска акаунт, продължете директно с попълване на адреса по-долу.
+              </p>
+            )}
+          </div>
         )}
 
         {error && <p className="text-red-600 text-sm mt-2">{error}</p>}

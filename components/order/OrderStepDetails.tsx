@@ -243,10 +243,16 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
       return;
     }
 
+    // Admin converting a non-subscription box without creating a customer
+    // account → treat as a guest order so the admin's own userId is not used.
+    const isAdminGuestConversion = isAdminUser && conversionToken && !isSubscription && !onBehalfOfUserId;
+
     // Resolve the correct contact info to persist.
     // When admin acts on behalf of a customer, name/email were set by
     // AdminCustomerPanel directly on the store, and phone comes from the
     // address form (the admin on-behalf UI has no separate phone field).
+    // For admin guest conversions, use the conversion source's customer data
+    // already held in the local state (prefilled from the store).
     const resolveContact = (): [string, string, string] => {
       if (onBehalfOfUserId) {
         const s = useOrderStore.getState();
@@ -278,6 +284,10 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
         if (!contactValid) return;
         store.setGuestMode(true);
         store.setContactInfo(...resolveContact());
+      } else if (isAdminGuestConversion) {
+        // Admin converting without account → guest order with customer's info
+        store.setGuestMode(true);
+        store.setContactInfo(...resolveContact());
       } else if (isAuthenticated) {
         store.setGuestMode(false);
         store.setContactInfo(...resolveContact());
@@ -300,6 +310,18 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
       const contactValid = validateContactInfo();
       const addressValid = validateAddressForm();
       if (!contactValid || !addressValid) return;
+
+      store.setGuestMode(true);
+      store.setContactInfo(...resolveContact());
+      store.setSelectedAddressId(null);
+      store.setDeliveryMethod('address');
+      store.setSpeedyOffice(null);
+      store.setAddress(address);
+      onNext();
+    } else if (isAdminGuestConversion) {
+      // Admin converting without account → guest order with customer's info
+      const addressValid = validateAddressForm();
+      if (!addressValid) return;
 
       store.setGuestMode(true);
       store.setContactInfo(...resolveContact());
@@ -494,6 +516,61 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
             </div>
           </>
         )}
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // Branch A0b: Non-subscription + admin conversion (optional account)
+  // =========================================================================
+  if (!isSubscription && isAdminUser && conversionToken) {
+    return (
+      <div>
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[var(--color-brand-navy)] text-center mb-8 sm:mb-10 md:mb-12 relative after:content-[''] after:block after:w-12 sm:after:w-16 after:h-1 after:bg-[var(--color-brand-orange)] after:mx-auto after:mt-3 sm:after:mt-4 after:rounded">
+          Данни за доставка
+        </h2>
+
+        {/* Admin: Optional account creation */}
+        <AdminCustomerPanel
+          defaultFullName={store.fullName}
+          defaultEmail={store.email}
+          optional
+        />
+
+        {/* Address form always visible (account not required) */}
+        <div className="space-y-6 sm:space-y-8 mt-6">
+          {/* Delivery Method Toggle */}
+          <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg">
+            <h3 className="text-lg sm:text-xl font-bold text-[var(--color-brand-navy)] mb-4 border-b pb-2">
+              Метод на доставка
+            </h3>
+            <DeliveryMethodToggle value={deliveryMethod} onChange={handleDeliveryMethodChange} />
+          </div>
+
+          {/* Address / Office Form */}
+          <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg">
+            <h3 className="text-lg sm:text-xl font-bold text-[var(--color-brand-navy)] mb-4 border-b pb-2">
+              {deliveryMethod === 'speedy_office' ? 'Данни за получаване' : 'Адрес за доставка'}
+            </h3>
+            {deliveryMethod === 'speedy_office' ? renderOfficeForm() : renderAddressForm()}
+          </div>
+        </div>
+
+        {/* Navigation buttons */}
+        <div className="flex gap-2 sm:gap-4 justify-center mt-6 sm:mt-8">
+          <button
+            onClick={onBack}
+            className="bg-gray-300 text-[var(--color-brand-navy)] px-6 sm:px-8 md:px-10 py-3 sm:py-4 rounded-full text-sm sm:text-base md:text-lg font-semibold uppercase tracking-wide hover:bg-gray-400 transition-all"
+          >
+            Назад
+          </button>
+          <button
+            onClick={handleContinue}
+            className="bg-[var(--color-brand-orange)] text-white px-8 sm:px-10 md:px-12 py-3 sm:py-4 rounded-full text-sm sm:text-base md:text-lg font-semibold uppercase tracking-wide shadow-lg hover:bg-[#e67100] transition-all hover:-translate-y-0.5 hover:shadow-xl"
+          >
+            Напред
+          </button>
+        </div>
       </div>
     );
   }

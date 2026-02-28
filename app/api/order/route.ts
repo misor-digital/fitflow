@@ -301,7 +301,19 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     let userId: string | null = null;
 
     if (session) {
-      userId = session.userId;
+      // Staff submitting a guest order (e.g. admin converting a preorder
+      // without creating a customer account) → keep userId null so the
+      // order is created as a guest order under the customer's email.
+      if (
+        isGuest &&
+        session.profile.user_type === 'staff' &&
+        session.profile.staff_role &&
+        STAFF_MANAGEMENT_ROLES.has(session.profile.staff_role)
+      ) {
+        userId = null;
+      } else {
+        userId = session.userId;
+      }
     } else if (!isGuest) {
       return NextResponse.json(
         { error: 'Изисква се вход в акаунта.' },
