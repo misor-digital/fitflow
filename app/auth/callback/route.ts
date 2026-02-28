@@ -1,19 +1,25 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { syncNewUser } from '@/lib/email/contact-sync';
+import type { EmailOtpType } from '@supabase/supabase-js';
 
 /**
  * Handles the auth callback from Supabase (email confirmations, magic links, password reset).
- * Exchanges the auth code for a session and redirects.
+ *
+ * Supports two verification flows:
+ *  1. PKCE code exchange  — `?code=<AUTH_CODE>` (OAuth, client-initiated OTP)
+ *  2. Token-hash verify   — `?token_hash=<HASH>&type=<OTP_TYPE>` (server-generated magic links)
  *
  * Error codes:
- *  - missing_code    — no `code` query param present
- *  - code_expired    — the auth code was already used or has expired
- *  - exchange_failed — generic code-exchange failure
+ *  - missing_code    — neither `code` nor `token_hash` present
+ *  - code_expired    — the auth code / token was already used or has expired
+ *  - exchange_failed — generic verification failure
  */
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
+  const tokenHash = searchParams.get('token_hash');
+  const type = searchParams.get('type') as EmailOtpType | null;
   const next = searchParams.get('next') ?? '/';
 
   /* ------------------------------------------------------------------
@@ -29,15 +35,28 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(target.toString());
   }
 
-  /* --- Guard: code must be present -------------------------------- */
-  if (!code) {
-    console.error('[auth/callback] Missing auth code in callback URL');
+  /* --- Guard: at least one verification param must be present ------ */
+  if (!code && !tokenHash) {
+    console.error('[auth/callback] Missing auth code and token_hash in callback URL');
     return errorRedirect('missing_code');
   }
 
-  /* --- Exchange the code for a session ----------------------------- */
+  /* --- Verify the session ------------------------------------------ */
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+  let data: { user: import('@supabase/supabase-js').User | null } | null = null;
+  let error: import('@supabase/supabase-js').AuthError | null = null;
+
+  if (tokenHash && type) {
+    // Flow 2: Direct OTP verification (server-generated magic links)
+    const result = await supabase.auth.verifyOtp({ token_hash: tokenHash, type });
+    data = result.data;
+    error = result.error;
+  } else if (code) {
+    // Flow 1: PKCE code exchange (OAuth, client-initiated flows)
+    const result = await supabase.auth.exchangeCodeForSession(code);
+    data = result.data;
+    error = result.error;
+  }
 
   if (error) {
     // Supabase returns specific messages for expired / already-used codes
@@ -48,7 +67,8 @@ export async function GET(request: NextRequest) {
 
     const errorCode = isExpired ? 'code_expired' : 'exchange_failed';
 
-    console.error('[auth/callback] Code exchange failed', {
+    console.error('[auth/callback] Verification failed', {
+      flow: tokenHash ? 'token_hash' : 'code',
       errorCode,
       message: error.message,
       status: error.status,

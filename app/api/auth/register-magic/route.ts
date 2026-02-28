@@ -124,12 +124,9 @@ export async function POST(request: Request): Promise<NextResponse> {
       await supabaseAdmin.auth.admin.generateLink({
         type: 'magiclink',
         email: normalizedEmail,
-        options: {
-          redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://fitflow.bg'}/auth/callback?next=/setup-password`,
-        },
       });
 
-    if (linkError) {
+    if (linkError || !linkData?.properties?.hashed_token) {
       console.error('[register-magic] generateLink failed:', linkError);
       return NextResponse.json(
         { error: 'Възникна грешка. Моля, опитайте по-късно.' },
@@ -137,7 +134,13 @@ export async function POST(request: Request): Promise<NextResponse> {
       );
     }
 
-    const setupUrl = linkData?.properties?.action_link;
+    // Build a direct callback URL with the hashed token (bypasses PKCE mismatch).
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://fitflow.bg';
+    const callbackUrl = new URL('/auth/callback', siteUrl);
+    callbackUrl.searchParams.set('token_hash', linkData.properties.hashed_token);
+    callbackUrl.searchParams.set('type', 'magiclink');
+    callbackUrl.searchParams.set('next', '/setup-password');
+    const setupUrl: string | null = callbackUrl.toString();
 
     // ---- Send email ------------------------------------------------------
     if (setupUrl) {

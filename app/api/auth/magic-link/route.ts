@@ -65,12 +65,9 @@ export async function POST(request: Request): Promise<NextResponse> {
       await supabaseAdmin.auth.admin.generateLink({
         type: 'magiclink',
         email: normalizedEmail,
-        options: {
-          redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://fitflow.bg'}/auth/callback`,
-        },
       });
 
-    if (linkError || !linkData?.properties?.action_link) {
+    if (linkError || !linkData?.properties?.hashed_token) {
       console.error('[magic-link] Failed to generate link:', linkError);
       return NextResponse.json(
         { error: 'Възникна грешка. Моля, опитайте отново.' },
@@ -78,7 +75,14 @@ export async function POST(request: Request): Promise<NextResponse> {
       );
     }
 
-    const loginUrl = linkData.properties.action_link;
+    // Build a direct callback URL using the hashed token.
+    // This bypasses Supabase's /auth/v1/verify redirect which requires
+    // a PKCE code_verifier cookie that doesn't exist for server-generated links.
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://fitflow.bg';
+    const callbackUrl = new URL('/auth/callback', siteUrl);
+    callbackUrl.searchParams.set('token_hash', linkData.properties.hashed_token);
+    callbackUrl.searchParams.set('type', 'magiclink');
+    const loginUrl = callbackUrl.toString();
 
     // ---- Send branded email via Brevo ------------------------------------
     await sendEmail({

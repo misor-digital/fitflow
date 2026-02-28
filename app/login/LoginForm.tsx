@@ -77,9 +77,10 @@ export default function LoginForm({ callbackError, next }: LoginFormProps) {
   if (magicLinkSent) {
     return (
       <div className="bg-green-50 text-green-700 p-6 rounded-lg text-center">
-        <p className="font-semibold mb-2">Линкът е изпратен!</p>
+        <p className="font-semibold mb-2">Проверете имейла си</p>
         <p className="text-sm">
-          Проверете имейла си ({email}) за магически линк за вход във системата.
+          Ако <strong>{email}</strong> е регистриран в системата, ще получите линк за вход.
+          Проверете и папка &quot;Спам&quot;.
         </p>
         <button
           type="button"

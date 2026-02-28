@@ -67,15 +67,18 @@ export async function inviteStaff(data: InviteData) {
   const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
     type: 'magiclink',
     email,
-    options: {
-      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://fitflow.bg'}/auth/callback?next=/setup-password`,
-    },
   });
 
-  if (linkError) {
+  if (linkError || !linkData?.properties?.hashed_token) {
     console.error('Error generating setup link:', linkError);
   } else {
-    setupUrl = linkData.properties.action_link;
+    // Build a direct callback URL with the hashed token (bypasses PKCE mismatch).
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://fitflow.bg';
+    const callbackUrl = new URL('/auth/callback', siteUrl);
+    callbackUrl.searchParams.set('token_hash', linkData.properties.hashed_token);
+    callbackUrl.searchParams.set('type', 'magiclink');
+    callbackUrl.searchParams.set('next', '/setup-password');
+    setupUrl = callbackUrl.toString();
   }
 
   // 4c. Send custom Brevo email
