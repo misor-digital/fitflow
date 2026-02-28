@@ -125,10 +125,11 @@ export default function PreorderCampaignPage() {
   /* ---- Send / Dry-run handler ---- */
   const handleSend = useCallback(
     async (dryRun: boolean) => {
+      const count = filteredRecipients.length;
       if (dryRun) {
-        if (!window.confirm(`Dry run ще логне ${total} получателя без реално изпращане. Продължи?`)) return;
+        if (!window.confirm(`Dry run ще логне ${count} получателя без реално изпращане. Продължи?`)) return;
       } else {
-        if (!window.confirm(`Сигурни ли сте? Това ще изпрати ${total} имейла.`)) return;
+        if (!window.confirm(`Сигурни ли сте? Това ще изпрати ${count} имейла.`)) return;
       }
 
       setSending(true);
@@ -139,7 +140,10 @@ export default function PreorderCampaignPage() {
         const res = await fetch('/api/admin/preorder-campaign', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ dryRun }),
+          body: JSON.stringify({
+            dryRun,
+            includeIds: filteredRecipients.map((r) => r.preorderId),
+          }),
         });
         if (!res.ok) {
           const body = await res.json().catch(() => null);
@@ -153,7 +157,7 @@ export default function PreorderCampaignPage() {
         setSending(false);
       }
     },
-    [total],
+    [filteredRecipients],
   );
 
   /* ---- Render ---- */
@@ -247,7 +251,7 @@ export default function PreorderCampaignPage() {
       <div className="flex items-center gap-3">
         <button
           type="button"
-          disabled={sending || total === 0}
+          disabled={sending || filteredRecipients.length === 0}
           onClick={() => handleSend(true)}
           className="inline-flex items-center gap-2 rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
@@ -255,11 +259,11 @@ export default function PreorderCampaignPage() {
         </button>
         <button
           type="button"
-          disabled={sending || total === 0}
+          disabled={sending || filteredRecipients.length === 0}
           onClick={() => handleSend(false)}
           className="inline-flex items-center gap-2 rounded-lg bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
-          {sending ? 'Изпращане...' : `📧 Изпрати на ${total} получателя`}
+          {sending ? 'Изпращане...' : `📧 Изпрати на ${filteredRecipients.length} получателя`}
         </button>
       </div>
 
@@ -329,7 +333,7 @@ export default function PreorderCampaignPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 bg-white">
-                {recipients.map((r, idx) => (
+                {filteredRecipients.map((r, idx) => (
                   <tr key={r.preorderId} className="even:bg-gray-50">
                     <td className="px-4 py-3 text-sm text-gray-500">{idx + 1}</td>
                     <td className="px-4 py-3 text-sm text-gray-900">{r.email}</td>
@@ -358,7 +362,7 @@ export default function PreorderCampaignPage() {
           </div>
 
           <p className="text-sm text-gray-600">
-            Общо получатели: <strong>{total}</strong>
+            Показани: <strong>{filteredRecipients.length}</strong> от <strong>{recipients.length}</strong> получателя
           </p>
         </>
       )}
