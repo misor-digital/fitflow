@@ -77,6 +77,7 @@ export async function POST(request: Request): Promise<NextResponse> {
           full_name: fullName.trim(),
           created_by_admin: true,
           created_by: session.userId,
+          has_password: false,
         },
       });
 
@@ -129,7 +130,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       try {
         await sendEmail({
           to: { email: normalizedEmail, name: fullName.trim() },
-          subject: 'Вашият акаунт във FitFlow',
+          subject: 'Активирайте акаунта си във FitFlow',
           htmlContent: generateCustomerInviteEmail(fullName.trim(), setupUrl),
           tags: ['customer-invite'],
         });

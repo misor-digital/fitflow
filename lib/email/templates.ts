@@ -368,14 +368,18 @@ export function generateCustomerInviteEmail(name: string, setupUrl: string): str
             </p>
 
             <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
-              Моля, задайте парола за вашия акаунт, като кликнете на бутона по-долу.
+              Кликнете бутона по-долу, за да активирате акаунта си. След това можете по желание да зададете парола или да продължите да влизате с магически линк.
             </p>
 
             <div style="text-align: center; margin: 30px 0;">
               <a href="${setupUrl}" style="display: inline-block; background-color: #ff6a00; color: #ffffff; padding: 14px 32px; border-radius: 8px; font-weight: bold; font-size: 16px; text-decoration: none;">
-                Задайте парола
+                Активирайте акаунта си
               </a>
             </div>
+
+            <p style="color: #6b7280; font-size: 14px; line-height: 1.6;">
+              Можете да зададете парола по всяко време от настройките на акаунта си.
+            </p>
 
             <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
               Ако не сте поискали създаване на акаунт, моля игнорирайте този имейл.
