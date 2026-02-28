@@ -111,6 +111,29 @@ export async function incrementPromoCodeUsage(
 }
 
 /**
+ * Atomically decrement the usage count for a promo code.
+ * Inverse of incrementPromoCodeUsage — used when an admin removes or replaces
+ * a promo code on an existing order.
+ * The DB function floors current_uses at 0 and removes the promo_code_usages record.
+ */
+export async function decrementPromoCodeUsage(
+  code: string,
+  userId?: string,
+  orderId?: string
+): Promise<void> {
+  const { error } = await supabaseAdmin.rpc('decrement_promo_usage', {
+    p_code: code.trim().toUpperCase(),
+    p_user_id: userId ?? null,
+    p_order_id: orderId ?? null,
+  });
+
+  if (error) {
+    console.error('Error decrementing promo code usage:', error);
+    throw new Error('Failed to decrement promo code usage');
+  }
+}
+
+/**
  * Applied promo info for display
  */
 export interface AppliedPromo {

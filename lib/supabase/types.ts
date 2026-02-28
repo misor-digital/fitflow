@@ -1158,6 +1158,10 @@ export interface Database {
         Args: { p_code: string; p_user_id?: string; p_order_id?: string };
         Returns: undefined;
       };
+      decrement_promo_usage: {
+        Args: { p_code: string; p_user_id?: string | null; p_order_id?: string | null };
+        Returns: undefined;
+      };
       check_user_promo_usage: {
         Args: { p_code: string; p_user_id: string };
         Returns: number;

@@ -31,6 +31,7 @@ export {
   getDiscountPercent,
   isValidPromoCode,
   incrementPromoCodeUsage,
+  decrementPromoCodeUsage,
   getAppliedPromo,
   listPromoCodes,
   getPromoCodeById,
