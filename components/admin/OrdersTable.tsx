@@ -14,9 +14,19 @@ import OrderPromoAction from './OrderPromoAction';
 // Types
 // ============================================================================
 
+/** Label maps fetched from the `options` table — single source of truth */
+export interface OptionLabelMaps {
+  sports: Record<string, string>;
+  colors: Record<string, string>;
+  flavors: Record<string, string>;
+  dietary: Record<string, string>;
+  sizes: Record<string, string>;
+}
+
 interface OrdersTableProps {
   orders: OrderRow[];
   boxTypeNames: Record<string, string>;
+  optionLabels: OptionLabelMaps;
   total: number;
   currentPage: number;
   perPage: number;
@@ -48,10 +58,10 @@ const STATUS_BG_COLORS: Record<OrderStatus, string> = {
 };
 
 // ============================================================================
-// Personalization labels (Bulgarian)
+// Personalization field labels (Bulgarian)
 // ============================================================================
 
-const DETAIL_LABELS: Record<string, string> = {
+const FIELD_LABELS: Record<string, string> = {
   sports: 'Спортове',
   sport_other: 'Друг спорт',
   colors: 'Цветове',
@@ -97,6 +107,7 @@ function formatDateTime(iso: string) {
 export function OrdersTable({
   orders,
   boxTypeNames,
+  optionLabels,
 }: OrdersTableProps) {
   const router = useRouter();
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -291,6 +302,7 @@ export function OrdersTable({
                         <OrderRowDetail
                           order={order}
                           boxTypeName={boxTypeNames[order.box_type] ?? order.box_type}
+                          optionLabels={optionLabels}
                           history={statusHistory[order.id]}
                           loadingHistory={loadingHistory === order.id}
                           onRefresh={() => router.refresh()}
@@ -377,32 +389,40 @@ export function OrdersTable({
 function OrderRowDetail({
   order,
   boxTypeName,
+  optionLabels,
   history,
   loadingHistory,
   onRefresh,
 }: {
   order: OrderRow;
   boxTypeName: string;
+  optionLabels: OptionLabelMaps;
   history?: OrderStatusHistoryRow[];
   loadingHistory: boolean;
   onRefresh: () => void;
 }) {
-  // Personalization fields
-  const personalizationEntries: [string, string | string[] | null | undefined][] = [
-    ['sports', order.sports],
-    ['sport_other', order.sport_other],
-    ['colors', order.colors],
-    ['flavors', order.flavors],
-    ['flavor_other', order.flavor_other],
-    ['size_upper', order.size_upper],
-    ['size_lower', order.size_lower],
-    ['dietary', order.dietary],
-    ['dietary_other', order.dietary_other],
-    ['additional_notes', order.additional_notes],
+  /** Resolve an array of raw IDs to their DB labels */
+  function mapLabels(ids: string[] | null | undefined, labelMap: Record<string, string>): string | null {
+    if (!ids || ids.length === 0) return null;
+    return ids.map(id => labelMap[id] ?? id).join(', ');
+  }
+
+  // Personalization fields — values are mapped through DB label maps
+  const personalizationEntries: [string, string | null | undefined][] = [
+    ['sports', mapLabels(order.sports, optionLabels.sports)],
+    ['sport_other', order.sport_other ?? null],
+    ['colors', mapLabels(order.colors, optionLabels.colors)],
+    ['flavors', mapLabels(order.flavors, optionLabels.flavors)],
+    ['flavor_other', order.flavor_other ?? null],
+    ['size_upper', order.size_upper ? (optionLabels.sizes[order.size_upper] ?? order.size_upper) : null],
+    ['size_lower', order.size_lower ? (optionLabels.sizes[order.size_lower] ?? order.size_lower) : null],
+    ['dietary', mapLabels(order.dietary, optionLabels.dietary)],
+    ['dietary_other', order.dietary_other ?? null],
+    ['additional_notes', order.additional_notes ?? null],
   ];
 
   const hasPersonalization = personalizationEntries.some(
-    ([, v]) => v != null && (Array.isArray(v) ? v.length > 0 : v !== ''),
+    ([, v]) => v != null && v !== '',
   );
 
   return (
@@ -417,13 +437,11 @@ function OrderRowDetail({
         ) : (
           <dl className="space-y-1">
             {personalizationEntries.map(([key, value]) => {
-              if (value == null || (Array.isArray(value) && value.length === 0) || value === '') return null;
+              if (value == null || value === '') return null;
               return (
                 <div key={key}>
-                  <dt className="text-gray-500 text-xs">{DETAIL_LABELS[key] ?? key}</dt>
-                  <dd className="text-gray-800">
-                    {Array.isArray(value) ? value.join(', ') : value}
-                  </dd>
+                  <dt className="text-gray-500 text-xs">{FIELD_LABELS[key] ?? key}</dt>
+                  <dd className="text-gray-800">{value}</dd>
                 </div>
               );
             })}
