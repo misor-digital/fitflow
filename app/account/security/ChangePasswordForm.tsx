@@ -137,8 +137,9 @@ export default function ChangePasswordForm() {
       )}
 
       {!hasPassword && (
-        <div className="bg-blue-50 text-blue-700 p-3 rounded-lg text-sm">
-          Акаунтът ви все още няма зададена парола. Задайте парола по-долу.
+        <div className="bg-amber-50 border border-amber-200 text-amber-800 p-4 rounded-lg text-sm">
+          <p className="font-medium">Акаунтът ви все още няма зададена парола.</p>
+          <p className="mt-1">Можете да зададете парола по-долу или от <a href="/setup-password" className="text-[var(--color-brand-orange)] font-semibold hover:underline">страницата за настройка на парола</a>.</p>
         </div>
       )}
 
