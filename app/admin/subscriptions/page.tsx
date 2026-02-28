@@ -1,6 +1,6 @@
 import { requireStaff } from '@/lib/auth';
 import { ORDER_VIEW_ROLES } from '@/lib/auth/permissions';
-import { getSubscriptionsPaginated, getSubscriptionsCount, getSubscriptionMRR, getBoxTypeNames } from '@/lib/data';
+import { getSubscriptionsPaginated, getSubscriptionsCount, getSubscriptionMRR, getBoxTypeNames, getEurToBgnRate } from '@/lib/data';
 import { SUBSCRIPTION_STATUS_LABELS, FREQUENCY_LABELS } from '@/lib/subscription';
 import { SubscriptionsTable } from '@/components/admin/SubscriptionsTable';
 import Link from 'next/link';
@@ -33,7 +33,7 @@ export default async function SubscriptionsPage({ searchParams }: SubscriptionsP
   const frequency = params.frequency;
   const search = params.search?.trim();
 
-  const [{ subscriptions, total }, counts, mrr, boxTypeNames] = await Promise.all([
+  const [{ subscriptions, total }, counts, mrr, boxTypeNames, eurToBgnRate] = await Promise.all([
     getSubscriptionsPaginated(page, PER_PAGE, {
       status: status || undefined,
       boxType: boxType || undefined,
@@ -43,6 +43,7 @@ export default async function SubscriptionsPage({ searchParams }: SubscriptionsP
     getSubscriptionsCount(),
     getSubscriptionMRR(),
     getBoxTypeNames(),
+    getEurToBgnRate(),
   ]);
 
   const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
@@ -95,8 +96,9 @@ export default async function SubscriptionsPage({ searchParams }: SubscriptionsP
           <p className="text-2xl font-bold text-amber-700">{counts.paused}</p>
         </div>
         <div className="bg-white rounded-xl shadow-sm p-5 border-l-4 border-[var(--color-brand-navy)]">
-          <p className="text-sm text-gray-500">MRR (EUR)</p>
+          <p className="text-sm text-gray-500">MRR</p>
           <p className="text-2xl font-bold text-[var(--color-brand-navy)]">€{mrr.toFixed(2)}</p>
+          <p className="text-sm text-gray-500 mt-0.5">{(mrr * eurToBgnRate).toFixed(2)} лв</p>
         </div>
       </div>
 
@@ -160,6 +162,7 @@ export default async function SubscriptionsPage({ searchParams }: SubscriptionsP
           <SubscriptionsTable
             subscriptions={subscriptions}
             boxTypeNames={boxTypeNames}
+            eurToBgnRate={eurToBgnRate}
             total={total}
             currentPage={page}
             perPage={PER_PAGE}

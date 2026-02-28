@@ -166,6 +166,7 @@ export default function ConversionFlow({
           orderId: data.orderId,
           email: currentInput.email || user?.email,
           isGuest: currentInput.isGuest,
+          finalPriceEur: data.finalPriceEur ?? null,
         }),
       );
 

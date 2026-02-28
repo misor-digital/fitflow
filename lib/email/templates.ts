@@ -9,9 +9,28 @@
 import type { ConfirmationEmailData } from './types';
 import {
   formatPriceDual,
+  formatPriceEur,
   formatSavings,
 } from '@/lib/catalog';
 import { escapeHtml } from '@/lib/utils/sanitize';
+
+// ============================================================================
+// Safe Price Formatting (email-specific)
+// ============================================================================
+
+/** Format dual price for emails; shows EUR-only when BGN is unavailable */
+function safePriceDual(eur: number | null | undefined, bgn: number | null | undefined): string {
+  if (eur == null) return '—';
+  if (bgn != null && bgn > 0) return formatPriceDual(eur, bgn);
+  return formatPriceEur(eur);
+}
+
+/** Format savings for emails; shows EUR-only when BGN is unavailable */
+function safeSavings(eur: number | null | undefined, bgn: number | null | undefined): string {
+  if (eur == null || eur <= 0) return '';
+  if (bgn != null && bgn > 0) return formatSavings(eur, bgn);
+  return `Спестяваш ${formatPriceEur(eur)}`;
+}
 
 // ============================================================================
 // Label Map Type
@@ -167,12 +186,12 @@ function generatePromoCodeSection(data: ConfirmationEmailData): string {
         ✅ Промо код ${data.promoCode} е приложен – ${data.discountPercent}% отстъпка
       </p>
       <p style="margin: 5px 0; color: #155724;">
-        <span style="text-decoration: line-through; color: #6c757d;">${formatPriceDual(data.originalPriceEur ?? 0, data.originalPriceBgn ?? 0)}</span>
+        <span style="text-decoration: line-through; color: #6c757d;">${safePriceDual(data.originalPriceEur, data.originalPriceBgn)}</span>
         &nbsp;→&nbsp;
-        <strong>${formatPriceDual(data.finalPriceEur ?? 0, data.finalPriceBgn ?? 0)}</strong>
+        <strong>${safePriceDual(data.finalPriceEur, data.finalPriceBgn)}</strong>
       </p>
       <p style="margin: 5px 0 0 0; color: #155724; font-size: 14px;">
-        ${formatSavings(data.discountAmountEur ?? 0, data.discountAmountBgn ?? 0)}
+        ${safeSavings(data.discountAmountEur, data.discountAmountBgn)}
       </p>
     </div>
   `;
@@ -267,7 +286,7 @@ export function generateConfirmationEmail(
             <div style="background-color: #fff4ec; padding: 20px; border-radius: 8px; margin: 20px 0;">
               <h3 style="color: #363636; margin-top: 0;">📦 Детайли на поръчката</h3>
               <p style="margin: 5px 0;"><strong>Номер на поръчка:</strong> ${data.orderId}</p>
-              <p style="margin: 5px 0;"><strong>Избрана кутия:</strong> ${data.boxTypeDisplay}${!data.hasPromoCode ? ` (${formatPriceDual(data.originalPriceEur ?? 0, data.originalPriceBgn ?? 0)})` : ''}</p>
+              <p style="margin: 5px 0;"><strong>Избрана кутия:</strong> ${data.boxTypeDisplay}${!data.hasPromoCode ? ` (${safePriceDual(data.originalPriceEur, data.originalPriceBgn)})` : ''}</p>
               <p style="margin: 5px 0;"><strong>Персонализация:</strong> ${data.wantsPersonalization ? 'Да' : 'Не'}</p>
             </div>
             

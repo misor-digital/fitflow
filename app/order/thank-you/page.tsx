@@ -15,6 +15,7 @@ interface LastOrderInfo {
   orderId: string;
   email: string;
   isGuest: boolean;
+  finalPriceEur?: number | null;
 }
 
 export default function OrderThankYou() {
@@ -54,7 +55,7 @@ export default function OrderThankYou() {
     // GA4 — generate_lead event
     trackGenerateLead({
       currency: 'EUR',
-      value: 0,
+      value: orderInfo.finalPriceEur ?? 0,
     });
 
     // GA4 — user properties

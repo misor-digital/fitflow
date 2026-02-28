@@ -1,6 +1,6 @@
 import { requireStaff } from '@/lib/auth';
 import { ORDER_VIEW_ROLES } from '@/lib/auth/permissions';
-import { getOrdersPaginated, getOrdersCount, getBoxTypeNames, getOptionLabels } from '@/lib/data';
+import { getOrdersPaginated, getOrdersCount, getBoxTypeNames, getOptionLabels, getEurToBgnRate } from '@/lib/data';
 import { ORDER_STATUS_LABELS } from '@/lib/order/format';
 import { OrdersTable } from '@/components/admin/OrdersTable';
 import Link from 'next/link';
@@ -40,6 +40,7 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
     flavorsLabels,
     dietaryLabels,
     sizesLabels,
+    eurToBgnRate,
   ] = await Promise.all([
     getOrdersPaginated(page, PER_PAGE, {
       status: status || undefined,
@@ -53,6 +54,7 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
     getOptionLabels('flavors'),
     getOptionLabels('dietary'),
     getOptionLabels('sizes'),
+    getEurToBgnRate(),
   ]);
 
   const optionLabels = { sports: sportsLabels, colors: colorsLabels, flavors: flavorsLabels, dietary: dietaryLabels, sizes: sizesLabels };
@@ -169,6 +171,7 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
             orders={orders}
             boxTypeNames={boxTypeNames}
             optionLabels={optionLabels}
+            eurToBgnRate={eurToBgnRate}
             total={total}
             currentPage={page}
             perPage={PER_PAGE}

@@ -8,6 +8,7 @@ import {
   ORDER_STATUS_COLORS,
 } from '@/lib/order/format';
 import { formatShippingAddressOneLine } from '@/lib/order';
+import { formatPriceDual, eurToBgnSync } from '@/lib/catalog';
 import OrderPromoAction from './OrderPromoAction';
 
 // ============================================================================
@@ -27,6 +28,7 @@ interface OrdersTableProps {
   orders: OrderRow[];
   boxTypeNames: Record<string, string>;
   optionLabels: OptionLabelMaps;
+  eurToBgnRate: number;
   total: number;
   currentPage: number;
   perPage: number;
@@ -121,6 +123,7 @@ export function OrdersTable({
   orders,
   boxTypeNames,
   optionLabels,
+  eurToBgnRate,
 }: OrdersTableProps) {
   const router = useRouter();
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -393,7 +396,7 @@ export function OrdersTable({
                     {/* Price */}
                     <td className="py-3 px-4 text-sm">
                       {order.final_price_eur != null
-                        ? `${order.final_price_eur.toFixed(2)} EUR`
+                        ? formatPriceDual(order.final_price_eur, eurToBgnSync(order.final_price_eur, eurToBgnRate))
                         : '—'}
                     </td>
 
@@ -422,6 +425,7 @@ export function OrdersTable({
                           order={order}
                           boxTypeName={boxTypeNames[order.box_type] ?? order.box_type}
                           optionLabels={optionLabels}
+                          eurToBgnRate={eurToBgnRate}
                           history={statusHistory[order.id]}
                           loadingHistory={loadingHistory === order.id}
                           onRefresh={() => router.refresh()}
@@ -618,6 +622,7 @@ function OrderRowDetail({
   order,
   boxTypeName,
   optionLabels,
+  eurToBgnRate,
   history,
   loadingHistory,
   onRefresh,
@@ -625,6 +630,7 @@ function OrderRowDetail({
   order: OrderRow;
   boxTypeName: string;
   optionLabels: OptionLabelMaps;
+  eurToBgnRate: number;
   history?: OrderStatusHistoryRow[];
   loadingHistory: boolean;
   onRefresh: () => void;
@@ -713,12 +719,12 @@ function OrderRowDetail({
           {order.original_price_eur != null && order.final_price_eur != null && order.original_price_eur !== order.final_price_eur && (
             <div>
               <dt className="text-gray-500 text-xs">Оригинална цена</dt>
-              <dd className="line-through text-gray-400">{order.original_price_eur.toFixed(2)} EUR</dd>
+              <dd className="line-through text-gray-400">{formatPriceDual(order.original_price_eur, eurToBgnSync(order.original_price_eur, eurToBgnRate))}</dd>
             </div>
           )}
           <div>
             <dt className="text-gray-500 text-xs">Крайна цена</dt>
-            <dd className="font-semibold">{order.final_price_eur?.toFixed(2) ?? '—'} EUR</dd>
+            <dd className="font-semibold">{order.final_price_eur != null ? formatPriceDual(order.final_price_eur, eurToBgnSync(order.final_price_eur, eurToBgnRate)) : '—'}</dd>
           </div>
         </dl>
 

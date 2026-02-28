@@ -55,14 +55,20 @@ function getTemplate(): string {
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** Format a price value as "XX.XX EUR" or fallback */
+/** Format a price value as "XX.XX € / XX.XX лв" dual-currency or fallback */
 function formatPrice(
-  finalPrice: number | null,
-  originalPrice: number | null,
+  finalPriceEur: number | null,
+  originalPriceEur: number | null,
+  finalPriceBgn: number | null,
+  originalPriceBgn: number | null,
 ): string {
-  const price = finalPrice ?? originalPrice;
-  if (price == null) return '—';
-  return `${price.toFixed(2)} EUR`;
+  const eur = finalPriceEur ?? originalPriceEur;
+  const bgn = finalPriceBgn ?? originalPriceBgn;
+  if (eur == null) return '—';
+  if (bgn != null) {
+    return `${eur.toFixed(2)} € / ${bgn.toFixed(2)} лв`;
+  }
+  return `${eur.toFixed(2)} €`;
 }
 
 /** Split full name into first and last name parts */
@@ -134,7 +140,7 @@ export function renderPreorderEmail(recipient: PreorderRecipient): string {
     lastName,
     preorder_number: recipient.orderId,
     box_name: BOX_TYPE_LABELS[recipient.boxType] ?? recipient.boxType,
-    box_price: formatPrice(recipient.finalPriceEur, recipient.originalPriceEur),
+    box_price: formatPrice(recipient.finalPriceEur, recipient.originalPriceEur, recipient.finalPriceBgn, recipient.originalPriceBgn),
     personalization: recipient.wantsPersonalization ? 'да' : 'не',
     wantsPersonalization: recipient.wantsPersonalization,
     sport: formatSports(recipient.sports, recipient.sportOther),

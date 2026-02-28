@@ -212,6 +212,7 @@ export default function OrderFlow({
           orderId: data.orderId,
           email: currentInput.email || user?.email,
           isGuest: currentInput.isGuest,
+          finalPriceEur: data.finalPriceEur ?? null,
         }),
       );
 

@@ -8,6 +8,7 @@
 import 'server-only';
 
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { eurToBgn } from '@/lib/data';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -45,6 +46,8 @@ export interface PreorderRecipient {
   promoCode: string | null;
   originalPriceEur: number | null;
   finalPriceEur: number | null;
+  originalPriceBgn: number | null;
+  finalPriceBgn: number | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -80,25 +83,39 @@ export async function getEligiblePreorderRecipients(): Promise<PreorderRecipient
 
   if (!preorders?.length) return [];
 
-  return preorders.map((p) => ({
-    preorderId: p.id,
-    orderId: p.order_id,
-    email: p.email.trim().toLowerCase(),
-    fullName: p.full_name,
-    boxType: p.box_type,
-    conversionUrl: `${SITE_URL}/order/convert?token=${p.conversion_token}`,
-    wantsPersonalization: p.wants_personalization ?? false,
-    sports: p.sports ?? null,
-    sportOther: p.sport_other ?? null,
-    colors: p.colors ?? null,
-    flavors: p.flavors ?? null,
-    flavorOther: p.flavor_other ?? null,
-    sizeUpper: p.size_upper ?? null,
-    sizeLower: p.size_lower ?? null,
-    dietary: p.dietary ?? null,
-    dietaryOther: p.dietary_other ?? null,
-    promoCode: p.promo_code ?? null,
-    originalPriceEur: p.original_price_eur ?? null,
-    finalPriceEur: p.final_price_eur ?? null,
-  }));
+  // Compute BGN equivalents for each recipient
+  const recipients: PreorderRecipient[] = await Promise.all(
+    preorders.map(async (p) => {
+      const originalEur = p.original_price_eur ?? null;
+      const finalEur = p.final_price_eur ?? null;
+      const originalBgn = originalEur != null ? await eurToBgn(originalEur) : null;
+      const finalBgn = finalEur != null ? await eurToBgn(finalEur) : null;
+
+      return {
+        preorderId: p.id,
+        orderId: p.order_id,
+        email: p.email.trim().toLowerCase(),
+        fullName: p.full_name,
+        boxType: p.box_type,
+        conversionUrl: `${SITE_URL}/order/convert?token=${p.conversion_token}`,
+        wantsPersonalization: p.wants_personalization ?? false,
+        sports: p.sports ?? null,
+        sportOther: p.sport_other ?? null,
+        colors: p.colors ?? null,
+        flavors: p.flavors ?? null,
+        flavorOther: p.flavor_other ?? null,
+        sizeUpper: p.size_upper ?? null,
+        sizeLower: p.size_lower ?? null,
+        dietary: p.dietary ?? null,
+        dietaryOther: p.dietary_other ?? null,
+        promoCode: p.promo_code ?? null,
+        originalPriceEur: originalEur,
+        finalPriceEur: finalEur,
+        originalPriceBgn: originalBgn,
+        finalPriceBgn: finalBgn,
+      };
+    }),
+  );
+
+  return recipients;
 }

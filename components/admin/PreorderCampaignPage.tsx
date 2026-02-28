@@ -18,6 +18,8 @@ interface Recipient {
   conversionUrl: string;
   originalPriceEur: number | null;
   finalPriceEur: number | null;
+  originalPriceBgn: number | null;
+  finalPriceBgn: number | null;
 }
 
 interface SendResultResponse {
@@ -412,9 +414,9 @@ export default function PreorderCampaignPage() {
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900">
                       {r.finalPriceEur != null
-                        ? `${r.finalPriceEur.toFixed(2)} EUR`
+                        ? `${r.finalPriceEur.toFixed(2)} €${r.finalPriceBgn != null ? ` / ${r.finalPriceBgn.toFixed(2)} лв` : ''}`
                         : r.originalPriceEur != null
-                          ? `${r.originalPriceEur.toFixed(2)} EUR`
+                          ? `${r.originalPriceEur.toFixed(2)} €${r.originalPriceBgn != null ? ` / ${r.originalPriceBgn.toFixed(2)} лв` : ''}`
                           : '—'}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900">{r.orderId}</td>

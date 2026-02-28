@@ -8,6 +8,7 @@ import {
   getBoxTypes,
   getOptions,
   getColors,
+  getEurToBgnRate,
 } from '@/lib/data';
 import { SubscriptionDashboard } from '@/components/account/SubscriptionDashboard';
 import type { SubscriptionWithDelivery } from '@/lib/subscription';
@@ -33,6 +34,7 @@ export default async function SubscriptionsPage() {
     flavors,
     dietary,
     sizes,
+    eurToBgnRate,
   ] = await Promise.all([
     getSubscriptionsByUser(userId),
     getUpcomingCycle(),
@@ -45,6 +47,7 @@ export default async function SubscriptionsPage() {
     getOptions('flavors'),
     getOptions('dietary'),
     getOptions('sizes'),
+    getEurToBgnRate(),
   ]);
 
   // Enrich subscriptions with next delivery info
@@ -100,6 +103,7 @@ export default async function SubscriptionsPage() {
         addresses={addresses}
         prices={prices}
         catalogOptions={catalogOptions}
+        eurToBgnRate={eurToBgnRate}
       />
     </div>
   );

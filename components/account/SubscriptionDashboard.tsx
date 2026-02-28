@@ -14,6 +14,7 @@ export interface SubscriptionDashboardProps {
   addresses: AddressRow[];
   prices: PricesMap;
   catalogOptions: CatalogData;
+  eurToBgnRate: number;
 }
 
 export function SubscriptionDashboard({
@@ -23,6 +24,7 @@ export function SubscriptionDashboard({
   addresses,
   prices,
   catalogOptions,
+  eurToBgnRate,
 }: SubscriptionDashboardProps) {
   const [subscriptions, setSubscriptions] = useState(initialSubscriptions);
 
@@ -87,6 +89,7 @@ export function SubscriptionDashboard({
           addresses={addresses}
           prices={prices}
           catalogOptions={catalogOptions}
+          eurToBgnRate={eurToBgnRate}
           onRefresh={() => refreshSubscription(sub.id)}
         />
       ))}
