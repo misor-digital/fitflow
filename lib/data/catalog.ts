@@ -269,11 +269,13 @@ const _getAllBoxPricesInner = unstable_cache(
 
     if (error) {
       console.error('Error calling calculate_box_prices:', error);
-      throw new Error('Failed to calculate prices. Please try again later.');
+      // Return empty array instead of throwing — allows ISR pages to
+      // prerender gracefully when Supabase is unreachable (e.g. CI).
+      return [];
     }
 
     if (!data || data.length === 0) {
-      throw new Error('No box types configured. Please contact support.');
+      return [];
     }
 
     return data.map((row) => ({
