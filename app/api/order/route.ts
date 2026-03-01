@@ -54,9 +54,24 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // ------------------------------------------------------------------
     // Step 1: Rate Limiting
     // ------------------------------------------------------------------
+    // Staff members (admins placing orders on behalf of customers) get a
+    // higher limit. Non-production environments also use a relaxed limit
+    // to avoid blocking during testing.
+    const isProd = process.env.NODE_ENV === 'production';
+    const staffSession = await verifySession().catch(() => null);
+    const isStaff =
+      staffSession?.profile?.user_type === 'staff' &&
+      staffSession.profile.staff_role &&
+      STAFF_MANAGEMENT_ROLES.has(staffSession.profile.staff_role);
+
+    const rateLimit = isStaff ? 50 : isProd ? 5 : 100;
+
     const headersList = await headers();
     const ip = headersList.get('x-forwarded-for')?.split(',')[0] ?? 'unknown';
-    const withinLimit = await checkRateLimit(`order_submit:${ip}`, 5, 3600);
+    const rateLimitKey = isStaff
+      ? `order_submit:staff:${staffSession!.userId}`
+      : `order_submit:${ip}`;
+    const withinLimit = await checkRateLimit(rateLimitKey, rateLimit, 3600);
 
     if (!withinLimit) {
       return NextResponse.json(
@@ -297,8 +312,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // ------------------------------------------------------------------
     // Step 3: Authentication Check
+    // (Reuse session from Step 1 rate-limit check)
     // ------------------------------------------------------------------
-    const session = await verifySession();
+    const session = staffSession ?? await verifySession().catch(() => null);
     let userId: string | null = null;
 
     if (session) {
