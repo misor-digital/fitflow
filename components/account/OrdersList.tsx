@@ -140,6 +140,8 @@ const ORDER_STATUS_BG: Record<OrderStatus, string> = {
 
 const ONETIME_TYPES = new Set(['onetime-mystery', 'onetime-revealed', 'direct']);
 
+const PAGE_SIZE = 15;
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -192,10 +194,14 @@ export function OrdersList({
   );
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   // Debounce search input
   useEffect(() => {
-    const timer = setTimeout(() => setSearchQuery(searchInput), 300);
+    const timer = setTimeout(() => {
+      setSearchQuery(searchInput);
+      setVisibleCount(PAGE_SIZE);
+    }, 300);
     return () => clearTimeout(timer);
   }, [searchInput]);
 
@@ -222,6 +228,7 @@ export function OrdersList({
       else next.add(s);
       return next;
     });
+    setVisibleCount(PAGE_SIZE);
   }, []);
 
   const clearAllFilters = useCallback(() => {
@@ -230,6 +237,7 @@ export function OrdersList({
     setDateRange('all');
     setSelectedStatuses(new Set());
     setSortDirection('desc');
+    setVisibleCount(PAGE_SIZE);
   }, []);
 
   const hasActiveFilters =
@@ -627,7 +635,7 @@ export function OrdersList({
             <button
               key={key}
               type="button"
-              onClick={() => setDateRange(key)}
+              onClick={() => { setDateRange(key); setVisibleCount(PAGE_SIZE); }}
               className={`text-xs px-3 py-1.5 rounded-full border whitespace-nowrap transition-colors ${
                 dateRange === key
                   ? 'bg-[var(--color-brand-orange)] text-white border-transparent'
@@ -693,9 +701,10 @@ export function OrdersList({
         {/* Sort toggle */}
         <button
           type="button"
-          onClick={() =>
-            setSortDirection((prev) => (prev === 'desc' ? 'asc' : 'desc'))
-          }
+          onClick={() => {
+            setSortDirection((prev) => (prev === 'desc' ? 'asc' : 'desc'));
+            setVisibleCount(PAGE_SIZE);
+          }}
           className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1 transition-colors"
         >
           {sortDirection === 'desc' ? 'Най-нови' : 'Най-стари'}
@@ -732,7 +741,7 @@ export function OrdersList({
             <button
               key={key}
               type="button"
-              onClick={() => setActiveFilter(key)}
+              onClick={() => { setActiveFilter(key); setVisibleCount(PAGE_SIZE); }}
               className={`text-sm font-medium pb-1 whitespace-nowrap transition-colors ${
                 isActive
                   ? 'text-[var(--color-brand-orange)] border-b-2 border-[var(--color-brand-orange)]'
@@ -760,13 +769,31 @@ export function OrdersList({
       ) : items.length === 0 ? (
         renderEmpty()
       ) : (
-        <div className="space-y-4">
-          {items.map((item) =>
-            item.type === 'order'
-              ? renderOrderCard(item.data)
-              : renderPreorderCard(item.data),
+        <>
+          {/* Results summary */}
+          <p className="text-xs text-gray-400 mb-3">
+            Показани {Math.min(visibleCount, items.length)} от {items.length} поръчки
+          </p>
+
+          <div className="space-y-4">
+            {items.slice(0, visibleCount).map((item) =>
+              item.type === 'order'
+                ? renderOrderCard(item.data)
+                : renderPreorderCard(item.data),
+            )}
+          </div>
+
+          {/* Load more button */}
+          {visibleCount < items.length && (
+            <button
+              type="button"
+              onClick={() => setVisibleCount((prev) => prev + PAGE_SIZE)}
+              className="w-full py-3 mt-4 text-sm font-medium text-[var(--color-brand-orange)] bg-orange-50 hover:bg-orange-100 rounded-lg transition-colors"
+            >
+              Покажи още ({items.length - visibleCount} оставащи)
+            </button>
           )}
-        </div>
+        </>
       )}
     </div>
   );
