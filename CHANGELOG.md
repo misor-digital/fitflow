@@ -1,5 +1,11 @@
 # fitflow
 
+## 1.1.2
+
+### Patch Changes
+
+- Tiered order rate limits: higher for staff, relaxed in non-production environments
+
 ## 1.1.1
 
 ### Patch Changes
