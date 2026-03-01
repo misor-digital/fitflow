@@ -26,7 +26,7 @@ import type {
 // Types
 // ---------------------------------------------------------------------------
 
-type OrderFilter = 'all' | 'preorder' | 'subscription' | 'onetime';
+type OrderFilter = 'all' | 'preorder' | 'onetime';
 type DateRange = 'all' | '30d' | '3m' | '6m' | '1y';
 type SortDirection = 'desc' | 'asc';
 
@@ -93,11 +93,10 @@ const STATUS_DOT_COLOR: Record<OrderStatus, string> = {
 const TABS: { key: OrderFilter; label: string }[] = [
   { key: 'all', label: 'Всички' },
   { key: 'preorder', label: 'Предварителни' },
-  { key: 'subscription', label: 'Абонаментни' },
   { key: 'onetime', label: 'Еднократни' },
 ];
 
-const VALID_FILTERS = new Set<string>(['preorder', 'subscription', 'onetime']);
+const VALID_FILTERS = new Set<string>(['preorder', 'onetime']);
 
 function isValidFilter(value: string | null): value is OrderFilter {
   return value !== null && VALID_FILTERS.has(value);
@@ -251,14 +250,10 @@ export function OrdersList({
 
   // Counts per tab (unfiltered data — unchanged)
   const counts = useMemo(() => {
-    const subscriptionOrders = orders.filter(
-      (o) => o.order_type === 'subscription',
-    );
     const onetimeOrders = orders.filter((o) => ONETIME_TYPES.has(o.order_type));
     return {
       all: orders.length + preorders.length,
       preorder: preorders.length,
-      subscription: subscriptionOrders.length,
       onetime: onetimeOrders.length,
     };
   }, [orders, preorders]);
@@ -270,11 +265,6 @@ export function OrdersList({
     switch (activeFilter) {
       case 'preorder':
         result = preorders.map((p) => ({ type: 'preorder' as const, data: p }));
-        break;
-      case 'subscription':
-        result = orders
-          .filter((o) => o.order_type === 'subscription')
-          .map((o) => ({ type: 'order' as const, data: o }));
         break;
       case 'onetime':
         result = orders
@@ -372,18 +362,6 @@ export function OrdersList({
           <p className="text-center py-12 text-gray-500">
             Нямате предварителни поръчки.
           </p>
-        );
-      case 'subscription':
-        return (
-          <div className="text-center py-12 text-gray-500">
-            <p>Нямате абонаментни поръчки.</p>
-            <Link
-              href="/account/subscriptions"
-              className="mt-3 inline-block text-[var(--color-brand-orange)] font-medium hover:underline"
-            >
-              Управление на абонаменти &rarr;
-            </Link>
-          </div>
         );
       case 'onetime':
         return (
