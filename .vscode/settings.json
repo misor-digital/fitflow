@@ -3,6 +3,7 @@
     "pnpm": true,
     "npx eslint": true,
     "npx next": true,
-    "Move-Item": true
+    "Move-Item": true,
+    "npx tsc": true
   }
 }

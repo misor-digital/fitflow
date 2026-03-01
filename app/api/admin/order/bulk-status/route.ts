@@ -3,24 +3,7 @@ import { verifySession } from '@/lib/auth/dal';
 import { ORDER_VIEW_ROLES } from '@/lib/auth/permissions';
 import { getOrderById, updateOrderStatus } from '@/lib/data';
 import type { OrderStatus } from '@/lib/supabase/types';
-
-// ============================================================================
-// Allowed status transitions (mirrors single-order route)
-// ============================================================================
-
-const ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
-  pending: ['confirmed', 'cancelled'],
-  confirmed: ['processing', 'cancelled'],
-  processing: ['shipped', 'cancelled'],
-  shipped: ['delivered'],
-  delivered: ['refunded'],
-  cancelled: [],
-  refunded: [],
-};
-
-const ALL_STATUSES: OrderStatus[] = [
-  'pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded',
-];
+import { isValidTransition, ALLOWED_TRANSITIONS } from '@/lib/order';
 
 // ============================================================================
 // PATCH /api/admin/order/bulk-status — Bulk update order statuses
@@ -50,7 +33,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
     if (orderIds.length > 100) {
       return NextResponse.json({ error: 'Максимум 100 поръчки наведнъж.' }, { status: 400 });
     }
-    if (!newStatus || !ALL_STATUSES.includes(newStatus)) {
+    if (!newStatus || !Object.keys(ALLOWED_TRANSITIONS).includes(newStatus)) {
       return NextResponse.json({ error: 'Невалиден статус.' }, { status: 400 });
     }
 
@@ -65,8 +48,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
           continue;
         }
 
-        const allowed = ALLOWED_TRANSITIONS[order.status] ?? [];
-        if (!allowed.includes(newStatus)) {
+        if (!isValidTransition(order.status, newStatus)) {
           results.push({
             id: orderId,
             success: false,

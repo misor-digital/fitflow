@@ -7,7 +7,7 @@ import {
   ORDER_STATUS_LABELS,
   ORDER_STATUS_COLORS,
 } from '@/lib/order/format';
-import { formatShippingAddressOneLine } from '@/lib/order';
+import { formatShippingAddressOneLine, ALLOWED_TRANSITIONS } from '@/lib/order';
 import { formatPriceDual, eurToBgnSync } from '@/lib/catalog';
 import OrderPromoAction from './OrderPromoAction';
 
@@ -33,20 +33,6 @@ interface OrdersTableProps {
   currentPage: number;
   perPage: number;
 }
-
-// ============================================================================
-// Status Transition Map
-// ============================================================================
-
-const ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
-  pending: ['confirmed', 'cancelled'],
-  confirmed: ['processing', 'cancelled'],
-  processing: ['shipped', 'cancelled'],
-  shipped: ['delivered'],
-  delivered: ['refunded'],
-  cancelled: [],
-  refunded: [],
-};
 
 /** Background color classes for status badges */
 const STATUS_BG_COLORS: Record<OrderStatus, string> = {
