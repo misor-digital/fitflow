@@ -179,6 +179,8 @@ export function OrdersList({
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [confirmingOrderId, setConfirmingOrderId] = useState<string | null>(null);
+  const [confirmError, setConfirmError] = useState<string | null>(null);
 
   // Update activeFilter + URL query param
   const handleFilterChange = useCallback(
@@ -248,6 +250,38 @@ export function OrdersList({
     selectedStatuses.size > 0 ||
     sortDirection !== 'desc';
 
+  function isAutoConfirmed(orderId: string): boolean {
+    const history = statusHistories?.[orderId] ?? [];
+    return history.some(
+      (h) =>
+        h.to_status === 'delivered' &&
+        h.changed_by === null &&
+        h.notes?.includes('Автоматично'),
+    );
+  }
+
+  async function handleConfirmDelivery(orderId: string) {
+    setConfirmingOrderId(orderId);
+    setConfirmError(null);
+
+    try {
+      const res = await fetch(`/api/order/${orderId}/confirm-delivery`, {
+        method: 'PATCH',
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error || 'Грешка при потвърждаване на доставката.');
+      }
+
+      router.refresh();
+    } catch (err) {
+      setConfirmError(err instanceof Error ? err.message : 'Неочаквана грешка.');
+    } finally {
+      setConfirmingOrderId(null);
+    }
+  }
+
   // Counts per tab (unfiltered data — unchanged)
   const counts = useMemo(() => {
     const onetimeOrders = orders.filter((o) => ONETIME_TYPES.has(o.order_type));
@@ -257,6 +291,11 @@ export function OrdersList({
       onetime: onetimeOrders.length,
     };
   }, [orders, preorders]);
+
+  const shippedOrders = useMemo(
+    () => orders.filter((o) => o.status === 'shipped'),
+    [orders],
+  );
 
   // Filtered items — chain: type filter → date range → status → search → sort
   const items: UnifiedItem[] = useMemo(() => {
@@ -440,6 +479,30 @@ export function OrdersList({
           </div>
         </button>
 
+        {/* Confirm delivery button for shipped orders */}
+        {statusKey === 'shipped' && (
+          <div className="mt-3">
+            <button
+              type="button"
+              onClick={() => handleConfirmDelivery(order.id)}
+              disabled={confirmingOrderId === order.id}
+              className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-green-600 text-white font-medium hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            >
+              {confirmingOrderId === order.id ? (
+                <>
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Потвърждаване...
+                </>
+              ) : (
+                <>✅ Потвърди доставка</>
+              )}
+            </button>
+            {confirmError && confirmingOrderId === null && (
+              <p className="mt-2 text-sm text-red-600">{confirmError}</p>
+            )}
+          </div>
+        )}
+
         {/* Track link (always visible) + inline status summary */}
         <div className="mt-3 flex flex-col sm:flex-row sm:items-center gap-2 text-sm">
           <Link
@@ -506,6 +569,14 @@ export function OrdersList({
             );
           })()}
         </div>
+
+        {/* Auto-confirm notice for delivered orders */}
+        {statusKey === 'delivered' && isAutoConfirmed(order.id) && (
+          <div className="mt-2 text-xs text-gray-500 flex items-center gap-1">
+            <span>ℹ️</span>
+            <span>Доставката беше автоматично потвърдена.</span>
+          </div>
+        )}
 
         {/* Expandable detail */}
         {isExpanded && (
@@ -822,6 +893,23 @@ export function OrdersList({
           );
         })}
       </div>
+
+      {/* Shipped orders prompt banner */}
+      {shippedOrders.length > 0 && (
+        <div className="mb-4 p-4 bg-purple-50 border border-purple-200 rounded-xl flex items-start gap-3">
+          <span className="text-xl">📦</span>
+          <div>
+            <p className="font-medium text-purple-800">
+              {shippedOrders.length === 1
+                ? 'Имате изпратена поръчка'
+                : `Имате ${shippedOrders.length} изпратени поръчки`}
+            </p>
+            <p className="text-sm text-purple-600 mt-1">
+              Ако сте получили поръчката си, моля потвърдете доставката.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* List, filtered-empty state, or true empty state */}
       {items.length === 0 && hasActiveFilters ? (
