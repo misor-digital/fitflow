@@ -801,7 +801,7 @@ export function OrdersList({
       </div>
 
       {/* Tab bar */}
-      <div className="flex gap-4 mb-6 border-b pb-3 overflow-x-auto" role="tablist" aria-label="Тип поръчки">
+      <div className="flex gap-4 mb-6 border-b pb-3 overflow-x-auto pt-1 pl-1 -mt-1 -ml-1" role="tablist" aria-label="Тип поръчки">
         {TABS.filter(({ key }) => key !== 'preorder' || preorders.length > 0).map(({ key, label }) => {
           const isActive = activeFilter === key;
           return (
