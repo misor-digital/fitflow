@@ -13,6 +13,8 @@ import {
   formatSavings,
 } from '@/lib/catalog';
 import { escapeHtml } from '@/lib/utils/sanitize';
+import { EMAIL } from './constants';
+import { wrapInEmailLayout, emailCtaButton, emailContactLine } from './layout';
 
 // ============================================================================
 // Safe Price Formatting (email-specific)
@@ -133,7 +135,7 @@ function generateDeliverySection(data: ConfirmationEmailData): string {
     addressHtml = `
       <p style="margin: 5px 0;"><strong>Метод на доставка:</strong> До офис на Speedy</p>
       ${data.speedyOfficeName ? `<p style="margin: 5px 0;"><strong>Офис:</strong> ${escapeHtml(data.speedyOfficeName)}</p>` : ''}
-      ${data.speedyOfficeAddress ? `<p style="margin: 5px 0; color: #6c757d; font-size: 14px;">${escapeHtml(data.speedyOfficeAddress)}</p>` : ''}
+      ${data.speedyOfficeAddress ? `<p style="margin: 5px 0; color: ${EMAIL.colors.textMutedAlt}; font-size: 14px;">${escapeHtml(data.speedyOfficeAddress)}</p>` : ''}
     `;
   } else {
     const addr = data.shippingAddress;
@@ -161,12 +163,12 @@ function generateDeliverySection(data: ConfirmationEmailData): string {
   ` : '';
 
   const notesHtml = recipient?.deliveryNotes
-    ? `<p style="margin: 5px 0; color: #6c757d; font-size: 14px;"><strong>Бележки:</strong> ${escapeHtml(recipient.deliveryNotes)}</p>`
+    ? `<p style="margin: 5px 0; color: ${EMAIL.colors.textMutedAlt}; font-size: 14px;"><strong>Бележки:</strong> ${escapeHtml(recipient.deliveryNotes)}</p>`
     : '';
 
   return `
-    <div style="background-color: #f0f7ff; padding: 20px; border-radius: 8px; margin: 20px 0;">
-      <h3 style="color: #363636; margin-top: 0;">🚚 Данни за доставка</h3>
+    <div style="background-color: ${EMAIL.sections.delivery}; padding: 20px; border-radius: 8px; margin: 20px 0;">
+      <h3 style="color: ${EMAIL.colors.textHeading}; margin-top: 0;">🚚 Данни за доставка</h3>
       ${recipientHtml}
       ${addressHtml}
       ${notesHtml}
@@ -181,16 +183,16 @@ function generatePromoCodeSection(data: ConfirmationEmailData): string {
   if (!data.hasPromoCode) return '';
 
   return `
-    <div style="background-color: #d4edda; border: 1px solid #c3e6cb; padding: 15px; border-radius: 8px; margin: 15px 0;">
-      <p style="margin: 0 0 10px 0; color: #155724; font-weight: bold;">
+    <div style="background-color: ${EMAIL.sections.promoBg}; border: 1px solid ${EMAIL.sections.promoBorder}; padding: 15px; border-radius: 8px; margin: 15px 0;">
+      <p style="margin: 0 0 10px 0; color: ${EMAIL.sections.promoText}; font-weight: bold;">
         ✅ Промо код ${data.promoCode} е приложен – ${data.discountPercent}% отстъпка
       </p>
-      <p style="margin: 5px 0; color: #155724;">
-        <span style="text-decoration: line-through; color: #6c757d;">${safePriceDual(data.originalPriceEur, data.originalPriceBgn)}</span>
+      <p style="margin: 5px 0; color: ${EMAIL.sections.promoText};">
+        <span style="text-decoration: line-through; color: ${EMAIL.colors.textMutedAlt};">${safePriceDual(data.originalPriceEur, data.originalPriceBgn)}</span>
         &nbsp;→&nbsp;
         <strong>${safePriceDual(data.finalPriceEur, data.finalPriceBgn)}</strong>
       </p>
-      <p style="margin: 5px 0 0 0; color: #155724; font-size: 14px;">
+      <p style="margin: 5px 0 0 0; color: ${EMAIL.sections.promoText}; font-size: 14px;">
         ${safeSavings(data.discountAmountEur, data.discountAmountBgn)}
       </p>
     </div>
@@ -223,8 +225,8 @@ export function generateConfirmationEmail(
 
   const personalizationSection = data.wantsPersonalization
     ? `
-      <div style="background-color: #fff4ec; padding: 20px; border-radius: 8px; margin: 20px 0;">
-        <h3 style="color: #363636; margin-top: 0;">Твоите предпочитания</h3>
+      <div style="background-color: ${EMAIL.sections.personalization}; padding: 20px; border-radius: 8px; margin: 20px 0;">
+        <h3 style="color: ${EMAIL.colors.textHeading}; margin-top: 0;">Твоите предпочитания</h3>
         ${sportsDisplay.length ? `<p><strong>Спортове:</strong> ${sportsDisplay.join(', ')}  ${printOtherOption(data.sports, data.sportOther)}</p>` : ''}
         ${data.colors?.length ? generateColorSwatchesHtml(data.colors, colorLabels) : ''}
         ${flavorsDisplay.length ? `<p><strong>Вкусове:</strong> ${flavorsDisplay.join(', ')}  ${printOtherOption(data.flavors, data.flavorOther)}</p>` : ''}
@@ -245,46 +247,28 @@ export function generateConfirmationEmail(
   const freeDeliveryBanner = emailType === 'legacy'
     ? `
             <!-- Free Delivery Banner -->
-            <div style="background-color: #e8f5e9; border: 2px solid #4caf50; padding: 15px 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
-              <p style="margin: 0; color: #2e7d32; font-size: 18px; font-weight: bold;">
+            <div style="background-color: ${EMAIL.sections.freeDeliveryBg}; border: 2px solid ${EMAIL.sections.freeDeliveryBorder}; padding: 15px 20px; border-radius: 8px; margin: 20px 0; text-align: center;">
+              <p style="margin: 0; color: ${EMAIL.sections.freeDeliveryText}; font-size: 18px; font-weight: bold;">
                 🚚 Безплатна доставка за твоята първа кутия!
               </p>
             </div>
     `
     : '';
 
-  return `
-<table role="presentation" style="width: 100%; border-collapse: collapse; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f6f3f0;">
-  <tr>
-    <td align="center" style="padding: 40px 0;">
-      <table role="presentation" style="width: 600px; max-width: 100%; border-collapse: collapse; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-
-        <!-- Header -->
-        <tr>
-          <td style="background: linear-gradient(135deg, #9c3b00 0%, #ff6a00 100%); padding: 40px 30px; text-align: center; border-radius: 12px 12px 0px 0px;">
-            <h1 style="color: #ffffff; margin: 0; font-size: 36px; font-weight: 700;">FitFlow</h1>
-            <p style="color: #ffffff; margin: 10px 0 0 0; font-size: 14px; opacity: 0.9;">
-              Защото можем
-            </p>
-          </td>
-        </tr>
-        
-        <!-- Main Content -->
-        <tr>
-          <td style="padding: 40px 30px;">
-            <h2 style="color: #363636; margin-top: 0; font-size: 24px;">
+  const bodyHtml = `
+            <h2 style="color: ${EMAIL.colors.textHeading}; margin-top: 0; font-size: 24px;">
               Благодарим ти, ${escapeHtml(data.fullName)}!
             </h2>
             
-            <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
+            <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
               ${confirmationText}
             </p>
             
             ${freeDeliveryBanner}
             
             <!-- Order Details -->
-            <div style="background-color: #fff4ec; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              <h3 style="color: #363636; margin-top: 0;">📦 Детайли на поръчката</h3>
+            <div style="background-color: ${EMAIL.sections.personalization}; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h3 style="color: ${EMAIL.colors.textHeading}; margin-top: 0;">📦 Детайли на поръчката</h3>
               <p style="margin: 5px 0;"><strong>Номер на поръчка:</strong> ${data.orderId}</p>
               <p style="margin: 5px 0;"><strong>Избрана кутия:</strong> ${data.boxTypeDisplay}${!data.hasPromoCode ? ` (${safePriceDual(data.originalPriceEur, data.originalPriceBgn)})` : ''}</p>
               <p style="margin: 5px 0;"><strong>Персонализация:</strong> ${data.wantsPersonalization ? 'Да' : 'Не'}</p>
@@ -297,9 +281,9 @@ export function generateConfirmationEmail(
             ${personalizationSection}
             
             <!-- What's Next -->
-            <div style="border-left: 4px solid #ff6a00; padding-left: 20px; margin: 30px 0;">
-              <h3 style="color: #363636; margin-top: 0;">Какво следва?</h3>
-              <ol style="color: #4a5568; padding-left: 20px;">
+            <div style="border-left: 4px solid ${EMAIL.colors.ctaButton}; padding-left: 20px; margin: 30px 0;">
+              <h3 style="color: ${EMAIL.colors.textHeading}; margin-top: 0;">Какво следва?</h3>
+              <ol style="color: ${EMAIL.colors.textPrimary}; padding-left: 20px;">
                 <li style="margin-bottom: 10px;">Ще прегледаме твоята поръчка и предпочитания.</li>
                 <li style="margin-bottom: 10px;">Ще се свържем с теб за потвърждение на детайлите в близко бъдеще.</li>
                 <li style="margin-bottom: 10px;">Ще подготвим твоята персонализирана FitFlow кутия.</li>
@@ -307,33 +291,10 @@ export function generateConfirmationEmail(
               </ol>
             </div>
             
-            <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
-              Ако имаш въпроси, не се колебай да се свържеш с нас на 
-              <a href="mailto:info@fitflow.bg" style="color: #ff6a00; font-weight: 600;">
-                info@fitflow.bg
-              </a>
-            </p>
-          </td>
-        </tr>
-        
-        <!-- Footer -->
-        <tr>
-          <td style="background-color: #fdf6f1; padding: 30px; text-align: center; border-radius: 0 0 12px 12px;">
-            <p style="color: #7a4a2a; font-size: 14px; margin: 0 0 10px 0;">
-              С любов към спорта,<br>
-              <strong>Екипът на FitFlow</strong> 💪
-            </p>
-            <p style="color: #b08968; font-size: 12px; margin: 0;">
-              © ${new Date().getFullYear()} FitFlow. Всички права запазени.
-            </p>
-          </td>
-        </tr>
+            ${emailContactLine()}
+  `;
 
-      </table>
-    </td>
-  </tr>
-</table>
-  `.trim();
+  return wrapInEmailLayout(bodyHtml);
 }
 
 /**
@@ -359,78 +320,33 @@ export function generateOrderConfirmationEmail(
  * @returns HTML string for the email
  */
 export function generateCustomerInviteEmail(name: string, setupUrl: string): string {
-  return `
-<table role="presentation" style="width: 100%; border-collapse: collapse; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f6f3f0;">
-  <tr>
-    <td align="center" style="padding: 40px 0;">
-      <table role="presentation" style="width: 600px; max-width: 100%; border-collapse: collapse; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-
-        <!-- Header -->
-        <tr>
-          <td style="background: linear-gradient(135deg, #9c3b00 0%, #ff6a00 100%); padding: 40px 30px; text-align: center; border-radius: 12px 12px 0px 0px;">
-            <h1 style="color: #ffffff; margin: 0; font-size: 36px; font-weight: 700;">FitFlow</h1>
-            <p style="color: #ffffff; margin: 10px 0 0 0; font-size: 14px; opacity: 0.9;">
-              Защото можем
-            </p>
-          </td>
-        </tr>
-
-        <!-- Main Content -->
-        <tr>
-          <td style="padding: 40px 30px;">
-            <h2 style="color: #363636; margin-top: 0; font-size: 24px;">
+  const bodyHtml = `
+            <h2 style="color: ${EMAIL.colors.textHeading}; margin-top: 0; font-size: 24px;">
               Здравейте, ${escapeHtml(name)}!
             </h2>
 
-            <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
+            <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
               Създадохме акаунт за вас във FitFlow, за да можете да управлявате поръчките и абонамента си.
             </p>
 
-            <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
+            <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
               Кликнете бутона по-долу, за да активирате акаунта си. След това можете по желание да зададете парола или да продължите да влизате с магически линк.
             </p>
 
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${setupUrl}" style="display: inline-block; background-color: #ff6a00; color: #ffffff; padding: 14px 32px; border-radius: 8px; font-weight: bold; font-size: 16px; text-decoration: none;">
-                Активирайте акаунта си
-              </a>
-            </div>
+            ${emailCtaButton(setupUrl, 'Активирайте акаунта си')}
 
-            <p style="color: #6b7280; font-size: 14px; line-height: 1.6;">
+            <p style="color: ${EMAIL.colors.textMuted}; font-size: 14px; line-height: 1.6;">
               Можете да зададете парола по всяко време от настройките на акаунта си.
             </p>
 
-            <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
+            <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
               Ако не сте поискали създаване на акаунт, моля игнорирайте този имейл.
             </p>
 
-            <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
-              Ако имате въпроси, свържете се с нас на
-              <a href="mailto:info@fitflow.bg" style="color: #ff6a00; font-weight: 600;">
-                info@fitflow.bg
-              </a>
-            </p>
-          </td>
-        </tr>
+            ${emailContactLine()}
+  `;
 
-        <!-- Footer -->
-        <tr>
-          <td style="background-color: #fdf6f1; padding: 30px; text-align: center; border-radius: 0 0 12px 12px;">
-            <p style="color: #7a4a2a; font-size: 14px; margin: 0 0 10px 0;">
-              С любов към спорта,<br>
-              <strong>Екипът на FitFlow</strong> 💪
-            </p>
-            <p style="color: #b08968; font-size: 12px; margin: 0;">
-              © ${new Date().getFullYear()} FitFlow. Всички права запазени.
-            </p>
-          </td>
-        </tr>
-
-      </table>
-    </td>
-  </tr>
-</table>
-  `.trim();
+  return wrapInEmailLayout(bodyHtml);
 }
 
 /**
@@ -443,74 +359,29 @@ export function generateCustomerInviteEmail(name: string, setupUrl: string): str
  * @returns HTML string for the email
  */
 export function generateStaffInviteEmail(name: string, role: string, setupUrl: string): string {
-  return `
-<table role="presentation" style="width: 100%; border-collapse: collapse; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f6f3f0;">
-  <tr>
-    <td align="center" style="padding: 40px 0;">
-      <table role="presentation" style="width: 600px; max-width: 100%; border-collapse: collapse; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-
-        <!-- Header -->
-        <tr>
-          <td style="background: linear-gradient(135deg, #9c3b00 0%, #ff6a00 100%); padding: 40px 30px; text-align: center; border-radius: 12px 12px 0px 0px;">
-            <h1 style="color: #ffffff; margin: 0; font-size: 36px; font-weight: 700;">FitFlow</h1>
-            <p style="color: #ffffff; margin: 10px 0 0 0; font-size: 14px; opacity: 0.9;">
-              Защото можем
-            </p>
-          </td>
-        </tr>
-
-        <!-- Main Content -->
-        <tr>
-          <td style="padding: 40px 30px;">
-            <h2 style="color: #363636; margin-top: 0; font-size: 24px;">
+  const bodyHtml = `
+            <h2 style="color: ${EMAIL.colors.textHeading}; margin-top: 0; font-size: 24px;">
               Добре дошли в екипа на FitFlow, ${escapeHtml(name)}!
             </h2>
 
-            <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
+            <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
               Поканени сте като <strong>${escapeHtml(role)}</strong> в административния панел на FitFlow.
             </p>
 
-            <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
+            <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
               Моля, задайте парола за вашия акаунт, като кликнете на бутона по-долу.
             </p>
 
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${setupUrl}" style="display: inline-block; background-color: #ff6a00; color: #ffffff; padding: 14px 32px; border-radius: 8px; font-weight: bold; font-size: 16px; text-decoration: none;">
-                Задайте парола
-              </a>
-            </div>
+            ${emailCtaButton(setupUrl, 'Задайте парола')}
 
-            <p style="color: #6b7280; font-size: 14px; line-height: 1.6;">
+            <p style="color: ${EMAIL.colors.textMuted}; font-size: 14px; line-height: 1.6;">
               След задаване на парола ще бъдете пренасочени към админ панела.
             </p>
 
-            <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
-              Ако имате въпроси, свържете се с нас на
-              <a href="mailto:info@fitflow.bg" style="color: #ff6a00; font-weight: 600;">
-                info@fitflow.bg
-              </a>
-            </p>
-          </td>
-        </tr>
+            ${emailContactLine()}
+  `;
 
-        <!-- Footer -->
-        <tr>
-          <td style="background-color: #fdf6f1; padding: 30px; text-align: center; border-radius: 0 0 12px 12px;">
-            <p style="color: #7a4a2a; font-size: 14px; margin: 0 0 10px 0;">
-              С любов към спорта,<br>
-              <strong>Екипът на FitFlow</strong> 💪
-            </p>
-            <p style="color: #b08968; font-size: 12px; margin: 0;">
-              © ${new Date().getFullYear()} FitFlow. Всички права запазени.
-            </p>
-          </td>
-        </tr>
-
-      </table>
-    </td>
-  </tr>
-</table>
-  `.trim();
+  return wrapInEmailLayout(bodyHtml);
 }
 
 // ============================================================================
@@ -528,74 +399,29 @@ export function generateStaffInviteEmail(name: string, role: string, setupUrl: s
  * @returns HTML string for the email
  */
 export function generateMagicRegistrationEmail(name: string, setupUrl: string): string {
-  return `
-<table role="presentation" style="width: 100%; border-collapse: collapse; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f6f3f0;">
-  <tr>
-    <td align="center" style="padding: 40px 0;">
-      <table role="presentation" style="width: 600px; max-width: 100%; border-collapse: collapse; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-
-        <!-- Header -->
-        <tr>
-          <td style="background: linear-gradient(135deg, #9c3b00 0%, #ff6a00 100%); padding: 40px 30px; text-align: center; border-radius: 12px 12px 0px 0px;">
-            <h1 style="color: #ffffff; margin: 0; font-size: 36px; font-weight: 700;">FitFlow</h1>
-            <p style="color: #ffffff; margin: 10px 0 0 0; font-size: 14px; opacity: 0.9;">
-              Защото можем
-            </p>
-          </td>
-        </tr>
-
-        <!-- Main Content -->
-        <tr>
-          <td style="padding: 40px 30px;">
-            <h2 style="color: #363636; margin-top: 0; font-size: 24px;">
+  const bodyHtml = `
+            <h2 style="color: ${EMAIL.colors.textHeading}; margin-top: 0; font-size: 24px;">
               Здравейте, ${escapeHtml(name)}!
             </h2>
 
-            <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
+            <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
               Благодарим ви за регистрацията във FitFlow!
             </p>
 
-            <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
+            <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
               Кликнете бутона по-долу, за да активирате акаунта си. След това можете по желание да зададете парола или да продължите да влизате с магически линк.
             </p>
 
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${setupUrl}" style="display: inline-block; background-color: #ff6a00; color: #ffffff; padding: 14px 32px; border-radius: 8px; font-weight: bold; font-size: 16px; text-decoration: none;">
-                Активирайте акаунта си
-              </a>
-            </div>
+            ${emailCtaButton(setupUrl, 'Активирайте акаунта си')}
 
-            <p style="color: #6b7280; font-size: 14px; line-height: 1.6;">
+            <p style="color: ${EMAIL.colors.textMuted}; font-size: 14px; line-height: 1.6;">
               Ако не сте заявили тази регистрация, моля игнорирайте този имейл.
             </p>
 
-            <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
-              Ако имате въпроси, свържете се с нас на
-              <a href="mailto:info@fitflow.bg" style="color: #ff6a00; font-weight: 600;">
-                info@fitflow.bg
-              </a>
-            </p>
-          </td>
-        </tr>
+            ${emailContactLine()}
+  `;
 
-        <!-- Footer -->
-        <tr>
-          <td style="background-color: #fdf6f1; padding: 30px; text-align: center; border-radius: 0 0 12px 12px;">
-            <p style="color: #7a4a2a; font-size: 14px; margin: 0 0 10px 0;">
-              С любов към спорта,<br>
-              <strong>Екипът на FitFlow</strong> 💪
-            </p>
-            <p style="color: #b08968; font-size: 12px; margin: 0;">
-              © ${new Date().getFullYear()} FitFlow. Всички права запазени.
-            </p>
-          </td>
-        </tr>
-
-      </table>
-    </td>
-  </tr>
-</table>
-  `.trim();
+  return wrapInEmailLayout(bodyHtml);
 }
 
 /**
@@ -607,72 +433,27 @@ export function generateMagicRegistrationEmail(name: string, setupUrl: string): 
  * @returns HTML string for the email
  */
 export function generateMagicLinkLoginEmail(loginUrl: string): string {
-  return `
-<table role="presentation" style="width: 100%; border-collapse: collapse; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f6f3f0;">
-  <tr>
-    <td align="center" style="padding: 40px 0;">
-      <table role="presentation" style="width: 600px; max-width: 100%; border-collapse: collapse; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-
-        <!-- Header -->
-        <tr>
-          <td style="background: linear-gradient(135deg, #9c3b00 0%, #ff6a00 100%); padding: 40px 30px; text-align: center; border-radius: 12px 12px 0px 0px;">
-            <h1 style="color: #ffffff; margin: 0; font-size: 36px; font-weight: 700;">FitFlow</h1>
-            <p style="color: #ffffff; margin: 10px 0 0 0; font-size: 14px; opacity: 0.9;">
-              Защото можем
-            </p>
-          </td>
-        </tr>
-
-        <!-- Main Content -->
-        <tr>
-          <td style="padding: 40px 30px;">
-            <h2 style="color: #363636; margin-top: 0; font-size: 24px;">
+  const bodyHtml = `
+            <h2 style="color: ${EMAIL.colors.textHeading}; margin-top: 0; font-size: 24px;">
               Здравейте,
             </h2>
 
-            <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
+            <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
               Получихме заявка за вход във вашия FitFlow акаунт.
             </p>
 
-            <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
+            <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
               Кликнете бутона по-долу, за да влезете.
             </p>
 
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="${loginUrl}" style="display: inline-block; background-color: #ff6a00; color: #ffffff; padding: 14px 32px; border-radius: 8px; font-weight: bold; font-size: 16px; text-decoration: none;">
-                Влезте в акаунта
-              </a>
-            </div>
+            ${emailCtaButton(loginUrl, 'Влезте в акаунта')}
 
-            <p style="color: #6b7280; font-size: 14px; line-height: 1.6;">
+            <p style="color: ${EMAIL.colors.textMuted}; font-size: 14px; line-height: 1.6;">
               Линкът е валиден за ограничено време. Ако не сте заявили този линк, можете спокойно да игнорирате този имейл.
             </p>
 
-            <p style="color: #4a5568; font-size: 16px; line-height: 1.6;">
-              Ако имате въпроси, свържете се с нас на
-              <a href="mailto:info@fitflow.bg" style="color: #ff6a00; font-weight: 600;">
-                info@fitflow.bg
-              </a>
-            </p>
-          </td>
-        </tr>
+            ${emailContactLine()}
+  `;
 
-        <!-- Footer -->
-        <tr>
-          <td style="background-color: #fdf6f1; padding: 30px; text-align: center; border-radius: 0 0 12px 12px;">
-            <p style="color: #7a4a2a; font-size: 14px; margin: 0 0 10px 0;">
-              С любов към спорта,<br>
-              <strong>Екипът на FitFlow</strong> 💪
-            </p>
-            <p style="color: #b08968; font-size: 12px; margin: 0;">
-              © ${new Date().getFullYear()} FitFlow. Всички права запазени.
-            </p>
-          </td>
-        </tr>
-
-      </table>
-    </td>
-  </tr>
-</table>
-  `.trim();
+  return wrapInEmailLayout(bodyHtml);
 }

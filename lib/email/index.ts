@@ -24,6 +24,10 @@ export {
   formatOptionsWithOther,
 } from './templates';
 
+// Shared email layout and constants
+export { wrapInEmailLayout, emailCtaButton, emailContactLine } from './layout';
+export { EMAIL } from './constants';
+
 // Email template types
 export type {
   LabelMap,
