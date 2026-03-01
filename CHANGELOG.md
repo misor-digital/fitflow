@@ -1,5 +1,11 @@
 # fitflow
 
+## 1.1.1
+
+### Patch Changes
+
+- Fix preorder conversion failing for subscription box types
+
 ## 1.1.0
 
 ### Minor Changes
