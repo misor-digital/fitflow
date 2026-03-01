@@ -6,6 +6,7 @@ import Link from 'next/link';
 import type { SubscriptionRow, SubscriptionDerivedState, SubscriptionHistoryRow, SubscriptionAction } from '@/lib/subscription';
 import { SUBSCRIPTION_STATUS_LABELS, SUBSCRIPTION_STATUS_COLORS, FREQUENCY_LABELS } from '@/lib/subscription';
 import { formatDeliveryDate } from '@/lib/delivery';
+import { formatPriceDual, eurToBgnSync } from '@/lib/catalog';
 import type { OrderRow, AddressRow } from '@/lib/supabase/types';
 
 // ============================================================================
@@ -70,6 +71,7 @@ interface SubscriptionDetailViewProps {
   canManage: boolean;
   userName: string;
   userEmail: string;
+  eurToBgnRate: number;
 }
 
 // ============================================================================
@@ -86,6 +88,7 @@ export function SubscriptionDetailView({
   canManage,
   userName,
   userEmail,
+  eurToBgnRate,
 }: SubscriptionDetailViewProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -257,10 +260,10 @@ export function SubscriptionDetailView({
             label="Цена"
             value={
               <span>
-                €{Number(subscription.current_price_eur).toFixed(2)}
+                {formatPriceDual(Number(subscription.current_price_eur), eurToBgnSync(Number(subscription.current_price_eur), eurToBgnRate))}
                 {subscription.discount_percent ? (
                   <span className="ml-2 text-xs text-green-600">
-                    (-{subscription.discount_percent}% от €{Number(subscription.base_price_eur).toFixed(2)})
+                    (-{subscription.discount_percent}% от {formatPriceDual(Number(subscription.base_price_eur), eurToBgnSync(Number(subscription.base_price_eur), eurToBgnRate))})
                   </span>
                 ) : null}
               </span>
@@ -515,7 +518,7 @@ export function SubscriptionDetailView({
                       </span>
                     </td>
                     <td className="px-4 py-3 font-mono text-gray-700">
-                      {order.final_price_eur != null ? `€${Number(order.final_price_eur).toFixed(2)}` : '—'}
+                      {order.final_price_eur != null ? formatPriceDual(Number(order.final_price_eur), eurToBgnSync(Number(order.final_price_eur), eurToBgnRate)) : '—'}
                     </td>
                     <td className="px-4 py-3 text-gray-500">
                       {formatDeliveryDate(order.created_at)}

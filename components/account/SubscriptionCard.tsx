@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import type { SubscriptionWithDelivery } from '@/lib/subscription';
 import {
   computeSubscriptionState,
@@ -10,11 +11,12 @@ import {
   formatSubscriptionSummary,
 } from '@/lib/subscription';
 import { formatDeliveryDate } from '@/lib/delivery';
-import { formatPriceDual } from '@/lib/catalog';
+import { formatPriceDual, eurToBgnSync } from '@/lib/catalog';
 import type { AddressRow } from '@/lib/supabase/types';
 import type { PricesMap, CatalogData, PriceDisplayInfo } from '@/lib/catalog';
 import PriceDisplay from '@/components/PriceDisplay';
 
+import SubscriptionTimeline from './SubscriptionTimeline';
 import PauseModal from './modals/PauseModal';
 import ResumeModal from './modals/ResumeModal';
 import CancelModal from './modals/CancelModal';
@@ -31,6 +33,7 @@ interface SubscriptionCardProps {
   addresses: AddressRow[];
   prices: PricesMap;
   catalogOptions: CatalogData;
+  eurToBgnRate: number;
   onRefresh: () => void;
 }
 
@@ -41,6 +44,7 @@ export default function SubscriptionCard({
   addresses,
   prices,
   catalogOptions,
+  eurToBgnRate,
   onRefresh,
 }: SubscriptionCardProps) {
   const [activeModal, setActiveModal] = useState<ModalType>(null);
@@ -53,6 +57,7 @@ export default function SubscriptionCard({
     email: string;
   }> | null>(null);
   const [loadingOrders, setLoadingOrders] = useState(false);
+  const [showTimeline, setShowTimeline] = useState(false);
 
   const state = computeSubscriptionState(subscription);
   const priceInfo = prices[subscription.box_type];
@@ -67,12 +72,12 @@ export default function SubscriptionCard({
   const priceDisplayInfo: PriceDisplayInfo | null = priceInfo
     ? {
         originalPriceEur: subscription.base_price_eur,
-        originalPriceBgn: subscription.base_price_eur * 1.9558,
+        originalPriceBgn: eurToBgnSync(subscription.base_price_eur, eurToBgnRate),
         finalPriceEur: subscription.current_price_eur,
-        finalPriceBgn: subscription.current_price_eur * 1.9558,
+        finalPriceBgn: eurToBgnSync(subscription.current_price_eur, eurToBgnRate),
         discountPercent: subscription.discount_percent ?? 0,
         discountAmountEur: subscription.base_price_eur - subscription.current_price_eur,
-        discountAmountBgn: (subscription.base_price_eur - subscription.current_price_eur) * 1.9558,
+        discountAmountBgn: eurToBgnSync(subscription.base_price_eur - subscription.current_price_eur, eurToBgnRate),
       }
     : null;
 
@@ -114,6 +119,11 @@ export default function SubscriptionCard({
             <h3 className="text-lg font-semibold text-[var(--color-brand-navy)]">
               {formatSubscriptionSummary(subscription, { [subscription.box_type]: boxTypeName })}
             </h3>
+            {state.isActive && upcomingCycle && (
+              <p className="text-xs text-gray-500 mt-1">
+                Следваща доставка: <span className="font-medium text-gray-700">{formatDeliveryDate(upcomingCycle.deliveryDate)}</span>
+              </p>
+            )}
           </div>
           <span
             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${SUBSCRIPTION_STATUS_COLORS[subscription.status]}`}
@@ -140,7 +150,7 @@ export default function SubscriptionCard({
                 <PriceDisplay priceInfo={priceDisplayInfo} />
               ) : (
                 <p className="text-sm font-medium text-gray-900">
-                  {formatPriceDual(subscription.current_price_eur, subscription.current_price_eur * 1.9558)}
+                  {formatPriceDual(subscription.current_price_eur, eurToBgnSync(subscription.current_price_eur, eurToBgnRate))}
                 </p>
               )}
             </div>
@@ -169,21 +179,56 @@ export default function SubscriptionCard({
           </div>
         )}
 
+        {/* Timeline (collapsible) */}
+        <div className="px-5 pb-3">
+          <button
+            type="button"
+            onClick={() => setShowTimeline(!showTimeline)}
+            className="text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:ring-offset-2 rounded"
+          >
+            <span>{showTimeline ? '▲' : '▼'}</span>
+            <span>Хронология</span>
+          </button>
+          {showTimeline && (
+            <SubscriptionTimeline
+              createdAt={subscription.created_at}
+              status={subscription.status as 'active' | 'paused' | 'cancelled' | 'expired'}
+              pastOrders={pastOrders}
+              pausedAt={subscription.paused_at ?? null}
+              cancelledAt={subscription.cancelled_at ?? null}
+              nextDeliveryDate={upcomingCycle?.deliveryDate ?? null}
+              onLoadOrders={loadPastOrders}
+              loadingOrders={loadingOrders}
+            />
+          )}
+        </div>
+
         {/* Cancelled/expired info */}
-        {(state.isCancelled || subscription.status === 'expired') && (
-          <div className="px-5 pb-4">
-            <p className="text-sm text-gray-500">
-              {state.isCancelled && subscription.cancelled_at
-                ? `Отказан на ${formatDeliveryDate(subscription.cancelled_at)}`
-                : subscription.status === 'expired'
-                  ? 'Изтекъл'
-                  : ''}
-            </p>
-            {subscription.cancellation_reason && (
-              <p className="text-sm text-gray-400 mt-1">
-                Причина: {subscription.cancellation_reason}
-              </p>
-            )}
+        {state.isCancelled && (
+          <div className="mx-5 mb-4 bg-red-50 border border-red-100 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <svg className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              <div>
+                <p className="text-sm font-medium text-red-800">
+                  Абонаментът е отказан{subscription.cancelled_at ? ` на ${formatDeliveryDate(subscription.cancelled_at)}` : ''}
+                </p>
+                {subscription.cancellation_reason && (
+                  <p className="text-sm text-red-600 mt-1">Причина: {subscription.cancellation_reason}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+        {!state.isCancelled && subscription.status === 'expired' && (
+          <div className="mx-5 mb-4 bg-gray-50 border border-gray-200 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <svg className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="text-sm font-medium text-gray-600">Абонаментът е изтекъл</p>
+            </div>
           </div>
         )}
 
@@ -193,7 +238,7 @@ export default function SubscriptionCard({
             {state.canEditPreferences && (
               <button
                 onClick={() => setActiveModal('preferences')}
-                className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+                className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:ring-offset-2"
               >
                 🔄 Промени предпочитания
               </button>
@@ -201,7 +246,7 @@ export default function SubscriptionCard({
             {state.canEditAddress && (
               <button
                 onClick={() => setActiveModal('address')}
-                className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+                className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:ring-offset-2"
               >
                 📍 Промени адрес
               </button>
@@ -209,7 +254,7 @@ export default function SubscriptionCard({
             {state.canChangeFrequency && (
               <button
                 onClick={() => setActiveModal('frequency')}
-                className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+                className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:ring-offset-2"
               >
                 ⏱ Промени честота
               </button>
@@ -217,7 +262,7 @@ export default function SubscriptionCard({
             {state.canPause && (
               <button
                 onClick={() => setActiveModal('pause')}
-                className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg bg-yellow-50 text-yellow-700 hover:bg-yellow-100 transition-colors"
+                className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg bg-yellow-50 text-yellow-700 hover:bg-yellow-100 transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:ring-offset-2"
               >
                 ⏸ Пауза
               </button>
@@ -225,7 +270,7 @@ export default function SubscriptionCard({
             {state.canResume && (
               <button
                 onClick={() => setActiveModal('resume')}
-                className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg bg-green-50 text-green-700 hover:bg-green-100 transition-colors"
+                className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg bg-green-50 text-green-700 hover:bg-green-100 transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:ring-offset-2"
               >
                 ▶️ Подновяване
               </button>
@@ -233,7 +278,7 @@ export default function SubscriptionCard({
             {state.canCancel && (
               <button
                 onClick={() => setActiveModal('cancel')}
-                className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 transition-colors"
+                className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:ring-offset-2"
               >
                 ❌ Отказване
               </button>
@@ -247,13 +292,42 @@ export default function SubscriptionCard({
             onClick={loadPastOrders}
             className="w-full px-5 py-3 text-left text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors flex items-center justify-between"
           >
-            <span>Поръчки от абонамента</span>
+            <span>Поръчки от абонамента{pastOrders !== null ? ` (${pastOrders.length})` : ''}</span>
             <span className="text-xs">{showPastOrders ? '▲' : '▼'}</span>
           </button>
 
           {loadingOrders && (
             <div className="px-5 pb-4">
               <p className="text-sm text-gray-400">Зареждане...</p>
+            </div>
+          )}
+
+          {/* Inline preview: always show first 2 orders when loaded */}
+          {pastOrders !== null && pastOrders.length > 0 && !showPastOrders && (
+            <div className="px-5 pb-3">
+              <ul className="space-y-1">
+                {pastOrders.slice(0, 2).map((order) => (
+                  <li key={order.id} className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">
+                      #{order.order_number} · {new Date(order.created_at).toLocaleDateString('bg-BG')} · {order.status}
+                    </span>
+                    <Link
+                      href={`/account/orders/${encodeURIComponent(order.order_number)}`}
+                      className="text-[var(--color-brand-orange)] hover:underline text-xs"
+                    >
+                      Детайли →
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              {pastOrders.length > 2 && (
+                <button
+                  onClick={() => setShowPastOrders(true)}
+                  className="text-xs text-[var(--color-brand-orange)] hover:underline mt-2"
+                >
+                  Виж всички ({pastOrders.length})
+                </button>
+              )}
             </div>
           )}
 
@@ -271,12 +345,12 @@ export default function SubscriptionCard({
                           {new Date(order.created_at).toLocaleDateString('bg-BG')}
                         </span>
                       </div>
-                      <a
-                        href={`/order/track?orderNumber=${order.order_number}&email=${encodeURIComponent(order.email)}`}
+                      <Link
+                        href={`/account/orders/${encodeURIComponent(order.order_number)}`}
                         className="text-[var(--color-brand-orange)] hover:underline text-xs"
                       >
-                        Проследи →
-                      </a>
+                        Детайли →
+                      </Link>
                     </li>
                   ))}
                 </ul>
@@ -335,6 +409,7 @@ export default function SubscriptionCard({
           subscriptionId={subscription.id}
           currentFrequency={subscription.frequency}
           currentPriceEur={subscription.current_price_eur}
+          eurToBgnRate={eurToBgnRate}
           onSuccess={handleActionSuccess}
           onClose={closeModal}
         />

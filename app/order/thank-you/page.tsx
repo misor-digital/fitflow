@@ -11,10 +11,14 @@ import {
 } from '@/lib/analytics';
 
 interface LastOrderInfo {
-  orderNumber: string;
-  orderId: string;
+  orderNumber: string | null;
+  orderId: string | null;
+  subscriptionId?: string | null;
   email: string;
   isGuest: boolean;
+  isSubscription?: boolean;
+  boxType?: string | null;
+  finalPriceEur?: number | null;
 }
 
 export default function OrderThankYou() {
@@ -32,7 +36,7 @@ export default function OrderThankYou() {
         return;
       }
       const info: LastOrderInfo = JSON.parse(raw);
-      if (!info.orderNumber) {
+      if (!info.orderNumber && !info.isSubscription) {
         router.replace('/order');
         return;
       }
@@ -54,7 +58,7 @@ export default function OrderThankYou() {
     // GA4 — generate_lead event
     trackGenerateLead({
       currency: 'EUR',
-      value: 0,
+      value: orderInfo.finalPriceEur ?? 0,
     });
 
     // GA4 — user properties
@@ -112,16 +116,27 @@ export default function OrderThankYou() {
 
           {/* Title */}
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[#023047] mb-3 sm:mb-4">
-            Благодарим за поръчката!
+            {orderInfo.isSubscription
+              ? 'Абонаментът е активиран!'
+              : 'Благодарим за поръчката!'}
           </h1>
 
-          {/* Order number */}
-          <div className="bg-gray-50 rounded-xl p-4 mb-4 sm:mb-5">
-            <p className="text-sm text-gray-500 mb-1">Номер на поръчка</p>
-            <p className="text-lg sm:text-xl font-bold text-[#023047] font-mono">
-              {orderInfo.orderNumber}
-            </p>
-          </div>
+          {/* Order/Subscription info */}
+          {orderInfo.orderNumber ? (
+            <div className="bg-gray-50 rounded-xl p-4 mb-4 sm:mb-5">
+              <p className="text-sm text-gray-500 mb-1">Номер на поръчка</p>
+              <p className="text-lg sm:text-xl font-bold text-[#023047] font-mono">
+                {orderInfo.orderNumber}
+              </p>
+            </div>
+          ) : orderInfo.isSubscription ? (
+            <div className="bg-green-50 rounded-xl p-4 mb-4 sm:mb-5">
+              <p className="text-sm text-green-600 mb-1">Месечен абонамент</p>
+              <p className="text-base font-semibold text-[#023047]">
+                Ще получите кутията си с всяка следваща доставка.
+              </p>
+            </div>
+          ) : null}
 
           {/* Email confirmation */}
           {orderInfo.email && (
@@ -142,7 +157,7 @@ export default function OrderThankYou() {
               <p className="text-sm text-amber-700">
                 Можете да проследите поръчката си{' '}
                 <Link
-                  href={`/order/track?order=${encodeURIComponent(orderInfo.orderNumber)}`}
+                  href={`/order/track?order=${encodeURIComponent(orderInfo.orderNumber ?? '')}`}
                   className="text-[var(--color-brand-orange)] hover:underline font-semibold"
                 >
                   тук
@@ -150,6 +165,17 @@ export default function OrderThankYou() {
                 .
               </p>
             </div>
+          ) : orderInfo.isSubscription ? (
+            <p className="text-gray-600 text-base mb-5 sm:mb-6 leading-relaxed">
+              Управлявайте абонамента си в{' '}
+              <Link
+                href="/account/subscriptions"
+                className="text-[var(--color-brand-orange)] hover:underline font-semibold"
+              >
+                абонаменти
+              </Link>
+              .
+            </p>
           ) : (
             <p className="text-gray-600 text-base mb-5 sm:mb-6 leading-relaxed">
               Можете да видите поръчката си в{' '}

@@ -3,12 +3,12 @@
 
 -- A. Add per-user limit column to promo_codes
 ALTER TABLE promo_codes
-ADD COLUMN max_uses_per_user INTEGER DEFAULT NULL;
+ADD COLUMN IF NOT EXISTS max_uses_per_user INTEGER DEFAULT NULL;
 
 COMMENT ON COLUMN promo_codes.max_uses_per_user IS 'Maximum times each user can use this code (NULL = unlimited)';
 
 -- B. Create promo_code_usages junction table
-CREATE TABLE promo_code_usages (
+CREATE TABLE IF NOT EXISTS promo_code_usages (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   promo_code_id UUID NOT NULL REFERENCES promo_codes(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -17,21 +17,29 @@ CREATE TABLE promo_code_usages (
 );
 
 -- Prevent same order from being counted twice
-CREATE UNIQUE INDEX idx_promo_code_usages_order
+CREATE UNIQUE INDEX IF NOT EXISTS idx_promo_code_usages_order
   ON promo_code_usages(promo_code_id, order_id)
   WHERE order_id IS NOT NULL;
 
 -- Fast per-user usage count lookups
-CREATE INDEX idx_promo_code_usages_user
+CREATE INDEX IF NOT EXISTS idx_promo_code_usages_user
   ON promo_code_usages(promo_code_id, user_id);
 
 COMMENT ON TABLE promo_code_usages IS 'Audit trail of individual promo code redemptions per user';
 
 ALTER TABLE promo_code_usages ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Allow service role full access promo_code_usages"
-  ON promo_code_usages FOR ALL TO service_role
-  USING (true) WITH CHECK (true);
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_policies
+    WHERE tablename = 'promo_code_usages'
+      AND policyname = 'Allow service role full access promo_code_usages'
+  ) THEN
+    CREATE POLICY "Allow service role full access promo_code_usages"
+      ON promo_code_usages FOR ALL TO service_role
+      USING (true) WITH CHECK (true);
+  END IF;
+END $$;
 
 GRANT ALL ON promo_code_usages TO service_role;
 

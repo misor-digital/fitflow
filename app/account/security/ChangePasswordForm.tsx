@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/browser';
 import { validatePassword } from '@/lib/auth/passwordPolicy';
+import PasswordInput from '@/components/PasswordInput';
 
 export default function ChangePasswordForm() {
   const [currentPassword, setCurrentPassword] = useState('');
@@ -12,6 +13,8 @@ export default function ChangePasswordForm() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [hasPassword, setHasPassword] = useState<boolean | null>(null);
+
+  const isSetMode = hasPassword === false;
 
   const validationErrors = useMemo(
     () => (newPassword ? validatePassword(newPassword).errors : []),
@@ -32,7 +35,6 @@ export default function ChangePasswordForm() {
       } catch (err) {
         if (err instanceof DOMException && err.name === 'AbortError') return;
         console.error('Error checking password status:', err);
-        // Default to requiring current password
         setHasPassword(true);
       }
     }
@@ -92,9 +94,16 @@ export default function ChangePasswordForm() {
 
     if (updateError) {
       console.error('Error updating password:', updateError);
-      setError('Грешка при промяна на паролата. Опитайте отново.');
+      setError(isSetMode
+        ? 'Грешка при задаване на паролата. Опитайте отново.'
+        : 'Грешка при промяна на паролата. Опитайте отново.');
     } else {
+      // Mark password as set in metadata
+      if (isSetMode) {
+        await supabase.auth.updateUser({ data: { has_password: true } });
+      }
       setSuccess(true);
+      setHasPassword(true);
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
@@ -116,7 +125,9 @@ export default function ChangePasswordForm() {
       {error && <div className="bg-red-50 text-red-700 p-3 rounded-lg text-sm">{error}</div>}
       {success && (
         <div className="bg-green-50 text-green-700 p-3 rounded-lg text-sm">
-          Паролата е променена успешно
+          {isSetMode
+            ? 'Паролата е зададена успешно'
+            : 'Паролата е променена успешно'}
         </div>
       )}
 
@@ -125,9 +136,8 @@ export default function ChangePasswordForm() {
           <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700 mb-1">
             Текуща парола
           </label>
-          <input
+          <PasswordInput
             id="currentPassword"
-            type="password"
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
             required
@@ -136,19 +146,12 @@ export default function ChangePasswordForm() {
         </div>
       )}
 
-      {!hasPassword && (
-        <div className="bg-blue-50 text-blue-700 p-3 rounded-lg text-sm">
-          Акаунтът ви все още няма зададена парола. Задайте парола по-долу.
-        </div>
-      )}
-
       <div>
         <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-1">
-          Нова парола
+          {isSetMode ? 'Парола' : 'Нова парола'}
         </label>
-        <input
+        <PasswordInput
           id="newPassword"
-          type="password"
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
           required
@@ -167,11 +170,10 @@ export default function ChangePasswordForm() {
 
       <div>
         <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
-          Потвърдете новата парола
+          {isSetMode ? 'Потвърдете паролата' : 'Потвърдете новата парола'}
         </label>
-        <input
+        <PasswordInput
           id="confirmPassword"
-          type="password"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
           required
@@ -187,7 +189,9 @@ export default function ChangePasswordForm() {
         disabled={saving}
         className="bg-[var(--color-brand-navy)] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[var(--color-brand-orange)] transition-colors disabled:opacity-50"
       >
-        {saving ? 'Промяна...' : 'Промени паролата'}
+        {saving
+          ? (isSetMode ? 'Запазване...' : 'Промяна...')
+          : (isSetMode ? 'Задай парола' : 'Промени паролата')}
       </button>
     </form>
   );

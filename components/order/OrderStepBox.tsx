@@ -15,7 +15,7 @@ interface OrderStepBoxProps {
 }
 
 export default function OrderStepBox({ prices, boxTypeNames, onNext }: OrderStepBoxProps) {
-  const { boxType, setBoxType, promoCode } = useOrderStore();
+  const { boxType, setBoxType, setFrequency, promoCode } = useOrderStore();
   const hasTrackedStep = useRef(false);
 
   // Track funnel step on mount
@@ -54,9 +54,15 @@ export default function OrderStepBox({ prices, boxTypeNames, onNext }: OrderStep
   const handleSelect = (id: string) => {
     setSelected(id);
 
+    // Reset frequency to 'monthly' when switching away from premium subscription
+    if (id !== 'monthly-premium') {
+      setFrequency('monthly');
+    }
+
     if (id === 'monthly-premium') {
       const finalSelection = buildBoxTypeId(id, premiumFrequency);
       setBoxType(finalSelection);
+      setFrequency(premiumFrequency);
 
       const priceInfo = getPriceInfo(id);
       trackBoxSelection({
@@ -85,6 +91,7 @@ export default function OrderStepBox({ prices, boxTypeNames, onNext }: OrderStep
     setSelected('monthly-premium');
     const finalSelection = buildBoxTypeId('monthly-premium', frequency);
     setBoxType(finalSelection);
+    setFrequency(frequency);
 
     const priceInfo = getPriceInfo('monthly-premium');
     trackBoxSelection({
@@ -284,7 +291,7 @@ export default function OrderStepBox({ prices, boxTypeNames, onNext }: OrderStep
               href="/box/mystery"
               className="inline-flex items-center gap-1.5 text-sm sm:text-base text-[var(--color-brand-orange)] font-semibold hover:underline transition-colors"
             >
-              🎁 Виж мистериозната кутия →
+              Научи повече →
             </Link>
           </div>
         </div>

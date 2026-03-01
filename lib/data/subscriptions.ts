@@ -9,7 +9,9 @@
 
 import 'server-only';
 import { cache } from 'react';
+import { unstable_cache } from 'next/cache';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { TAG_SUBSCRIPTIONS } from './cache-tags';
 import type {
   SubscriptionRow,
   SubscriptionInsert,
@@ -21,6 +23,7 @@ import type {
   SubscriptionHistoryRow,
 } from '@/lib/supabase/types';
 import type { BatchGenerationResult, SubscriptionPreferencesUpdate, SubscriptionWithUserInfo } from '@/lib/subscription';
+import { getUserEmailsByIds } from '@/lib/auth/get-users-by-ids';
 import { shouldIncludeInCycle } from '@/lib/subscription';
 import { sendDeliveryUpcomingEmail } from '@/lib/subscription/notifications';
 import { createOrder } from './orders';
@@ -151,7 +154,7 @@ export const getSubscriptionsByUser = cache(
 
     if (error) {
       console.error('Error fetching user subscriptions:', error);
-      throw new Error('Failed to load subscriptions.');
+      return [];
     }
 
     return data ?? [];
@@ -177,48 +180,62 @@ export async function getActiveSubscriptions(): Promise<SubscriptionRow[]> {
 
 /**
  * Get subscription counts grouped by status.
+ * Uses parallel HEAD COUNT queries (no row data transferred).
  */
 export const getSubscriptionsCount = cache(
-  async (): Promise<{ total: number; active: number; paused: number; cancelled: number }> => {
-    // Supabase JS client doesn't support FILTER(WHERE) in COUNT,
-    // so we run a lightweight select and count client-side.
-    const { data, error } = await supabaseAdmin
-      .from('subscriptions')
-      .select('status');
+  unstable_cache(
+    async (): Promise<{ total: number; active: number; paused: number; cancelled: number }> => {
+      const [totalResult, activeResult, pausedResult, cancelledResult] = await Promise.all([
+        supabaseAdmin.from('subscriptions').select('*', { count: 'exact', head: true }),
+        supabaseAdmin.from('subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+        supabaseAdmin.from('subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'paused'),
+        supabaseAdmin.from('subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'cancelled'),
+      ]);
 
-    if (error) {
-      console.error('Error counting subscriptions:', error);
-      throw new Error('Failed to count subscriptions.');
-    }
+      const firstError = [totalResult, activeResult, pausedResult, cancelledResult].find((r) => r.error);
+      if (firstError?.error) {
+        console.error('Error counting subscriptions:', firstError.error);
+        // Return zeros so the cache stores a fallback instead of retrying every request
+        return { total: 0, active: 0, paused: 0, cancelled: 0 };
+      }
 
-    const rows = data ?? [];
-    return {
-      total: rows.length,
-      active: rows.filter((r) => r.status === 'active').length,
-      paused: rows.filter((r) => r.status === 'paused').length,
-      cancelled: rows.filter((r) => r.status === 'cancelled').length,
-    };
-  },
+      return {
+        total: totalResult.count ?? 0,
+        active: activeResult.count ?? 0,
+        paused: pausedResult.count ?? 0,
+        cancelled: cancelledResult.count ?? 0,
+      };
+    },
+    ['subscriptions-count'],
+    { revalidate: 60, tags: [TAG_SUBSCRIPTIONS] },
+  ),
 );
 
 /**
  * Get Monthly Recurring Revenue (sum of current_price_eur for active subs).
  */
-export const getSubscriptionMRR = cache(async (): Promise<number> => {
-  const { data, error } = await supabaseAdmin
-    .from('subscriptions')
-    .select('current_price_eur')
-    .eq('status', 'active');
+export const getSubscriptionMRR = cache(
+  unstable_cache(
+    async (): Promise<number> => {
+      const { data, error } = await supabaseAdmin
+        .from('subscriptions')
+        .select('current_price_eur')
+        .eq('status', 'active');
 
-  if (error) {
-    console.error('Error calculating MRR:', error);
-    throw new Error('Failed to calculate MRR.');
-  }
+      if (error) {
+        console.error('Error calculating MRR:', error);
+        // Return 0 so the cache stores a fallback instead of retrying every request
+        return 0;
+      }
 
-  if (!data || data.length === 0) return 0;
+      if (!data || data.length === 0) return 0;
 
-  return data.reduce((sum, row) => sum + Number(row.current_price_eur), 0);
-});
+      return data.reduce((sum, row) => sum + Number(row.current_price_eur), 0);
+    },
+    ['subscription-mrr'],
+    { revalidate: 60, tags: [TAG_SUBSCRIPTIONS] },
+  ),
+);
 
 // ============================================================================
 // Lifecycle Transitions
@@ -824,18 +841,8 @@ export const getSubscriptionsPaginated = cache(
       (profiles ?? []).map((p) => [p.id, p.full_name]),
     );
 
-    // Fetch emails via auth admin API
-    const emailMap = new Map<string, string>();
-    for (const uid of uniqueUserIds) {
-      try {
-        const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(uid);
-        if (authUser?.user?.email) {
-          emailMap.set(uid, authUser.user.email);
-        }
-      } catch {
-        // Non-fatal — email will be empty
-      }
-    }
+    // Fetch emails via auth — single batch query via PostgREST
+    const emailMap = await getUserEmailsByIds(uniqueUserIds);
 
     const subscriptions: SubscriptionWithUserInfo[] = rows.map((row) => ({
       ...row,

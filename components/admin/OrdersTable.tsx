@@ -1,39 +1,39 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import type { OrderRow, OrderStatus, OrderStatusHistoryRow } from '@/lib/supabase/types';
 import {
   ORDER_STATUS_LABELS,
   ORDER_STATUS_COLORS,
 } from '@/lib/order/format';
-import { formatShippingAddressOneLine } from '@/lib/order';
+import { formatShippingAddressOneLine, ALLOWED_TRANSITIONS } from '@/lib/order';
+import { formatPriceDual, eurToBgnSync } from '@/lib/catalog';
+import OrderPromoAction from './OrderPromoAction';
 
 // ============================================================================
 // Types
 // ============================================================================
 
+/** Label maps fetched from the `options` table — single source of truth */
+export interface OptionLabelMaps {
+  sports: Record<string, string>;
+  colors: Record<string, string>;
+  flavors: Record<string, string>;
+  dietary: Record<string, string>;
+  sizes: Record<string, string>;
+}
+
 interface OrdersTableProps {
   orders: OrderRow[];
   boxTypeNames: Record<string, string>;
+  optionLabels: OptionLabelMaps;
+  eurToBgnRate: number;
   total: number;
   currentPage: number;
   perPage: number;
+  reminderCounts?: Record<string, { count: number; lastSentAt: string | null }>;
 }
-
-// ============================================================================
-// Status Transition Map
-// ============================================================================
-
-const ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
-  pending: ['confirmed', 'cancelled'],
-  confirmed: ['processing', 'cancelled'],
-  processing: ['shipped', 'cancelled'],
-  shipped: ['delivered'],
-  delivered: ['refunded'],
-  cancelled: [],
-  refunded: [],
-};
 
 /** Background color classes for status badges */
 const STATUS_BG_COLORS: Record<OrderStatus, string> = {
@@ -47,10 +47,10 @@ const STATUS_BG_COLORS: Record<OrderStatus, string> = {
 };
 
 // ============================================================================
-// Personalization labels (Bulgarian)
+// Personalization field labels (Bulgarian)
 // ============================================================================
 
-const DETAIL_LABELS: Record<string, string> = {
+const FIELD_LABELS: Record<string, string> = {
   sports: 'Спортове',
   sport_other: 'Друг спорт',
   colors: 'Цветове',
@@ -93,13 +93,30 @@ function formatDateTime(iso: string) {
 // Component
 // ============================================================================
 
+/** Compute the shared transitions available for a set of selected orders */
+function getSharedTransitions(orders: OrderRow[], selectedIds: Set<string>): OrderStatus[] {
+  const selected = orders.filter(o => selectedIds.has(o.id));
+  if (selected.length === 0) return [];
+  // Start from the first order's transitions and intersect with the rest
+  let shared = new Set(ALLOWED_TRANSITIONS[selected[0].status] ?? []);
+  for (let i = 1; i < selected.length; i++) {
+    const allowed = new Set(ALLOWED_TRANSITIONS[selected[i].status] ?? []);
+    shared = new Set([...shared].filter(s => allowed.has(s)));
+  }
+  return [...shared];
+}
+
 export function OrdersTable({
   orders,
   boxTypeNames,
+  optionLabels,
+  eurToBgnRate,
+  reminderCounts,
 }: OrdersTableProps) {
   const router = useRouter();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [statusDropdownId, setStatusDropdownId] = useState<string | null>(null);
+  const [dropdownRect, setDropdownRect] = useState<{ top: number; left: number } | null>(null);
   const [confirmModal, setConfirmModal] = useState<{
     orderId: string;
     orderNumber: string;
@@ -112,9 +129,103 @@ export function OrdersTable({
   const [loadingHistory, setLoadingHistory] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // ---------- Bulk selection ----------
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkStatus, setBulkStatus] = useState<OrderStatus | ''>('');
+  const [bulkNotes, setBulkNotes] = useState('');
+  const [bulkConfirmOpen, setBulkConfirmOpen] = useState(false);
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [bulkResult, setBulkResult] = useState<{ succeeded: number; failed: number } | null>(null);
+
+  const allIds = useMemo(() => orders.map(o => o.id), [orders]);
+  const allSelected = allIds.length > 0 && allIds.every(id => selectedIds.has(id));
+  const someSelected = selectedIds.size > 0 && !allSelected;
+
+  const toggleSelectAll = useCallback(() => {
+    setSelectedIds(prev => {
+      if (prev.size === allIds.length) return new Set();
+      return new Set(allIds);
+    });
+  }, [allIds]);
+
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  }, []);
+
+  const clearSelection = useCallback(() => {
+    setSelectedIds(new Set());
+    setBulkStatus('');
+    setBulkNotes('');
+    setBulkResult(null);
+  }, []);
+
+  const sharedTransitions = useMemo(
+    () => getSharedTransitions(orders, selectedIds),
+    [orders, selectedIds],
+  );
+
+  async function executeBulkUpdate() {
+    if (!bulkStatus || selectedIds.size === 0) return;
+    setBulkLoading(true);
+    setBulkResult(null);
+
+    try {
+      const res = await fetch('/api/admin/order/bulk-status', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderIds: [...selectedIds],
+          status: bulkStatus,
+          notes: bulkNotes.trim() || undefined,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? 'Грешка при масово обновяване.');
+      }
+
+      const data = await res.json();
+      setBulkResult({ succeeded: data.succeeded, failed: data.failed });
+
+      // Clear cached history for updated orders
+      setStatusHistory(prev => {
+        const copy = { ...prev };
+        for (const id of selectedIds) delete copy[id];
+        return copy;
+      });
+
+      // If all succeeded, auto-clear selection after a short delay
+      if (data.failed === 0) {
+        setTimeout(() => {
+          clearSelection();
+          setBulkConfirmOpen(false);
+        }, 1200);
+      }
+
+      startTransition(() => router.refresh());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Неочаквана грешка.');
+    } finally {
+      setBulkLoading(false);
+    }
+  }
+
   // ---------- Status update ----------
-  function openStatusDropdown(orderId: string) {
-    setStatusDropdownId(prev => (prev === orderId ? null : orderId));
+  function openStatusDropdown(orderId: string, e: React.MouseEvent<HTMLButtonElement>) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setStatusDropdownId(prev => {
+      if (prev === orderId) {
+        setDropdownRect(null);
+        return null;
+      }
+      setDropdownRect({ top: rect.bottom + 4, left: rect.left });
+      return orderId;
+    });
   }
 
   function selectNewStatus(order: OrderRow, newStatus: OrderStatus) {
@@ -192,6 +303,16 @@ export function OrdersTable({
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="border-b">
+              <th className="py-3 px-4 w-10">
+                <input
+                  type="checkbox"
+                  checked={allSelected}
+                  ref={el => { if (el) el.indeterminate = someSelected; }}
+                  onChange={toggleSelectAll}
+                  className="h-4 w-4 rounded border-gray-300 text-[var(--color-brand-navy)] focus:ring-[var(--color-brand-navy)] cursor-pointer"
+                  title={allSelected ? 'Премахни всички' : 'Избери всички'}
+                />
+              </th>
               <th className="py-3 px-4 text-sm font-medium text-gray-500">Номер</th>
               <th className="py-3 px-4 text-sm font-medium text-gray-500">Клиент</th>
               <th className="py-3 px-4 text-sm font-medium text-gray-500">Кутия</th>
@@ -208,7 +329,17 @@ export function OrdersTable({
 
               return (
                 <Fragment key={order.id}>
-                  <tr className="border-b hover:bg-gray-50">
+                  <tr className={`border-b hover:bg-gray-50 ${selectedIds.has(order.id) ? 'bg-blue-50/50' : ''}`}>
+                    {/* Checkbox */}
+                    <td className="py-3 px-4">
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.has(order.id)}
+                        onChange={() => toggleSelect(order.id)}
+                        className="h-4 w-4 rounded border-gray-300 text-[var(--color-brand-navy)] focus:ring-[var(--color-brand-navy)] cursor-pointer"
+                      />
+                    </td>
+
                     {/* Order number */}
                     <td className="py-3 px-4 text-sm font-mono">
                       {order.order_number}
@@ -226,9 +357,9 @@ export function OrdersTable({
                     </td>
 
                     {/* Status badge + dropdown */}
-                    <td className="py-3 px-4 relative">
+                    <td className="py-3 px-4">
                       <button
-                        onClick={() => transitions.length > 0 ? openStatusDropdown(order.id) : undefined}
+                        onClick={(e) => transitions.length > 0 ? openStatusDropdown(order.id, e) : undefined}
                         className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full ${STATUS_BG_COLORS[order.status]} ${
                           transitions.length > 0 ? 'cursor-pointer hover:opacity-80' : 'cursor-default'
                         }`}
@@ -241,28 +372,34 @@ export function OrdersTable({
                           </svg>
                         )}
                       </button>
-
-                      {/* Status dropdown */}
-                      {statusDropdownId === order.id && transitions.length > 0 && (
-                        <div className="absolute z-20 top-full left-4 mt-1 bg-white border rounded-lg shadow-lg py-1 min-w-[160px]">
-                          {transitions.map(s => (
-                            <button
-                              key={s}
-                              onClick={() => selectNewStatus(order, s)}
-                              className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2"
-                            >
-                              <span className={`w-2 h-2 rounded-full ${STATUS_BG_COLORS[s].split(' ')[0]}`} />
-                              {ORDER_STATUS_LABELS[s]}
-                            </button>
-                          ))}
-                        </div>
+                      {order.status === 'shipped' && reminderCounts?.[order.id] && (
+                        <span
+                          className="ml-2 text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700"
+                          title={`Последно напомняне: ${reminderCounts[order.id].lastSentAt
+                            ? new Date(reminderCounts[order.id].lastSentAt!).toLocaleDateString('bg-BG')
+                            : '—'}`}
+                        >
+                          📧 {reminderCounts[order.id].count}/3 напомняния
+                        </span>
                       )}
+                      {order.status === 'delivered' && (() => {
+                        const history = statusHistory?.[order.id] ?? [];
+                        const autoEntry = history.find(
+                          h => h.to_status === 'delivered' && !h.changed_by && h.notes?.includes('Автоматично')
+                        );
+                        if (!autoEntry) return null;
+                        return (
+                          <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                            Авто-потвърдена
+                          </span>
+                        );
+                      })()}
                     </td>
 
                     {/* Price */}
                     <td className="py-3 px-4 text-sm">
                       {order.final_price_eur != null
-                        ? `${order.final_price_eur.toFixed(2)} EUR`
+                        ? formatPriceDual(order.final_price_eur, eurToBgnSync(order.final_price_eur, eurToBgnRate))
                         : '—'}
                     </td>
 
@@ -286,12 +423,16 @@ export function OrdersTable({
                   {/* Expanded details */}
                   {isExpanded && (
                     <tr>
-                      <td colSpan={7} className="bg-gray-50 px-4 py-4">
+                      <td colSpan={8} className="bg-gray-50 px-4 py-4">
                         <OrderRowDetail
                           order={order}
                           boxTypeName={boxTypeNames[order.box_type] ?? order.box_type}
+                          optionLabels={optionLabels}
+                          eurToBgnRate={eurToBgnRate}
                           history={statusHistory[order.id]}
                           loadingHistory={loadingHistory === order.id}
+                          onRefresh={() => router.refresh()}
+                          reminderCounts={reminderCounts}
                         />
                       </td>
                     </tr>
@@ -303,10 +444,142 @@ export function OrdersTable({
         </table>
       </div>
 
-      {/* Click-away handler for dropdown */}
-      {statusDropdownId && (
-        <div className="fixed inset-0 z-10" onClick={() => setStatusDropdownId(null)} />
+      {/* Bulk action bar */}
+      {selectedIds.size > 0 && (
+        <div className="sticky bottom-0 z-30 mt-4 bg-white border-t border-gray-200 shadow-[0_-2px_8px_rgba(0,0,0,0.08)] rounded-t-xl px-4 py-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <span className="text-sm font-semibold text-[var(--color-brand-navy)]">
+              {selectedIds.size} {selectedIds.size === 1 ? 'поръчка' : 'поръчки'}
+            </span>
+
+            {sharedTransitions.length > 0 ? (
+              <>
+                <select
+                  value={bulkStatus}
+                  onChange={e => setBulkStatus(e.target.value as OrderStatus | '')}
+                  className="border rounded-lg px-3 py-1.5 text-sm bg-white"
+                >
+                  <option value="">Промени статус на...</option>
+                  {sharedTransitions.map(s => (
+                    <option key={s} value={s}>{ORDER_STATUS_LABELS[s]}</option>
+                  ))}
+                </select>
+
+                <button
+                  onClick={() => {
+                    if (!bulkStatus) return;
+                    setBulkResult(null);
+                    setBulkConfirmOpen(true);
+                  }}
+                  disabled={!bulkStatus}
+                  className="px-4 py-1.5 text-sm bg-[var(--color-brand-orange)] text-white rounded-lg font-semibold hover:opacity-90 transition-opacity disabled:opacity-40"
+                >
+                  Приложи
+                </button>
+              </>
+            ) : (
+              <span className="text-xs text-gray-500 italic">
+                Избраните поръчки нямат общ допустим преход
+              </span>
+            )}
+
+            <button
+              onClick={clearSelection}
+              className="ml-auto text-sm text-gray-500 hover:text-gray-700 underline"
+            >
+              Изчисти избора
+            </button>
+          </div>
+        </div>
       )}
+
+      {/* Bulk confirm modal */}
+      {bulkConfirmOpen && bulkStatus && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold mb-3 text-[var(--color-brand-navy)]">
+              Масова промяна на статус
+            </h3>
+            <p className="text-sm text-gray-700 mb-4">
+              Ще промените статуса на <strong>{selectedIds.size}</strong>{' '}
+              {selectedIds.size === 1 ? 'поръчка' : 'поръчки'} на{' '}
+              <span className={`font-semibold ${ORDER_STATUS_COLORS[bulkStatus as OrderStatus]}`}>
+                {ORDER_STATUS_LABELS[bulkStatus as OrderStatus]}
+              </span>.
+            </p>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Бележка (незадължително)
+              </label>
+              <textarea
+                value={bulkNotes}
+                onChange={e => setBulkNotes(e.target.value)}
+                className="w-full border rounded-lg px-3 py-2 text-sm"
+                rows={2}
+                placeholder="Причина за промяната..."
+              />
+            </div>
+
+            {bulkResult && (
+              <div className={`text-sm mb-3 ${
+                bulkResult.failed === 0 ? 'text-green-600' : 'text-amber-600'
+              }`}>
+                Успешно: {bulkResult.succeeded}, Неуспешно: {bulkResult.failed}
+              </div>
+            )}
+
+            {error && (
+              <p className="text-sm text-red-600 mb-3">{error}</p>
+            )}
+
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => { setBulkConfirmOpen(false); setError(null); }}
+                className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50"
+                disabled={bulkLoading}
+              >
+                Отказ
+              </button>
+              <button
+                onClick={executeBulkUpdate}
+                disabled={bulkLoading}
+                className="px-4 py-2 text-sm bg-[var(--color-brand-orange)] text-white rounded-lg font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                {bulkLoading ? 'Обработка...' : 'Потвърди'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Status dropdown (rendered outside the table to avoid overflow clipping) */}
+      {statusDropdownId && dropdownRect && (() => {
+        const order = orders.find(o => o.id === statusDropdownId);
+        if (!order) return null;
+        const transitions = ALLOWED_TRANSITIONS[order.status] ?? [];
+        if (transitions.length === 0) return null;
+        return (
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => { setStatusDropdownId(null); setDropdownRect(null); }} />
+            <div
+              className="fixed z-50 bg-white border rounded-lg shadow-lg py-1 min-w-[160px]"
+              style={{ top: dropdownRect.top, left: dropdownRect.left }}
+            >
+              {transitions.map(s => (
+                <button
+                  key={s}
+                  onClick={() => selectNewStatus(order, s)}
+                  className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2"
+                >
+                  <span className={`w-2 h-2 rounded-full ${STATUS_BG_COLORS[s].split(' ')[0]}`} />
+                  {ORDER_STATUS_LABELS[s]}
+                </button>
+              ))}
+            </div>
+          </>
+        );
+      })()}
 
       {/* Confirmation modal */}
       {confirmModal && (
@@ -375,30 +648,44 @@ export function OrdersTable({
 function OrderRowDetail({
   order,
   boxTypeName,
+  optionLabels,
+  eurToBgnRate,
   history,
   loadingHistory,
+  onRefresh,
+  reminderCounts,
 }: {
   order: OrderRow;
   boxTypeName: string;
+  optionLabels: OptionLabelMaps;
+  eurToBgnRate: number;
   history?: OrderStatusHistoryRow[];
   loadingHistory: boolean;
+  onRefresh: () => void;
+  reminderCounts?: Record<string, { count: number; lastSentAt: string | null }>;
 }) {
-  // Personalization fields
-  const personalizationEntries: [string, string | string[] | null | undefined][] = [
-    ['sports', order.sports],
-    ['sport_other', order.sport_other],
-    ['colors', order.colors],
-    ['flavors', order.flavors],
-    ['flavor_other', order.flavor_other],
-    ['size_upper', order.size_upper],
-    ['size_lower', order.size_lower],
-    ['dietary', order.dietary],
-    ['dietary_other', order.dietary_other],
-    ['additional_notes', order.additional_notes],
+  /** Resolve an array of raw IDs to their DB labels */
+  function mapLabels(ids: string[] | null | undefined, labelMap: Record<string, string>): string | null {
+    if (!ids || ids.length === 0) return null;
+    return ids.map(id => labelMap[id] ?? id).join(', ');
+  }
+
+  // Personalization fields — values are mapped through DB label maps
+  const personalizationEntries: [string, string | null | undefined][] = [
+    ['sports', mapLabels(order.sports, optionLabels.sports)],
+    ['sport_other', order.sport_other ?? null],
+    ['colors', mapLabels(order.colors, optionLabels.colors)],
+    ['flavors', mapLabels(order.flavors, optionLabels.flavors)],
+    ['flavor_other', order.flavor_other ?? null],
+    ['size_upper', order.size_upper ? (optionLabels.sizes[order.size_upper] ?? order.size_upper) : null],
+    ['size_lower', order.size_lower ? (optionLabels.sizes[order.size_lower] ?? order.size_lower) : null],
+    ['dietary', mapLabels(order.dietary, optionLabels.dietary)],
+    ['dietary_other', order.dietary_other ?? null],
+    ['additional_notes', order.additional_notes ?? null],
   ];
 
   const hasPersonalization = personalizationEntries.some(
-    ([, v]) => v != null && (Array.isArray(v) ? v.length > 0 : v !== ''),
+    ([, v]) => v != null && v !== '',
   );
 
   return (
@@ -413,13 +700,11 @@ function OrderRowDetail({
         ) : (
           <dl className="space-y-1">
             {personalizationEntries.map(([key, value]) => {
-              if (value == null || (Array.isArray(value) && value.length === 0) || value === '') return null;
+              if (value == null || value === '') return null;
               return (
                 <div key={key}>
-                  <dt className="text-gray-500 text-xs">{DETAIL_LABELS[key] ?? key}</dt>
-                  <dd className="text-gray-800">
-                    {Array.isArray(value) ? value.join(', ') : value}
-                  </dd>
+                  <dt className="text-gray-500 text-xs">{FIELD_LABELS[key] ?? key}</dt>
+                  <dd className="text-gray-800">{value}</dd>
                 </div>
               );
             })}
@@ -463,12 +748,12 @@ function OrderRowDetail({
           {order.original_price_eur != null && order.final_price_eur != null && order.original_price_eur !== order.final_price_eur && (
             <div>
               <dt className="text-gray-500 text-xs">Оригинална цена</dt>
-              <dd className="line-through text-gray-400">{order.original_price_eur.toFixed(2)} EUR</dd>
+              <dd className="line-through text-gray-400">{formatPriceDual(order.original_price_eur, eurToBgnSync(order.original_price_eur, eurToBgnRate))}</dd>
             </div>
           )}
           <div>
             <dt className="text-gray-500 text-xs">Крайна цена</dt>
-            <dd className="font-semibold">{order.final_price_eur?.toFixed(2) ?? '—'} EUR</dd>
+            <dd className="font-semibold">{order.final_price_eur != null ? formatPriceDual(order.final_price_eur, eurToBgnSync(order.final_price_eur, eurToBgnRate)) : '—'}</dd>
           </div>
         </dl>
 
@@ -477,6 +762,15 @@ function OrderRowDetail({
             Преобразувана от предварителна поръчка
           </p>
         )}
+
+        {/* Admin promo management */}
+        <OrderPromoAction
+          orderId={order.id}
+          currentPromo={order.promo_code}
+          currentDiscount={order.discount_percent}
+          orderStatus={order.status}
+          onSuccess={onRefresh}
+        />
       </div>
 
       {/* Column 3: Status History */}
@@ -511,6 +805,25 @@ function OrderRowDetail({
           </ol>
         ) : (
           <p className="text-gray-500 text-xs">Няма история</p>
+        )}
+
+        {order.status === 'shipped' && reminderCounts?.[order.id] && (
+          <div className="mt-2 p-3 bg-amber-50 rounded-lg text-sm">
+            <p className="font-medium text-amber-800">Доставка — напомняния</p>
+            <p className="text-amber-700 mt-1">
+              Изпратени напомняния: {reminderCounts[order.id].count} от 3
+            </p>
+            {reminderCounts[order.id].lastSentAt && (
+              <p className="text-amber-600 text-xs mt-1">
+                Последно: {new Date(reminderCounts[order.id].lastSentAt!).toLocaleString('bg-BG')}
+              </p>
+            )}
+            {reminderCounts[order.id].count >= 3 && (
+              <p className="text-amber-800 text-xs mt-1 font-medium">
+                ⏰ Ще бъде автоматично потвърдена скоро
+              </p>
+            )}
+          </div>
         )}
       </div>
     </div>

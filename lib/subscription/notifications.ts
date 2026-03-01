@@ -2,24 +2,20 @@
  * Subscription Lifecycle Email Notifications
  *
  * Fire-and-forget email helpers for subscription events.
- * Uses Brevo template emails — templates must be created in the Brevo dashboard.
+ * Uses local code-controlled templates with the unified FitFlow design.
  * All calls catch errors to prevent failures from blocking the main flow.
  */
 
-import { sendTransactionalTemplateEmail } from '@/lib/email/brevo';
+import { sendTransactionalEmail } from '@/lib/email/brevo';
+import { resolveEmailLabels, FREQUENCY_LABELS } from '@/lib/email/labels';
+import {
+  generateSubscriptionCreatedEmail,
+  generateSubscriptionPausedEmail,
+  generateSubscriptionResumedEmail,
+  generateSubscriptionCancelledEmail,
+  generateDeliveryUpcomingEmail,
+} from '@/lib/email/subscription-templates';
 import type { SubscriptionRow } from '@/lib/supabase/types';
-
-/**
- * Brevo template IDs for subscription lifecycle notifications.
- * Update these after creating the templates in the Brevo dashboard.
- */
-const SUBSCRIPTION_TEMPLATE_IDS = {
-  created: Number(process.env.BREVO_SUB_CREATED_TEMPLATE_ID) || 0,
-  paused: Number(process.env.BREVO_SUB_PAUSED_TEMPLATE_ID) || 0,
-  resumed: Number(process.env.BREVO_SUB_RESUMED_TEMPLATE_ID) || 0,
-  cancelled: Number(process.env.BREVO_SUB_CANCELLED_TEMPLATE_ID) || 0,
-  deliveryUpcoming: Number(process.env.BREVO_DELIVERY_UPCOMING_TEMPLATE_ID) || 0,
-} as const;
 
 /**
  * Send email when a new subscription is created.
@@ -29,21 +25,22 @@ export async function sendSubscriptionCreatedEmail(
   subscription: SubscriptionRow,
   nextDeliveryDate: string,
 ): Promise<void> {
-  if (!SUBSCRIPTION_TEMPLATE_IDS.created) {
-    console.warn('[EMAIL] Skipping subscription-created — template ID not configured');
-    return;
-  }
-
   try {
-    await sendTransactionalTemplateEmail({
+    const labels = await resolveEmailLabels();
+    const boxTypeName = labels.boxTypes[subscription.box_type] ?? subscription.box_type;
+    const frequency = FREQUENCY_LABELS[subscription.frequency] ?? subscription.frequency;
+
+    const htmlContent = generateSubscriptionCreatedEmail({
+      boxTypeName,
+      frequency,
+      nextDeliveryDate,
+      manageUrl: 'https://fitflow.bg/account/subscriptions',
+    });
+
+    await sendTransactionalEmail({
       to: { email },
-      templateId: SUBSCRIPTION_TEMPLATE_IDS.created,
-      params: {
-        boxType: subscription.box_type,
-        frequency: subscription.frequency,
-        nextDeliveryDate,
-        manageUrl: 'https://fitflow.bg/account/subscriptions',
-      },
+      subject: 'FitFlow — Абонаментът ви е активиран!',
+      htmlContent,
       tags: ['subscription', 'created'],
       category: 'sub-created',
       relatedEntityType: 'subscription',
@@ -61,19 +58,19 @@ export async function sendSubscriptionPausedEmail(
   email: string,
   subscription: SubscriptionRow,
 ): Promise<void> {
-  if (!SUBSCRIPTION_TEMPLATE_IDS.paused) {
-    console.warn('[EMAIL] Skipping subscription-paused — template ID not configured');
-    return;
-  }
-
   try {
-    await sendTransactionalTemplateEmail({
+    const labels = await resolveEmailLabels();
+    const boxTypeName = labels.boxTypes[subscription.box_type] ?? subscription.box_type;
+
+    const htmlContent = generateSubscriptionPausedEmail({
+      boxTypeName,
+      resumeUrl: 'https://fitflow.bg/account/subscriptions',
+    });
+
+    await sendTransactionalEmail({
       to: { email },
-      templateId: SUBSCRIPTION_TEMPLATE_IDS.paused,
-      params: {
-        boxType: subscription.box_type,
-        resumeUrl: 'https://fitflow.bg/account/subscriptions',
-      },
+      subject: 'FitFlow — Абонаментът ви е на пауза',
+      htmlContent,
       tags: ['subscription', 'paused'],
       category: 'sub-paused',
       relatedEntityType: 'subscription',
@@ -92,20 +89,20 @@ export async function sendSubscriptionResumedEmail(
   subscription: SubscriptionRow,
   nextDeliveryDate: string,
 ): Promise<void> {
-  if (!SUBSCRIPTION_TEMPLATE_IDS.resumed) {
-    console.warn('[EMAIL] Skipping subscription-resumed — template ID not configured');
-    return;
-  }
-
   try {
-    await sendTransactionalTemplateEmail({
+    const labels = await resolveEmailLabels();
+    const boxTypeName = labels.boxTypes[subscription.box_type] ?? subscription.box_type;
+
+    const htmlContent = generateSubscriptionResumedEmail({
+      boxTypeName,
+      nextDeliveryDate,
+      manageUrl: 'https://fitflow.bg/account/subscriptions',
+    });
+
+    await sendTransactionalEmail({
       to: { email },
-      templateId: SUBSCRIPTION_TEMPLATE_IDS.resumed,
-      params: {
-        boxType: subscription.box_type,
-        nextDeliveryDate,
-        manageUrl: 'https://fitflow.bg/account/subscriptions',
-      },
+      subject: 'FitFlow — Абонаментът ви е възобновен',
+      htmlContent,
       tags: ['subscription', 'resumed'],
       category: 'sub-resumed',
       relatedEntityType: 'subscription',
@@ -123,19 +120,19 @@ export async function sendSubscriptionCancelledEmail(
   email: string,
   subscription: SubscriptionRow,
 ): Promise<void> {
-  if (!SUBSCRIPTION_TEMPLATE_IDS.cancelled) {
-    console.warn('[EMAIL] Skipping subscription-cancelled — template ID not configured');
-    return;
-  }
-
   try {
-    await sendTransactionalTemplateEmail({
+    const labels = await resolveEmailLabels();
+    const boxTypeName = labels.boxTypes[subscription.box_type] ?? subscription.box_type;
+
+    const htmlContent = generateSubscriptionCancelledEmail({
+      boxTypeName,
+      resubscribeUrl: 'https://fitflow.bg/order',
+    });
+
+    await sendTransactionalEmail({
       to: { email },
-      templateId: SUBSCRIPTION_TEMPLATE_IDS.cancelled,
-      params: {
-        boxType: subscription.box_type,
-        resubscribeUrl: 'https://fitflow.bg/order',
-      },
+      subject: 'FitFlow — Абонаментът ви е отменен',
+      htmlContent,
       tags: ['subscription', 'cancelled'],
       category: 'sub-cancelled',
       relatedEntityType: 'subscription',
@@ -155,20 +152,20 @@ export async function sendDeliveryUpcomingEmail(
   deliveryDate: string,
   orderId: string,
 ): Promise<void> {
-  if (!SUBSCRIPTION_TEMPLATE_IDS.deliveryUpcoming) {
-    console.warn('[EMAIL] Skipping delivery-upcoming — template ID not configured');
-    return;
-  }
-
   try {
-    await sendTransactionalTemplateEmail({
+    const labels = await resolveEmailLabels();
+    const boxTypeName = labels.boxTypes[subscription.box_type] ?? subscription.box_type;
+
+    const htmlContent = generateDeliveryUpcomingEmail({
+      boxTypeName,
+      deliveryDate,
+      trackUrl: `https://fitflow.bg/order/track?orderId=${orderId}`,
+    });
+
+    await sendTransactionalEmail({
       to: { email },
-      templateId: SUBSCRIPTION_TEMPLATE_IDS.deliveryUpcoming,
-      params: {
-        boxType: subscription.box_type,
-        deliveryDate,
-        trackUrl: `https://fitflow.bg/order/track?orderId=${orderId}`,
-      },
+      subject: 'FitFlow — Доставката ви наближава!',
+      htmlContent,
       tags: ['subscription', 'delivery-upcoming'],
       category: 'delivery-upcoming',
       relatedEntityType: 'order',

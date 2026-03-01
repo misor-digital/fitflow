@@ -129,11 +129,12 @@ export async function canSendEmails(count: number): Promise<UsageCheck> {
       warningLevel: getWarningLevel(used, limit),
     };
   } catch {
-    // Fallback: allow sending on usage check failure to avoid blocking emails
-    console.error('Usage check failed — falling back to allow');
+    // Fail-closed: block sending when usage check fails.
+    // This prevents runaway sends if the DB is unreachable.
+    console.error('Usage check failed — falling back to DENY');
     return {
-      canSend: true,
-      remaining: DEFAULT_MONTHLY_LIMIT,
+      canSend: false,
+      remaining: 0,
       used: 0,
       limit: DEFAULT_MONTHLY_LIMIT,
       warningLevel: 'none',

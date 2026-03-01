@@ -1,6 +1,8 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { verifySession } from '@/lib/auth';
+import { STAFF_MANAGEMENT_ROLES } from '@/lib/auth/permissions';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 import {
   createOrder,
   createAddress,
@@ -20,7 +22,7 @@ import type { OrderInsert, ShippingAddressSnapshot, Preorder, BoxType, OrderType
 import type { AddressInput } from '@/lib/order';
 import { sendTransactionalEmail, syncOrderToContact } from '@/lib/email/brevo';
 import { syncPreorderConverted, syncOrderCustomer } from '@/lib/email/contact-sync';
-import { generateConfirmationEmail } from '@/lib/email';
+import { generateConfirmationEmail, resolveEmailLabels } from '@/lib/email';
 import type { ConfirmationEmailData } from '@/lib/email';
 import { getBoxTypeNames } from '@/lib/data';
 
@@ -93,6 +95,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       conversionToken,
       orderType: rawOrderType,
       deliveryCycleId,
+      onBehalfOfUserId,
     } = data as {
       fullName?: string;
       email?: string;
@@ -119,6 +122,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       conversionToken?: string | null;
       orderType?: string;
       deliveryCycleId?: string | null;
+      onBehalfOfUserId?: string | null;
     };
 
     // Required fields
@@ -213,11 +217,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: 'Полето е прекалено дълго.' }, { status: 400 });
     }
 
-    // Guest cannot order subscription boxes
-    if (isGuest && isSubscriptionBox(validatedBoxType)) {
+    // Subscription box types must go through POST /api/subscription
+    if (isSubscriptionBox(validatedBoxType)) {
       return NextResponse.json(
-        { error: 'Абонаментните кутии изискват регистрация.' },
-        { status: 403 },
+        { error: 'Абонаментните кутии се поръчват чрез абонаментния процес.' },
+        { status: 400 },
       );
     }
 
@@ -272,6 +276,24 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       validatedCycleId = cycle.id;
     }
 
+    // Validate onBehalfOfUserId if present
+    if (onBehalfOfUserId !== undefined && onBehalfOfUserId !== null) {
+      if (typeof onBehalfOfUserId !== 'string' || onBehalfOfUserId.length === 0) {
+        return NextResponse.json(
+          { error: 'Невалиден идентификатор на клиент.' },
+          { status: 400 },
+        );
+      }
+    }
+
+    // onBehalfOfUserId overrides guest mode
+    if (onBehalfOfUserId && isGuest) {
+      return NextResponse.json(
+        { error: 'Не може да се прави поръчка от името на клиент в гост режим.' },
+        { status: 400 },
+      );
+    }
+
     // ------------------------------------------------------------------
     // Step 3: Authentication Check
     // ------------------------------------------------------------------
@@ -279,7 +301,19 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     let userId: string | null = null;
 
     if (session) {
-      userId = session.userId;
+      // Staff submitting a guest order (e.g. admin converting a preorder
+      // without creating a customer account) → keep userId null so the
+      // order is created as a guest order under the customer's email.
+      if (
+        isGuest &&
+        session.profile.user_type === 'staff' &&
+        session.profile.staff_role &&
+        STAFF_MANAGEMENT_ROLES.has(session.profile.staff_role)
+      ) {
+        userId = null;
+      } else {
+        userId = session.userId;
+      }
     } else if (!isGuest) {
       return NextResponse.json(
         { error: 'Изисква се вход в акаунта.' },
@@ -287,6 +321,55 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
     // isGuest === true && no session → userId stays null
+
+    // ------------------------------------------------------------------
+    // Step 3b: On-Behalf-Of Check (admin placing order for a customer)
+    // ------------------------------------------------------------------
+    if (onBehalfOfUserId) {
+      // Verify the caller is an admin
+      if (
+        !session ||
+        session.profile.user_type !== 'staff' ||
+        !session.profile.staff_role ||
+        !STAFF_MANAGEMENT_ROLES.has(session.profile.staff_role)
+      ) {
+        return NextResponse.json(
+          { error: 'Нямате право да правите поръчки от името на друг потребител.' },
+          { status: 403 },
+        );
+      }
+
+      // Verify the target customer exists
+      const { data: targetUser, error: targetError } = await supabaseAdmin.auth.admin.getUserById(onBehalfOfUserId);
+      if (targetError || !targetUser?.user) {
+        return NextResponse.json(
+          { error: 'Клиентският акаунт не беше намерен.' },
+          { status: 404 },
+        );
+      }
+
+      // Override userId to the customer's
+      console.log('[AdminAudit] On-behalf order', {
+        action: 'on_behalf_order',
+        adminId: session.userId,
+        customerId: onBehalfOfUserId,
+        customerEmail: targetUser.user.email,
+        timestamp: new Date().toISOString(),
+      });
+
+      userId = onBehalfOfUserId;
+    }
+
+    // Fetch profile phone as fallback for customer_phone (defense-in-depth)
+    let profilePhone: string | null = null;
+    if (userId) {
+      const { data: profile } = await supabaseAdmin
+        .from('user_profiles')
+        .select('phone')
+        .eq('id', userId)
+        .single();
+      profilePhone = profile?.phone ?? null;
+    }
 
     // ------------------------------------------------------------------
     // Step 4: Handle Conversion Token (if present)
@@ -465,7 +548,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       user_id: userId,
       customer_email: email.trim().toLowerCase(),
       customer_full_name: fullName.trim(),
-      customer_phone: phone?.trim() || null,
+      customer_phone: phone?.trim() || profilePhone || null,
       shipping_address: addressSnapshot,
       address_id: addressId,
       delivery_method: effectiveDeliveryMethod,
@@ -575,7 +658,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         promoCode: priceInfo.promoCode ?? undefined,
         discountPercent: priceInfo.discountPercent ?? undefined,
         originalPriceEur: priceInfo.originalPriceEur ?? undefined,
+        originalPriceBgn: priceInfo.originalPriceBgn ?? undefined,
         finalPriceEur: priceInfo.finalPriceEur ?? undefined,
+        finalPriceBgn: priceInfo.finalPriceBgn ?? undefined,
+        discountAmountEur: priceInfo.discountAmountEur ?? undefined,
+        discountAmountBgn: priceInfo.discountAmountBgn ?? undefined,
         deliveryMethod: effectiveDeliveryMethod as 'address' | 'speedy_office',
         speedyOfficeName: addressSnapshot.speedy_office_name ?? null,
         speedyOfficeAddress: addressSnapshot.speedy_office_address ?? null,
@@ -595,8 +682,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       // Determine email type based on whether this is a conversion
       const emailType = 'order';
 
-      // Generate HTML
-      const htmlContent = generateConfirmationEmail(emailData, emailType);
+      // Resolve display labels for personalization options
+      const labels = await resolveEmailLabels();
+
+      // Generate HTML with resolved labels
+      const htmlContent = generateConfirmationEmail(emailData, emailType, labels);
 
       // Send via Brevo wrapper (auto-logs to email_send_log)
       const result = await sendTransactionalEmail({
@@ -698,6 +788,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         success: true,
         orderId: order.id,
         orderNumber: order.order_number,
+        finalPriceEur: priceInfo.finalPriceEur ?? null,
         _meta: {
           emailSent,
           conversionCompleted,

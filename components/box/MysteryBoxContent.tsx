@@ -98,7 +98,7 @@ export default function MysteryBoxContent({
             <span className="text-4xl sm:text-5xl md:text-6xl">🎁</span>
           </div>
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4 sm:mb-6 tracking-wide">
-            Мистериозна Кутия
+            FitFlow Еднократна Кутия
           </h1>
           <p className="text-base sm:text-lg md:text-xl text-white/80 mb-6 sm:mb-8 max-w-xl mx-auto">
             Съдържанието е изненада до деня на доставката!
@@ -163,7 +163,7 @@ export default function MysteryBoxContent({
           <div className="bg-white rounded-xl sm:rounded-2xl p-5 sm:p-6 md:p-8 shadow-lg border-2 border-gray-200 hover:border-[var(--color-brand-orange)] hover:-translate-y-1 hover:shadow-xl transition-all">
             <h3 className="text-xl sm:text-2xl font-bold text-[var(--color-brand-navy)] mb-2 sm:mb-3">Стандартна</h3>
             <p className="text-xs sm:text-sm text-gray-600 mb-4 sm:mb-5">
-              4-5 продукта за активни дами
+              5-7 продукта за активни дами
             </p>
             {onetimeStandard && <PriceDisplay priceInfo={onetimeStandard} />}
             <button
@@ -181,7 +181,7 @@ export default function MysteryBoxContent({
             </div>
             <h3 className="text-xl sm:text-2xl font-bold text-[var(--color-brand-navy)] mb-2 sm:mb-3">Премиум</h3>
             <p className="text-xs sm:text-sm text-gray-600 mb-4 sm:mb-5">
-              6-8 продукта + спортно облекло
+              5-7 продукта + спортно облекло
             </p>
             {onetimePremium && <PriceDisplay priceInfo={onetimePremium} />}
             <button
@@ -226,15 +226,15 @@ export default function MysteryBoxContent({
         <div className="max-w-2xl mx-auto space-y-4 sm:space-y-6">
           <FAQItem
             question="Как се различава от абонамента?"
-            answer="Абонаментът се доставя всеки месец автоматично. Мистериозната кутия е еднократна покупка, доставена на следващата дата за абонаменти."
+            answer="Абонаментът се доставя всеки месец автоматично. Еднократно поръчаната кутия  се доставя веднъж на следващата дата за абонаменти ИЛИ до 2 работни дни след поръчка на разкрита кутия (при наличност)."
           />
           <FAQItem
             question="Кога ще знам какво има вътре?"
-            answer={`Съдържанието ще бъде разкрито на ${nextDeliveryDate} след доставката.`}
+            answer="Съдържанието ще бъде разкрито след датата за доставка на абонаментните кутии."
           />
           <FAQItem
             question="Мога ли да поръчам като гост?"
-            answer="Да, не е нужна регистрация за еднократни покупки."
+            answer="Да, не е нужна регистрация за еднократна поръчка на кутия."
           />
         </div>
       </section>
@@ -246,7 +246,7 @@ export default function MysteryBoxContent({
             Готова ли си за изненадата?
           </h2>
           <p className="text-base sm:text-lg text-white/80 mb-6 sm:mb-8">
-            Поръчай мистериозна кутия и получи на {nextDeliveryDate}
+            Поръчай еднократна кутия и получи на {nextDeliveryDate}
           </p>
           <Link
             href={`/order?boxType=onetime-standard${cycleId ? `&cycleId=${cycleId}` : ''}&orderType=onetime-mystery`}

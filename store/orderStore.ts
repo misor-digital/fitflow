@@ -23,6 +23,7 @@ interface OrderStore extends OrderUserInput {
 
   // Step 1
   setBoxType: (boxType: BoxTypeId | null) => void;
+  setFrequency: (frequency: string) => void;
 
   // Step 2 — personalization
   setPersonalization: (wants: boolean) => void;
@@ -56,6 +57,9 @@ interface OrderStore extends OrderUserInput {
   setOrderType: (type: string | null) => void;
   resetSubscriptionFields: () => void;
 
+  // Admin: on-behalf ordering
+  setOnBehalfOfUserId: (id: string | null) => void;
+
   // Navigation
   setStep: (step: OrderStep) => void;
   goToNextStep: () => void;
@@ -77,6 +81,7 @@ export const useOrderStore = create<OrderStore>()(
 
       // Step 1: Box Selection
       setBoxType: (boxType) => set({ boxType }),
+      setFrequency: (frequency) => set({ frequency }),
 
       // Step 2: Personalization
       setPersonalization: (wants) => set({ wantsPersonalization: wants }),
@@ -119,6 +124,7 @@ export const useOrderStore = create<OrderStore>()(
       prefillFromConversion: (source) =>
         set({
           boxType: source.boxType,
+          frequency: 'monthly',
           wantsPersonalization: source.wantsPersonalization,
           sports: source.sports,
           sportOther: source.sportOther,
@@ -140,6 +146,9 @@ export const useOrderStore = create<OrderStore>()(
         orderType: null,
         deliveryCycleId: null,
       }),
+
+      // Admin: on-behalf ordering
+      setOnBehalfOfUserId: (id) => set({ onBehalfOfUserId: id }),
 
       // Navigation
       setStep: (step) => set({ currentStep: step }),
@@ -170,6 +179,7 @@ export const useOrderStore = create<OrderStore>()(
 function mapStoreToInput(store: OrderStore): OrderUserInput {
   return {
     boxType: store.boxType,
+    frequency: store.frequency,
     wantsPersonalization: store.wantsPersonalization,
     sports: store.sports,
     sportOther: store.sportOther,
@@ -193,6 +203,7 @@ function mapStoreToInput(store: OrderStore): OrderUserInput {
     conversionToken: store.conversionToken,
     deliveryCycleId: store.deliveryCycleId,
     orderType: store.orderType,
+    onBehalfOfUserId: store.onBehalfOfUserId,
   };
 }
 

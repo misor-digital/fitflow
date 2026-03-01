@@ -41,6 +41,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
             id: userId,
             email,
             fullName: profile.full_name ?? '',
+            phone: profile.phone ?? null,
             userType: profile.user_type ?? 'customer',
             staffRole: profile.staff_role ?? null,
             avatarUrl: profile.avatar_url ?? null,

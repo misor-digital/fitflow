@@ -35,6 +35,7 @@ export async function GET(): Promise<NextResponse> {
       preorderId: r.preorderId,
       orderId: r.orderId,
       email: maskEmail(r.email),
+      fullEmail: r.email,
       fullName: r.fullName,
       boxType: r.boxType,
       conversionUrl: r.conversionUrl,
@@ -42,6 +43,8 @@ export async function GET(): Promise<NextResponse> {
       promoCode: r.promoCode,
       originalPriceEur: r.originalPriceEur,
       finalPriceEur: r.finalPriceEur,
+      originalPriceBgn: r.originalPriceBgn,
+      finalPriceBgn: r.finalPriceBgn,
     }));
 
     return NextResponse.json({ recipients: masked, total: recipients.length });
@@ -71,8 +74,9 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     const body = await request.json();
     const dryRun = typeof body.dryRun === 'boolean' ? body.dryRun : true;
+    const includeIds: string[] | undefined = Array.isArray(body.includeIds) ? body.includeIds : undefined;
 
-    const result = await sendPreorderConversionEmails({ dryRun });
+    const result = await sendPreorderConversionEmails({ dryRun, includeIds });
 
     // Mask emails in the recipient list before returning
     const maskedRecipients = result.recipients.map((r) => ({

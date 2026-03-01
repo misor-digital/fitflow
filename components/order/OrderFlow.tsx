@@ -4,8 +4,9 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useOrderStore, useOrderInput, getOrderInput } from '@/store/orderStore';
 import { useAuthStore } from '@/store/authStore';
-import { computeOrderDerivedState, transformOrderToApiRequest } from '@/lib/order';
+import { computeOrderDerivedState, transformOrderToApiRequest, transformOrderToSubscriptionRequest } from '@/lib/order';
 import type { OrderStep, PricesMap } from '@/lib/order';
+import { isSubscriptionBox } from '@/lib/catalog';
 import type { CatalogData } from '@/lib/catalog';
 import OrderStepBox from './OrderStepBox';
 import OrderStepPersonalize from './OrderStepPersonalize';
@@ -36,6 +37,7 @@ export default function OrderFlow({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const lastPromoRef = useRef<string | null>(null);
+  const isSubmittingRef = useRef(false);
 
   const { currentStep, setStep, promoCode, orderType } =
     useOrderStore();
@@ -98,10 +100,10 @@ export default function OrderFlow({
   }, []);
 
   // ---------------------------------------------------------------------------
-  // Scroll to top on step change
+  // Scroll to top on step change (skip during submission / navigation)
   // ---------------------------------------------------------------------------
   useEffect(() => {
-    if (hydrated) {
+    if (hydrated && !isSubmittingRef.current) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [currentStep, hydrated]);
@@ -174,9 +176,10 @@ export default function OrderFlow({
       case 2:
         if (!freshDerived.isStep2Valid) return;
         break;
-      case 3:
+      case 3: {
         if (!freshDerived.isStep3Valid) return;
         break;
+      }
     }
     goToNextActiveStep();
   }, [currentStep, goToNextActiveStep]);
@@ -186,34 +189,92 @@ export default function OrderFlow({
   // ---------------------------------------------------------------------------
   const handleSubmit = useCallback(async () => {
     setIsSubmitting(true);
+    isSubmittingRef.current = true;
     setSubmitError(null);
 
     try {
-      const currentInput = getOrderInput();
-      const apiRequest = transformOrderToApiRequest(currentInput);
+      let currentInput = getOrderInput();
+      const isSubscription = isSubscriptionBox(currentInput.boxType);
 
-      const response = await fetch('/api/order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(apiRequest),
-      });
+      let responseData: Record<string, unknown>;
 
-      const data = await response.json();
+      if (isSubscription) {
+        // ---- Subscription flow ----
+        // Subscriptions require a saved address. When the user entered a new
+        // inline address (selectedAddressId is null), persist it first via the
+        // address API and use the returned ID for the subscription request.
+        if (!currentInput.selectedAddressId) {
+          const addrRes = await fetch('/api/address', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(currentInput.address),
+          });
+          const addrData = await addrRes.json();
+          if (!addrRes.ok || !addrData.address?.id) {
+            throw new Error(addrData.error || 'Грешка при запазване на адреса');
+          }
+          currentInput = { ...currentInput, selectedAddressId: addrData.address.id };
+          useOrderStore.getState().setSelectedAddressId(addrData.address.id);
+        }
 
-      if (!data.success) {
-        throw new Error(data.error || 'Изпращането на поръчката не беше успешно');
+        const subscriptionRequest = transformOrderToSubscriptionRequest(currentInput);
+        const response = await fetch('/api/subscription', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(subscriptionRequest),
+        });
+        responseData = await response.json();
+
+        if (!responseData.success) {
+          throw new Error(
+            (responseData.error as string) || 'Създаването на абонамент не беше успешно',
+          );
+        }
+
+        // Store subscription info for thank-you page
+        const sub = responseData.subscription as Record<string, unknown>;
+        sessionStorage.setItem(
+          'fitflow-last-order',
+          JSON.stringify({
+            orderNumber: null,
+            orderId: null,
+            subscriptionId: sub.id,
+            email: currentInput.email || user?.email,
+            isGuest: false,
+            isSubscription: true,
+            boxType: currentInput.boxType,
+            finalPriceEur: sub.current_price_eur ?? null,
+          }),
+        );
+      } else {
+        // ---- One-time order flow (existing) ----
+        const apiRequest = transformOrderToApiRequest(currentInput);
+        const response = await fetch('/api/order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(apiRequest),
+        });
+        responseData = await response.json();
+
+        if (!responseData.success) {
+          throw new Error(
+            (responseData.error as string) || 'Изпращането на поръчката не беше успешно',
+          );
+        }
+
+        // Store order info for thank-you page
+        sessionStorage.setItem(
+          'fitflow-last-order',
+          JSON.stringify({
+            orderNumber: responseData.orderNumber,
+            orderId: responseData.orderId,
+            email: currentInput.email || user?.email,
+            isGuest: currentInput.isGuest,
+            isSubscription: false,
+            finalPriceEur: responseData.finalPriceEur ?? null,
+          }),
+        );
       }
-
-      // Store order info for thank-you page
-      sessionStorage.setItem(
-        'fitflow-last-order',
-        JSON.stringify({
-          orderNumber: data.orderNumber,
-          orderId: data.orderId,
-          email: currentInput.email || user?.email,
-          isGuest: currentInput.isGuest,
-        }),
-      );
 
       // Clear order store so next visit starts fresh
       useOrderStore.getState().reset();
@@ -225,6 +286,7 @@ export default function OrderFlow({
       );
     } finally {
       setIsSubmitting(false);
+      isSubmittingRef.current = false;
     }
   }, [router, user?.email]);
 

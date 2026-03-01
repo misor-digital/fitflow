@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifySession } from '@/lib/auth/dal';
 import { STAFF_MANAGEMENT_ROLES } from '@/lib/auth/permissions';
 import { updateDeliveryConfig } from '@/lib/data';
+import { revalidateDataTag, TAG_SITE_CONFIG } from '@/lib/data/cache-tags';
 
 // ============================================================================
 // PATCH /api/admin/settings/delivery — Update delivery config
@@ -28,6 +29,7 @@ export async function PATCH(request: NextRequest): Promise<NextResponse> {
     }
 
     await updateDeliveryConfig(key, String(value));
+    revalidateDataTag(TAG_SITE_CONFIG);
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error('Error updating delivery config:', err);

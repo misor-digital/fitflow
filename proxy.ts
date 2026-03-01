@@ -3,10 +3,17 @@ import { createServerClient } from '@supabase/ssr';
 
 /**
  * Next.js 16 proxy handler — runs on every request.
- * 
- * ONLY responsibility: refresh the Supabase auth session cookie.
+ *
+ * Responsibilities:
+ * 1. Redirect legacy routes.
+ * 2. Refresh Supabase auth session cookies (best-effort).
+ *
  * Does NOT perform authorization — that's the DAL's job.
  */
+
+/** Timeout for the Supabase Auth call so the proxy never stalls a request. */
+const AUTH_TIMEOUT_MS = 5_000;
+
 export default async function proxy(request: NextRequest) {
   // Legacy route redirects
   const redirects: Record<string, string> = {
@@ -49,10 +56,37 @@ export default async function proxy(request: NextRequest) {
     }
   );
 
-  // Refresh the session — this reads and potentially updates the auth cookie.
-  // getClaims() validates the JWT signature without a network call.
-  // IMPORTANT: Do not use getUser() here — adds latency to every request.
-  await supabase.auth.getClaims();
+  // Refresh the session (best-effort).
+  //
+  // Fast path: getClaims() validates the JWT locally without a network call.
+  // If the token is still valid (not expired) there's nothing to refresh —
+  // we skip the expensive getUser() round-trip and save ~50-100 ms per request.
+  //
+  // Slow path: when the JWT IS expired, getClaims() still succeeds (it
+  // doesn't check `exp`), so we call getUser() which triggers a refresh via
+  // the refresh-token.  This is wrapped in a timeout + try/catch so that a
+  // Supabase outage never stalls every request for the 10 s TCP connect
+  // timeout.
+  try {
+    const { data } = await supabase.auth.getClaims();
+    if (data?.claims) {
+      const exp = (data.claims as { exp?: number }).exp;
+      // Refresh proactively if the token expires within 60 s
+      const needsRefresh = !exp || exp < Math.floor(Date.now() / 1000) + 60;
+      if (needsRefresh) {
+        await Promise.race([
+          supabase.auth.getUser(),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('proxy auth timeout')), AUTH_TIMEOUT_MS),
+          ),
+        ]);
+      }
+    }
+  } catch {
+    // Non-fatal — if Supabase is unreachable the user will see the
+    // unauthorized boundary on protected pages, but public pages and
+    // cached data still render immediately.
+  }
 
   return supabaseResponse;
 }

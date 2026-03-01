@@ -2,25 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifySession } from '@/lib/auth/dal';
 import { ORDER_VIEW_ROLES } from '@/lib/auth/permissions';
 import { updateOrderStatus, getOrderById, getOrderStatusHistory } from '@/lib/data';
+import { revalidateDataTag, TAG_ORDERS } from '@/lib/data/cache-tags';
 import type { OrderStatus } from '@/lib/supabase/types';
-
-// ============================================================================
-// Allowed status transitions (server-side enforcement)
-// ============================================================================
-
-const ALLOWED_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
-  pending: ['confirmed', 'cancelled'],
-  confirmed: ['processing', 'cancelled'],
-  processing: ['shipped', 'cancelled'],
-  shipped: ['delivered'],
-  delivered: ['refunded'],
-  cancelled: [],
-  refunded: [],
-};
-
-const ALL_STATUSES: OrderStatus[] = [
-  'pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'refunded',
-];
+import { isValidTransition, ALLOWED_TRANSITIONS } from '@/lib/order';
 
 // ============================================================================
 // PATCH /api/admin/order/:id/status — Update order status
@@ -47,7 +31,7 @@ export async function PATCH(
     const notes = typeof body.notes === 'string' ? body.notes.trim().slice(0, 1000) : null;
 
     // 3. Validate status value
-    if (!newStatus || !ALL_STATUSES.includes(newStatus)) {
+    if (!newStatus || !Object.keys(ALLOWED_TRANSITIONS).includes(newStatus)) {
       return NextResponse.json(
         { error: 'Невалиден статус.' },
         { status: 400 },
@@ -61,8 +45,7 @@ export async function PATCH(
     }
 
     // 5. Validate transition
-    const allowed = ALLOWED_TRANSITIONS[order.status] ?? [];
-    if (!allowed.includes(newStatus)) {
+    if (!isValidTransition(order.status, newStatus)) {
       return NextResponse.json(
         {
           error: `Невалиден преход от "${order.status}" към "${newStatus}".`,
@@ -73,6 +56,7 @@ export async function PATCH(
 
     // 6. Perform update
     const updated = await updateOrderStatus(orderId, newStatus, session.userId, notes || null);
+    revalidateDataTag(TAG_ORDERS);
 
     return NextResponse.json({ success: true, order: updated });
   } catch (err) {

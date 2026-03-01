@@ -42,7 +42,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link href="/box/mystery" className="text-gray-300 hover:text-[var(--color-brand-orange)] transition-colors text-xs sm:text-sm">
-                  Мистериозна кутия
+                  Еднократна кутия
                 </Link>
               </li>
             </ul>

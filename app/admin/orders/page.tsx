@@ -1,6 +1,6 @@
 import { requireStaff } from '@/lib/auth';
 import { ORDER_VIEW_ROLES } from '@/lib/auth/permissions';
-import { getOrdersPaginated, getOrdersCount, getBoxTypeNames } from '@/lib/data';
+import { getOrdersPaginated, getOrdersCount, getBoxTypeNames, getOptionLabels, getEurToBgnRate, getReminderCountsByOrders } from '@/lib/data';
 import { ORDER_STATUS_LABELS } from '@/lib/order/format';
 import { OrdersTable } from '@/components/admin/OrdersTable';
 import Link from 'next/link';
@@ -31,7 +31,17 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
   const boxType = params.boxType;
   const search = params.search?.trim();
 
-  const [{ orders, total }, totalAll, boxTypeNames] = await Promise.all([
+  const [
+    { orders, total },
+    totalAll,
+    boxTypeNames,
+    sportsLabels,
+    colorsLabels,
+    flavorsLabels,
+    dietaryLabels,
+    sizesLabels,
+    eurToBgnRate,
+  ] = await Promise.all([
     getOrdersPaginated(page, PER_PAGE, {
       status: status || undefined,
       boxType: boxType || undefined,
@@ -39,7 +49,21 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
     }),
     getOrdersCount(),
     getBoxTypeNames(),
+    getOptionLabels('sports'),
+    getOptionLabels('colors'),
+    getOptionLabels('flavors'),
+    getOptionLabels('dietary'),
+    getOptionLabels('sizes'),
+    getEurToBgnRate(),
   ]);
+
+  const optionLabels = { sports: sportsLabels, colors: colorsLabels, flavors: flavorsLabels, dietary: dietaryLabels, sizes: sizesLabels };
+
+  // Batch-fetch reminder counts for shipped orders
+  const shippedOrderIds = orders
+    .filter(o => o.status === 'shipped')
+    .map(o => o.id);
+  const reminderCounts = await getReminderCountsByOrders(shippedOrderIds);
 
   const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
   const statusOptions = Object.entries(ORDER_STATUS_LABELS) as [OrderStatus, string][];
@@ -152,9 +176,12 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
           <OrdersTable
             orders={orders}
             boxTypeNames={boxTypeNames}
+            optionLabels={optionLabels}
+            eurToBgnRate={eurToBgnRate}
             total={total}
             currentPage={page}
             perPage={PER_PAGE}
+            reminderCounts={reminderCounts}
           />
 
           {/* Pagination */}

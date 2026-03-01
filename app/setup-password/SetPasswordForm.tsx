@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/browser';
 import { validatePassword } from '@/lib/auth/passwordPolicy';
+import PasswordInput from '@/components/PasswordInput';
 import { useAuthStore } from '@/store/authStore';
 
 export default function SetPasswordForm() {
@@ -40,6 +41,11 @@ export default function SetPasswordForm() {
       return;
     }
 
+    // Mark password as set in metadata for has-password detection
+    await supabase.auth.updateUser({
+      data: { has_password: true },
+    });
+
     // Redirect based on user type
     if (user?.userType === 'staff') {
       router.push('/admin');
@@ -57,8 +63,8 @@ export default function SetPasswordForm() {
         <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
           Нова парола
         </label>
-        <input
-          id="password" type="password" value={password}
+        <PasswordInput
+          id="password" value={password}
           onChange={(e) => setPassword(e.target.value)}
           required minLength={8}
           className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:outline-none"
@@ -80,8 +86,8 @@ export default function SetPasswordForm() {
         <label htmlFor="confirm" className="block text-sm font-medium text-gray-700 mb-1">
           Потвърдете паролата
         </label>
-        <input
-          id="confirm" type="password" value={confirm}
+        <PasswordInput
+          id="confirm" value={confirm}
           onChange={(e) => setConfirm(e.target.value)}
           required minLength={8}
           className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:outline-none"
@@ -94,6 +100,25 @@ export default function SetPasswordForm() {
       >
         {loading ? 'Запазване...' : 'Задай парола'}
       </button>
+
+      {user?.userType !== 'staff' && (
+        <div className="text-center mt-4">
+          <button
+            type="button"
+            onClick={() => {
+              if (user?.userType === 'staff') {
+                router.push('/admin');
+              } else {
+                router.push('/');
+              }
+              router.refresh();
+            }}
+            className="text-sm text-gray-500 underline hover:text-gray-700 transition-colors"
+          >
+            Пропусни засега
+          </button>
+        </div>
+      )}
     </form>
   );
 }

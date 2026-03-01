@@ -10,6 +10,7 @@ export async function GET(): Promise<NextResponse> {
 
   return NextResponse.json({
     full_name: session.profile.full_name,
+    phone: session.profile.phone,
     user_type: session.profile.user_type,
     staff_role: session.profile.staff_role,
     avatar_url: session.profile.avatar_url,

@@ -3,10 +3,10 @@ import { getDeliveryConfig, formatDeliveryDate, calculateNextDeliveryDate } from
 import MysteryBoxContent from '@/components/box/MysteryBoxContent';
 import type { Metadata } from 'next';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 300; // ISR: regenerate at most every 5 min
 
 export const metadata: Metadata = {
-  title: 'Мистериозна кутия | FitFlow',
+  title: 'Еднократна кутия | FitFlow',
   description: 'Поръчай еднократна FitFlow кутия — доставка на следващата дата за абонаменти. Съдържанието е изненада!',
 };
 

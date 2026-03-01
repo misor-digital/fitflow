@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useOrderStore } from '@/store/orderStore';
 import { useAuthStore } from '@/store/authStore';
+import { useDeliveryStore } from '@/store/deliveryStore';
 import { createClient } from '@/lib/supabase/browser';
 import { trackCTAClick } from '@/lib/analytics';
 import PromoDiscountPrompt from './PromoDiscountPrompt';
@@ -13,11 +14,11 @@ export default function Navigation() {
   const [isOpen, setIsOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [boxDropdownOpen, setBoxDropdownOpen] = useState(false);
-  const [revealedBoxAvailable, setRevealedBoxAvailable] = useState<boolean | null>(null);
   const pathname = usePathname();
   const router = useRouter();
   const { promoCode } = useOrderStore();
   const { user, isLoading } = useAuthStore();
+  const { revealedBoxAvailable, fetchRevealedBox } = useDeliveryStore();
 
   // ---- Fix P2: Cache discount in state, only fetch when promoCode changes ----
   const [discountPercent, setDiscountPercent] = useState(0);
@@ -60,20 +61,10 @@ export default function Navigation() {
     return () => controller.abort();
   }, [promoCode, lastValidatedCode]);
 
-  // ---- Check if revealed box is available ----
+  // ---- Check if revealed box is available (shared store — deduped) ----
   useEffect(() => {
-    const controller = new AbortController();
-    (async () => {
-      try {
-        const res = await fetch('/api/delivery/current', { signal: controller.signal });
-        setRevealedBoxAvailable(res.ok);
-      } catch (err) {
-        if (err instanceof DOMException && err.name === 'AbortError') return;
-        setRevealedBoxAvailable(false);
-      }
-    })();
-    return () => controller.abort();
-  }, []);
+    fetchRevealedBox();
+  }, [fetchRevealedBox]);
 
   // ---- Logout handler ----
   const handleLogout = useCallback(async () => {
@@ -121,7 +112,7 @@ export default function Navigation() {
                     onClick={() => setBoxDropdownOpen(false)}
                     className="block px-4 py-2 text-sm font-medium text-[var(--color-brand-navy)] hover:bg-gray-50 hover:text-[var(--color-brand-orange)] transition-colors"
                   >
-                    🎁 Мистериозна кутия
+                    🎁 Еднократна кутия
                   </Link>
                   {revealedBoxAvailable && (
                     <Link
@@ -316,7 +307,7 @@ export default function Navigation() {
                   isActive('/box/mystery') ? 'text-[var(--color-brand-orange)]' : 'text-[var(--color-brand-navy)] hover:text-[var(--color-brand-orange)]'
                 }`}
               >
-                🎁 Мистериозна кутия
+                🎁 Еднократна кутия
               </Link>
               {revealedBoxAvailable && (
                 <Link

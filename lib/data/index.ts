@@ -31,6 +31,7 @@ export {
   getDiscountPercent,
   isValidPromoCode,
   incrementPromoCodeUsage,
+  decrementPromoCodeUsage,
   getAppliedPromo,
   listPromoCodes,
   getPromoCodeById,
@@ -67,7 +68,9 @@ export {
   getOrderByNumberAndEmail,
   getOrdersByUser,
   updateOrderStatus,
+  applyPromoToOrder,
   getOrderStatusHistory,
+  getOrderStatusHistoryBatch,
   getOrdersCount,
   getOrdersPaginated,
 } from './orders';
@@ -78,6 +81,9 @@ export {
   markPreorderConverted,
   getPreorderConversionStatus,
   getPreordersWithConversionInfo,
+  getPreordersByUser,
+  getPreorderById,
+  getPreorderByOrderId,
 } from './preorder-conversion';
 
 // Delivery cycles
@@ -172,3 +178,19 @@ export {
 } from './email-campaign-history';
 
 export { initializeEmailSystem } from './email-init';
+
+// Delivery confirmation reminders
+export {
+  recordReminderSent,
+  getRemindersByOrder,
+  getLatestReminderByOrder,
+  getOrdersNeedingDeliveryAction,
+  getReminderCountsByOrders,
+  type OrderNeedingAction,
+} from './delivery-reminders';
+
+// Customer data
+export {
+  getCustomersPaginated,
+  getCustomersStats,
+} from './customers';

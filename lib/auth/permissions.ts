@@ -64,3 +64,26 @@ export const ORDER_VIEW_ROLES: ReadonlySet<StaffRole> = new Set([
   'support',
   'warehouse',
 ]);
+
+/**
+ * Roles that can edit order pricing / apply promo codes.
+ * Intentionally more restrictive than ORDER_VIEW_ROLES —
+ * support and warehouse can view but not modify pricing.
+ */
+export const ORDER_EDIT_ROLES: ReadonlySet<StaffRole> = new Set([
+  'super_admin',
+  'admin',
+  'manager',
+]);
+
+/**
+ * Roles that can view the customer listing page.
+ * Mirrors ORDER_VIEW_ROLES — separate constant allows future divergence.
+ */
+export const CUSTOMER_VIEW_ROLES: ReadonlySet<StaffRole> = new Set([
+  'super_admin',
+  'admin',
+  'manager',
+  'support',
+  'warehouse',
+]);

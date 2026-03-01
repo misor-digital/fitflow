@@ -33,6 +33,7 @@ export type {
 
   // API
   OrderApiRequest,
+  SubscriptionApiRequest,
   OrderSubmitResponse,
 
   // Tracking
@@ -92,6 +93,10 @@ export {
   ORDER_STATUS_LABELS,
   ORDER_STATUS_COLORS,
 
+  // Timeline constants
+  STATUS_ORDER,
+  STATUS_BG_COLORS,
+
   // Status formatting
   formatOrderStatus,
   formatOrderNumber,
@@ -100,9 +105,34 @@ export {
   formatShippingAddress,
   formatShippingAddressOneLine,
 
+  // Order type labels & colors
+  ORDER_TYPE_LABELS,
+  ORDER_TYPE_COLORS,
+
   // Delivery method formatting
   formatDeliveryMethodLabel,
 } from './format';
+
+// ============================================================================
+// Status Transitions
+// ============================================================================
+
+export {
+  ALLOWED_TRANSITIONS,
+  isValidTransition,
+  getAllowedTransitions,
+} from './transitions';
+
+// ============================================================================
+// Preorder Formatting
+// ============================================================================
+
+export {
+  PREORDER_STATUS_LABELS,
+  PREORDER_STATUS_COLORS,
+} from './preorder-format';
+
+export { getStatusIcon } from './status-icons';
 
 // ============================================================================
 // Transformation
@@ -115,6 +145,7 @@ export {
   // Transform functions
   transformOrderToPersistedFormat,
   transformOrderToApiRequest,
+  transformOrderToSubscriptionRequest,
 
   // Initial state
   INITIAL_ORDER_INPUT,

@@ -5,7 +5,10 @@
  * with delivery status information.
  *
  * Webhook URL to configure in Brevo:
- *   POST {SITE_URL}/api/webhooks/brevo?secret={BREVO_WEBHOOK_SECRET}
+ *   POST {SITE_URL}/api/webhooks/brevo
+ *   Header: x-webhook-secret: {BREVO_WEBHOOK_SECRET}
+ *
+ *   Legacy (still accepted): ?secret={BREVO_WEBHOOK_SECRET}
  *
  * Supported events: delivered, soft_bounce, hard_bounce, opened, clicked,
  * spam, unsubscribed, blocked.
@@ -142,7 +145,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     );
   }
 
-  const secret = request.nextUrl.searchParams.get('secret');
+  // Accept secret from header (preferred) or query param (legacy).
+  // Headers don't leak into CDN/access logs the way query strings do.
+  const secret =
+    request.headers.get('x-webhook-secret') ??
+    request.nextUrl.searchParams.get('secret');
   if (secret !== WEBHOOK_SECRET) {
     return NextResponse.json({ error: 'Invalid webhook secret.' }, { status: 401 });
   }

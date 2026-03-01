@@ -6,6 +6,7 @@ import {
   updateDeliveryCycle,
   deleteDeliveryCycle,
 } from '@/lib/data';
+import { revalidateDataTag, TAG_DELIVERY } from '@/lib/data/cache-tags';
 
 // ============================================================================
 // PATCH /api/admin/delivery/:id — Update cycle fields
@@ -59,6 +60,7 @@ export async function PATCH(
     }
 
     const cycle = await updateDeliveryCycle(id, updateData);
+    revalidateDataTag(TAG_DELIVERY);
     return NextResponse.json({ success: true, cycle });
   } catch (err) {
     console.error('Error updating delivery cycle:', err);
@@ -86,6 +88,8 @@ export async function DELETE(
 
     const { id } = await params;
     await deleteDeliveryCycle(id);
+
+    revalidateDataTag(TAG_DELIVERY);
 
     return new NextResponse(null, { status: 204 });
   } catch (err) {

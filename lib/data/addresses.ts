@@ -25,7 +25,7 @@ export const getAddressesByUser = cache(async (userId: string): Promise<AddressR
 
   if (error) {
     console.error('Error fetching addresses:', error);
-    throw new Error('Failed to load addresses.');
+    return [];
   }
 
   return data ?? [];
@@ -83,8 +83,9 @@ export const getDefaultAddress = cache(
 
 /**
  * Count addresses for a user — used to enforce max 10 addresses per user.
+ * Wrapped in cache() for per-request deduplication.
  */
-export async function countAddressesByUser(userId: string): Promise<number> {
+export const countAddressesByUser = cache(async (userId: string): Promise<number> => {
   const { count, error } = await supabaseAdmin
     .from('addresses')
     .select('*', { count: 'exact', head: true })
@@ -96,7 +97,7 @@ export async function countAddressesByUser(userId: string): Promise<number> {
   }
 
   return count ?? 0;
-}
+});
 
 // ============================================================================
 // Write operations (never cached)

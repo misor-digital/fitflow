@@ -4,6 +4,7 @@
  */
 
 import 'server-only';
+import { cache } from 'react';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import type { Preorder, PreorderConversionStatus } from '@/lib/supabase/types';
 
@@ -105,6 +106,80 @@ export async function getPreorderConversionStatus(
 
   return data.conversion_status as PreorderConversionStatus;
 }
+
+// ============================================================================
+// User-scoped queries
+// ============================================================================
+
+/**
+ * Get a single preorder by its UUID.
+ * Used on the preorder detail page.
+ */
+export const getPreorderById = cache(
+  async (preorderId: string): Promise<Preorder | null> => {
+    const { data, error } = await supabaseAdmin
+      .from('preorders')
+      .select('*')
+      .eq('id', preorderId)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return null;
+      }
+      console.error('Error fetching preorder by ID:', error);
+      return null;
+    }
+
+    return data as Preorder;
+  },
+);
+
+/**
+ * Get a single preorder by its human-readable order_id (preorder number).
+ * Used on the public preorder detail page to avoid exposing UUIDs.
+ */
+export const getPreorderByOrderId = cache(
+  async (orderId: string): Promise<Preorder | null> => {
+    const { data, error } = await supabaseAdmin
+      .from('preorders')
+      .select('*')
+      .eq('order_id', orderId)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return null;
+      }
+      console.error('Error fetching preorder by order_id:', error);
+      return null;
+    }
+
+    return data as Preorder;
+  },
+);
+
+/**
+ * Get all preorders linked to a specific user, ordered by creation date (newest first).
+ * Used on the customer account orders page.
+ * Returns all preorders regardless of conversion status.
+ */
+export const getPreordersByUser = cache(
+  async (userId: string): Promise<Preorder[]> => {
+    const { data, error } = await supabaseAdmin
+      .from('preorders')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching preorders by user:', error);
+      return [] as Preorder[];
+    }
+
+    return (data ?? []) as Preorder[];
+  },
+);
 
 // ============================================================================
 // Admin views

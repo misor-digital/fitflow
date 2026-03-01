@@ -269,6 +269,32 @@ export interface UserProfileUpdate {
 }
 
 // ============================================================================
+// Admin Customer Listing (aggregated view)
+// ============================================================================
+
+/**
+ * Customer profile enriched with aggregated stats and email.
+ * Used exclusively by the admin customer listing page.
+ * Personal fields (full_name, email, phone) are masked in the UI.
+ */
+export interface CustomerWithStats {
+  id: string;
+  full_name: string;
+  email: string;
+  phone: string | null;
+  avatar_url: string | null;
+  is_subscriber: boolean;
+  created_at: string;
+  updated_at: string;
+  /** Total number of orders placed by this customer */
+  order_count: number;
+  /** Whether the customer has at least one active subscription */
+  has_active_subscription: boolean;
+  /** ISO timestamp of the most recent order, or null if no orders */
+  last_order_date: string | null;
+}
+
+// ============================================================================
 // Addresses Table
 // ============================================================================
 
@@ -376,6 +402,7 @@ export interface OrderRow {
   order_type: string; // OrderType
   subscription_id: string | null;
   converted_from_preorder_id: string | null;
+  shipped_at: string | null;       // TIMESTAMPTZ as ISO string, set when status → shipped
   created_at: string;
   updated_at: string;
 }
@@ -415,6 +442,48 @@ export interface OrderUpdate {
   status?: OrderStatus;
   shipping_address?: ShippingAddressSnapshot;
   address_id?: string | null;
+  shipped_at?: string | null;
+  // Pricing / promo fields (admin-only mutations via applyPromoToOrder)
+  promo_code?: string | null;
+  discount_percent?: number | null;
+  original_price_eur?: number | null;
+  final_price_eur?: number | null;
+}
+
+// ============================================================================
+// Order Price History Table (audit trail for admin promo/pricing changes)
+// ============================================================================
+
+export interface OrderPriceHistoryRow {
+  id: string;
+  order_id: string;
+  changed_by: string | null;
+  change_type: string;
+  prev_promo_code: string | null;
+  prev_discount_percent: number | null;
+  prev_original_price_eur: number | null;
+  prev_final_price_eur: number | null;
+  new_promo_code: string | null;
+  new_discount_percent: number | null;
+  new_original_price_eur: number | null;
+  new_final_price_eur: number | null;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface OrderPriceHistoryInsert {
+  order_id: string;
+  changed_by?: string | null;
+  change_type: string;
+  prev_promo_code?: string | null;
+  prev_discount_percent?: number | null;
+  prev_original_price_eur?: number | null;
+  prev_final_price_eur?: number | null;
+  new_promo_code?: string | null;
+  new_discount_percent?: number | null;
+  new_original_price_eur?: number | null;
+  new_final_price_eur?: number | null;
+  notes?: string | null;
 }
 
 // ============================================================================
@@ -437,6 +506,23 @@ export interface OrderStatusHistoryInsert {
   to_status: OrderStatus;
   changed_by?: string | null;
   notes?: string | null;
+}
+
+// ============================================================================
+// Delivery Confirmation Reminders Table
+// ============================================================================
+
+export interface DeliveryConfirmationReminderRow {
+  id: string;
+  order_id: string;
+  reminder_number: number;         // 1, 2, or 3
+  sent_at: string;                 // TIMESTAMPTZ as ISO string
+}
+
+export interface DeliveryConfirmationReminderInsert {
+  order_id: string;
+  reminder_number: number;
+  sent_at?: string;                // Defaults to NOW() in DB
 }
 
 // ============================================================================
@@ -993,12 +1079,34 @@ export interface Database {
           referencedColumns: ['id'];
         }];
       };
+      order_price_history: {
+        Row: ToRecord<OrderPriceHistoryRow>;
+        Insert: ToRecord<OrderPriceHistoryInsert>;
+        Update: ToRecord<Partial<OrderPriceHistoryInsert>>;
+        Relationships: [{
+          foreignKeyName: 'order_price_history_order_id_fkey';
+          columns: ['order_id'];
+          referencedRelation: 'orders';
+          referencedColumns: ['id'];
+        }];
+      };
       order_status_history: {
         Row: ToRecord<OrderStatusHistoryRow>;
         Insert: ToRecord<OrderStatusHistoryInsert>;
         Update: ToRecord<Partial<OrderStatusHistoryInsert>>;
         Relationships: [{
           foreignKeyName: 'order_status_history_order_id_fkey';
+          columns: ['order_id'];
+          referencedRelation: 'orders';
+          referencedColumns: ['id'];
+        }];
+      };
+      delivery_confirmation_reminders: {
+        Row: ToRecord<DeliveryConfirmationReminderRow>;
+        Insert: ToRecord<DeliveryConfirmationReminderInsert>;
+        Update: ToRecord<Partial<DeliveryConfirmationReminderInsert>>;
+        Relationships: [{
+          foreignKeyName: 'delivery_confirmation_reminders_order_id_fkey';
           columns: ['order_id'];
           referencedRelation: 'orders';
           referencedColumns: ['id'];
@@ -1153,6 +1261,10 @@ export interface Database {
         Args: { p_code: string; p_user_id?: string; p_order_id?: string };
         Returns: undefined;
       };
+      decrement_promo_usage: {
+        Args: { p_code: string; p_user_id?: string | null; p_order_id?: string | null };
+        Returns: undefined;
+      };
       check_user_promo_usage: {
         Args: { p_code: string; p_user_id: string };
         Returns: number;
@@ -1160,6 +1272,10 @@ export interface Database {
       increment_email_usage: {
         Args: { p_type: string; p_count?: number };
         Returns: { current_total: number; current_limit: number; is_over_limit: boolean }[];
+      };
+      get_orders_needing_delivery_action: {
+        Args: { delay_days: number };
+        Returns: { order_id: string; reminder_count: number; last_sent_at: string | null }[];
       };
     };
     Enums: {

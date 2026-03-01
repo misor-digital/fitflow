@@ -56,6 +56,7 @@ export interface AddressInput {
 export interface OrderUserInput {
   // Step 1: Box Selection
   boxType: BoxTypeId | null;
+  frequency: string; // 'monthly' | 'seasonal'
 
   // Step 2: Personalization
   wantsPersonalization: boolean | null;
@@ -89,6 +90,9 @@ export interface OrderUserInput {
   // Delivery cycle (for mystery box orders)
   deliveryCycleId: string | null;
   orderType: string | null; // 'onetime-mystery' | 'onetime-revealed' | null
+
+  // Admin: place order on behalf of a customer (null for self-orders)
+  onBehalfOfUserId: string | null;
 }
 
 // ============================================================================
@@ -197,6 +201,9 @@ export interface OrderApiRequest {
   // Delivery cycle
   deliveryCycleId?: string | null;
   orderType?: string | null;
+
+  // Admin: place order on behalf of a customer
+  onBehalfOfUserId?: string | null;
 }
 
 export interface OrderSubmitResponse {
@@ -205,6 +212,30 @@ export interface OrderSubmitResponse {
   orderNumber?: string;
   message?: string;
   error?: string;
+}
+
+// ============================================================================
+// Subscription API
+// ============================================================================
+
+/** Payload shape for POST /api/subscription */
+export interface SubscriptionApiRequest {
+  boxType: string;
+  frequency: string;
+  wantsPersonalization: boolean;
+  preferences?: {
+    sports?: string[];
+    sportOther?: string;
+    colors?: string[];
+    flavors?: string[];
+    flavorOther?: string;
+    dietary?: string[];
+    dietaryOther?: string;
+    additionalNotes?: string;
+  };
+  sizes?: { upper?: string; lower?: string };
+  addressId: string;
+  promoCode?: string | null;
 }
 
 // ============================================================================

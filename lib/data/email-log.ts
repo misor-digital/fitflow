@@ -8,7 +8,9 @@
 
 import 'server-only';
 import { cache } from 'react';
+import { unstable_cache } from 'next/cache';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { TAG_EMAIL_STATS } from './cache-tags';
 import type {
   EmailSendLogRow,
   EmailSendLogInsert,
@@ -260,6 +262,13 @@ export const getEmailStats = cache(
   async (
     dateFrom: string,
     dateTo: string,
+  ) => _getEmailStatsInner(dateFrom, dateTo),
+);
+
+const _getEmailStatsInner = unstable_cache(
+  async (
+    dateFrom: string,
+    dateTo: string,
   ): Promise<{
     total: number;
     transactional: number;
@@ -339,4 +348,6 @@ export const getEmailStats = cache(
       blocked: blocked ?? 0,
     };
   },
+  ['email-stats'],
+  { revalidate: 60, tags: [TAG_EMAIL_STATS] },
 );

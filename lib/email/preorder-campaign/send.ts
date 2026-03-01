@@ -63,19 +63,26 @@ function sleep(ms: number): Promise<void> {
 // ---------------------------------------------------------------------------
 
 /**
- * Send preorder conversion emails to all eligible recipients.
+ * Send preorder conversion emails to eligible recipients.
  *
  * @param options.dryRun - If true, renders templates and logs to
  *   email_send_log with category 'preorder-conversion-dry-run' but
  *   does NOT call Brevo. If false, sends via Brevo transactional API.
+ * @param options.includeIds - Optional allowlist of preorder UUIDs.
+ *   When provided, only recipients whose preorderId is in the list
+ *   will be processed. When omitted, all eligible recipients are sent.
  */
 export async function sendPreorderConversionEmails(options: {
   dryRun: boolean;
+  includeIds?: string[];
 }): Promise<SendResult> {
-  const { dryRun } = options;
+  const { dryRun, includeIds } = options;
 
-  // Step 1: Fetch eligible recipients
-  const recipients = await getEligiblePreorderRecipients();
+  // Step 1: Fetch eligible recipients (optionally scoped by includeIds)
+  const allRecipients = await getEligiblePreorderRecipients();
+  const recipients = includeIds
+    ? allRecipients.filter((r) => includeIds.includes(r.preorderId))
+    : allRecipients;
 
   if (recipients.length === 0) {
     return {

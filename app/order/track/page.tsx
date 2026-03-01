@@ -6,20 +6,15 @@ import { Suspense } from 'react';
 import Link from 'next/link';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
-import { ORDER_STATUS_LABELS, ORDER_STATUS_COLORS, formatShippingAddress } from '@/lib/order';
+import { ORDER_STATUS_COLORS, STATUS_BG_COLORS, formatShippingAddress } from '@/lib/order';
 import type { OrderStatus, ShippingAddressSnapshot } from '@/lib/supabase/types';
 import { formatPriceDual } from '@/lib/catalog';
+import { StatusTimeline } from '@/components/account/StatusTimeline';
+import type { StatusHistoryEntry } from '@/components/account/StatusTimeline';
 
 // ============================================================================
 // Types
 // ============================================================================
-
-interface StatusHistoryEntry {
-  fromStatus: OrderStatus | null;
-  toStatus: OrderStatus;
-  notes: string | null;
-  createdAt: string;
-}
 
 interface TrackingOrder {
   orderNumber: string;
@@ -35,26 +30,6 @@ interface TrackingOrder {
   createdAt: string;
   statusHistory: StatusHistoryEntry[];
 }
-
-// All possible statuses in logical order for timeline rendering
-const STATUS_ORDER: OrderStatus[] = [
-  'pending',
-  'confirmed',
-  'processing',
-  'shipped',
-  'delivered',
-];
-
-// Background colors for status badges
-const STATUS_BG_COLORS: Record<OrderStatus, string> = {
-  pending: 'bg-yellow-100',
-  confirmed: 'bg-blue-100',
-  processing: 'bg-indigo-100',
-  shipped: 'bg-purple-100',
-  delivered: 'bg-green-100',
-  cancelled: 'bg-red-100',
-  refunded: 'bg-gray-100',
-};
 
 // ============================================================================
 // Inner component that uses useSearchParams
@@ -164,8 +139,6 @@ function OrderTrackingContent() {
   // ── Order Details State ─────────────────────────────────────────────────
   if (order) {
     const addressLines = formatShippingAddress(order.shippingAddress).split('\n');
-    const currentStatusIndex = STATUS_ORDER.indexOf(order.status);
-    const isCancelled = order.status === 'cancelled' || order.status === 'refunded';
 
     return (
       <div className="max-w-2xl mx-auto py-8 px-4">
@@ -240,76 +213,10 @@ function OrderTrackingContent() {
         {/* Status Timeline */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-6">
           <h2 className="text-lg font-bold text-gray-900 mb-6">Хронология</h2>
-          <div className="relative">
-            {order.statusHistory.map((entry, i) => {
-              const isLast = i === order.statusHistory.length - 1;
-              const statusColor = ORDER_STATUS_COLORS[entry.toStatus];
-
-              return (
-                <div key={i} className="relative flex gap-4 pb-6 last:pb-0">
-                  {/* Timeline line */}
-                  {!isLast && (
-                    <div className="absolute left-[11px] top-7 bottom-0 w-0.5 bg-gray-200" />
-                  )}
-
-                  {/* Timeline dot */}
-                  <div className="relative flex-shrink-0">
-                    {isLast ? (
-                      <div className={`w-6 h-6 rounded-full border-2 ${statusColor.replace('text-', 'border-')} ${STATUS_BG_COLORS[entry.toStatus]} flex items-center justify-center`}>
-                        <div className={`w-2.5 h-2.5 rounded-full ${statusColor.replace('text-', 'bg-')}`} />
-                      </div>
-                    ) : (
-                      <div className="w-6 h-6 rounded-full bg-green-100 flex items-center justify-center">
-                        <svg className="w-3.5 h-3.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Timeline content */}
-                  <div className="flex-1 min-w-0">
-                    <p className={`font-semibold text-sm ${isLast ? statusColor : 'text-gray-700'}`}>
-                      {ORDER_STATUS_LABELS[entry.toStatus]}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-0.5">
-                      {new Date(entry.createdAt).toLocaleDateString('bg-BG', {
-                        day: 'numeric',
-                        month: 'long',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
-                    </p>
-                    {entry.notes && (
-                      <p className="text-xs text-gray-500 mt-1 italic">{entry.notes}</p>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Future statuses (grayed out) — only if not cancelled/refunded */}
-          {!isCancelled && currentStatusIndex >= 0 && currentStatusIndex < STATUS_ORDER.length - 1 && (
-            <div className="mt-2">
-              {STATUS_ORDER.slice(currentStatusIndex + 1).map((futureStatus, i) => (
-                <div key={futureStatus} className="relative flex gap-4 pb-6 last:pb-0">
-                  {i < STATUS_ORDER.length - currentStatusIndex - 2 && (
-                    <div className="absolute left-[11px] top-7 bottom-0 w-0.5 bg-gray-100" />
-                  )}
-                  <div className="relative flex-shrink-0">
-                    <div className="w-6 h-6 rounded-full border-2 border-gray-200 bg-gray-50" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm text-gray-300">
-                      {ORDER_STATUS_LABELS[futureStatus]}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          <StatusTimeline
+            statusHistory={order.statusHistory}
+            currentStatus={order.status}
+          />
         </div>
 
         {/* Search Again */}

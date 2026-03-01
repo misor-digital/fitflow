@@ -4,8 +4,16 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/browser';
+import PasswordInput from '@/components/PasswordInput';
 
-export default function LoginForm() {
+interface LoginFormProps {
+  /** Server-resolved error message from auth callback failures. */
+  callbackError?: string | null;
+  /** Intended destination after login (preserved from failed callback). */
+  next?: string;
+}
+
+export default function LoginForm({ callbackError, next }: LoginFormProps) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -27,7 +35,7 @@ export default function LoginForm() {
       return;
     }
 
-    router.push('/');
+    router.push(next ?? '/');
     router.refresh();
   }
 
@@ -39,31 +47,41 @@ export default function LoginForm() {
     setLoading(true);
     setError(null);
 
-    const supabase = createClient();
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
-        shouldCreateUser: false,
-      },
-    });
+    try {
+      const res = await fetch('/api/auth/magic-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email.trim() }),
+      });
 
-    if (error) {
-      setError('Не е намерен акаунт с този имейл. Моля, регистрирайте се първо.');
+      if (res.status === 429) {
+        setError('Твърде много опити. Моля, опитайте по-късно.');
+        setLoading(false);
+        return;
+      }
+
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || 'Грешка при изпращане на линк. Опитайте отново.');
+        setLoading(false);
+        return;
+      }
+
+      setMagicLinkSent(true);
+    } catch {
+      setError('Грешка при изпращане на линк. Опитайте отново.');
+    } finally {
       setLoading(false);
-      return;
     }
-
-    setMagicLinkSent(true);
-    setLoading(false);
   }
 
   if (magicLinkSent) {
     return (
       <div className="bg-green-50 text-green-700 p-6 rounded-lg text-center">
-        <p className="font-semibold mb-2">Линкът е изпратен!</p>
+        <p className="font-semibold mb-2">Проверете имейла си</p>
         <p className="text-sm">
-          Проверете имейла си ({email}) за магически линк за вход във системата.
+          Ако <strong>{email}</strong> е регистриран в системата, ще получите линк за вход.
+          Проверете и папка &quot;Спам&quot;.
         </p>
         <button
           type="button"
@@ -78,6 +96,12 @@ export default function LoginForm() {
 
   return (
     <form onSubmit={handleEmailLogin} className="space-y-6">
+      {callbackError && !error && (
+        <div className="bg-amber-50 border border-amber-200 text-amber-800 p-3 rounded-lg text-sm">
+          {callbackError}
+        </div>
+      )}
+
       {error && (
         <div className="bg-red-50 text-red-700 p-3 rounded-lg text-sm">
           {error}
@@ -103,9 +127,8 @@ export default function LoginForm() {
         <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
           Парола
         </label>
-        <input
+        <PasswordInput
           id="password"
-          type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required

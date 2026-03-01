@@ -8,6 +8,7 @@ import type {
   OrderUserInput,
   OrderPersistData,
   OrderApiRequest,
+  SubscriptionApiRequest,
   AddressInput,
   DeliveryMethod,
   SpeedyOfficeSelection,
@@ -210,6 +211,87 @@ export function transformOrderToApiRequest(input: OrderUserInput): OrderApiReque
     request.orderType = input.orderType;
   }
 
+  // Admin: on-behalf ordering
+  if (input.onBehalfOfUserId) {
+    request.onBehalfOfUserId = input.onBehalfOfUserId;
+  }
+
+  return request;
+}
+
+// ============================================================================
+// Client → Subscription API Request Format
+// ============================================================================
+
+/**
+ * Transform order user input to subscription API request format.
+ * Used when the selected box type is a subscription (monthly-*).
+ * Throws if required fields for subscription are missing.
+ */
+export function transformOrderToSubscriptionRequest(
+  input: OrderUserInput,
+): SubscriptionApiRequest {
+  if (!input.boxType) {
+    throw new Error('Box type is required for subscription');
+  }
+
+  if (!input.selectedAddressId) {
+    throw new Error('A saved address is required for subscriptions');
+  }
+
+  // Derive base box type; use the store's frequency field for premium boxes.
+  // For standard boxes, frequency is always 'monthly'.
+  let boxType: string;
+  let frequency: string;
+
+  if (input.boxType === 'monthly-standard') {
+    boxType = 'monthly-standard';
+    frequency = 'monthly';
+  } else if (
+    input.boxType === 'monthly-premium' ||
+    input.boxType === 'monthly-premium-monthly' ||
+    input.boxType === 'monthly-premium-seasonal'
+  ) {
+    boxType = 'monthly-premium';
+    frequency = input.frequency || 'monthly';
+  } else {
+    throw new Error(`Unsupported subscription box type: ${input.boxType}`);
+  }
+
+  const request: SubscriptionApiRequest = {
+    boxType,
+    frequency,
+    wantsPersonalization: input.wantsPersonalization ?? false,
+    addressId: input.selectedAddressId,
+  };
+
+  // Preferences (only if personalization is wanted)
+  if (input.wantsPersonalization) {
+    request.preferences = {
+      sports: input.sports.length > 0 ? input.sports : undefined,
+      sportOther: input.sportOther.trim() || undefined,
+      colors: input.colors.length > 0 ? input.colors : undefined,
+      flavors: input.flavors.length > 0 ? input.flavors : undefined,
+      flavorOther: input.flavorOther.trim() || undefined,
+      dietary: input.dietary.length > 0 ? input.dietary : undefined,
+      dietaryOther: input.dietaryOther.trim() || undefined,
+      additionalNotes: input.additionalNotes.trim() || undefined,
+    };
+  }
+
+  // Sizes (for premium boxes)
+  if (input.sizeUpper || input.sizeLower) {
+    request.sizes = {
+      upper: input.sizeUpper || undefined,
+      lower: input.sizeLower || undefined,
+    };
+  }
+
+  // Promo code
+  if (input.promoCode) {
+    request.promoCode = input.promoCode;
+  }
+
   return request;
 }
 
@@ -239,6 +321,7 @@ const INITIAL_ADDRESS_INPUT: AddressInput = {
 export const INITIAL_ORDER_INPUT: OrderUserInput = {
   // Step 1: Box Selection
   boxType: null,
+  frequency: 'monthly',
 
   // Step 2: Personalization
   wantsPersonalization: null,
@@ -272,4 +355,7 @@ export const INITIAL_ORDER_INPUT: OrderUserInput = {
   // Delivery cycle
   deliveryCycleId: null,
   orderType: null,
+
+  // Admin: on-behalf ordering
+  onBehalfOfUserId: null,
 };

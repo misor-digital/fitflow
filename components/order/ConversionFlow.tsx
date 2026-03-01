@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useOrderStore, useOrderInput } from '@/store/orderStore';
+import { useOrderStore } from '@/store/orderStore';
 import { useAuthStore } from '@/store/authStore';
-import { computeOrderDerivedState, transformOrderToApiRequest } from '@/lib/order';
+import { transformOrderToApiRequest } from '@/lib/order';
 import type { PricesMap, CatalogData, PriceInfo } from '@/lib/catalog';
 import type { ConversionSource } from './ConversionSummary';
 import ConversionSummary from './ConversionSummary';
@@ -79,6 +79,13 @@ export default function ConversionFlow({
       source.phone ?? '',
     );
 
+    // Prefill address name/phone from the preorder so the delivery form
+    // doesn't start empty when an admin converts on behalf of a customer.
+    store.setAddress({
+      fullName: source.fullName,
+      phone: source.phone ?? '',
+    });
+
     // Set conversion token
     store.setConversionToken(source.conversionToken);
   }, [source]);
@@ -88,15 +95,12 @@ export default function ConversionFlow({
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [conversionStep]);
 
-  // Derive validation state from the store
-  const input = useOrderInput();
-  const derived = computeOrderDerivedState(input);
-
   // Address step → confirm
+  // Note: OrderStepDetails.handleContinue already validates before calling
+  // onNext, so no additional gate is needed here.
   const handleAddressNext = useCallback(() => {
-    if (!derived.isStep3Valid) return;
     setConversionStep('confirm');
-  }, [derived.isStep3Valid]);
+  }, []);
 
   // Confirm → back to address
   const handleConfirmBack = useCallback(() => {
@@ -117,6 +121,7 @@ export default function ConversionFlow({
       const currentInput = useOrderStore.getState();
       const apiRequest = transformOrderToApiRequest({
         boxType: currentInput.boxType,
+        frequency: currentInput.frequency,
         wantsPersonalization: currentInput.wantsPersonalization,
         sports: currentInput.sports,
         sportOther: currentInput.sportOther,
@@ -140,6 +145,7 @@ export default function ConversionFlow({
         orderType: currentInput.orderType,
         deliveryMethod: currentInput.deliveryMethod,
         speedyOffice: currentInput.speedyOffice,
+        onBehalfOfUserId: currentInput.onBehalfOfUserId,
       });
 
       const response = await fetch('/api/order', {
@@ -161,6 +167,7 @@ export default function ConversionFlow({
           orderId: data.orderId,
           email: currentInput.email || user?.email,
           isGuest: currentInput.isGuest,
+          finalPriceEur: data.finalPriceEur ?? null,
         }),
       );
 

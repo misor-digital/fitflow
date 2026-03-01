@@ -4,8 +4,10 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/browser';
 import { validatePassword } from '@/lib/auth/passwordPolicy';
+import PasswordInput from '@/components/PasswordInput';
 
 export default function RegisterForm() {
+  const [mode, setMode] = useState<'password' | 'magic'>('password');
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -14,6 +16,13 @@ export default function RegisterForm() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
+  function switchMode(newMode: 'password' | 'magic') {
+    setMode(newMode);
+    setPassword('');
+    setConfirmPassword('');
+    setError(null);
+  }
 
   const passwordValidation = validatePassword(password);
 
@@ -57,8 +66,73 @@ export default function RegisterForm() {
       return;
     }
 
+    // Send branded confirmation email via our API (fire-and-forget)
+    fetch('/api/auth/send-confirmation', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, fullName: fullName.trim() }),
+    }).catch(() => {
+      // Non-blocking — Supabase's built-in email serves as fallback
+      console.warn('Failed to send branded confirmation email');
+    });
+
     setSuccess(true);
     setLoading(false);
+  }
+
+  async function handleMagicRegister(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+
+    if (!fullName.trim()) {
+      setError('Моля, въведете вашето име');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const res = await fetch('/api/auth/register-magic', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          fullName: fullName.trim(),
+          wantsPromos,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (res.status === 429) {
+        setError('Твърде много опити. Моля, опитайте по-късно.');
+        setLoading(false);
+        return;
+      }
+
+      if (!res.ok) {
+        setError(data.error || 'Грешка при регистрация. Опитайте отново.');
+        setLoading(false);
+        return;
+      }
+
+      setSuccess(true);
+    } catch {
+      setError('Грешка при регистрация. Опитайте отново.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  if (success && mode === 'magic') {
+    return (
+      <div className="bg-green-50 text-green-700 p-6 rounded-lg text-center">
+        <p className="font-semibold mb-2">Проверете имейла си!</p>
+        <p className="text-sm">
+          Изпратихме линк за активация на {email}. Кликнете линка, за да активирате акаунта си.
+        </p>
+      </div>
+    );
   }
 
   if (success) {
@@ -73,12 +147,37 @@ export default function RegisterForm() {
   }
 
   return (
-    <form onSubmit={handleRegister} className="space-y-6">
+    <form onSubmit={mode === 'password' ? handleRegister : handleMagicRegister} className="space-y-6">
       {error && (
         <div className="bg-red-50 text-red-700 p-3 rounded-lg text-sm">
           {error}
         </div>
       )}
+
+      <div className="flex rounded-lg overflow-hidden border border-gray-200 mb-6">
+        <button
+          type="button"
+          onClick={() => switchMode('password')}
+          className={`flex-1 py-2 text-sm font-medium text-center transition-colors ${
+            mode === 'password'
+              ? 'bg-[var(--color-brand-navy)] text-white'
+              : 'bg-white text-gray-600 hover:bg-gray-50'
+          }`}
+        >
+          С парола
+        </button>
+        <button
+          type="button"
+          onClick={() => switchMode('magic')}
+          className={`flex-1 py-2 text-sm font-medium text-center transition-colors ${
+            mode === 'magic'
+              ? 'bg-[var(--color-brand-navy)] text-white'
+              : 'bg-white text-gray-600 hover:bg-gray-50'
+          }`}
+        >
+          С магически линк
+        </button>
+      </div>
 
       <div>
         <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
@@ -110,53 +209,55 @@ export default function RegisterForm() {
         />
       </div>
 
-      <div>
-        <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-          Парола
-        </label>
-        <input
-          id="password"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          minLength={8}
-          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:outline-none"
-        />
-        {password && (
-          <ul className="mt-2 space-y-1 text-xs">
-            {[
-              { test: password.length >= 8, label: 'Минимум 8 символа' },
-              { test: /[a-z]/.test(password), label: 'Поне една малка буква' },
-              { test: /[A-Z]/.test(password), label: 'Поне една главна буква' },
-              { test: /\d/.test(password), label: 'Поне една цифра' },
-              { test: /[^a-zA-Z0-9]/.test(password), label: 'Поне един специален символ' },
-            ].map((rule) => (
-              <li key={rule.label} className={rule.test ? 'text-green-600' : 'text-gray-400'}>
-                {rule.test ? '✓' : '○'} {rule.label}
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+      {mode === 'password' && (
+        <>
+          <div>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              Парола
+            </label>
+            <PasswordInput
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={8}
+              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:outline-none"
+            />
+            {password && (
+              <ul className="mt-2 space-y-1 text-xs">
+                {[
+                  { test: password.length >= 8, label: 'Минимум 8 символа' },
+                  { test: /[a-z]/.test(password), label: 'Поне една малка буква' },
+                  { test: /[A-Z]/.test(password), label: 'Поне една главна буква' },
+                  { test: /\d/.test(password), label: 'Поне една цифра' },
+                  { test: /[^a-zA-Z0-9]/.test(password), label: 'Поне един специален символ' },
+                ].map((rule) => (
+                  <li key={rule.label} className={rule.test ? 'text-green-600' : 'text-gray-400'}>
+                    {rule.test ? '✓' : '○'} {rule.label}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
 
-      <div>
-        <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
-          Потвърдете паролата
-        </label>
-        <input
-          id="confirmPassword"
-          type="password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          required
-          minLength={8}
-          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:outline-none"
-        />
-        {confirmPassword && password !== confirmPassword && (
-          <p className="mt-1 text-xs text-red-500">Паролите не съвпадат</p>
-        )}
-      </div>
+          <div>
+            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+              Потвърдете паролата
+            </label>
+            <PasswordInput
+              id="confirmPassword"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+              minLength={8}
+              className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:outline-none"
+            />
+            {confirmPassword && password !== confirmPassword && (
+              <p className="mt-1 text-xs text-red-500">Паролите не съвпадат</p>
+            )}
+          </div>
+        </>
+      )}
 
       <div className="flex items-start gap-2">
         <input
@@ -176,7 +277,11 @@ export default function RegisterForm() {
         disabled={loading}
         className="w-full bg-[var(--color-brand-navy)] text-white py-3 rounded-lg font-semibold hover:bg-[var(--color-brand-orange)] transition-colors disabled:opacity-50"
       >
-        {loading ? 'Зареждане...' : 'Регистрация'}
+        {loading
+          ? 'Зареждане...'
+          : mode === 'password'
+            ? 'Регистрация'
+            : 'Изпрати линк за активация'}
       </button>
 
       <div className="text-center text-sm text-gray-600">

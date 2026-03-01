@@ -59,7 +59,7 @@ export async function GET(): Promise<NextResponse> {
 
     response.headers.set(
       'Cache-Control',
-      'public, s-maxage=300, stale-while-revalidate=600',
+      'public, s-maxage=300, stale-while-revalidate=600, stale-if-error=86400',
     );
     return response;
   } catch (error) {

@@ -118,6 +118,54 @@ export function formatShippingAddressOneLine(address: ShippingAddressSnapshot): 
   return parts.join(', ');
 }
 
+// ============================================================================
+// Timeline Constants (shared by guest tracking page & account detail page)
+// ============================================================================
+
+/** All possible statuses in logical order for timeline rendering */
+export const STATUS_ORDER: OrderStatus[] = [
+  'pending',
+  'confirmed',
+  'processing',
+  'shipped',
+  'delivered',
+];
+
+/** Background colors for status badges (pill variant) */
+export const STATUS_BG_COLORS: Record<OrderStatus, string> = {
+  pending: 'bg-yellow-100',
+  confirmed: 'bg-blue-100',
+  processing: 'bg-indigo-100',
+  shipped: 'bg-purple-100',
+  delivered: 'bg-green-100',
+  cancelled: 'bg-red-100',
+  refunded: 'bg-gray-100',
+};
+
+// ============================================================================
+// Order Type Labels (Bulgarian)
+// ============================================================================
+
+/** Bulgarian labels for each order type */
+export const ORDER_TYPE_LABELS: Record<string, string> = {
+  subscription: 'Абонаментна',
+  'onetime-mystery': 'Мистери',
+  'onetime-revealed': 'Разкрита',
+  direct: 'Директна',
+};
+
+/** Tailwind badge classes for each order type */
+export const ORDER_TYPE_COLORS: Record<string, string> = {
+  subscription: 'bg-blue-100 text-blue-700',
+  'onetime-mystery': 'bg-purple-100 text-purple-700',
+  'onetime-revealed': 'bg-pink-100 text-pink-700',
+  direct: 'bg-orange-100 text-orange-700',
+};
+
+// ============================================================================
+// Delivery Method Formatting
+// ============================================================================
+
 /**
  * Get the Bulgarian label for a delivery method.
  */
