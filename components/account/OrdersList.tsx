@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
   ORDER_STATUS_LABELS,
@@ -92,6 +93,12 @@ const TABS: { key: OrderFilter; label: string }[] = [
   { key: 'onetime', label: 'Еднократни' },
 ];
 
+const VALID_FILTERS = new Set<string>(['preorder', 'subscription', 'onetime']);
+
+function isValidFilter(value: string | null): value is OrderFilter {
+  return value !== null && VALID_FILTERS.has(value);
+}
+
 // ---------------------------------------------------------------------------
 // Preorder status labels & colors
 // ---------------------------------------------------------------------------
@@ -182,7 +189,14 @@ export function OrdersList({
   eurToBgnRate,
   statusHistories,
 }: OrdersListProps) {
-  const [activeFilter, setActiveFilter] = useState<OrderFilter>('all');
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const initialType = searchParams.get('type');
+  const [activeFilter, setActiveFilter] = useState<OrderFilter>(
+    isValidFilter(initialType) ? initialType : 'all',
+  );
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   // New filter state
@@ -195,6 +209,24 @@ export function OrdersList({
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  // Update activeFilter + URL query param
+  const handleFilterChange = useCallback(
+    (filter: OrderFilter) => {
+      setActiveFilter(filter);
+      const params = new URLSearchParams(searchParams.toString());
+      if (filter === 'all') {
+        params.delete('type');
+      } else {
+        params.set('type', filter);
+      }
+      const query = params.toString();
+      router.replace(`${pathname}${query ? `?${query}` : ''}`, {
+        scroll: false,
+      });
+    },
+    [searchParams, router, pathname],
+  );
 
   // Debounce search input
   useEffect(() => {
@@ -741,7 +773,7 @@ export function OrdersList({
             <button
               key={key}
               type="button"
-              onClick={() => { setActiveFilter(key); setVisibleCount(PAGE_SIZE); }}
+              onClick={() => { handleFilterChange(key); setVisibleCount(PAGE_SIZE); }}
               className={`text-sm font-medium pb-1 whitespace-nowrap transition-colors ${
                 isActive
                   ? 'text-[var(--color-brand-orange)] border-b-2 border-[var(--color-brand-orange)]'

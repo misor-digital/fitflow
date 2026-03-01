@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { requireAuth } from '@/lib/auth';
 import {
   getOrdersByUser,
@@ -39,13 +40,15 @@ export default async function OrdersPage() {
       <h1 className="text-2xl font-bold text-[var(--color-brand-navy)] mb-6">
         Моите поръчки
       </h1>
-      <OrdersList
-        orders={orders}
-        preorders={preorders}
-        boxTypeNames={boxTypeNames}
-        eurToBgnRate={eurToBgnRate}
-        statusHistories={statusHistories}
-      />
+      <Suspense fallback={null}>
+        <OrdersList
+          orders={orders}
+          preorders={preorders}
+          boxTypeNames={boxTypeNames}
+          eurToBgnRate={eurToBgnRate}
+          statusHistories={statusHistories}
+        />
+      </Suspense>
     </div>
   );
 }
