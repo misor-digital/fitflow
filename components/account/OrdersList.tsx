@@ -497,16 +497,26 @@ export function OrdersList({
                 {/* Step dots */}
                 {!isCancelled && (
                   <div className="flex items-center gap-1">
-                    {STATUS_STEPS.map((step, i) => (
-                      <div
-                        key={step}
-                        className={`w-2 h-2 rounded-full ${
-                          i <= currentIndex
-                            ? 'bg-[var(--color-brand-orange)]'
-                            : 'bg-gray-200'
-                        }`}
-                      />
-                    ))}
+                    {STATUS_STEPS.map((step, i) => {
+                      const historyEntry = history.find(
+                        (h) => h.to_status === step,
+                      );
+                      const tooltipText = historyEntry
+                        ? `${ORDER_STATUS_LABELS[step]} — ${new Date(historyEntry.created_at).toLocaleDateString('bg-BG', { day: '2-digit', month: '2-digit', year: 'numeric' })}`
+                        : ORDER_STATUS_LABELS[step];
+
+                      return (
+                        <div
+                          key={step}
+                          title={tooltipText}
+                          className={`w-2 h-2 rounded-full cursor-default ${
+                            i <= currentIndex
+                              ? 'bg-[var(--color-brand-orange)]'
+                              : 'bg-gray-200'
+                          }`}
+                        />
+                      );
+                    })}
                   </div>
                 )}
                 {/* Last update date */}

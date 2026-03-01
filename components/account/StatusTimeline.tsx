@@ -9,6 +9,30 @@ import {
 import type { OrderStatus } from '@/lib/supabase/types';
 
 // ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function formatRelativeTime(dateStr: string): string {
+  const now = Date.now();
+  const then = new Date(dateStr).getTime();
+  const diffMs = now - then;
+  const diffMinutes = Math.floor(diffMs / 60_000);
+
+  if (diffMinutes < 1) return 'току-що';
+  if (diffMinutes < 60) return `преди ${diffMinutes} мин.`;
+
+  const diffHours = Math.floor(diffMinutes / 60);
+  if (diffHours < 24) return `преди ${diffHours} ч.`;
+
+  const diffDays = Math.floor(diffHours / 24);
+  if (diffDays === 1) return 'преди 1 ден';
+  if (diffDays <= 30) return `преди ${diffDays} дни`;
+  if (diffDays <= 364) return `преди ${Math.floor(diffDays / 30)} мес.`;
+
+  return `преди ${Math.floor(diffDays / 365)} г.`;
+}
+
+// ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
@@ -90,6 +114,10 @@ export function StatusTimeline({ statusHistory, currentStatus }: StatusTimelineP
                   hour: '2-digit',
                   minute: '2-digit',
                 })}
+                <span className="text-gray-400">
+                  {' · '}
+                  {formatRelativeTime(entry.createdAt)}
+                </span>
               </p>
               {entry.notes && (
                 <p className="text-xs text-gray-500 mt-1 italic">{entry.notes}</p>
