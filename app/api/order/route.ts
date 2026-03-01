@@ -218,7 +218,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // Subscription box types must go through POST /api/subscription
-    if (isSubscriptionBox(validatedBoxType)) {
+    // Exception: preorder conversions may carry a subscription box type
+    if (isSubscriptionBox(validatedBoxType) && !conversionToken) {
       return NextResponse.json(
         { error: 'Абонаментните кутии се поръчват чрез абонаментния процес.' },
         { status: 400 },
