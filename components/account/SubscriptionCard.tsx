@@ -184,7 +184,7 @@ export default function SubscriptionCard({
           <button
             type="button"
             onClick={() => setShowTimeline(!showTimeline)}
-            className="text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors flex items-center gap-1"
+            className="text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:ring-offset-2 rounded"
           >
             <span>{showTimeline ? '▲' : '▼'}</span>
             <span>Хронология</span>
@@ -238,7 +238,7 @@ export default function SubscriptionCard({
             {state.canEditPreferences && (
               <button
                 onClick={() => setActiveModal('preferences')}
-                className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+                className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:ring-offset-2"
               >
                 🔄 Промени предпочитания
               </button>
@@ -246,7 +246,7 @@ export default function SubscriptionCard({
             {state.canEditAddress && (
               <button
                 onClick={() => setActiveModal('address')}
-                className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+                className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:ring-offset-2"
               >
                 📍 Промени адрес
               </button>
@@ -254,7 +254,7 @@ export default function SubscriptionCard({
             {state.canChangeFrequency && (
               <button
                 onClick={() => setActiveModal('frequency')}
-                className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors"
+                className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:ring-offset-2"
               >
                 ⏱ Промени честота
               </button>
@@ -262,7 +262,7 @@ export default function SubscriptionCard({
             {state.canPause && (
               <button
                 onClick={() => setActiveModal('pause')}
-                className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg bg-yellow-50 text-yellow-700 hover:bg-yellow-100 transition-colors"
+                className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg bg-yellow-50 text-yellow-700 hover:bg-yellow-100 transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:ring-offset-2"
               >
                 ⏸ Пауза
               </button>
@@ -270,7 +270,7 @@ export default function SubscriptionCard({
             {state.canResume && (
               <button
                 onClick={() => setActiveModal('resume')}
-                className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg bg-green-50 text-green-700 hover:bg-green-100 transition-colors"
+                className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg bg-green-50 text-green-700 hover:bg-green-100 transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:ring-offset-2"
               >
                 ▶️ Подновяване
               </button>
@@ -278,7 +278,7 @@ export default function SubscriptionCard({
             {state.canCancel && (
               <button
                 onClick={() => setActiveModal('cancel')}
-                className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 transition-colors"
+                className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:ring-offset-2"
               >
                 ❌ Отказване
               </button>

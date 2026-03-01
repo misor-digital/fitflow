@@ -12,7 +12,7 @@ export default function ExpiringPreordersBanner({
   if (expiringCount <= 0) return null;
 
   return (
-    <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+    <div role="alert" className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
       <div className="flex items-start gap-2">
         <svg
           className="h-5 w-5 text-amber-500 mt-0.5 flex-shrink-0"
@@ -36,7 +36,7 @@ export default function ExpiringPreordersBanner({
       </div>
       <Link
         href="/account/orders?type=preorder"
-        className="text-sm font-medium text-amber-700 hover:text-amber-900 hover:underline whitespace-nowrap"
+        className="text-sm font-medium text-amber-700 hover:text-amber-900 hover:underline whitespace-nowrap focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:ring-offset-2 rounded"
       >
         Преглед &rarr;
       </Link>

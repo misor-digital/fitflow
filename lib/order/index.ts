@@ -122,6 +122,8 @@ export {
   PREORDER_STATUS_COLORS,
 } from './preorder-format';
 
+export { getStatusIcon } from './status-icons';
+
 // ============================================================================
 // Transformation
 // ============================================================================

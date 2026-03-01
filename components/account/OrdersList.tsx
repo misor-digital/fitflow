@@ -12,6 +12,7 @@ import {
   formatOrderNumber,
   formatShippingAddress,
   formatDeliveryMethodLabel,
+  getStatusIcon,
 } from '@/lib/order';
 import { formatPriceDual } from '@/lib/catalog';
 import type {
@@ -433,8 +434,9 @@ export function OrdersList({
             <div className="flex flex-wrap items-center gap-2">
               {/* Status pill */}
               <span
-                className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${ORDER_STATUS_BG[statusKey] ?? 'bg-gray-100 text-gray-600'}`}
+                className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${ORDER_STATUS_BG[statusKey] ?? 'bg-gray-100 text-gray-600'}`}
               >
+                {getStatusIcon(statusKey)}
                 {ORDER_STATUS_LABELS[statusKey] ?? order.status}
               </span>
 
@@ -481,7 +483,11 @@ export function OrdersList({
               <div className="flex items-center gap-3 text-xs text-gray-400">
                 {/* Step dots */}
                 {!isCancelled && (
-                  <div className="flex items-center gap-1">
+                  <div
+                    className="flex items-center gap-1"
+                    aria-label={`Статус на поръчка: ${ORDER_STATUS_LABELS[statusKey]}`}
+                    role="img"
+                  >
                     {STATUS_STEPS.map((step, i) => {
                       const historyEntry = history.find(
                         (h) => h.to_status === step,
@@ -494,12 +500,16 @@ export function OrdersList({
                         <div
                           key={step}
                           title={tooltipText}
-                          className={`w-2 h-2 rounded-full cursor-default ${
-                            i <= currentIndex
-                              ? 'bg-[var(--color-brand-orange)]'
-                              : 'bg-gray-200'
-                          }`}
-                        />
+                          className="flex items-center justify-center w-6 h-6 cursor-default"
+                        >
+                          <div
+                            className={`w-2 h-2 rounded-full ${
+                              i <= currentIndex
+                                ? 'bg-[var(--color-brand-orange)]'
+                                : 'bg-gray-200'
+                            }`}
+                          />
+                        </div>
                       );
                     })}
                   </div>
@@ -666,7 +676,7 @@ export function OrdersList({
   return (
     <div>
       {/* Filter / search bar */}
-      <div className="flex flex-wrap gap-3 items-center mb-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center mb-4">
         {/* Search input */}
         <div className="relative w-full sm:w-64">
           <svg
@@ -676,6 +686,7 @@ export function OrdersList({
             viewBox="0 0 24 24"
             strokeWidth={2}
             stroke="currentColor"
+            aria-hidden="true"
           >
             <path
               strokeLinecap="round"
@@ -688,7 +699,8 @@ export function OrdersList({
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
             placeholder="Търси по номер на поръчка..."
-            className="border rounded-lg pl-9 pr-3 py-2 text-sm w-full focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:border-transparent outline-none"
+            aria-label="Търсене по номер на поръчка"
+            className="border rounded-lg pl-9 pr-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:ring-offset-2"
           />
         </div>
 
@@ -715,7 +727,9 @@ export function OrdersList({
           <button
             type="button"
             onClick={() => setStatusDropdownOpen((prev) => !prev)}
-            className="text-sm border rounded-lg px-3 py-2 hover:border-gray-300 transition-colors flex items-center gap-1"
+            aria-haspopup="true"
+            aria-expanded={statusDropdownOpen}
+            className="text-sm border rounded-lg px-3 py-2 hover:border-gray-300 transition-colors flex items-center gap-1 focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:ring-offset-2"
           >
             Статус
             {selectedStatuses.size > 0 && (
@@ -730,6 +744,7 @@ export function OrdersList({
               viewBox="0 0 24 24"
               strokeWidth={2}
               stroke="currentColor"
+              aria-hidden="true"
             >
               <path
                 strokeLinecap="round"
@@ -739,10 +754,19 @@ export function OrdersList({
             </svg>
           </button>
           {statusDropdownOpen && (
-            <div className="absolute z-10 bg-white border rounded-lg shadow-lg p-3 mt-1 min-w-[200px]">
+            <div
+              className="absolute z-10 bg-white border rounded-lg shadow-lg p-3 mt-1 min-w-[200px]"
+              role="listbox"
+              aria-label="Филтър по статус"
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') setStatusDropdownOpen(false);
+              }}
+            >
               {ALL_ORDER_STATUSES.map((s) => (
                 <label
                   key={s}
+                  role="option"
+                  aria-selected={selectedStatuses.has(s)}
                   className="flex items-center gap-2 py-1 cursor-pointer text-sm"
                 >
                   <input
@@ -753,6 +777,7 @@ export function OrdersList({
                   />
                   <span
                     className={`inline-block w-2 h-2 rounded-full ${STATUS_DOT_COLOR[s]}`}
+                    aria-hidden="true"
                   />
                   {ORDER_STATUS_LABELS[s]}
                 </label>
@@ -768,7 +793,8 @@ export function OrdersList({
             setSortDirection((prev) => (prev === 'desc' ? 'asc' : 'desc'));
             setVisibleCount(PAGE_SIZE);
           }}
-          className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1 transition-colors"
+          aria-label={sortDirection === 'desc' ? 'Сортирай по дата — най-нови първо' : 'Сортирай по дата — най-стари първо'}
+          className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1 transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:ring-offset-2 rounded-lg px-2 py-1"
         >
           {sortDirection === 'desc' ? 'Най-нови' : 'Най-стари'}
           <svg
@@ -797,15 +823,17 @@ export function OrdersList({
       </div>
 
       {/* Tab bar */}
-      <div className="flex gap-4 mb-6 border-b pb-3 overflow-x-auto">
+      <div className="flex gap-4 mb-6 border-b pb-3 overflow-x-auto" role="tablist" aria-label="Тип поръчки">
         {TABS.filter(({ key }) => key !== 'preorder' || preorders.length > 0).map(({ key, label }) => {
           const isActive = activeFilter === key;
           return (
             <button
               key={key}
               type="button"
+              role="tab"
+              aria-selected={isActive}
               onClick={() => { handleFilterChange(key); setVisibleCount(PAGE_SIZE); }}
-              className={`text-sm font-medium pb-1 whitespace-nowrap transition-colors ${
+              className={`text-sm font-medium pb-1 whitespace-nowrap transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:ring-offset-2 rounded-sm ${
                 isActive
                   ? 'text-[var(--color-brand-orange)] border-b-2 border-[var(--color-brand-orange)]'
                   : 'text-gray-500 hover:text-[var(--color-brand-navy)]'
@@ -824,8 +852,7 @@ export function OrdersList({
           <button
             type="button"
             onClick={clearAllFilters}
-            className="mt-3 inline-block text-[var(--color-brand-orange)] font-medium hover:underline"
-          >
+            className="mt-3 inline-block text-[var(--color-brand-orange)] font-medium hover:underline focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:ring-offset-2 rounded">
             Изчисти филтри
           </button>
         </div>
@@ -837,6 +864,10 @@ export function OrdersList({
           <p className="text-xs text-gray-400 mb-3">
             Показани {Math.min(visibleCount, items.length)} от {items.length} поръчки
           </p>
+          {/* Screen reader live region */}
+          <div aria-live="polite" className="sr-only">
+            Показани {items.length} поръчки
+          </div>
 
           <div className="space-y-4">
             {items.slice(0, visibleCount).map((item) =>
@@ -851,7 +882,7 @@ export function OrdersList({
             <button
               type="button"
               onClick={() => setVisibleCount((prev) => prev + PAGE_SIZE)}
-              className="w-full py-3 mt-4 text-sm font-medium text-[var(--color-brand-orange)] bg-orange-50 hover:bg-orange-100 rounded-lg transition-colors"
+              className="w-full py-3 mt-4 text-sm font-medium text-[var(--color-brand-orange)] bg-orange-50 hover:bg-orange-100 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:ring-offset-2"
             >
               Покажи още ({items.length - visibleCount} оставащи)
             </button>

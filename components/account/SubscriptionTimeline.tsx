@@ -108,7 +108,7 @@ export default function SubscriptionTimeline(props: SubscriptionTimelineProps) {
           type="button"
           onClick={onLoadOrders}
           disabled={loadingOrders}
-          className="text-xs text-[var(--color-brand-orange)] hover:underline disabled:opacity-50"
+          className="text-xs text-[var(--color-brand-orange)] hover:underline disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:ring-offset-2 rounded"
         >
           {loadingOrders ? 'Зареждане…' : 'Зареди хронология'}
         </button>
@@ -120,13 +120,13 @@ export default function SubscriptionTimeline(props: SubscriptionTimelineProps) {
 
   return (
     <div className="overflow-x-auto py-3">
-      <div className="flex items-start gap-0 min-w-max px-2">
+      <div className="flex items-start gap-0 min-w-max px-2" role="list" aria-label="Хронология на абонамент">
         {events.map((event, idx) => {
           const isLast = idx === events.length - 1;
           const isEllipsis = event.type === 'ellipsis';
 
           return (
-            <div key={event.key} className="flex items-start">
+            <div key={event.key} className="flex items-start" role="listitem">
               {/* Dot + label column */}
               <div className="flex flex-col items-center" style={{ minWidth: '3rem' }}>
                 {isEllipsis ? (

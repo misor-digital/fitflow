@@ -36,7 +36,7 @@ export function CancelRequestButton({ orderNumber }: CancelRequestButtonProps) {
 
   if (submitted) {
     return (
-      <p className="text-sm text-green-700">
+      <p className="text-sm text-green-700" role="status" aria-live="polite">
         Заявката за отказ е изпратена. Ще получите потвърждение по имейл.
       </p>
     );
@@ -47,7 +47,7 @@ export function CancelRequestButton({ orderNumber }: CancelRequestButtonProps) {
       type="button"
       onClick={handleCancel}
       disabled={loading}
-      className="border border-red-200 text-red-600 hover:bg-red-50 px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50 transition-colors"
+      className="border border-red-200 text-red-600 hover:bg-red-50 px-4 py-2 rounded-lg text-sm font-medium disabled:opacity-50 transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:ring-offset-2"
     >
       {loading ? 'Изпращане…' : 'Заявка за отказ'}
     </button>

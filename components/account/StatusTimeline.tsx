@@ -57,14 +57,14 @@ export function StatusTimeline({ statusHistory, currentStatus }: StatusTimelineP
   const isCancelled = currentStatus === 'cancelled' || currentStatus === 'refunded';
 
   return (
-    <div className="relative">
+    <div className="relative" role="list" aria-label="Хронология на статус">
       {/* Completed steps from history */}
       {statusHistory.map((entry, i) => {
         const isLast = i === statusHistory.length - 1;
         const statusColor = ORDER_STATUS_COLORS[entry.toStatus];
 
         return (
-          <div key={i} className="relative flex gap-4 pb-6 last:pb-0">
+          <div key={i} className="relative flex gap-4 pb-6 last:pb-0" role="listitem">
             {/* Timeline line */}
             {(!isLast || (!isCancelled && currentStatusIndex >= 0 && currentStatusIndex < STATUS_ORDER.length - 1)) && (
               <div className="absolute left-[11px] top-7 bottom-0 w-0.5 bg-gray-200" />
@@ -133,7 +133,7 @@ export function StatusTimeline({ statusHistory, currentStatus }: StatusTimelineP
         currentStatusIndex < STATUS_ORDER.length - 1 && (
           <div className="mt-2">
             {STATUS_ORDER.slice(currentStatusIndex + 1).map((futureStatus, i) => (
-              <div key={futureStatus} className="relative flex gap-4 pb-6 last:pb-0">
+              <div key={futureStatus} className="relative flex gap-4 pb-6 last:pb-0" role="listitem">
                 {i < STATUS_ORDER.length - currentStatusIndex - 2 && (
                   <div className="absolute left-[11px] top-7 bottom-0 w-0.5 bg-gray-100" />
                 )}

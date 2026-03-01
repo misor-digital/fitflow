@@ -148,7 +148,7 @@ export default function AccountNav() {
                     <Link
                       href={href}
                       aria-current={active ? 'page' : undefined}
-                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:ring-offset-2 ${
                         active
                           ? 'bg-orange-50 text-[var(--color-brand-orange)] border-l-[3px] border-[var(--color-brand-orange)] pl-[9px]'
                           : 'text-gray-600 hover:bg-gray-50 hover:text-[var(--color-brand-navy)]'
@@ -177,7 +177,7 @@ export default function AccountNav() {
               key={href}
               href={href}
               aria-current={active ? 'page' : undefined}
-              className={`flex flex-col items-center gap-1 px-3 py-2 min-w-[4.5rem] snap-start rounded-lg text-xs font-medium transition-colors ${
+              className={`flex flex-col items-center gap-1 px-3 py-2 min-w-[4.5rem] snap-start rounded-lg text-xs font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:ring-offset-2 ${
                 active
                   ? 'bg-orange-50 text-[var(--color-brand-orange)]'
                   : 'text-gray-500 hover:text-[var(--color-brand-navy)]'
