@@ -1,5 +1,55 @@
 # fitflow
 
+## 1.1.0
+
+### Minor Changes
+
+- ## 1.1.0
+
+  ### Minor Changes
+
+  - Post-launch improvements: delivery tracking, branded emails, customer orders, and admin tools.
+
+    **Delivery confirmation**
+
+    - Email reminders after shipping with one-click confirm link (signed token)
+    - Daily cron auto-confirms unresponded deliveries
+    - Admin indicators for reminder status and auto-confirm
+
+    **Branded emails**
+
+    - Shared email layout with FitFlow design tokens and Bulgarian labels
+    - Auth emails (confirmation, password reset) sent via custom API routes instead of Supabase defaults
+    - Code-controlled subscription templates replacing Brevo-hosted ones
+
+    **Customer orders page**
+
+    - Full order history under `/account/orders` with detail views and status timelines
+    - Preorder detail page, cancel request button, guest preorder linking
+
+    **Admin customers & order tools**
+
+    - Paginated customers listing with stats cards, filters, and masked PII
+    - Bulk order status updates and apply-promo-to-existing-order action
+
+    **Auth**
+
+    - Magic-link and passwordless registration flows
+    - Password visibility toggle component
+
+    **Performance**
+
+    - Server-side caching (`unstable_cache` + tag invalidation)
+    - 8s fetch timeout with graceful degradation
+    - Batched auth lookups via `get_user_emails_by_ids` RPC
+    - ISR for product pages
+
+    **Fixes & housekeeping**
+
+    - Lint cleanup, centralised order transitions, dropdown overflow fix, scroll fix on submit, updated docs
+
+    **Migrations**: `create_order_price_history`, `add_delivery_confirmation`, `delivery_confirmation_rpc`, `increment_campaign_counters`, `get_user_emails_by_ids`
+
 ## 1.0.0
 
 ### Major Changes
