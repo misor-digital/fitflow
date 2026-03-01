@@ -48,7 +48,7 @@ export default function AdminCustomerPanel({
     } catch {
       setStatus('ready'); // Lookup failed, allow manual creation
     }
-  }, []);
+  }, [fullName]);
 
   // On mount — auto-lookup
   useEffect(() => {

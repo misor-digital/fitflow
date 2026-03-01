@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition, useMemo, useCallback, useRef } from 'react';
+import { useState, useTransition, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import type { OrderRow, OrderStatus, OrderStatusHistoryRow } from '@/lib/supabase/types';
 import {

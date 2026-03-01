@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useTransition, useCallback } from 'react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import type {
   DeliveryCycleRow,
@@ -546,9 +547,11 @@ export function CycleDetailView({
                 {/* Image thumbnail */}
                 <div className="w-14 h-14 rounded-lg bg-gray-100 flex-shrink-0 overflow-hidden">
                   {item.image_url ? (
-                    <img
+                    <Image
                       src={item.image_url}
                       alt={item.name}
+                      width={56}
+                      height={56}
                       className="w-full h-full object-cover"
                     />
                   ) : (
@@ -808,9 +811,11 @@ function ItemModal({
 
               {imageUrl && (
                 <div className="mb-2 relative inline-block">
-                  <img
+                  <Image
                     src={imageUrl}
                     alt="Preview"
+                    width={96}
+                    height={96}
                     className="w-24 h-24 object-cover rounded-lg border"
                   />
                   <button

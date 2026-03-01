@@ -120,7 +120,6 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
 
     fetchAddresses();
     return () => controller.abort();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
   // Pre-fill contact info from auth profile — but NOT during a conversion
