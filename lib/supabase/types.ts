@@ -1273,6 +1273,10 @@ export interface Database {
         Args: { p_type: string; p_count?: number };
         Returns: { current_total: number; current_limit: number; is_over_limit: boolean }[];
       };
+      get_orders_needing_delivery_action: {
+        Args: { delay_days: number };
+        Returns: { order_id: string; reminder_count: number; last_sent_at: string | null }[];
+      };
     };
     Enums: {
       box_type: BoxType;

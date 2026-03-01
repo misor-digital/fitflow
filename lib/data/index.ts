@@ -178,6 +178,15 @@ export {
 
 export { initializeEmailSystem } from './email-init';
 
+// Delivery confirmation reminders
+export {
+  recordReminderSent,
+  getRemindersByOrder,
+  getLatestReminderByOrder,
+  getOrdersNeedingDeliveryAction,
+  type OrderNeedingAction,
+} from './delivery-reminders';
+
 // Customer data
 export {
   getCustomersPaginated,
