@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition, useMemo, useCallback } from 'react';
+import { useState, useTransition, useMemo, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import type { OrderRow, OrderStatus, OrderStatusHistoryRow } from '@/lib/supabase/types';
 import {
@@ -128,6 +128,7 @@ export function OrdersTable({
   const router = useRouter();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [statusDropdownId, setStatusDropdownId] = useState<string | null>(null);
+  const [dropdownRect, setDropdownRect] = useState<{ top: number; left: number } | null>(null);
   const [confirmModal, setConfirmModal] = useState<{
     orderId: string;
     orderNumber: string;
@@ -227,8 +228,16 @@ export function OrdersTable({
   }
 
   // ---------- Status update ----------
-  function openStatusDropdown(orderId: string) {
-    setStatusDropdownId(prev => (prev === orderId ? null : orderId));
+  function openStatusDropdown(orderId: string, e: React.MouseEvent<HTMLButtonElement>) {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setStatusDropdownId(prev => {
+      if (prev === orderId) {
+        setDropdownRect(null);
+        return null;
+      }
+      setDropdownRect({ top: rect.bottom + 4, left: rect.left });
+      return orderId;
+    });
   }
 
   function selectNewStatus(order: OrderRow, newStatus: OrderStatus) {
@@ -360,9 +369,9 @@ export function OrdersTable({
                     </td>
 
                     {/* Status badge + dropdown */}
-                    <td className="py-3 px-4 relative">
+                    <td className="py-3 px-4">
                       <button
-                        onClick={() => transitions.length > 0 ? openStatusDropdown(order.id) : undefined}
+                        onClick={(e) => transitions.length > 0 ? openStatusDropdown(order.id, e) : undefined}
                         className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full ${STATUS_BG_COLORS[order.status]} ${
                           transitions.length > 0 ? 'cursor-pointer hover:opacity-80' : 'cursor-default'
                         }`}
@@ -375,22 +384,6 @@ export function OrdersTable({
                           </svg>
                         )}
                       </button>
-
-                      {/* Status dropdown */}
-                      {statusDropdownId === order.id && transitions.length > 0 && (
-                        <div className="absolute z-20 top-full left-4 mt-1 bg-white border rounded-lg shadow-lg py-1 min-w-[160px]">
-                          {transitions.map(s => (
-                            <button
-                              key={s}
-                              onClick={() => selectNewStatus(order, s)}
-                              className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2"
-                            >
-                              <span className={`w-2 h-2 rounded-full ${STATUS_BG_COLORS[s].split(' ')[0]}`} />
-                              {ORDER_STATUS_LABELS[s]}
-                            </button>
-                          ))}
-                        </div>
-                      )}
                     </td>
 
                     {/* Price */}
@@ -549,10 +542,33 @@ export function OrdersTable({
         </div>
       )}
 
-      {/* Click-away handler for dropdown */}
-      {statusDropdownId && (
-        <div className="fixed inset-0 z-10" onClick={() => setStatusDropdownId(null)} />
-      )}
+      {/* Status dropdown (rendered outside the table to avoid overflow clipping) */}
+      {statusDropdownId && dropdownRect && (() => {
+        const order = orders.find(o => o.id === statusDropdownId);
+        if (!order) return null;
+        const transitions = ALLOWED_TRANSITIONS[order.status] ?? [];
+        if (transitions.length === 0) return null;
+        return (
+          <>
+            <div className="fixed inset-0 z-40" onClick={() => { setStatusDropdownId(null); setDropdownRect(null); }} />
+            <div
+              className="fixed z-50 bg-white border rounded-lg shadow-lg py-1 min-w-[160px]"
+              style={{ top: dropdownRect.top, left: dropdownRect.left }}
+            >
+              {transitions.map(s => (
+                <button
+                  key={s}
+                  onClick={() => selectNewStatus(order, s)}
+                  className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2"
+                >
+                  <span className={`w-2 h-2 rounded-full ${STATUS_BG_COLORS[s].split(' ')[0]}`} />
+                  {ORDER_STATUS_LABELS[s]}
+                </button>
+              ))}
+            </div>
+          </>
+        );
+      })()}
 
       {/* Confirmation modal */}
       {confirmModal && (
