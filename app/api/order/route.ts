@@ -360,6 +360,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       userId = onBehalfOfUserId;
     }
 
+    // Fetch profile phone as fallback for customer_phone (defense-in-depth)
+    let profilePhone: string | null = null;
+    if (userId) {
+      const { data: profile } = await supabaseAdmin
+        .from('user_profiles')
+        .select('phone')
+        .eq('id', userId)
+        .single();
+      profilePhone = profile?.phone ?? null;
+    }
+
     // ------------------------------------------------------------------
     // Step 4: Handle Conversion Token (if present)
     // ------------------------------------------------------------------
@@ -537,7 +548,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       user_id: userId,
       customer_email: email.trim().toLowerCase(),
       customer_full_name: fullName.trim(),
-      customer_phone: phone?.trim() || null,
+      customer_phone: phone?.trim() || profilePhone || null,
       shipping_address: addressSnapshot,
       address_id: addressId,
       delivery_method: effectiveDeliveryMethod,
