@@ -75,3 +75,15 @@ export const ORDER_EDIT_ROLES: ReadonlySet<StaffRole> = new Set([
   'admin',
   'manager',
 ]);
+
+/**
+ * Roles that can view the customer listing page.
+ * Mirrors ORDER_VIEW_ROLES — separate constant allows future divergence.
+ */
+export const CUSTOMER_VIEW_ROLES: ReadonlySet<StaffRole> = new Set([
+  'super_admin',
+  'admin',
+  'manager',
+  'support',
+  'warehouse',
+]);

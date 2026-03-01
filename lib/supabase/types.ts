@@ -269,6 +269,32 @@ export interface UserProfileUpdate {
 }
 
 // ============================================================================
+// Admin Customer Listing (aggregated view)
+// ============================================================================
+
+/**
+ * Customer profile enriched with aggregated stats and email.
+ * Used exclusively by the admin customer listing page.
+ * Personal fields (full_name, email, phone) are masked in the UI.
+ */
+export interface CustomerWithStats {
+  id: string;
+  full_name: string;
+  email: string;
+  phone: string | null;
+  avatar_url: string | null;
+  is_subscriber: boolean;
+  created_at: string;
+  updated_at: string;
+  /** Total number of orders placed by this customer */
+  order_count: number;
+  /** Whether the customer has at least one active subscription */
+  has_active_subscription: boolean;
+  /** ISO timestamp of the most recent order, or null if no orders */
+  last_order_date: string | null;
+}
+
+// ============================================================================
 // Addresses Table
 // ============================================================================
 
