@@ -66,6 +66,16 @@ export default function RegisterForm() {
       return;
     }
 
+    // Send branded confirmation email via our API (fire-and-forget)
+    fetch('/api/auth/send-confirmation', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, fullName: fullName.trim() }),
+    }).catch(() => {
+      // Non-blocking — Supabase's built-in email serves as fallback
+      console.warn('Failed to send branded confirmation email');
+    });
+
     setSuccess(true);
     setLoading(false);
   }

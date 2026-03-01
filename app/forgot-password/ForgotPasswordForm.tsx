@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { createClient } from '@/lib/supabase/browser';
 
 export default function ForgotPasswordForm() {
   const [email, setEmail] = useState('');
@@ -15,19 +14,25 @@ export default function ForgotPasswordForm() {
     setLoading(true);
     setError(null);
 
-    const supabase = createClient();
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/callback?next=/reset-password`,
-    });
+    try {
+      const res = await fetch('/api/auth/send-password-reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
 
-    if (error) {
+      if (!res.ok) {
+        setError('Грешка при изпращане на линк. Опитайте отново.');
+        setLoading(false);
+        return;
+      }
+
+      setSuccess(true);
+    } catch {
       setError('Грешка при изпращане на линк. Опитайте отново.');
+    } finally {
       setLoading(false);
-      return;
     }
-
-    setSuccess(true);
-    setLoading(false);
   }
 
   if (success) {

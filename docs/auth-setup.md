@@ -89,3 +89,27 @@ pnpm seed:admin
 | `User already exists` | The script will attempt to update the existing user's role. This is safe to re-run. |
 | Connection errors / `ECONNREFUSED` | Verify `NEXT_PUBLIC_SUPABASE_URL` is correct and the Supabase project is running. |
 | Profile not upgraded | The script waits briefly for the trigger. If it fails, re-run the script to retry. |
+
+## Custom Auth Emails via Brevo
+
+FitFlow sends its own branded auth emails instead of using Supabase's built-in templates.
+
+### How It Works
+
+1. **Email Confirmation**: `RegisterForm.tsx` calls `supabase.auth.signUp()` to create the user, then fires a request to `POST /api/auth/send-confirmation`. The API route uses `supabase.auth.admin.generateLink({ type: 'signup' })` to generate a verification token and sends a branded email through Brevo.
+
+2. **Password Reset**: `ForgotPasswordForm.tsx` calls `POST /api/auth/send-password-reset` instead of `supabase.auth.resetPasswordForEmail()`. The API route uses `supabase.auth.admin.generateLink({ type: 'recovery' })`.
+
+3. **Magic Link Registration**: Already handled by `POST /api/auth/register-magic` (sends via Brevo).
+
+4. **Magic Link Login**: Already handled by `POST /api/auth/magic-link` (sends via Brevo).
+
+### Supabase Dashboard Configuration
+
+To prevent duplicate emails from Supabase's built-in system:
+
+1. Go to **Authentication → Email Templates** in the Supabase Dashboard
+2. Consider disabling automatic confirmation emails if using `generateLink` exclusively
+3. Or configure **Custom SMTP** in Supabase to route through Brevo SMTP for consistency
+
+> **Note**: Until Supabase's built-in emails are disabled, users may receive two confirmation emails on registration (one from Supabase, one branded from Brevo). The branded one should be preferred.
