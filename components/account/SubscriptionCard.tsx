@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import type { SubscriptionWithDelivery } from '@/lib/subscription';
 import {
   computeSubscriptionState,
@@ -116,6 +117,11 @@ export default function SubscriptionCard({
             <h3 className="text-lg font-semibold text-[var(--color-brand-navy)]">
               {formatSubscriptionSummary(subscription, { [subscription.box_type]: boxTypeName })}
             </h3>
+            {state.isActive && upcomingCycle && (
+              <p className="text-xs text-gray-500 mt-1">
+                Следваща доставка: <span className="font-medium text-gray-700">{formatDeliveryDate(upcomingCycle.deliveryDate)}</span>
+              </p>
+            )}
           </div>
           <span
             className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${SUBSCRIPTION_STATUS_COLORS[subscription.status]}`}
@@ -172,20 +178,31 @@ export default function SubscriptionCard({
         )}
 
         {/* Cancelled/expired info */}
-        {(state.isCancelled || subscription.status === 'expired') && (
-          <div className="px-5 pb-4">
-            <p className="text-sm text-gray-500">
-              {state.isCancelled && subscription.cancelled_at
-                ? `Отказан на ${formatDeliveryDate(subscription.cancelled_at)}`
-                : subscription.status === 'expired'
-                  ? 'Изтекъл'
-                  : ''}
-            </p>
-            {subscription.cancellation_reason && (
-              <p className="text-sm text-gray-400 mt-1">
-                Причина: {subscription.cancellation_reason}
-              </p>
-            )}
+        {state.isCancelled && (
+          <div className="mx-5 mb-4 bg-red-50 border border-red-100 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <svg className="w-5 h-5 text-red-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              <div>
+                <p className="text-sm font-medium text-red-800">
+                  Абонаментът е отказан{subscription.cancelled_at ? ` на ${formatDeliveryDate(subscription.cancelled_at)}` : ''}
+                </p>
+                {subscription.cancellation_reason && (
+                  <p className="text-sm text-red-600 mt-1">Причина: {subscription.cancellation_reason}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+        {!state.isCancelled && subscription.status === 'expired' && (
+          <div className="mx-5 mb-4 bg-gray-50 border border-gray-200 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <svg className="w-5 h-5 text-gray-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="text-sm font-medium text-gray-600">Абонаментът е изтекъл</p>
+            </div>
           </div>
         )}
 
@@ -249,13 +266,42 @@ export default function SubscriptionCard({
             onClick={loadPastOrders}
             className="w-full px-5 py-3 text-left text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors flex items-center justify-between"
           >
-            <span>Поръчки от абонамента</span>
+            <span>Поръчки от абонамента{pastOrders !== null ? ` (${pastOrders.length})` : ''}</span>
             <span className="text-xs">{showPastOrders ? '▲' : '▼'}</span>
           </button>
 
           {loadingOrders && (
             <div className="px-5 pb-4">
               <p className="text-sm text-gray-400">Зареждане...</p>
+            </div>
+          )}
+
+          {/* Inline preview: always show first 2 orders when loaded */}
+          {pastOrders !== null && pastOrders.length > 0 && !showPastOrders && (
+            <div className="px-5 pb-3">
+              <ul className="space-y-1">
+                {pastOrders.slice(0, 2).map((order) => (
+                  <li key={order.id} className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">
+                      #{order.order_number} · {new Date(order.created_at).toLocaleDateString('bg-BG')} · {order.status}
+                    </span>
+                    <Link
+                      href={`/account/orders/${encodeURIComponent(order.order_number)}`}
+                      className="text-[var(--color-brand-orange)] hover:underline text-xs"
+                    >
+                      Детайли →
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+              {pastOrders.length > 2 && (
+                <button
+                  onClick={() => setShowPastOrders(true)}
+                  className="text-xs text-[var(--color-brand-orange)] hover:underline mt-2"
+                >
+                  Виж всички ({pastOrders.length})
+                </button>
+              )}
             </div>
           )}
 
@@ -273,12 +319,12 @@ export default function SubscriptionCard({
                           {new Date(order.created_at).toLocaleDateString('bg-BG')}
                         </span>
                       </div>
-                      <a
-                        href={`/order/track?orderNumber=${order.order_number}&email=${encodeURIComponent(order.email)}`}
+                      <Link
+                        href={`/account/orders/${encodeURIComponent(order.order_number)}`}
                         className="text-[var(--color-brand-orange)] hover:underline text-xs"
                       >
-                        Проследи →
-                      </a>
+                        Детайли →
+                      </Link>
                     </li>
                   ))}
                 </ul>

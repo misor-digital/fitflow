@@ -60,14 +60,33 @@ export function SubscriptionDashboard({
   // Empty state
   if (subscriptions.length === 0) {
     return (
-      <div className="text-center py-16">
+      <div className="text-center py-16 max-w-md mx-auto">
         <div className="text-6xl mb-4">📦</div>
         <h2 className="text-xl font-semibold text-[var(--color-brand-navy)] mb-2">
           Нямате активни абонаменти.
         </h2>
-        <p className="text-gray-500 mb-6">
+        <p className="text-gray-500 mb-4">
           Абонирайте се за месечна кутия и получете FitFlow доставка до вратата ви.
         </p>
+        {/* Benefits list */}
+        <div className="text-left bg-gray-50 rounded-lg p-4 mb-6 space-y-2">
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <span className="text-green-500">✓</span>
+            <span>Спестете до 15% спрямо еднократни покупки</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <span className="text-green-500">✓</span>
+            <span>Автоматична доставка всеки месец или на 3 месеца</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <span className="text-green-500">✓</span>
+            <span>Лесно управление — пауза или отказ по всяко време</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <span className="text-green-500">✓</span>
+            <span>Персонализирайте по вашите предпочитания</span>
+          </div>
+        </div>
         <Link
           href="/order"
           className="inline-block bg-[var(--color-brand-orange)] text-white px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity"
