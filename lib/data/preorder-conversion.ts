@@ -112,6 +112,30 @@ export async function getPreorderConversionStatus(
 // ============================================================================
 
 /**
+ * Get a single preorder by its UUID.
+ * Used on the preorder detail page.
+ */
+export const getPreorderById = cache(
+  async (preorderId: string): Promise<Preorder | null> => {
+    const { data, error } = await supabaseAdmin
+      .from('preorders')
+      .select('*')
+      .eq('id', preorderId)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return null;
+      }
+      console.error('Error fetching preorder by ID:', error);
+      return null;
+    }
+
+    return data as Preorder;
+  },
+);
+
+/**
  * Get all preorders linked to a specific user, ordered by creation date (newest first).
  * Used on the customer account orders page.
  * Returns all preorders regardless of conversion status.

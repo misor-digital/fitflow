@@ -7,6 +7,8 @@ import {
   ORDER_STATUS_LABELS,
   ORDER_TYPE_LABELS,
   ORDER_TYPE_COLORS,
+  PREORDER_STATUS_LABELS,
+  PREORDER_STATUS_COLORS,
   formatOrderNumber,
   formatShippingAddress,
   formatDeliveryMethodLabel,
@@ -16,7 +18,6 @@ import type {
   OrderRow,
   Preorder,
   OrderStatus,
-  PreorderConversionStatus,
   OrderStatusHistoryRow,
 } from '@/lib/supabase/types';
 
@@ -100,22 +101,6 @@ const VALID_FILTERS = new Set<string>(['preorder', 'subscription', 'onetime']);
 function isValidFilter(value: string | null): value is OrderFilter {
   return value !== null && VALID_FILTERS.has(value);
 }
-
-// ---------------------------------------------------------------------------
-// Preorder status labels & colors
-// ---------------------------------------------------------------------------
-
-const PREORDER_STATUS_LABELS: Record<PreorderConversionStatus, string> = {
-  pending: 'Изчакваща',
-  converted: 'Конвертирана',
-  expired: 'Изтекла',
-};
-
-const PREORDER_STATUS_COLORS: Record<PreorderConversionStatus, string> = {
-  pending: 'bg-yellow-100 text-yellow-700',
-  converted: 'bg-green-100 text-green-700',
-  expired: 'bg-gray-100 text-gray-500',
-};
 
 
 
@@ -604,21 +589,72 @@ export function OrdersList({
           )}
         </div>
 
-        {/* Linked order link */}
-        {preorder.converted_to_order_id && (() => {
-          const linkedOrder = orders.find((o) => o.id === preorder.converted_to_order_id);
-          if (!linkedOrder) return null;
-          return (
-            <div className="mt-3 text-sm">
-              <Link
-                href={`/account/orders/${encodeURIComponent(linkedOrder.order_number)}`}
-                className="text-[var(--color-brand-orange)] font-medium hover:underline"
-              >
-                Виж поръчка &rarr;
-              </Link>
-            </div>
-          );
+        {/* Conversion CTA / expiry / linked order */}
+        {(() => {
+          const now = new Date();
+          const expiresAt = preorder.conversion_token_expires_at
+            ? new Date(preorder.conversion_token_expires_at)
+            : null;
+          const isExpired = expiresAt ? expiresAt < now : false;
+          const daysRemaining = expiresAt
+            ? Math.ceil((expiresAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+            : null;
+
+          if (preorder.conversion_status === 'pending' && !isExpired) {
+            return (
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <Link
+                  href={`/order/convert?token=${preorder.conversion_token}`}
+                  className="bg-[var(--color-brand-orange)] text-white text-xs px-3 py-1.5 rounded-lg hover:opacity-90 inline-block"
+                >
+                  Конвертирай &rarr;
+                </Link>
+                {daysRemaining !== null && daysRemaining <= 14 && (
+                  <span className="bg-amber-100 text-amber-700 text-xs px-2 py-0.5 rounded-full">
+                    Изтича след {daysRemaining} дни
+                  </span>
+                )}
+              </div>
+            );
+          }
+
+          if (preorder.conversion_status === 'pending' && isExpired) {
+            return (
+              <div className="mt-3">
+                <span className="bg-gray-100 text-gray-500 text-xs px-2 py-0.5 rounded-full">
+                  Изтекла
+                </span>
+              </div>
+            );
+          }
+
+          if (preorder.converted_to_order_id) {
+            const linkedOrder = orders.find((o) => o.id === preorder.converted_to_order_id);
+            if (!linkedOrder) return null;
+            return (
+              <div className="mt-3 text-sm">
+                <Link
+                  href={`/account/orders/${encodeURIComponent(linkedOrder.order_number)}`}
+                  className="text-[var(--color-brand-orange)] font-medium hover:underline"
+                >
+                  Виж поръчка &rarr;
+                </Link>
+              </div>
+            );
+          }
+
+          return null;
         })()}
+
+        {/* Detail link */}
+        <div className="mt-3 text-sm">
+          <Link
+            href={`/account/orders/preorder/${preorder.id}`}
+            className="text-[var(--color-brand-orange)] font-medium hover:underline text-sm"
+          >
+            Детайли &rarr;
+          </Link>
+        </div>
       </div>
     );
   }
