@@ -21,6 +21,8 @@ const NAV_ITEMS: Array<{
     allowedRoles: ['super_admin', 'admin', 'manager', 'support', 'warehouse'] },
   { href: '/admin/subscriptions', label: 'Абонаменти', icon: '🔄',
     allowedRoles: ['super_admin', 'admin', 'manager', 'support', 'warehouse'] },
+  { href: '/admin/customers', label: 'Клиенти', icon: '👥',
+    allowedRoles: ['super_admin', 'admin', 'manager', 'support', 'warehouse'] },
   { href: '/admin/delivery', label: 'Доставки', icon: '📅',
     allowedRoles: ['super_admin', 'admin', 'manager', 'support', 'warehouse'] },
   { href: '/admin/staff', label: 'Служители', icon: '👥',
