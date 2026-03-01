@@ -402,6 +402,7 @@ export interface OrderRow {
   order_type: string; // OrderType
   subscription_id: string | null;
   converted_from_preorder_id: string | null;
+  shipped_at: string | null;       // TIMESTAMPTZ as ISO string, set when status → shipped
   created_at: string;
   updated_at: string;
 }
@@ -441,6 +442,7 @@ export interface OrderUpdate {
   status?: OrderStatus;
   shipping_address?: ShippingAddressSnapshot;
   address_id?: string | null;
+  shipped_at?: string | null;
   // Pricing / promo fields (admin-only mutations via applyPromoToOrder)
   promo_code?: string | null;
   discount_percent?: number | null;
@@ -504,6 +506,23 @@ export interface OrderStatusHistoryInsert {
   to_status: OrderStatus;
   changed_by?: string | null;
   notes?: string | null;
+}
+
+// ============================================================================
+// Delivery Confirmation Reminders Table
+// ============================================================================
+
+export interface DeliveryConfirmationReminderRow {
+  id: string;
+  order_id: string;
+  reminder_number: number;         // 1, 2, or 3
+  sent_at: string;                 // TIMESTAMPTZ as ISO string
+}
+
+export interface DeliveryConfirmationReminderInsert {
+  order_id: string;
+  reminder_number: number;
+  sent_at?: string;                // Defaults to NOW() in DB
 }
 
 // ============================================================================
@@ -1077,6 +1096,17 @@ export interface Database {
         Update: ToRecord<Partial<OrderStatusHistoryInsert>>;
         Relationships: [{
           foreignKeyName: 'order_status_history_order_id_fkey';
+          columns: ['order_id'];
+          referencedRelation: 'orders';
+          referencedColumns: ['id'];
+        }];
+      };
+      delivery_confirmation_reminders: {
+        Row: ToRecord<DeliveryConfirmationReminderRow>;
+        Insert: ToRecord<DeliveryConfirmationReminderInsert>;
+        Update: ToRecord<Partial<DeliveryConfirmationReminderInsert>>;
+        Relationships: [{
+          foreignKeyName: 'delivery_confirmation_reminders_order_id_fkey';
           columns: ['order_id'];
           referencedRelation: 'orders';
           referencedColumns: ['id'];
