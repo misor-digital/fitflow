@@ -4,6 +4,7 @@
  */
 
 import 'server-only';
+import { cache } from 'react';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import type { Preorder, PreorderConversionStatus } from '@/lib/supabase/types';
 
@@ -105,6 +106,32 @@ export async function getPreorderConversionStatus(
 
   return data.conversion_status as PreorderConversionStatus;
 }
+
+// ============================================================================
+// User-scoped queries
+// ============================================================================
+
+/**
+ * Get all preorders linked to a specific user, ordered by creation date (newest first).
+ * Used on the customer account orders page.
+ * Returns all preorders regardless of conversion status.
+ */
+export const getPreordersByUser = cache(
+  async (userId: string): Promise<Preorder[]> => {
+    const { data, error } = await supabaseAdmin
+      .from('preorders')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching preorders by user:', error);
+      throw new Error('Failed to load user preorders.');
+    }
+
+    return (data ?? []) as Preorder[];
+  },
+);
 
 // ============================================================================
 // Admin views
