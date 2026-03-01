@@ -33,6 +33,23 @@ export { EMAIL } from './constants';
 // Centralized label resolution
 export { resolveEmailLabels, FREQUENCY_LABELS, STATUS_LABELS } from './labels';
 
+// Subscription lifecycle email templates
+export {
+  generateSubscriptionCreatedEmail,
+  generateSubscriptionPausedEmail,
+  generateSubscriptionResumedEmail,
+  generateSubscriptionCancelledEmail,
+  generateDeliveryUpcomingEmail,
+} from './subscription-templates';
+
+export type {
+  SubscriptionCreatedParams,
+  SubscriptionPausedParams,
+  SubscriptionResumedParams,
+  SubscriptionCancelledParams,
+  DeliveryUpcomingParams,
+} from './subscription-templates';
+
 // Email template types
 export type {
   LabelMap,
