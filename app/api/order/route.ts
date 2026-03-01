@@ -22,7 +22,7 @@ import type { OrderInsert, ShippingAddressSnapshot, Preorder, BoxType, OrderType
 import type { AddressInput } from '@/lib/order';
 import { sendTransactionalEmail, syncOrderToContact } from '@/lib/email/brevo';
 import { syncPreorderConverted, syncOrderCustomer } from '@/lib/email/contact-sync';
-import { generateConfirmationEmail } from '@/lib/email';
+import { generateConfirmationEmail, resolveEmailLabels } from '@/lib/email';
 import type { ConfirmationEmailData } from '@/lib/email';
 import { getBoxTypeNames } from '@/lib/data';
 
@@ -682,8 +682,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       // Determine email type based on whether this is a conversion
       const emailType = 'order';
 
-      // Generate HTML
-      const htmlContent = generateConfirmationEmail(emailData, emailType);
+      // Resolve display labels for personalization options
+      const labels = await resolveEmailLabels();
+
+      // Generate HTML with resolved labels
+      const htmlContent = generateConfirmationEmail(emailData, emailType, labels);
 
       // Send via Brevo wrapper (auto-logs to email_send_log)
       const result = await sendTransactionalEmail({

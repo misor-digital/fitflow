@@ -28,6 +28,9 @@ export {
 export { wrapInEmailLayout, emailCtaButton, emailContactLine } from './layout';
 export { EMAIL } from './constants';
 
+// Centralized label resolution
+export { resolveEmailLabels, FREQUENCY_LABELS, STATUS_LABELS } from './labels';
+
 // Email template types
 export type {
   LabelMap,
