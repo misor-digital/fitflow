@@ -184,6 +184,7 @@ export {
   getRemindersByOrder,
   getLatestReminderByOrder,
   getOrdersNeedingDeliveryAction,
+  getReminderCountsByOrders,
   type OrderNeedingAction,
 } from './delivery-reminders';
 

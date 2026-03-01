@@ -1,6 +1,6 @@
 import { requireStaff } from '@/lib/auth';
 import { ORDER_VIEW_ROLES } from '@/lib/auth/permissions';
-import { getOrdersPaginated, getOrdersCount, getBoxTypeNames, getOptionLabels, getEurToBgnRate } from '@/lib/data';
+import { getOrdersPaginated, getOrdersCount, getBoxTypeNames, getOptionLabels, getEurToBgnRate, getReminderCountsByOrders } from '@/lib/data';
 import { ORDER_STATUS_LABELS } from '@/lib/order/format';
 import { OrdersTable } from '@/components/admin/OrdersTable';
 import Link from 'next/link';
@@ -58,6 +58,12 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
   ]);
 
   const optionLabels = { sports: sportsLabels, colors: colorsLabels, flavors: flavorsLabels, dietary: dietaryLabels, sizes: sizesLabels };
+
+  // Batch-fetch reminder counts for shipped orders
+  const shippedOrderIds = orders
+    .filter(o => o.status === 'shipped')
+    .map(o => o.id);
+  const reminderCounts = await getReminderCountsByOrders(shippedOrderIds);
 
   const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
   const statusOptions = Object.entries(ORDER_STATUS_LABELS) as [OrderStatus, string][];
@@ -175,6 +181,7 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
             total={total}
             currentPage={page}
             perPage={PER_PAGE}
+            reminderCounts={reminderCounts}
           />
 
           {/* Pagination */}

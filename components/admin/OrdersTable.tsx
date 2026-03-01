@@ -32,6 +32,7 @@ interface OrdersTableProps {
   total: number;
   currentPage: number;
   perPage: number;
+  reminderCounts?: Record<string, { count: number; lastSentAt: string | null }>;
 }
 
 /** Background color classes for status badges */
@@ -110,6 +111,7 @@ export function OrdersTable({
   boxTypeNames,
   optionLabels,
   eurToBgnRate,
+  reminderCounts,
 }: OrdersTableProps) {
   const router = useRouter();
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -370,6 +372,28 @@ export function OrdersTable({
                           </svg>
                         )}
                       </button>
+                      {order.status === 'shipped' && reminderCounts?.[order.id] && (
+                        <span
+                          className="ml-2 text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700"
+                          title={`Последно напомняне: ${reminderCounts[order.id].lastSentAt
+                            ? new Date(reminderCounts[order.id].lastSentAt!).toLocaleDateString('bg-BG')
+                            : '—'}`}
+                        >
+                          📧 {reminderCounts[order.id].count}/3 напомняния
+                        </span>
+                      )}
+                      {order.status === 'delivered' && (() => {
+                        const history = statusHistory?.[order.id] ?? [];
+                        const autoEntry = history.find(
+                          h => h.to_status === 'delivered' && !h.changed_by && h.notes?.includes('Автоматично')
+                        );
+                        if (!autoEntry) return null;
+                        return (
+                          <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                            Авто-потвърдена
+                          </span>
+                        );
+                      })()}
                     </td>
 
                     {/* Price */}
@@ -408,6 +432,7 @@ export function OrdersTable({
                           history={statusHistory[order.id]}
                           loadingHistory={loadingHistory === order.id}
                           onRefresh={() => router.refresh()}
+                          reminderCounts={reminderCounts}
                         />
                       </td>
                     </tr>
@@ -628,6 +653,7 @@ function OrderRowDetail({
   history,
   loadingHistory,
   onRefresh,
+  reminderCounts,
 }: {
   order: OrderRow;
   boxTypeName: string;
@@ -636,6 +662,7 @@ function OrderRowDetail({
   history?: OrderStatusHistoryRow[];
   loadingHistory: boolean;
   onRefresh: () => void;
+  reminderCounts?: Record<string, { count: number; lastSentAt: string | null }>;
 }) {
   /** Resolve an array of raw IDs to their DB labels */
   function mapLabels(ids: string[] | null | undefined, labelMap: Record<string, string>): string | null {
@@ -778,6 +805,25 @@ function OrderRowDetail({
           </ol>
         ) : (
           <p className="text-gray-500 text-xs">Няма история</p>
+        )}
+
+        {order.status === 'shipped' && reminderCounts?.[order.id] && (
+          <div className="mt-2 p-3 bg-amber-50 rounded-lg text-sm">
+            <p className="font-medium text-amber-800">Доставка — напомняния</p>
+            <p className="text-amber-700 mt-1">
+              Изпратени напомняния: {reminderCounts[order.id].count} от 3
+            </p>
+            {reminderCounts[order.id].lastSentAt && (
+              <p className="text-amber-600 text-xs mt-1">
+                Последно: {new Date(reminderCounts[order.id].lastSentAt!).toLocaleString('bg-BG')}
+              </p>
+            )}
+            {reminderCounts[order.id].count >= 3 && (
+              <p className="text-amber-800 text-xs mt-1 font-medium">
+                ⏰ Ще бъде автоматично потвърдена скоро
+              </p>
+            )}
+          </div>
         )}
       </div>
     </div>

@@ -151,3 +151,45 @@ export async function getOrdersNeedingDeliveryAction(
     })
     .filter(Boolean) as OrderNeedingAction[];
 }
+
+/**
+ * Batch-fetch reminder counts for multiple orders.
+ * Returns a map of orderId → { count, lastSentAt }.
+ * Used by admin order listing.
+ */
+export async function getReminderCountsByOrders(
+  orderIds: string[],
+): Promise<Record<string, { count: number; lastSentAt: string | null }>> {
+  if (orderIds.length === 0) return {};
+
+  const { data, error } = await supabaseAdmin
+    .from('delivery_confirmation_reminders')
+    .select('order_id, reminder_number, sent_at')
+    .in('order_id', orderIds)
+    .order('reminder_number', { ascending: false });
+
+  if (error) {
+    console.error('Error fetching reminder counts:', error);
+    return {};
+  }
+
+  const result: Record<string, { count: number; lastSentAt: string | null }> = {};
+
+  for (const row of data ?? []) {
+    const existing = result[row.order_id];
+    if (!existing) {
+      result[row.order_id] = {
+        count: 1,
+        lastSentAt: row.sent_at,
+      };
+    } else {
+      existing.count++;
+      // Keep the latest sent_at
+      if (row.sent_at > (existing.lastSentAt ?? '')) {
+        existing.lastSentAt = row.sent_at;
+      }
+    }
+  }
+
+  return result;
+}
