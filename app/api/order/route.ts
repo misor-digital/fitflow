@@ -217,11 +217,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: 'Полето е прекалено дълго.' }, { status: 400 });
     }
 
-    // Guest cannot order subscription boxes
-    if (isGuest && isSubscriptionBox(validatedBoxType)) {
+    // Subscription box types must go through POST /api/subscription
+    if (isSubscriptionBox(validatedBoxType)) {
       return NextResponse.json(
-        { error: 'Абонаментните кутии изискват регистрация.' },
-        { status: 403 },
+        { error: 'Абонаментните кутии се поръчват чрез абонаментния процес.' },
+        { status: 400 },
       );
     }
 
