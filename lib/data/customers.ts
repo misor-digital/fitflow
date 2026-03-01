@@ -9,7 +9,10 @@
 
 import 'server-only';
 import { cache } from 'react';
+import { unstable_cache } from 'next/cache';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { getUserEmailsByIds } from '@/lib/auth/get-users-by-ids';
+import { TAG_CUSTOMERS } from './cache-tags';
 import type { CustomerWithStats } from '@/lib/supabase/types';
 
 // ============================================================================
@@ -108,21 +111,8 @@ export const getCustomersPaginated = cache(
       (activeSubsResult.data ?? []).map((s) => s.user_id),
     );
 
-    // Fetch emails from Supabase Auth (parallel per-user)
-    const emailMap = new Map<string, string>();
-    await Promise.all(
-      userIds.map(async (uid) => {
-        try {
-          const { data: authUser } =
-            await supabaseAdmin.auth.admin.getUserById(uid);
-          if (authUser?.user?.email) {
-            emailMap.set(uid, authUser.user.email);
-          }
-        } catch {
-          // Non-fatal — email will show as empty
-        }
-      }),
-    );
+    // Fetch emails from Supabase Auth — single batch query via PostgREST
+    const emailMap = await getUserEmailsByIds(userIds);
 
     // Assemble CustomerWithStats array
     const customers: CustomerWithStats[] = rows.map((profile) => ({
@@ -149,39 +139,67 @@ export const getCustomersPaginated = cache(
  * Returns total customers, subscriber count, and new-this-month count.
  */
 export const getCustomersStats = cache(
-  async (): Promise<{
-    total: number;
-    subscribers: number;
-    newThisMonth: number;
-  }> => {
-    const now = new Date();
-    const firstOfMonth = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      1,
-    ).toISOString();
+  unstable_cache(
+    async (): Promise<{
+      total: number;
+      subscribers: number;
+      newThisMonth: number;
+    }> => {
+      const now = new Date();
+      const firstOfMonth = new Date(
+        now.getFullYear(),
+        now.getMonth(),
+        1,
+      ).toISOString();
 
-    const [totalResult, subscriberResult, newResult] = await Promise.all([
-      supabaseAdmin
-        .from('user_profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_type', 'customer'),
-      supabaseAdmin
-        .from('user_profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_type', 'customer')
-        .eq('is_subscriber', true),
-      supabaseAdmin
-        .from('user_profiles')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_type', 'customer')
-        .gte('created_at', firstOfMonth),
-    ]);
+      const [totalResult, subscriberResult, newResult] = await Promise.all([
+        supabaseAdmin
+          .from('user_profiles')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_type', 'customer'),
+        supabaseAdmin
+          .from('user_profiles')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_type', 'customer')
+          .eq('is_subscriber', true),
+        supabaseAdmin
+          .from('user_profiles')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_type', 'customer')
+          .gte('created_at', firstOfMonth),
+      ]);
 
-    return {
-      total: totalResult.count ?? 0,
-      subscribers: subscriberResult.count ?? 0,
-      newThisMonth: newResult.count ?? 0,
-    };
-  },
+      return {
+        total: totalResult.count ?? 0,
+        subscribers: subscriberResult.count ?? 0,
+        newThisMonth: newResult.count ?? 0,
+      };
+    },
+    ['customers-stats'],
+    { revalidate: 60, tags: [TAG_CUSTOMERS] },
+  ),
+);
+
+/**
+ * Staff member count — for admin dashboard.
+ * Cached across requests for 60s (tag: customers).
+ */
+export const getStaffCount = cache(
+  unstable_cache(
+    async (): Promise<number> => {
+      const { count, error } = await supabaseAdmin
+        .from('user_profiles')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_type', 'staff');
+
+      if (error) {
+        console.error('Error counting staff:', error);
+        return 0;
+      }
+
+      return count ?? 0;
+    },
+    ['staff-count'],
+    { revalidate: 60, tags: [TAG_CUSTOMERS] },
+  ),
 );

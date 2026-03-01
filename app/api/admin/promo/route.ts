@@ -4,6 +4,7 @@ import { verifySession } from '@/lib/auth';
 import { listPromoCodes, createPromoCode } from '@/lib/data';
 import { checkRateLimit } from '@/lib/utils/rateLimit';
 import type { PromoCodeFilters } from '@/lib/data/promo';
+import { revalidateDataTag, TAG_PROMO, TAG_CATALOG } from '@/lib/data/cache-tags';
 
 const PROMO_MANAGEMENT_ROLES = new Set(['super_admin', 'admin', 'marketing']);
 
@@ -260,6 +261,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const created = await createPromoCode(
       payload as unknown as Parameters<typeof createPromoCode>[0],
     );
+
+    // Bust catalog cache so price calculations pick up new promo codes
+    revalidateDataTag(TAG_PROMO, TAG_CATALOG);
 
     return NextResponse.json(
       { success: true, promo: created },

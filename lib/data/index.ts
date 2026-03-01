@@ -70,6 +70,7 @@ export {
   updateOrderStatus,
   applyPromoToOrder,
   getOrderStatusHistory,
+  getOrderStatusHistoryBatch,
   getOrdersCount,
   getOrdersPaginated,
 } from './orders';

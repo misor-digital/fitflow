@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifySession } from '@/lib/auth/dal';
 import { STAFF_MANAGEMENT_ROLES } from '@/lib/auth/permissions';
 import { markCycleDelivered, archiveCycle, getDeliveryCycleById } from '@/lib/data';
+import { revalidateDataTag, TAG_DELIVERY } from '@/lib/data/cache-tags';
 
 // ============================================================================
 // POST /api/admin/delivery/:id/status — Change cycle status
@@ -26,11 +27,13 @@ export async function POST(
 
     if (action === 'mark_delivered') {
       const cycle = await markCycleDelivered(id);
+      revalidateDataTag(TAG_DELIVERY);
       return NextResponse.json({ success: true, cycle });
     }
 
     if (action === 'archive') {
       await archiveCycle(id);
+      revalidateDataTag(TAG_DELIVERY);
       const cycle = await getDeliveryCycleById(id);
       return NextResponse.json({ success: true, cycle });
     }

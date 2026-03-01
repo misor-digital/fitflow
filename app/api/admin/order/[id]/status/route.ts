@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifySession } from '@/lib/auth/dal';
 import { ORDER_VIEW_ROLES } from '@/lib/auth/permissions';
 import { updateOrderStatus, getOrderById, getOrderStatusHistory } from '@/lib/data';
+import { revalidateDataTag, TAG_ORDERS } from '@/lib/data/cache-tags';
 import type { OrderStatus } from '@/lib/supabase/types';
 import { isValidTransition, ALLOWED_TRANSITIONS } from '@/lib/order';
 
@@ -55,6 +56,7 @@ export async function PATCH(
 
     // 6. Perform update
     const updated = await updateOrderStatus(orderId, newStatus, session.userId, notes || null);
+    revalidateDataTag(TAG_ORDERS);
 
     return NextResponse.json({ success: true, order: updated });
   } catch (err) {

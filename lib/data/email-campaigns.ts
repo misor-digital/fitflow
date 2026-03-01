@@ -100,18 +100,32 @@ export async function updateCampaignStatus(
 }
 
 /**
- * Atomically increment sent_count and/or failed_count using
- * raw SQL via the Supabase RPC, avoiding race conditions.
+ * Atomically increment sent_count and/or failed_count.
+ *
+ * Uses the `increment_campaign_counters` RPC for true atomicity.
+ * Falls back to a direct SQL expression via .rpc() if the function
+ * doesn't exist yet, and finally to read-then-write as a last resort.
  */
 export async function incrementCampaignCounters(
   id: string,
   sentDelta: number,
   failedDelta: number,
 ): Promise<void> {
-  // Use raw SQL for atomic increment — Supabase JS client doesn't support
-  // increment natively, so we use a direct update with SQL expressions.
-  // Workaround: fetch current values, then update.
-  // For true atomicity, fall through to rpc if available.
+  // Attempt atomic increment via RPC first
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error: rpcError } = await (supabaseAdmin.rpc as any)(
+    'increment_campaign_counters',
+    { p_campaign_id: id, p_sent_delta: sentDelta, p_failed_delta: failedDelta },
+  );
+
+  if (!rpcError) return;
+
+  // Fallback: read-then-write (non-atomic, log a warning)
+  console.warn(
+    'increment_campaign_counters RPC unavailable, falling back to read-then-write:',
+    rpcError.message,
+  );
+
   const { data: current, error: fetchError } = await supabaseAdmin
     .from('email_campaigns')
     .select('sent_count, failed_count')

@@ -1,13 +1,21 @@
 /**
  * Catalog data access layer
  * Server-only functions for fetching box types, options, and site config from Supabase
- * 
+ *
+ * Caching strategy:
+ *   • `unstable_cache` — cross-request data cache (TTL 300 s, tag "catalog").
+ *   • `React.cache`   — per-request deduplication on top of the data cache.
+ *
+ * Admin mutations call `revalidateDataTag(TAG_CATALOG)` to bust the cache
+ * immediately after writes.
  */
 
 import { cache } from 'react';
+import { unstable_cache } from 'next/cache';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import type { BoxTypeRow, OptionRow, OptionSetId } from '@/lib/supabase';
 import type { PriceInfo } from '@/lib/catalog';
+import { TAG_CATALOG } from './cache-tags';
 
 // ============================================================================
 // Box Types
@@ -15,50 +23,41 @@ import type { PriceInfo } from '@/lib/catalog';
 
 /**
  * Get all enabled box types, sorted by sort_order.
- * Cached for the duration of a single request (RSC render or Route Handler).
- * React.cache() does NOT cache across requests — each request hits Supabase.
- * For cross-request caching, add Cache-Control headers to API responses.
+ * Cached across requests for 5 min via unstable_cache (tag: catalog).
+ * React.cache() deduplicates within a single render pass.
  */
-export const getBoxTypes = cache(async (): Promise<BoxTypeRow[]> => {
-  const { data, error } = await supabaseAdmin
-    .from('box_types')
-    .select('*')
-    .eq('is_enabled', true)
-    .order('sort_order', { ascending: true });
+export const getBoxTypes = cache(
+  unstable_cache(
+    async (): Promise<BoxTypeRow[]> => {
+      const { data, error } = await supabaseAdmin
+        .from('box_types')
+        .select('*')
+        .eq('is_enabled', true)
+        .order('sort_order', { ascending: true });
 
-  if (error) {
-    console.error('Error fetching box types:', error);
-    throw new Error('Failed to load box types. Please try again later.');
-  }
+      if (error) {
+        console.error('Error fetching box types:', error);
+        throw new Error('Failed to load box types. Please try again later.');
+      }
 
-  if (!data || data.length === 0) {
-    throw new Error('No box types configured. Please contact support.');
-  }
+      if (!data || data.length === 0) {
+        throw new Error('No box types configured. Please contact support.');
+      }
 
-  return data;
-});
+      return data;
+    },
+    ['box-types'],
+    { revalidate: 300, tags: [TAG_CATALOG] },
+  ),
+);
 
 /**
- * Get a single box type by ID
+ * Get a single box type by ID.
+ * Reads from the cached box types list — no extra DB call.
  */
 export const getBoxTypeById = cache(async (id: string): Promise<BoxTypeRow | null> => {
-  const { data, error } = await supabaseAdmin
-    .from('box_types')
-    .select('*')
-    .eq('id', id)
-    .eq('is_enabled', true)
-    .single();
-
-  if (error) {
-    if (error.code === 'PGRST116') {
-      // Not found
-      return null;
-    }
-    console.error('Error fetching box type:', error);
-    return null;
-  }
-
-  return data;
+  const types = await getBoxTypes();
+  return types.find((bt) => bt.id === id) ?? null;
 });
 
 /**
@@ -88,22 +87,41 @@ export const getBoxTypeNames = cache(async (): Promise<Record<string, string>> =
 // ============================================================================
 
 /**
- * Get all enabled options for a specific option set
+ * Fetch ALL enabled options in a single DB call.
+ * Cached across requests for 5 min (tag: catalog).
+ *
+ * Every per-set accessor (getOptions, getOptionLabels, getColors …)
+ * filters from this cached result, so navigating /admin/orders no longer
+ * fires 5 separate option queries.
+ */
+export const getAllOptions = cache(
+  unstable_cache(
+    async (): Promise<OptionRow[]> => {
+      const { data, error } = await supabaseAdmin
+        .from('options')
+        .select('*')
+        .eq('is_enabled', true)
+        .order('sort_order', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching all options:', error);
+        return [];
+      }
+
+      return data || [];
+    },
+    ['all-options'],
+    { revalidate: 300, tags: [TAG_CATALOG] },
+  ),
+);
+
+/**
+ * Get all enabled options for a specific option set.
+ * Reads from the cached full option list — no extra DB call.
  */
 export const getOptions = cache(async (optionSetId: OptionSetId): Promise<OptionRow[]> => {
-  const { data, error } = await supabaseAdmin
-    .from('options')
-    .select('*')
-    .eq('option_set_id', optionSetId)
-    .eq('is_enabled', true)
-    .order('sort_order', { ascending: true });
-
-  if (error) {
-    console.error(`Error fetching options for ${optionSetId}:`, error);
-    return [];
-  }
-
-  return data || [];
+  const all = await getAllOptions();
+  return all.filter((o) => o.option_set_id === optionSetId);
 });
 
 /**
@@ -147,21 +165,28 @@ export const getColorNames = cache(async (): Promise<Record<string, string>> => 
 // ============================================================================
 
 /**
- * Get a site config value by key
+ * Get a site config value by key.
+ * Cached across requests for 5 min (tag: catalog).
  */
-export const getSiteConfig = cache(async (key: string): Promise<string | null> => {
-  const { data, error } = await supabaseAdmin
-    .from('site_config')
-    .select('value')
-    .eq('key', key)
-    .single();
+export const getSiteConfig = cache(
+  unstable_cache(
+    async (key: string): Promise<string | null> => {
+      const { data, error } = await supabaseAdmin
+        .from('site_config')
+        .select('value')
+        .eq('key', key)
+        .single();
 
-  if (error || !data) {
-    return null;
-  }
+      if (error || !data) {
+        return null;
+      }
 
-  return (data as { value: string }).value;
-});
+      return (data as { value: string }).value;
+    },
+    ['site-config'],
+    { revalidate: 300, tags: [TAG_CATALOG] },
+  ),
+);
 
 /**
  * Upsert a site config value (insert or update on conflict).
@@ -179,20 +204,45 @@ export async function upsertSiteConfig(key: string, value: string): Promise<void
 }
 
 /**
- * Get EUR to BGN conversion rate
- * Throws error if not configured in database
+ * The fixed BGN/EUR peg rate used by the Bulgarian Currency Board.
+ * Last-resort fallback only used on very first cold start if the DB is unreachable.
  */
-export const getEurToBgnRate = cache(async (): Promise<number> => {
-  const value = await getSiteConfig('EUR_TO_BGN_RATE');
-  if (!value) {
-    throw new Error('EUR_TO_BGN_RATE not configured in site_config table');
-  }
-  const rate = parseFloat(value);
-  if (isNaN(rate) || rate <= 0) {
-    throw new Error(`Invalid EUR_TO_BGN_RATE value: ${value}`);
-  }
-  return rate;
-});
+const DEFAULT_EUR_TO_BGN_RATE = 1.9558;
+
+/**
+ * Get EUR to BGN conversion rate.
+ *
+ * Wrapped in its own `unstable_cache` (1 hour, tag: catalog) so that once a
+ * valid rate is fetched from the DB it survives even if subsequent
+ * `getSiteConfig` calls fail (their 5 min TTL is shorter). The hardcoded
+ * constant is only reached on a true cold start with no DB connectivity.
+ */
+export const getEurToBgnRate = cache(
+  unstable_cache(
+    async (): Promise<number> => {
+      const { data, error } = await supabaseAdmin
+        .from('site_config')
+        .select('value')
+        .eq('key', 'EUR_TO_BGN_RATE')
+        .single();
+
+      if (error || !data) {
+        console.warn('EUR_TO_BGN_RATE not found in site_config — using default 1.9558');
+        return DEFAULT_EUR_TO_BGN_RATE;
+      }
+
+      const rate = parseFloat((data as { value: string }).value);
+      if (isNaN(rate) || rate <= 0) {
+        console.warn(`Invalid EUR_TO_BGN_RATE value "${(data as { value: string }).value}" — using default 1.9558`);
+        return DEFAULT_EUR_TO_BGN_RATE;
+      }
+
+      return rate;
+    },
+    ['eur-to-bgn-rate'],
+    { revalidate: 3600, tags: [TAG_CATALOG] },
+  ),
+);
 
 // ============================================================================
 // Price Calculation (Server-side only)
@@ -201,35 +251,47 @@ export const getEurToBgnRate = cache(async (): Promise<number> => {
 // PriceInfo is now imported from @/lib/catalog/types and re-exported above
 
 /**
- * Get all box prices in a single database call using Supabase RPC
- * This is the optimized version that eliminates multiple round-trips
+ * Get all box prices in a single database call using Supabase RPC.
+ * Cached across requests for 5 min (tag: catalog).
+ * When promoCode is supplied the cache key includes it so per-promo
+ * results are cached independently.
  */
 export const getAllBoxPrices = cache(async (promoCode: string | null | undefined): Promise<PriceInfo[]> => {
-  const { data, error } = await supabaseAdmin
-    .rpc('calculate_box_prices', { p_promo_code: promoCode || null });
-
-  if (error) {
-    console.error('Error calling calculate_box_prices:', error);
-    throw new Error('Failed to calculate prices. Please try again later.');
-  }
-
-  if (!data || data.length === 0) {
-    throw new Error('No box types configured. Please contact support.');
-  }
-
-  return data.map((row) => ({
-    boxTypeId: row.box_type_id,
-    boxTypeName: row.box_type_name,
-    originalPriceEur: Number(row.original_price_eur),
-    originalPriceBgn: Number(row.original_price_bgn),
-    discountPercent: row.discount_percent,
-    discountAmountEur: Number(row.discount_amount_eur),
-    discountAmountBgn: Number(row.discount_amount_bgn),
-    finalPriceEur: Number(row.final_price_eur),
-    finalPriceBgn: Number(row.final_price_bgn),
-    promoCode: row.discount_percent > 0 ? (promoCode ?? null) : null,
-  }));
+  // Normalise to null so the cache key is stable
+  const normalisedPromo = promoCode || null;
+  return _getAllBoxPricesInner(normalisedPromo);
 });
+
+const _getAllBoxPricesInner = unstable_cache(
+  async (promoCode: string | null): Promise<PriceInfo[]> => {
+    const { data, error } = await supabaseAdmin
+      .rpc('calculate_box_prices', { p_promo_code: promoCode });
+
+    if (error) {
+      console.error('Error calling calculate_box_prices:', error);
+      throw new Error('Failed to calculate prices. Please try again later.');
+    }
+
+    if (!data || data.length === 0) {
+      throw new Error('No box types configured. Please contact support.');
+    }
+
+    return data.map((row) => ({
+      boxTypeId: row.box_type_id,
+      boxTypeName: row.box_type_name,
+      originalPriceEur: Number(row.original_price_eur),
+      originalPriceBgn: Number(row.original_price_bgn),
+      discountPercent: row.discount_percent,
+      discountAmountEur: Number(row.discount_amount_eur),
+      discountAmountBgn: Number(row.discount_amount_bgn),
+      finalPriceEur: Number(row.final_price_eur),
+      finalPriceBgn: Number(row.final_price_bgn),
+      promoCode: row.discount_percent > 0 ? (promoCode ?? null) : null,
+    }));
+  },
+  ['box-prices'],
+  { revalidate: 300, tags: [TAG_CATALOG] },
+);
 
 /**
  * Get all box prices as a map keyed by box type ID

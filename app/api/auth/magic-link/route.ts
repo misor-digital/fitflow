@@ -14,6 +14,7 @@ import { checkRateLimit } from '@/lib/utils/rateLimit';
 import { isValidEmail } from '@/lib/catalog';
 import { sendEmail } from '@/lib/email/emailService';
 import { generateMagicLinkLoginEmail } from '@/lib/email/templates';
+import { getUserByEmail } from '@/lib/auth/get-user-by-email';
 
 const SUCCESS_RESPONSE = { success: true };
 
@@ -50,12 +51,9 @@ export async function POST(request: Request): Promise<NextResponse> {
     }
 
     // ---- Anti-enumeration check ------------------------------------------
-    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
-    const userExists = existingUsers?.users?.some(
-      (u) => u.email?.toLowerCase() === normalizedEmail,
-    );
+    const existingUser = await getUserByEmail(normalizedEmail);
 
-    if (!userExists) {
+    if (!existingUser) {
       console.warn('[magic-link] Login attempt for non-existent email');
       return NextResponse.json(SUCCESS_RESPONSE);
     }

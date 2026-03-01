@@ -176,7 +176,8 @@ export async function getNextBatch(
 
 /**
  * Aggregate COUNT of recipients grouped by status for a campaign.
- * Returns counts for all possible statuses.
+ * Uses a single query fetching status values, then counts client-side.
+ * (Supabase JS doesn't support GROUP BY directly.)
  */
 export async function getRecipientStats(
   campaignId: string,
@@ -190,50 +191,42 @@ export async function getRecipientStats(
   failed: number;
   skipped: number;
 }> {
-  const statuses: EmailRecipientStatusEnum[] = [
-    'pending',
-    'sent',
-    'delivered',
-    'opened',
-    'clicked',
-    'bounced',
-    'failed',
-    'skipped',
-  ];
+  const { data, error } = await supabaseAdmin
+    .from('email_campaign_recipients')
+    .select('status')
+    .eq('campaign_id', campaignId);
 
-  const results: Record<string, number> = {};
-
-  // Fetch counts per status in parallel
-  const counts = await Promise.all(
-    statuses.map(async (status) => {
-      const { count, error } = await supabaseAdmin
-        .from('email_campaign_recipients')
-        .select('*', { count: 'exact', head: true })
-        .eq('campaign_id', campaignId)
-        .eq('status', status);
-
-      if (error) {
-        console.error(`Error counting ${status} recipients:`, error);
-        return { status, count: 0 };
-      }
-
-      return { status, count: count ?? 0 };
-    }),
-  );
-
-  for (const { status, count } of counts) {
-    results[status] = count;
+  if (error) {
+    console.error('Error fetching recipient stats:', error);
+    throw new Error('Failed to fetch recipient stats.');
   }
 
-  return {
-    pending: results.pending ?? 0,
-    sent: results.sent ?? 0,
-    delivered: results.delivered ?? 0,
-    opened: results.opened ?? 0,
-    clicked: results.clicked ?? 0,
-    bounced: results.bounced ?? 0,
-    failed: results.failed ?? 0,
-    skipped: results.skipped ?? 0,
+  const counts: Record<string, number> = {
+    pending: 0,
+    sent: 0,
+    delivered: 0,
+    opened: 0,
+    clicked: 0,
+    bounced: 0,
+    failed: 0,
+    skipped: 0,
+  };
+
+  for (const row of data ?? []) {
+    if (row.status in counts) {
+      counts[row.status]++;
+    }
+  }
+
+  return counts as {
+    pending: number;
+    sent: number;
+    delivered: number;
+    opened: number;
+    clicked: number;
+    bounced: number;
+    failed: number;
+    skipped: number;
   };
 }
 

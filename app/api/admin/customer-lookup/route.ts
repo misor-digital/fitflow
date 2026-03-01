@@ -10,7 +10,7 @@
 
 import { NextResponse } from 'next/server';
 import { requireAdmin, AdminApiError } from '@/lib/auth/admin';
-import { supabaseAdmin } from '@/lib/supabase/admin';
+import { getUserByEmail } from '@/lib/auth/get-user-by-email';
 
 export async function GET(request: Request): Promise<NextResponse> {
   try {
@@ -28,18 +28,13 @@ export async function GET(request: Request): Promise<NextResponse> {
     }
 
     // ---- Look up user ----------------------------------------------------
-    // TODO: For large user bases, switch to listUsers({ filter }) or a
-    // direct user_profiles table query instead of fetching all users.
-    const { data: users } = await supabaseAdmin.auth.admin.listUsers();
-    const user = users?.users.find(
-      (u) => u.email?.toLowerCase() === email,
-    );
+    const user = await getUserByEmail(email);
 
     if (user) {
       return NextResponse.json({
         exists: true,
         userId: user.id,
-        fullName: user.user_metadata?.full_name ?? null,
+        fullName: user.raw_user_meta_data?.full_name ?? null,
       });
     }
 

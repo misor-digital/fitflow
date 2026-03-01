@@ -174,7 +174,7 @@ export const getPreordersByUser = cache(
 
     if (error) {
       console.error('Error fetching preorders by user:', error);
-      throw new Error('Failed to load user preorders.');
+      return [] as Preorder[];
     }
 
     return (data ?? []) as Preorder[];

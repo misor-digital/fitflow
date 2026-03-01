@@ -3,6 +3,7 @@ import { headers } from 'next/headers';
 import { verifySession } from '@/lib/auth';
 import { togglePromoCode } from '@/lib/data';
 import { checkRateLimit } from '@/lib/utils/rateLimit';
+import { revalidateDataTag, TAG_PROMO, TAG_CATALOG } from '@/lib/data/cache-tags';
 
 const PROMO_MANAGEMENT_ROLES = new Set(['super_admin', 'admin', 'marketing']);
 
@@ -78,6 +79,8 @@ export async function PATCH(
     }
 
     const updated = await togglePromoCode(id, body.enabled);
+
+    revalidateDataTag(TAG_PROMO, TAG_CATALOG);
 
     return NextResponse.json({ success: true, promo: updated });
   } catch (err) {

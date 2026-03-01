@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { verifySession } from '@/lib/auth';
 import { STAFF_MANAGEMENT_ROLES } from '@/lib/auth/permissions';
+import { revalidateDataTag, TAG_SUBSCRIPTIONS } from '@/lib/data/cache-tags';
 import {
   getSubscriptionById,
   pauseSubscription,
@@ -251,5 +252,9 @@ export async function PATCH(
       { error: 'Възникна грешка. Моля, опитайте отново.' },
       { status: 500 },
     );
+  } finally {
+    // Bust subscription stats cache regardless of success/failure path
+    // (the mutation may have partially succeeded before throwing)
+    revalidateDataTag(TAG_SUBSCRIPTIONS);
   }
 }

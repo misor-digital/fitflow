@@ -3,10 +3,11 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useRef, Suspense, Fragment, useState } from 'react';
+import { useEffect, useRef, Suspense, Fragment, useMemo } from 'react';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { useOrderStore } from '@/store/orderStore';
+import { useDeliveryStore } from '@/store/deliveryStore';
 import { trackViewContent, trackViewItem, trackCTAClick, trackPromoCode } from '@/lib/analytics';
 import { formatDeliveryDate, formatMonthYear } from '@/lib/delivery';
 
@@ -14,12 +15,20 @@ function HomeContent() {
   const searchParams = useSearchParams();
   const { setPromoCode } = useOrderStore();
   const hasTrackedViewContent = useRef(false);
-  const [nextDeliveryDate, setNextDeliveryDate] = useState<string | null>(null);
-  const [revealedBox, setRevealedBox] = useState<{
-    cycle: { id: string; deliveryDate: string; title: string | null };
-    items: { id: string; name: string; imageUrl: string | null; category: string | null }[];
-    monthYear: string;
-  } | null>(null);
+  const {
+    revealedBox: rawRevealedBox, fetchRevealedBox,
+    upcomingDelivery, fetchUpcomingDelivery,
+  } = useDeliveryStore();
+
+  // Derive display-ready revealed box with formatted monthYear
+  const revealedBox = useMemo(() => {
+    if (!rawRevealedBox?.cycle) return null;
+    return {
+      cycle: rawRevealedBox.cycle,
+      items: rawRevealedBox.items || [],
+      monthYear: formatMonthYear(rawRevealedBox.cycle.deliveryDate),
+    };
+  }, [rawRevealedBox]);
   
   // Track ViewContent (Meta) and view_item (GA4) on landing page load (once)
   useEffect(() => {
@@ -71,45 +80,21 @@ function HomeContent() {
     validateAndSetPromo();
   }, [searchParams, setPromoCode]);
 
-  // Fetch upcoming delivery date for mystery box section
+  // Fetch upcoming delivery date via shared store (deduped + cached)
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch('/api/delivery/upcoming');
-        if (!res.ok) return;
-        const data = await res.json();
-        if (!cancelled && data.nextDeliveryDate) {
-          setNextDeliveryDate(formatDeliveryDate(data.nextDeliveryDate));
-        }
-      } catch {
-        // silently fail
-      }
-    })();
-    return () => { cancelled = true; };
-  }, []);
+    fetchUpcomingDelivery();
+  }, [fetchUpcomingDelivery]);
 
-  // Fetch revealed box data for featured section
+  // Derive formatted delivery date from store
+  const nextDeliveryDate = useMemo(() => {
+    if (!upcomingDelivery?.nextDeliveryDate) return null;
+    return formatDeliveryDate(upcomingDelivery.nextDeliveryDate);
+  }, [upcomingDelivery]);
+
+  // Fetch revealed box data via shared store (deduped with Navigation)
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await fetch('/api/delivery/current');
-        if (!res.ok) return; // 404 = not available, hide section
-        const data = await res.json();
-        if (!cancelled && data.cycle) {
-          setRevealedBox({
-            cycle: data.cycle,
-            items: data.items || [],
-            monthYear: formatMonthYear(data.cycle.deliveryDate),
-          });
-        }
-      } catch {
-        // silently fail — section stays hidden
-      }
-    })();
-    return () => { cancelled = true; };
-  }, []);
+    fetchRevealedBox();
+  }, [fetchRevealedBox]);
 
   return (
     <>

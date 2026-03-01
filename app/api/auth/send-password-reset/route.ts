@@ -12,6 +12,7 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import { sendTransactionalEmail } from '@/lib/email/brevo/transactional';
 import { generatePasswordResetEmail } from '@/lib/email/templates';
 import { isValidEmail } from '@/lib/catalog';
+import { getUserByEmail } from '@/lib/auth/get-user-by-email';
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
@@ -37,10 +38,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // Look up user display name; fall back to email username portion
     let name = normalizedEmail.split('@')[0];
     try {
-      const { data: users } = await supabaseAdmin.auth.admin.listUsers();
-      const user = users?.users?.find((u) => u.email === normalizedEmail);
-      const profileName = user?.user_metadata?.full_name;
-      if (profileName) name = profileName;
+      const user = await getUserByEmail(normalizedEmail);
+      const profileName = user?.raw_user_meta_data?.full_name;
+      if (typeof profileName === 'string' && profileName) name = profileName;
     } catch {
       /* use fallback */
     }

@@ -5,11 +5,10 @@ import {
   getPreordersByUser,
   getBoxTypeNames,
   getEurToBgnRate,
-  getOrderStatusHistory,
+  getOrderStatusHistoryBatch,
 } from '@/lib/data';
 import { OrdersList } from '@/components/account/OrdersList';
 import type { Metadata } from 'next';
-import type { OrderStatusHistoryRow } from '@/lib/supabase/types';
 
 export const metadata: Metadata = {
   title: 'Моите поръчки | FitFlow',
@@ -26,14 +25,10 @@ export default async function OrdersPage() {
     getEurToBgnRate(),
   ]);
 
-  // Batch-fetch status histories for all orders
-  const historyEntries = await Promise.all(
-    orders.map((o) => getOrderStatusHistory(o.id)),
-  );
-  const statusHistories: Record<string, OrderStatusHistoryRow[]> = {};
-  orders.forEach((o, i) => {
-    statusHistories[o.id] = historyEntries[i];
-  });
+  // Batch-fetch status histories for all orders in a single query
+  const statusHistories = orders.length > 0
+    ? await getOrderStatusHistoryBatch(orders.map((o) => o.id))
+    : {};
 
   return (
     <div>

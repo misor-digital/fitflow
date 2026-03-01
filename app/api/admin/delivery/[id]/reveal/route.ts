@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifySession } from '@/lib/auth/dal';
 import { STAFF_MANAGEMENT_ROLES } from '@/lib/auth/permissions';
 import { revealCycle, getDeliveryCycleById } from '@/lib/data';
+import { revalidateDataTag, TAG_DELIVERY, TAG_SITE_CONFIG } from '@/lib/data/cache-tags';
 
 // ============================================================================
 // POST /api/admin/delivery/:id/reveal — Reveal cycle contents
@@ -41,6 +42,7 @@ export async function POST(
     }
 
     const cycle = await revealCycle(id);
+    revalidateDataTag(TAG_DELIVERY, TAG_SITE_CONFIG);
     return NextResponse.json({ success: true, cycle });
   } catch (err) {
     console.error('Error revealing cycle:', err);

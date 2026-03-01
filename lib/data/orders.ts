@@ -5,7 +5,9 @@
 
 import 'server-only';
 import { cache } from 'react';
+import { unstable_cache } from 'next/cache';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { TAG_ORDERS } from './cache-tags';
 import type {
   OrderRow,
   OrderInsert,
@@ -351,7 +353,7 @@ export const getOrdersByUser = cache(async (userId: string): Promise<OrderRow[]>
 
   if (error) {
     console.error('Error fetching user orders:', error);
-    throw new Error('Failed to load orders.');
+    return [];
   }
 
   return data ?? [];
@@ -370,7 +372,7 @@ export const getOrderStatusHistory = cache(
 
     if (error) {
       console.error('Error fetching order status history:', error);
-      throw new Error('Failed to load order status history.');
+      return [];
     }
 
     return data ?? [];
@@ -378,20 +380,65 @@ export const getOrderStatusHistory = cache(
 );
 
 /**
- * Get total order count — for admin dashboard.
+ * Batch-fetch status histories for multiple orders in a single query.
+ * Returns a map of orderId → history entries (chronological).
  */
-export const getOrdersCount = cache(async (): Promise<number> => {
-  const { count, error } = await supabaseAdmin
-    .from('orders')
-    .select('*', { count: 'exact', head: true });
+export async function getOrderStatusHistoryBatch(
+  orderIds: string[],
+): Promise<Record<string, OrderStatusHistoryRow[]>> {
+  const result: Record<string, OrderStatusHistoryRow[]> = {};
+  if (orderIds.length === 0) return result;
+
+  const { data, error } = await supabaseAdmin
+    .from('order_status_history')
+    .select('*')
+    .in('order_id', orderIds)
+    .order('created_at', { ascending: true });
 
   if (error) {
-    console.error('Error counting orders:', error);
-    throw new Error('Failed to count orders.');
+    console.error('Error batch-fetching order status history:', error);
+    return result;
   }
 
-  return count ?? 0;
-});
+  // Group by order_id
+  for (const row of data ?? []) {
+    if (!result[row.order_id]) {
+      result[row.order_id] = [];
+    }
+    result[row.order_id].push(row);
+  }
+
+  // Ensure every requested ID has an entry (even if empty)
+  for (const id of orderIds) {
+    if (!result[id]) result[id] = [];
+  }
+
+  return result;
+}
+
+/**
+ * Get total order count — for admin dashboard.
+ * Cached across requests for 30s (tag: orders).
+ */
+export const getOrdersCount = cache(
+  unstable_cache(
+    async (): Promise<number> => {
+      const { count, error } = await supabaseAdmin
+        .from('orders')
+        .select('*', { count: 'exact', head: true });
+
+      if (error) {
+        console.error('Error counting orders:', error);
+        // Return 0 so the cache stores a fallback instead of retrying every request
+        return 0;
+      }
+
+      return count ?? 0;
+    },
+    ['orders-count'],
+    { revalidate: 30, tags: [TAG_ORDERS] },
+  ),
+);
 
 /**
  * Get paginated orders with optional filters — for admin order management.

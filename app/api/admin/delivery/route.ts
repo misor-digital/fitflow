@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifySession } from '@/lib/auth/dal';
 import { STAFF_MANAGEMENT_ROLES } from '@/lib/auth/permissions';
 import { createDeliveryCycle, getDeliveryCycles } from '@/lib/data';
+import { revalidateDataTag, TAG_DELIVERY } from '@/lib/data/cache-tags';
 
 // ============================================================================
 // POST /api/admin/delivery — Create delivery cycle
@@ -45,6 +46,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       delivery_date,
       title: title?.trim() || null,
     });
+
+    revalidateDataTag(TAG_DELIVERY);
 
     return NextResponse.json({ success: true, cycle }, { status: 201 });
   } catch (err) {

@@ -8,6 +8,7 @@
 
 import 'server-only';
 import { cache } from 'react';
+import { unstable_cache } from 'next/cache';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import type {
   DeliveryCycleRow,
@@ -17,6 +18,7 @@ import type {
   DeliveryCycleItemInsert,
   DeliveryCycleItemUpdate,
 } from '@/lib/supabase/types';
+import { TAG_DELIVERY, TAG_SITE_CONFIG } from './cache-tags';
 
 // ============================================================================
 // Delivery-related site_config keys
@@ -37,65 +39,65 @@ type DeliveryConfigKey = (typeof DELIVERY_CONFIG_KEYS)[number];
 
 /**
  * Get all delivery cycles, newest first.
+ * Cached across requests for 5 min (tag: delivery).
  */
 export const getDeliveryCycles = cache(
-  async (): Promise<DeliveryCycleRow[]> => {
-    const { data, error } = await supabaseAdmin
-      .from('delivery_cycles')
-      .select('*')
-      .order('delivery_date', { ascending: false });
+  unstable_cache(
+    async (): Promise<DeliveryCycleRow[]> => {
+      const { data, error } = await supabaseAdmin
+        .from('delivery_cycles')
+        .select('*')
+        .order('delivery_date', { ascending: false });
 
-    if (error) {
-      console.error('Error fetching delivery cycles:', error);
-      throw new Error('Failed to load delivery cycles.');
-    }
+      if (error) {
+        console.error('Error fetching delivery cycles:', error);
+        throw new Error('Failed to load delivery cycles.');
+      }
 
-    return data ?? [];
-  },
+      return data ?? [];
+    },
+    ['delivery-cycles'],
+    { revalidate: 300, tags: [TAG_DELIVERY] },
+  ),
 );
 
 /**
  * Get a single delivery cycle by ID.
+ * Reads from the cached cycle list — no extra DB call.
  */
 export const getDeliveryCycleById = cache(
   async (id: string): Promise<DeliveryCycleRow | null> => {
-    const { data, error } = await supabaseAdmin
-      .from('delivery_cycles')
-      .select('*')
-      .eq('id', id)
-      .single();
-
-    if (error) {
-      if (error.code === 'PGRST116') return null;
-      console.error('Error fetching delivery cycle:', error);
-      return null;
-    }
-
-    return data;
+    const cycles = await getDeliveryCycles();
+    return cycles.find((c) => c.id === id) ?? null;
   },
 );
 
 /**
  * Get the next upcoming cycle (status = 'upcoming', delivery_date in the future).
+ * Cached across requests for 5 min (tag: delivery).
  */
 export const getUpcomingCycle = cache(
-  async (): Promise<DeliveryCycleRow | null> => {
-    const { data, error } = await supabaseAdmin
-      .from('delivery_cycles')
-      .select('*')
-      .eq('status', 'upcoming')
-      .gte('delivery_date', new Date().toISOString().split('T')[0])
-      .order('delivery_date', { ascending: true })
-      .limit(1)
-      .maybeSingle();
+  unstable_cache(
+    async (): Promise<DeliveryCycleRow | null> => {
+      const { data, error } = await supabaseAdmin
+        .from('delivery_cycles')
+        .select('*')
+        .eq('status', 'upcoming')
+        .gte('delivery_date', new Date().toISOString().split('T')[0])
+        .order('delivery_date', { ascending: true })
+        .limit(1)
+        .maybeSingle();
 
-    if (error) {
-      console.error('Error fetching upcoming cycle:', error);
-      return null;
-    }
+      if (error) {
+        console.error('Error fetching upcoming cycle:', error);
+        return null;
+      }
 
-    return data;
-  },
+      return data;
+    },
+    ['upcoming-cycle'],
+    { revalidate: 300, tags: [TAG_DELIVERY] },
+  ),
 );
 
 /**
@@ -124,24 +126,29 @@ export async function getEarliestEligibleCycle(): Promise<DeliveryCycleRow | nul
 
 /**
  * Get the most recently revealed cycle.
+ * Cached across requests for 5 min (tag: delivery).
  */
 export const getCurrentRevealedCycle = cache(
-  async (): Promise<DeliveryCycleRow | null> => {
-    const { data, error } = await supabaseAdmin
-      .from('delivery_cycles')
-      .select('*')
-      .eq('is_revealed', true)
-      .order('delivery_date', { ascending: false })
-      .limit(1)
-      .maybeSingle();
+  unstable_cache(
+    async (): Promise<DeliveryCycleRow | null> => {
+      const { data, error } = await supabaseAdmin
+        .from('delivery_cycles')
+        .select('*')
+        .eq('is_revealed', true)
+        .order('delivery_date', { ascending: false })
+        .limit(1)
+        .maybeSingle();
 
-    if (error) {
-      console.error('Error fetching revealed cycle:', error);
-      return null;
-    }
+      if (error) {
+        console.error('Error fetching revealed cycle:', error);
+        return null;
+      }
 
-    return data;
-  },
+      return data;
+    },
+    ['revealed-cycle'],
+    { revalidate: 300, tags: [TAG_DELIVERY] },
+  ),
 );
 
 /**
@@ -370,7 +377,7 @@ export const getCycleItems = cache(
 
     if (error) {
       console.error('Error fetching cycle items:', error);
-      throw new Error('Failed to load cycle items.');
+      return [];
     }
 
     return data ?? [];
@@ -527,30 +534,35 @@ export async function reorderCycleItems(
 
 /**
  * Fetch all delivery-related site_config keys in one query.
+ * Cached across requests for 5 min (tag: site-config).
  * Returns a map like { SUBSCRIPTION_DELIVERY_DAY: '5', FIRST_DELIVERY_DATE: '2026-03-08', ... }
  */
 export const getDeliveryConfigMap = cache(
-  async (): Promise<Record<string, string | null>> => {
-    const { data, error } = await supabaseAdmin
-      .from('site_config')
-      .select('key, value')
-      .in('key', [...DELIVERY_CONFIG_KEYS]);
+  unstable_cache(
+    async (): Promise<Record<string, string | null>> => {
+      const { data, error } = await supabaseAdmin
+        .from('site_config')
+        .select('key, value')
+        .in('key', [...DELIVERY_CONFIG_KEYS]);
 
-    if (error) {
-      console.error('Error fetching delivery config:', error);
-      throw new Error('Failed to load delivery configuration.');
-    }
+      if (error) {
+        console.error('Error fetching delivery config:', error);
+        throw new Error('Failed to load delivery configuration.');
+      }
 
-    const configMap: Record<string, string | null> = {};
-    for (const key of DELIVERY_CONFIG_KEYS) {
-      const row = (data ?? []).find(
-        (r: { key: string; value: string }) => r.key === key,
-      );
-      configMap[key] = row ? row.value : null;
-    }
+      const configMap: Record<string, string | null> = {};
+      for (const key of DELIVERY_CONFIG_KEYS) {
+        const row = (data ?? []).find(
+          (r: { key: string; value: string }) => r.key === key,
+        );
+        configMap[key] = row ? row.value : null;
+      }
 
-    return configMap;
-  },
+      return configMap;
+    },
+    ['delivery-config'],
+    { revalidate: 300, tags: [TAG_SITE_CONFIG] },
+  ),
 );
 
 /**

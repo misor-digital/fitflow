@@ -14,6 +14,7 @@ import { isValidEmail } from '@/lib/catalog';
 import { sendEmail } from '@/lib/email/emailService';
 import { generateCustomerInviteEmail } from '@/lib/email/templates';
 import { syncNewUser } from '@/lib/email/contact-sync';
+import { getUserByEmail } from '@/lib/auth/get-user-by-email';
 
 export async function POST(request: Request): Promise<NextResponse> {
   try {
@@ -54,12 +55,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     }
 
     // ---- Check if user already exists ------------------------------------
-    // TODO: For large user bases, switch to listUsers({ filter }) or a
-    // direct user_profiles table query instead of fetching all users.
-    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
-    const existingUser = existingUsers?.users.find(
-      (u) => u.email?.toLowerCase() === normalizedEmail,
-    );
+    const existingUser = await getUserByEmail(normalizedEmail);
 
     if (existingUser) {
       return NextResponse.json(
@@ -84,11 +80,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     if (createError) {
       // Race condition: user was created between the check and createUser
       if (createError.message?.includes('already registered')) {
-        const { data: retryUsers } =
-          await supabaseAdmin.auth.admin.listUsers();
-        const retryUser = retryUsers?.users.find(
-          (u) => u.email?.toLowerCase() === normalizedEmail,
-        );
+        const retryUser = await getUserByEmail(normalizedEmail);
         if (retryUser) {
           return NextResponse.json(
             { userId: retryUser.id, alreadyExisted: true },

@@ -8,6 +8,7 @@ import {
   getPromoCodeStats,
 } from '@/lib/data';
 import { checkRateLimit } from '@/lib/utils/rateLimit';
+import { revalidateDataTag, TAG_PROMO, TAG_CATALOG } from '@/lib/data/cache-tags';
 
 const PROMO_MANAGEMENT_ROLES = new Set(['super_admin', 'admin', 'marketing']);
 
@@ -256,6 +257,8 @@ export async function PATCH(
       updates as Parameters<typeof updatePromoCode>[1],
     );
 
+    revalidateDataTag(TAG_PROMO, TAG_CATALOG);
+
     return NextResponse.json({ success: true, promo: updated });
   } catch (err) {
     const message = err instanceof Error ? err.message : '';
@@ -309,6 +312,8 @@ export async function DELETE(
     }
 
     await deletePromoCode(id);
+
+    revalidateDataTag(TAG_PROMO, TAG_CATALOG);
 
     return NextResponse.json({ success: true });
   } catch (err) {

@@ -4,6 +4,7 @@
  */
 
 import 'server-only';
+import { cache } from 'react';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import type {
   DeliveryConfirmationReminderRow,
@@ -65,9 +66,9 @@ export async function recordReminderSent(
 /**
  * Fetch all reminders for a given order, ordered by reminder_number ASC.
  */
-export async function getRemindersByOrder(
+export const getRemindersByOrder = cache(async (
   orderId: string,
-): Promise<DeliveryConfirmationReminderRow[]> {
+): Promise<DeliveryConfirmationReminderRow[]> => {
   const { data, error } = await supabaseAdmin
     .from('delivery_confirmation_reminders')
     .select('*')
@@ -80,15 +81,15 @@ export async function getRemindersByOrder(
   }
 
   return data ?? [];
-}
+});
 
 /**
  * Fetch the most recent reminder for an order (highest reminder_number).
  * Returns null if no reminders have been sent.
  */
-export async function getLatestReminderByOrder(
+export const getLatestReminderByOrder = cache(async (
   orderId: string,
-): Promise<DeliveryConfirmationReminderRow | null> {
+): Promise<DeliveryConfirmationReminderRow | null> => {
   const { data, error } = await supabaseAdmin
     .from('delivery_confirmation_reminders')
     .select('*')
@@ -103,7 +104,7 @@ export async function getLatestReminderByOrder(
   }
 
   return data;
-}
+});
 
 /**
  * Find orders in "shipped" status that need either a reminder email or

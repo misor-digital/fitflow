@@ -1,6 +1,6 @@
 import { requireStaff } from '@/lib/auth';
-import { supabaseAdmin } from '@/lib/supabase/admin';
-import { getSubscriptionsCount, getSubscriptionMRR, getSiteConfig, getEurToBgnRate } from '@/lib/data';
+import { getOrdersCount, getSubscriptionsCount, getSubscriptionMRR, getSiteConfig, getEurToBgnRate } from '@/lib/data';
+import { getStaffCount } from '@/lib/data/customers';
 
 export const metadata = {
   title: 'Табло | FitFlow Admin',
@@ -11,8 +11,8 @@ export default async function AdminDashboard() {
 
   // Basic stats
   const [orderCount, staffCount, subscriptionCounts, mrr, cronLastRun, cronLastResult, eurToBgnRate] = await Promise.all([
-    supabaseAdmin.from('orders').select('id', { count: 'exact', head: true }),
-    supabaseAdmin.from('user_profiles').select('id', { count: 'exact', head: true }).eq('user_type', 'staff'),
+    getOrdersCount(),
+    getStaffCount(),
     getSubscriptionsCount(),
     getSubscriptionMRR(),
     getSiteConfig('cron_last_run'),
@@ -34,13 +34,13 @@ export default async function AdminDashboard() {
         <div className="bg-white rounded-xl shadow-sm p-6">
           <p className="text-sm text-gray-500">Общо поръчки</p>
           <p className="text-3xl font-bold text-[var(--color-brand-navy)]">
-            {orderCount.count ?? 0}
+            {orderCount}
           </p>
         </div>
         <div className="bg-white rounded-xl shadow-sm p-6">
           <p className="text-sm text-gray-500">Служители</p>
           <p className="text-3xl font-bold text-[var(--color-brand-navy)]">
-            {staffCount.count ?? 0}
+            {staffCount}
           </p>
         </div>
         <div className="bg-white rounded-xl shadow-sm p-6">

@@ -16,6 +16,7 @@ import { checkRateLimit } from '@/lib/utils/rateLimit';
 import { sendEmail } from '@/lib/email/emailService';
 import { generateMagicRegistrationEmail } from '@/lib/email/templates';
 import { syncNewUser } from '@/lib/email/contact-sync';
+import { getUserByEmail } from '@/lib/auth/get-user-by-email';
 
 const SUCCESS_RESPONSE = {
   success: true,
@@ -77,10 +78,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     const isSubscriber = Boolean(wantsPromos);
 
     // ---- Anti-enumeration check ------------------------------------------
-    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
-    const existingUser = existingUsers?.users.find(
-      (u) => u.email?.toLowerCase() === normalizedEmail,
-    );
+    const existingUser = await getUserByEmail(normalizedEmail);
 
     if (existingUser) {
       console.warn(
