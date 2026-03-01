@@ -8,6 +8,7 @@ const tabs = [
   { href: '/account/edit', label: 'Редактиране' },
   { href: '/account/security', label: 'Сигурност' },
   { href: '/account/subscriptions', label: 'Абонаменти' },
+  { href: '/account/orders', label: 'Поръчки' },
 ] as const;
 
 export default function AccountNav() {
