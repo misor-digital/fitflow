@@ -127,6 +127,7 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
     if (isAuthenticated && user && !conversionToken) {
       setFullName(user.fullName || '');
       setEmail(user.email || '');
+      setPhone(user.phone || '');
 
       // Also seed the address recipient name and phone so the delivery form
       // isn't blank. Only overwrite if the user hasn't already typed something.
