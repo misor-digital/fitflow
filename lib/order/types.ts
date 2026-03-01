@@ -214,6 +214,30 @@ export interface OrderSubmitResponse {
 }
 
 // ============================================================================
+// Subscription API
+// ============================================================================
+
+/** Payload shape for POST /api/subscription */
+export interface SubscriptionApiRequest {
+  boxType: string;
+  frequency: string;
+  wantsPersonalization: boolean;
+  preferences?: {
+    sports?: string[];
+    sportOther?: string;
+    colors?: string[];
+    flavors?: string[];
+    flavorOther?: string;
+    dietary?: string[];
+    dietaryOther?: string;
+    additionalNotes?: string;
+  };
+  sizes?: { upper?: string; lower?: string };
+  addressId: string;
+  promoCode?: string | null;
+}
+
+// ============================================================================
 // Order Tracking
 // ============================================================================
 

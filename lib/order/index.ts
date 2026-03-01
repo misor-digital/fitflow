@@ -33,6 +33,7 @@ export type {
 
   // API
   OrderApiRequest,
+  SubscriptionApiRequest,
   OrderSubmitResponse,
 
   // Tracking
@@ -115,6 +116,7 @@ export {
   // Transform functions
   transformOrderToPersistedFormat,
   transformOrderToApiRequest,
+  transformOrderToSubscriptionRequest,
 
   // Initial state
   INITIAL_ORDER_INPUT,
