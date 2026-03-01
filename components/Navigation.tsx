@@ -112,7 +112,7 @@ export default function Navigation() {
                     onClick={() => setBoxDropdownOpen(false)}
                     className="block px-4 py-2 text-sm font-medium text-[var(--color-brand-navy)] hover:bg-gray-50 hover:text-[var(--color-brand-orange)] transition-colors"
                   >
-                    🎁 Мистериозна кутия
+                    🎁 Еднократна кутия
                   </Link>
                   {revealedBoxAvailable && (
                     <Link
@@ -307,7 +307,7 @@ export default function Navigation() {
                   isActive('/box/mystery') ? 'text-[var(--color-brand-orange)]' : 'text-[var(--color-brand-navy)] hover:text-[var(--color-brand-orange)]'
                 }`}
               >
-                🎁 Мистериозна кутия
+                🎁 Еднократна кутия
               </Link>
               {revealedBoxAvailable && (
                 <Link
