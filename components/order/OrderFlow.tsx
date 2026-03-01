@@ -37,6 +37,7 @@ export default function OrderFlow({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const lastPromoRef = useRef<string | null>(null);
+  const isSubmittingRef = useRef(false);
 
   const { currentStep, setStep, promoCode, orderType } =
     useOrderStore();
@@ -99,10 +100,10 @@ export default function OrderFlow({
   }, []);
 
   // ---------------------------------------------------------------------------
-  // Scroll to top on step change
+  // Scroll to top on step change (skip during submission / navigation)
   // ---------------------------------------------------------------------------
   useEffect(() => {
-    if (hydrated) {
+    if (hydrated && !isSubmittingRef.current) {
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [currentStep, hydrated]);
@@ -188,6 +189,7 @@ export default function OrderFlow({
   // ---------------------------------------------------------------------------
   const handleSubmit = useCallback(async () => {
     setIsSubmitting(true);
+    isSubmittingRef.current = true;
     setSubmitError(null);
 
     try {
@@ -284,6 +286,7 @@ export default function OrderFlow({
       );
     } finally {
       setIsSubmitting(false);
+      isSubmittingRef.current = false;
     }
   }, [router, user?.email]);
 
