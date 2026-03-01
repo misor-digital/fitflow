@@ -86,10 +86,18 @@ export async function updateOrderStatus(
 
   const fromStatus = current.status as OrderStatus;
 
-  // 2. Update the order status
+  // 2. Build update payload
+  const updatePayload: OrderUpdate = { status: newStatus };
+
+  // Set shipped_at when transitioning to 'shipped'
+  if (newStatus === 'shipped') {
+    updatePayload.shipped_at = new Date().toISOString();
+  }
+
+  // 3. Update the order status
   const { data: updated, error: updateError } = await supabaseAdmin
     .from('orders')
-    .update({ status: newStatus })
+    .update(updatePayload)
     .eq('id', orderId)
     .select()
     .single();
