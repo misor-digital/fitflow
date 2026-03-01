@@ -105,6 +105,10 @@ export {
   formatShippingAddress,
   formatShippingAddressOneLine,
 
+  // Order type labels & colors
+  ORDER_TYPE_LABELS,
+  ORDER_TYPE_COLORS,
+
   // Delivery method formatting
   formatDeliveryMethodLabel,
 } from './format';

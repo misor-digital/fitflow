@@ -6,10 +6,14 @@ import {
   getOrderStatusHistory,
   getBoxTypeNames,
   getEurToBgnRate,
+  getDeliveryCycleById,
+  getUpcomingCycle,
 } from '@/lib/data';
 import {
   ORDER_STATUS_LABELS,
   ORDER_STATUS_COLORS,
+  ORDER_TYPE_LABELS,
+  ORDER_TYPE_COLORS,
   STATUS_BG_COLORS,
   formatOrderNumber,
   formatShippingAddress,
@@ -17,6 +21,7 @@ import {
 } from '@/lib/order';
 import { formatPriceDual } from '@/lib/catalog';
 import { StatusTimeline } from '@/components/account/StatusTimeline';
+import { CancelRequestButton } from '@/components/account/CancelRequestButton';
 import type { OrderStatus } from '@/lib/supabase/types';
 import type { Metadata } from 'next';
 
@@ -36,6 +41,18 @@ export async function generateMetadata({
       ? `Поръчка ${formatOrderNumber(order.order_number)} | FitFlow`
       : 'Поръчка | FitFlow',
   };
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function formatDateBG(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString('bg-BG', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -65,8 +82,31 @@ export default async function OrderDetailPage({
     getEurToBgnRate(),
   ]);
 
+  // Secondary parallel fetches (depend on order data)
+  const [deliveryCycle, upcomingCycle] = await Promise.all([
+    order.delivery_cycle_id ? getDeliveryCycleById(order.delivery_cycle_id) : null,
+    order.order_type === 'subscription' && order.subscription_id
+      ? getUpcomingCycle()
+      : null,
+  ]);
+
   const statusKey = order.status as OrderStatus;
   const addressLines = formatShippingAddress(order.shipping_address).split('\n');
+
+  // Derived dates
+  const lastUpdateDate =
+    statusHistory.length > 0
+      ? formatDateBG(statusHistory[statusHistory.length - 1].created_at)
+      : null;
+  const expectedDeliveryDate = deliveryCycle?.delivery_date
+    ? formatDateBG(deliveryCycle.delivery_date)
+    : null;
+  const nextRenewalDate =
+    order.order_type === 'subscription' && upcomingCycle?.delivery_date
+      ? formatDateBG(upcomingCycle.delivery_date)
+      : null;
+
+  const canCancel = statusKey === 'pending' || statusKey === 'confirmed';
 
   // Transform status history for the timeline component
   const timelineEntries = statusHistory.map((h) => ({
@@ -78,21 +118,35 @@ export default async function OrderDetailPage({
 
   return (
     <div>
-      {/* Back link */}
-      <Link
-        href="/account/orders"
-        className="inline-flex items-center text-sm text-gray-500 hover:text-[var(--color-brand-navy)] mb-6 transition-colors"
-      >
-        <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-        </svg>
-        Назад към поръчки
-      </Link>
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-2 text-sm text-gray-500 mb-6">
+        <Link href="/account" className="hover:text-[var(--color-brand-navy)] transition-colors">
+          Акаунт
+        </Link>
+        <span className="text-gray-300">&gt;</span>
+        <Link
+          href="/account/orders"
+          className="hover:text-[var(--color-brand-navy)] transition-colors"
+        >
+          Поръчки
+        </Link>
+        <span className="text-gray-300">&gt;</span>
+        <span className="text-gray-700 font-medium">
+          {formatOrderNumber(order.order_number)}
+        </span>
+      </nav>
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-8">
         <h1 className="text-2xl font-bold text-[var(--color-brand-navy)]">
           {formatOrderNumber(order.order_number)}
+          {ORDER_TYPE_LABELS[order.order_type] && (
+            <span
+              className={`ml-3 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${ORDER_TYPE_COLORS[order.order_type] ?? 'bg-gray-100 text-gray-600'}`}
+            >
+              {ORDER_TYPE_LABELS[order.order_type]}
+            </span>
+          )}
         </h1>
         <span
           className={`inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-bold ${STATUS_BG_COLORS[statusKey]} ${ORDER_STATUS_COLORS[statusKey]}`}
@@ -133,13 +187,27 @@ export default async function OrderDetailPage({
           <div>
             <dt className="text-gray-500 mb-1">Дата на поръчка</dt>
             <dd className="font-semibold text-gray-900">
-              {new Date(order.created_at).toLocaleDateString('bg-BG', {
-                day: 'numeric',
-                month: 'long',
-                year: 'numeric',
-              })}
+              {formatDateBG(order.created_at)}
             </dd>
           </div>
+          {lastUpdateDate && (
+            <div>
+              <dt className="text-gray-500 mb-1">Последна промяна</dt>
+              <dd className="font-semibold text-gray-900">{lastUpdateDate}</dd>
+            </div>
+          )}
+          <div>
+            <dt className="text-gray-500 mb-1">Очаквана доставка</dt>
+            <dd className="font-semibold text-gray-900">
+              {expectedDeliveryDate ?? '—'}
+            </dd>
+          </div>
+          {nextRenewalDate && (
+            <div>
+              <dt className="text-gray-500 mb-1">Следващо подновяване</dt>
+              <dd className="font-semibold text-gray-900">{nextRenewalDate}</dd>
+            </div>
+          )}
           {order.promo_code && (
             <div>
               <dt className="text-gray-500 mb-1">Промо код</dt>
@@ -153,6 +221,13 @@ export default async function OrderDetailPage({
           )}
         </dl>
       </div>
+
+      {/* Cancel request */}
+      {canCancel && (
+        <div className="mb-6">
+          <CancelRequestButton orderNumber={order.order_number} />
+        </div>
+      )}
 
       {/* Shipping Address Card */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-6">
@@ -173,6 +248,30 @@ export default async function OrderDetailPage({
           {formatDeliveryMethodLabel(order.delivery_method)}
         </div>
       </div>
+
+      {/* Tracking placeholder — shown when order is shipped */}
+      {/* TODO: Integrate real tracking number from carrier API */}
+      {statusKey === 'shipped' && (
+        <div className="bg-purple-50 border border-purple-100 rounded-lg p-4 text-sm text-purple-700 mb-6 flex items-start gap-3">
+          <svg
+            className="w-5 h-5 flex-shrink-0 mt-0.5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+            />
+          </svg>
+          <span>
+            Информация за проследяване ще се появи тук, когато пратката бъде обработена от
+            куриера.
+          </span>
+        </div>
+      )}
 
       {/* Status Timeline */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">

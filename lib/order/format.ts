@@ -143,6 +143,26 @@ export const STATUS_BG_COLORS: Record<OrderStatus, string> = {
 };
 
 // ============================================================================
+// Order Type Labels (Bulgarian)
+// ============================================================================
+
+/** Bulgarian labels for each order type */
+export const ORDER_TYPE_LABELS: Record<string, string> = {
+  subscription: 'Абонаментна',
+  'onetime-mystery': 'Мистери',
+  'onetime-revealed': 'Разкрита',
+  direct: 'Директна',
+};
+
+/** Tailwind badge classes for each order type */
+export const ORDER_TYPE_COLORS: Record<string, string> = {
+  subscription: 'bg-blue-100 text-blue-700',
+  'onetime-mystery': 'bg-purple-100 text-purple-700',
+  'onetime-revealed': 'bg-pink-100 text-pink-700',
+  direct: 'bg-orange-100 text-orange-700',
+};
+
+// ============================================================================
 // Delivery Method Formatting
 // ============================================================================
 

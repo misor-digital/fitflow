@@ -5,6 +5,8 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import {
   ORDER_STATUS_LABELS,
+  ORDER_TYPE_LABELS,
+  ORDER_TYPE_COLORS,
   formatOrderNumber,
   formatShippingAddress,
   formatDeliveryMethodLabel,
@@ -115,24 +117,7 @@ const PREORDER_STATUS_COLORS: Record<PreorderConversionStatus, string> = {
   expired: 'bg-gray-100 text-gray-500',
 };
 
-// ---------------------------------------------------------------------------
-// Order‑type labels
-// ---------------------------------------------------------------------------
 
-const ORDER_TYPE_LABELS: Record<string, string> = {
-  subscription: 'Абонаментна',
-  'onetime-mystery': 'Мистери',
-  'onetime-revealed': 'Разкрита',
-  direct: 'Директна',
-};
-
-// Badge bg colors per order type
-const ORDER_TYPE_COLORS: Record<string, string> = {
-  subscription: 'bg-blue-100 text-blue-700',
-  'onetime-mystery': 'bg-purple-100 text-purple-700',
-  'onetime-revealed': 'bg-pink-100 text-pink-700',
-  direct: 'bg-orange-100 text-orange-700',
-};
 
 // Status badge bg colors (pill variant)
 const ORDER_STATUS_BG: Record<OrderStatus, string> = {
