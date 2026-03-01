@@ -457,3 +457,60 @@ export function generateMagicLinkLoginEmail(loginUrl: string): string {
 
   return wrapInEmailLayout(bodyHtml);
 }
+
+// ============================================================================
+// Auth Email Templates
+// ============================================================================
+
+/**
+ * Generate a branded email-confirmation email HTML.
+ * Sent to new users to verify their email address.
+ *
+ * @param name - User's display name
+ * @param confirmUrl - URL that confirms the user's email
+ * @returns HTML string for the email
+ */
+export function generateEmailConfirmationEmail(name: string, confirmUrl: string): string {
+  const bodyHtml = `
+  <h2 style="color: ${EMAIL.colors.textHeading}; margin-top: 0; font-size: 24px;">
+    Потвърдете имейла си, ${escapeHtml(name)}!
+  </h2>
+  <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
+    Благодарим ви за регистрацията във FitFlow! Кликнете бутона по-долу, за да потвърдите имейл адреса си.
+  </p>
+  ${emailCtaButton(confirmUrl, 'Потвърдете имейла')}
+  <p style="color: ${EMAIL.colors.textMuted}; font-size: 14px; line-height: 1.6;">
+    Линкът е валиден за ограничено време. Ако не сте заявили тази регистрация, моля игнорирайте този имейл.
+  </p>
+  ${emailContactLine()}
+`;
+  return wrapInEmailLayout(bodyHtml);
+}
+
+/**
+ * Generate a branded password-reset email HTML.
+ * Sent to users who request a password reset.
+ *
+ * @param name - User's display name
+ * @param resetUrl - URL that takes the user to set a new password
+ * @returns HTML string for the email
+ */
+export function generatePasswordResetEmail(name: string, resetUrl: string): string {
+  const bodyHtml = `
+  <h2 style="color: ${EMAIL.colors.textHeading}; margin-top: 0; font-size: 24px;">
+    Нулиране на парола
+  </h2>
+  <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
+    Здравейте, ${escapeHtml(name)}! Получихме заявка за нулиране на паролата на вашия FitFlow акаунт.
+  </p>
+  <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
+    Кликнете бутона по-долу, за да зададете нова парола.
+  </p>
+  ${emailCtaButton(resetUrl, 'Задайте нова парола')}
+  <p style="color: ${EMAIL.colors.textMuted}; font-size: 14px; line-height: 1.6;">
+    Линкът е валиден за ограничено време. Ако не сте заявили тази промяна, можете спокойно да игнорирате този имейл.
+  </p>
+  ${emailContactLine()}
+`;
+  return wrapInEmailLayout(bodyHtml);
+}

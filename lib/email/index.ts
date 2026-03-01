@@ -21,6 +21,8 @@ export {
 export {
   generateConfirmationEmail,
   generateOrderConfirmationEmail,
+  generateEmailConfirmationEmail,
+  generatePasswordResetEmail,
   formatOptionsWithOther,
 } from './templates';
 
