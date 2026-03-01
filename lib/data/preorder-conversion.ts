@@ -136,6 +136,30 @@ export const getPreorderById = cache(
 );
 
 /**
+ * Get a single preorder by its human-readable order_id (preorder number).
+ * Used on the public preorder detail page to avoid exposing UUIDs.
+ */
+export const getPreorderByOrderId = cache(
+  async (orderId: string): Promise<Preorder | null> => {
+    const { data, error } = await supabaseAdmin
+      .from('preorders')
+      .select('*')
+      .eq('order_id', orderId)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return null;
+      }
+      console.error('Error fetching preorder by order_id:', error);
+      return null;
+    }
+
+    return data as Preorder;
+  },
+);
+
+/**
  * Get all preorders linked to a specific user, ordered by creation date (newest first).
  * Used on the customer account orders page.
  * Returns all preorders regardless of conversion status.

@@ -82,6 +82,7 @@ export {
   getPreordersWithConversionInfo,
   getPreordersByUser,
   getPreorderById,
+  getPreorderByOrderId,
 } from './preorder-conversion';
 
 // Delivery cycles

@@ -2,6 +2,7 @@
   "chat.tools.terminal.autoApprove": {
     "pnpm": true,
     "npx eslint": true,
-    "npx next": true
+    "npx next": true,
+    "Move-Item": true
   }
 }

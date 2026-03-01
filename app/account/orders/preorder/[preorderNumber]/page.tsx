@@ -2,7 +2,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { requireAuth } from '@/lib/auth';
 import {
-  getPreorderById,
+  getPreorderByOrderId,
   getOrderById,
   getBoxTypeNames,
   getEurToBgnRate,
@@ -41,12 +41,12 @@ function formatDateBG(dateStr: string): string {
 export default async function PreorderDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: Promise<{ preorderNumber: string }>;
 }) {
-  const { id } = await params;
+  const { preorderNumber } = await params;
   const { userId } = await requireAuth();
 
-  const preorder = await getPreorderById(id);
+  const preorder = await getPreorderByOrderId(decodeURIComponent(preorderNumber));
 
   // Not found or not owned by this user → 404
   if (!preorder || preorder.user_id !== userId) {
@@ -120,7 +120,7 @@ export default async function PreorderDetailPage({
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-6">
         <h1 className="text-2xl font-bold text-[var(--color-brand-navy)]">
-          Предварителна поръчка
+          Предварителна поръчка <span className="text-base font-medium text-gray-500">#{preorder.order_id}</span>
         </h1>
         <span
           className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${PREORDER_STATUS_COLORS[statusKey]}`}
@@ -132,6 +132,12 @@ export default async function PreorderDetailPage({
       {/* Info card */}
       <div className="bg-white rounded-xl shadow-sm border p-5 space-y-3 mb-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* Preorder number */}
+          <div>
+            <span className="text-sm text-gray-500">Номер</span>
+            <p className="font-medium">{preorder.order_id}</p>
+          </div>
+
           {/* Created date */}
           <div>
             <span className="text-sm text-gray-500">Дата на създаване</span>

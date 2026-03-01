@@ -659,7 +659,7 @@ export function OrdersList({
         {/* Detail link */}
         <div className="mt-3 text-sm">
           <Link
-            href={`/account/orders/preorder/${preorder.id}`}
+            href={`/account/orders/preorder/${encodeURIComponent(preorder.order_id)}`}
             className="text-[var(--color-brand-orange)] font-medium hover:underline text-sm"
           >
             Детайли &rarr;
