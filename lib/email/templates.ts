@@ -34,6 +34,12 @@ function safeSavings(eur: number | null | undefined, bgn: number | null | undefi
   return `Спестяваш ${formatPriceEur(eur)}`;
 }
 
+/** Format an ISO date string in Bulgarian DD.MM.YYYY format */
+function formatDateBg(isoDate: string): string {
+  const d = new Date(isoDate);
+  return d.toLocaleDateString('bg-BG', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
 // ============================================================================
 // Label Map Type
 // ============================================================================
@@ -510,6 +516,117 @@ export function generatePasswordResetEmail(name: string, resetUrl: string): stri
   <p style="color: ${EMAIL.colors.textMuted}; font-size: 14px; line-height: 1.6;">
     Линкът е валиден за ограничено време. Ако не сте заявили тази промяна, можете спокойно да игнорирате този имейл.
   </p>
+  ${emailContactLine()}
+`;
+  return wrapInEmailLayout(bodyHtml);
+}
+
+// ============================================================================
+// Delivery Confirmation Email Templates
+// ============================================================================
+
+export interface DeliveryReminderEmailData {
+  customerName: string;
+  orderNumber: string;
+  shippedAt: string;
+  confirmUrl: string;
+  reminderNumber: number;
+  autoConfirmDate: string;
+  reportProblemUrl: string;
+}
+
+export interface DeliveryAutoConfirmedEmailData {
+  customerName: string;
+  orderNumber: string;
+  confirmedAt: string;
+  reportProblemUrl: string;
+}
+
+/**
+ * Generate a delivery reminder email HTML.
+ * Sent to customers who haven't confirmed receipt of their order.
+ *
+ * @param data - Reminder email data
+ * @returns HTML string for the email
+ */
+export function generateDeliveryReminderEmail(data: DeliveryReminderEmailData): string {
+  const {
+    customerName,
+    orderNumber,
+    shippedAt,
+    confirmUrl,
+    reminderNumber,
+    autoConfirmDate,
+    reportProblemUrl,
+  } = data;
+
+  const safeName = escapeHtml(customerName);
+  const safeOrder = escapeHtml(orderNumber);
+  const shippedFormatted = formatDateBg(shippedAt);
+  const safeAutoDate = escapeHtml(autoConfirmDate);
+
+  let escalationHtml = '';
+  if (reminderNumber === 2) {
+    escalationHtml = `
+  <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6; font-weight: 600;">
+    Това е второ напомняне.
+  </p>`;
+  } else if (reminderNumber === 3) {
+    escalationHtml = `
+  <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6; font-weight: 600;">
+    Това е последно напомняне. След 2 дни статусът ще бъде автоматично променен.
+  </p>`;
+  }
+
+  const bodyHtml = `
+  <h2 style="color: ${EMAIL.colors.textHeading}; margin-top: 0; font-size: 24px;">
+    Получихте ли поръчката си?
+  </h2>
+  <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
+    Здравейте, ${safeName}! Поръчка ${safeOrder} беше изпратена на ${shippedFormatted}. Ако вече сте я получили, моля потвърдете доставката.
+  </p>
+  ${emailCtaButton(confirmUrl, 'Потвърди доставка')}
+  <div style="background-color: ${EMAIL.sections.delivery}; border-left: 4px solid ${EMAIL.colors.ctaButton}; padding: 16px 20px; margin: 30px 0; border-radius: 4px;">
+    <p style="color: ${EMAIL.colors.textPrimary}; font-size: 14px; line-height: 1.6; margin: 0;">
+      Ако не потвърдите, поръчката ще бъде автоматично маркирана като доставена на ${safeAutoDate}.
+    </p>
+  </div>
+  ${escalationHtml}
+  <p style="color: ${EMAIL.colors.textMuted}; font-size: 14px; line-height: 1.6;">
+    Не сте получили поръчката? <a href="${reportProblemUrl}" style="color: ${EMAIL.colors.linkColor}; font-weight: 600;">Свържете се с нас</a>
+  </p>
+  ${emailContactLine()}
+`;
+  return wrapInEmailLayout(bodyHtml);
+}
+
+/**
+ * Generate a delivery auto-confirmed notification email HTML.
+ * Sent to customers when their order is automatically marked as delivered.
+ *
+ * @param data - Auto-confirmed email data
+ * @returns HTML string for the email
+ */
+export function generateDeliveryAutoConfirmedEmail(data: DeliveryAutoConfirmedEmailData): string {
+  const { customerName, orderNumber, confirmedAt, reportProblemUrl } = data;
+
+  const safeName = escapeHtml(customerName);
+  const safeOrder = escapeHtml(orderNumber);
+  const confirmedFormatted = formatDateBg(confirmedAt);
+
+  const bodyHtml = `
+  <h2 style="color: ${EMAIL.colors.textHeading}; margin-top: 0; font-size: 24px;">
+    Поръчката ви е маркирана като доставена
+  </h2>
+  <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
+    Здравейте, ${safeName}! Поръчка ${safeOrder} беше автоматично маркирана като доставена на ${confirmedFormatted}.
+  </p>
+  <div style="background-color: ${EMAIL.sections.delivery}; border-left: 4px solid ${EMAIL.colors.ctaButton}; padding: 16px 20px; margin: 30px 0; border-radius: 4px;">
+    <p style="color: ${EMAIL.colors.textPrimary}; font-size: 14px; line-height: 1.6; margin: 0;">
+      Ако не сте получили поръчката или имате проблем, моля свържете се с нас възможно най-скоро.
+    </p>
+  </div>
+  ${emailCtaButton(reportProblemUrl, 'Имам проблем с доставката')}
   ${emailContactLine()}
 `;
   return wrapInEmailLayout(bodyHtml);
