@@ -2,17 +2,23 @@ BEGIN;
 
 -- 1. Add delivery_method column
 ALTER TABLE orders
-  ADD COLUMN delivery_method TEXT NOT NULL DEFAULT 'address';
+  ADD COLUMN IF NOT EXISTS delivery_method TEXT NOT NULL DEFAULT 'address';
 
-ALTER TABLE orders
-  ADD CONSTRAINT valid_delivery_method CHECK (
-    delivery_method IN ('address', 'speedy_office')
-  );
+DO $$ BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint WHERE conname = 'valid_delivery_method'
+  ) THEN
+    ALTER TABLE orders
+      ADD CONSTRAINT valid_delivery_method CHECK (
+        delivery_method IN ('address', 'speedy_office')
+      );
+  END IF;
+END $$;
 
 COMMENT ON COLUMN orders.delivery_method IS 'Delivery method: address (to door) or speedy_office (Speedy office pickup)';
 
 -- 2. Replace shipping_address constraint with delivery-method-aware version
-ALTER TABLE orders DROP CONSTRAINT valid_shipping_address;
+ALTER TABLE orders DROP CONSTRAINT IF EXISTS valid_shipping_address;
 
 ALTER TABLE orders ADD CONSTRAINT valid_shipping_address CHECK (
   CASE
