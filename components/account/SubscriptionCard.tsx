@@ -16,6 +16,7 @@ import type { AddressRow } from '@/lib/supabase/types';
 import type { PricesMap, CatalogData, PriceDisplayInfo } from '@/lib/catalog';
 import PriceDisplay from '@/components/PriceDisplay';
 
+import SubscriptionTimeline from './SubscriptionTimeline';
 import PauseModal from './modals/PauseModal';
 import ResumeModal from './modals/ResumeModal';
 import CancelModal from './modals/CancelModal';
@@ -56,6 +57,7 @@ export default function SubscriptionCard({
     email: string;
   }> | null>(null);
   const [loadingOrders, setLoadingOrders] = useState(false);
+  const [showTimeline, setShowTimeline] = useState(false);
 
   const state = computeSubscriptionState(subscription);
   const priceInfo = prices[subscription.box_type];
@@ -176,6 +178,30 @@ export default function SubscriptionCard({
             </span>
           </div>
         )}
+
+        {/* Timeline (collapsible) */}
+        <div className="px-5 pb-3">
+          <button
+            type="button"
+            onClick={() => setShowTimeline(!showTimeline)}
+            className="text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors flex items-center gap-1"
+          >
+            <span>{showTimeline ? '▲' : '▼'}</span>
+            <span>Хронология</span>
+          </button>
+          {showTimeline && (
+            <SubscriptionTimeline
+              createdAt={subscription.created_at}
+              status={subscription.status as 'active' | 'paused' | 'cancelled' | 'expired'}
+              pastOrders={pastOrders}
+              pausedAt={subscription.paused_at ?? null}
+              cancelledAt={subscription.cancelled_at ?? null}
+              nextDeliveryDate={upcomingCycle?.deliveryDate ?? null}
+              onLoadOrders={loadPastOrders}
+              loadingOrders={loadingOrders}
+            />
+          )}
+        </div>
 
         {/* Cancelled/expired info */}
         {state.isCancelled && (
