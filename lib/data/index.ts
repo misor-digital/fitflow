@@ -177,3 +177,9 @@ export {
 } from './email-campaign-history';
 
 export { initializeEmailSystem } from './email-init';
+
+// Customer data
+export {
+  getCustomersPaginated,
+  getCustomersStats,
+} from './customers';
