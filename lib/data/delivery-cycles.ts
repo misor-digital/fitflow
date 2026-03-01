@@ -547,7 +547,9 @@ export const getDeliveryConfigMap = cache(
 
       if (error) {
         console.error('Error fetching delivery config:', error);
-        throw new Error('Failed to load delivery configuration.');
+        // Return empty map instead of throwing — allows ISR pages to
+        // prerender gracefully when Supabase is unreachable (e.g. CI).
+        return {} as Record<string, string | null>;
       }
 
       const configMap: Record<string, string | null> = {};
