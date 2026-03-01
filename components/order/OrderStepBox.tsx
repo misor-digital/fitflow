@@ -291,7 +291,7 @@ export default function OrderStepBox({ prices, boxTypeNames, onNext }: OrderStep
               href="/box/mystery"
               className="inline-flex items-center gap-1.5 text-sm sm:text-base text-[var(--color-brand-orange)] font-semibold hover:underline transition-colors"
             >
-              🎁 Виж мистериозната кутия →
+              Научи повече →
             </Link>
           </div>
         </div>
