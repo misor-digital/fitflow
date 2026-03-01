@@ -93,6 +93,10 @@ export {
   ORDER_STATUS_LABELS,
   ORDER_STATUS_COLORS,
 
+  // Timeline constants
+  STATUS_ORDER,
+  STATUS_BG_COLORS,
+
   // Status formatting
   formatOrderStatus,
   formatOrderNumber,

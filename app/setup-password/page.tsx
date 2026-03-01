@@ -1,5 +1,7 @@
+import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { requireAuth } from '@/lib/auth';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 import SetPasswordForm from './SetPasswordForm';
 
 export const metadata = {
@@ -8,6 +10,17 @@ export const metadata = {
 
 export default async function SetupPasswordPage() {
   const session = await requireAuth();
+
+  // If user already has a password, redirect to the security tab
+  const { data: user } = await supabaseAdmin.auth.admin.getUserById(session.userId);
+  const hasPassword = Boolean(
+    user?.user?.user_metadata?.has_password ??
+    user?.user?.identities?.some(i => i.provider === 'email')
+  );
+
+  if (hasPassword) {
+    redirect('/account/security');
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 bg-white">

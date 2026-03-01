@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/browser';
+import PasswordInput from '@/components/PasswordInput';
 
 interface LoginFormProps {
   /** Server-resolved error message from auth callback failures. */
@@ -126,9 +127,8 @@ export default function LoginForm({ callbackError, next }: LoginFormProps) {
         <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
           Парола
         </label>
-        <input
+        <PasswordInput
           id="password"
-          type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required

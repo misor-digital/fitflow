@@ -14,6 +14,7 @@ import type {
   Preorder,
   OrderStatus,
   PreorderConversionStatus,
+  OrderStatusHistoryRow,
 } from '@/lib/supabase/types';
 
 // ---------------------------------------------------------------------------
@@ -110,6 +111,8 @@ export interface OrdersListProps {
   preorders: Preorder[];
   boxTypeNames: Record<string, string>;
   eurToBgnRate: number;
+  /** Status history per order ID — enables inline progress indicator */
+  statusHistories?: Record<string, OrderStatusHistoryRow[]>;
 }
 
 // ---------------------------------------------------------------------------
@@ -121,6 +124,7 @@ export function OrdersList({
   preorders,
   boxTypeNames,
   eurToBgnRate,
+  statusHistories,
 }: OrdersListProps) {
   const [activeFilter, setActiveFilter] = useState<OrderFilter>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -287,14 +291,53 @@ export function OrdersList({
           </div>
         </button>
 
-        {/* Track link (always visible) */}
-        <div className="mt-3 flex items-center gap-3 text-sm">
+        {/* Track link (always visible) + inline status summary */}
+        <div className="mt-3 flex flex-col sm:flex-row sm:items-center gap-2 text-sm">
           <Link
-            href={`/order/track?order=${encodeURIComponent(order.order_number)}`}
+            href={`/account/orders/${encodeURIComponent(order.order_number)}`}
             className="text-[var(--color-brand-orange)] font-medium hover:underline"
           >
-            Проследяване &rarr;
+            Детайли &rarr;
           </Link>
+
+          {/* Mini progress indicator */}
+          {statusHistories?.[order.id] && (() => {
+            const STATUS_STEPS: OrderStatus[] = ['pending', 'confirmed', 'processing', 'shipped', 'delivered'];
+            const isCancelled = statusKey === 'cancelled' || statusKey === 'refunded';
+            const currentIndex = STATUS_STEPS.indexOf(statusKey);
+            const history = statusHistories[order.id];
+            const lastEntry = history[history.length - 1];
+
+            return (
+              <div className="flex items-center gap-3 text-xs text-gray-400">
+                {/* Step dots */}
+                {!isCancelled && (
+                  <div className="flex items-center gap-1">
+                    {STATUS_STEPS.map((step, i) => (
+                      <div
+                        key={step}
+                        className={`w-2 h-2 rounded-full ${
+                          i <= currentIndex
+                            ? 'bg-[var(--color-brand-orange)]'
+                            : 'bg-gray-200'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                )}
+                {/* Last update date */}
+                {lastEntry && (
+                  <span>
+                    {new Date(lastEntry.created_at).toLocaleDateString('bg-BG', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric',
+                    })}
+                  </span>
+                )}
+              </div>
+            );
+          })()}
         </div>
 
         {/* Expandable detail */}
@@ -368,16 +411,20 @@ export function OrdersList({
         </div>
 
         {/* Linked order link */}
-        {preorder.converted_to_order_id && (
-          <div className="mt-3 text-sm">
-            <Link
-              href={`/order/track?order=${encodeURIComponent(preorder.converted_to_order_id)}`}
-              className="text-[var(--color-brand-orange)] font-medium hover:underline"
-            >
-              Виж поръчка &rarr;
-            </Link>
-          </div>
-        )}
+        {preorder.converted_to_order_id && (() => {
+          const linkedOrder = orders.find((o) => o.id === preorder.converted_to_order_id);
+          if (!linkedOrder) return null;
+          return (
+            <div className="mt-3 text-sm">
+              <Link
+                href={`/account/orders/${encodeURIComponent(linkedOrder.order_number)}`}
+                className="text-[var(--color-brand-orange)] font-medium hover:underline"
+              >
+                Виж поръчка &rarr;
+              </Link>
+            </div>
+          );
+        })()}
       </div>
     );
   }
@@ -390,7 +437,7 @@ export function OrdersList({
     <div>
       {/* Tab bar */}
       <div className="flex gap-4 mb-6 border-b pb-3 overflow-x-auto">
-        {TABS.map(({ key, label }) => {
+        {TABS.filter(({ key }) => key !== 'preorder' || preorders.length > 0).map(({ key, label }) => {
           const isActive = activeFilter === key;
           return (
             <button

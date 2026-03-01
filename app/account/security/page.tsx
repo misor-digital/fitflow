@@ -11,7 +11,7 @@ export default async function SecurityPage() {
   return (
     <div>
       <h1 className="text-2xl font-bold text-[var(--color-brand-navy)] mb-6">
-        Сигурност
+        Парола
       </h1>
       <ChangePasswordForm />
     </div>

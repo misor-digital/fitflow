@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/browser';
 import { validatePassword } from '@/lib/auth/passwordPolicy';
+import PasswordInput from '@/components/PasswordInput';
 
 export default function ResetPasswordForm() {
   const [password, setPassword] = useState('');
@@ -71,9 +72,8 @@ export default function ResetPasswordForm() {
         <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
           Нова парола
         </label>
-        <input
+        <PasswordInput
           id="password"
-          type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
@@ -101,9 +101,8 @@ export default function ResetPasswordForm() {
         <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
           Потвърдете паролата
         </label>
-        <input
+        <PasswordInput
           id="confirmPassword"
-          type="password"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
           required

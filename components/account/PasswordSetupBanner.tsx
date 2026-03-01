@@ -33,7 +33,7 @@ export default function PasswordSetupBanner() {
             Задайте парола, за да можете да влизате и с имейл и парола, не само с магически линк.
           </p>
           <Link
-            href="/setup-password"
+            href="/account/security"
             className="inline-block mt-3 px-4 py-2 bg-[var(--color-brand-navy)] text-white text-sm font-semibold rounded-lg hover:bg-[var(--color-brand-orange)] transition-colors"
           >
             Задайте парола

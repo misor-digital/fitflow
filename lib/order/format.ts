@@ -118,6 +118,34 @@ export function formatShippingAddressOneLine(address: ShippingAddressSnapshot): 
   return parts.join(', ');
 }
 
+// ============================================================================
+// Timeline Constants (shared by guest tracking page & account detail page)
+// ============================================================================
+
+/** All possible statuses in logical order for timeline rendering */
+export const STATUS_ORDER: OrderStatus[] = [
+  'pending',
+  'confirmed',
+  'processing',
+  'shipped',
+  'delivered',
+];
+
+/** Background colors for status badges (pill variant) */
+export const STATUS_BG_COLORS: Record<OrderStatus, string> = {
+  pending: 'bg-yellow-100',
+  confirmed: 'bg-blue-100',
+  processing: 'bg-indigo-100',
+  shipped: 'bg-purple-100',
+  delivered: 'bg-green-100',
+  cancelled: 'bg-red-100',
+  refunded: 'bg-gray-100',
+};
+
+// ============================================================================
+// Delivery Method Formatting
+// ============================================================================
+
 /**
  * Get the Bulgarian label for a delivery method.
  */

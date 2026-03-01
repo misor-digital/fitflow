@@ -1,5 +1,6 @@
 import { requireAuth } from '@/lib/auth';
 import PasswordSetupBanner from '@/components/account/PasswordSetupBanner';
+import UnlinkedPreordersBanner from '@/components/account/UnlinkedPreordersBanner';
 
 export const metadata = {
   title: 'Моят профил | FitFlow',
@@ -16,6 +17,7 @@ export default async function AccountPage() {
       </h1>
 
       <PasswordSetupBanner />
+      <UnlinkedPreordersBanner />
 
       <div className="space-y-4">
         <div>
