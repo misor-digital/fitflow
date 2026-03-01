@@ -4,8 +4,9 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { useOrderStore, useOrderInput, getOrderInput } from '@/store/orderStore';
 import { useAuthStore } from '@/store/authStore';
-import { computeOrderDerivedState, transformOrderToApiRequest } from '@/lib/order';
+import { computeOrderDerivedState, transformOrderToApiRequest, transformOrderToSubscriptionRequest } from '@/lib/order';
 import type { OrderStep, PricesMap } from '@/lib/order';
+import { isSubscriptionBox } from '@/lib/catalog';
 import type { CatalogData } from '@/lib/catalog';
 import OrderStepBox from './OrderStepBox';
 import OrderStepPersonalize from './OrderStepPersonalize';
@@ -174,9 +175,17 @@ export default function OrderFlow({
       case 2:
         if (!freshDerived.isStep2Valid) return;
         break;
-      case 3:
+      case 3: {
         if (!freshDerived.isStep3Valid) return;
+        // Subscription boxes require a saved address
+        const freshInput = getOrderInput();
+        if (isSubscriptionBox(freshInput.boxType) && !freshInput.selectedAddressId) {
+          // This shouldn't happen in normal flow since auth users use saved addresses,
+          // but guard defensively
+          return;
+        }
         break;
+      }
     }
     goToNextActiveStep();
   }, [currentStep, goToNextActiveStep]);
@@ -190,31 +199,70 @@ export default function OrderFlow({
 
     try {
       const currentInput = getOrderInput();
-      const apiRequest = transformOrderToApiRequest(currentInput);
+      const isSubscription = isSubscriptionBox(currentInput.boxType);
 
-      const response = await fetch('/api/order', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(apiRequest),
-      });
+      let responseData: Record<string, unknown>;
 
-      const data = await response.json();
+      if (isSubscription) {
+        // ---- Subscription flow ----
+        const subscriptionRequest = transformOrderToSubscriptionRequest(currentInput);
+        const response = await fetch('/api/subscription', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(subscriptionRequest),
+        });
+        responseData = await response.json();
 
-      if (!data.success) {
-        throw new Error(data.error || 'Изпращането на поръчката не беше успешно');
+        if (!responseData.success) {
+          throw new Error(
+            (responseData.error as string) || 'Създаването на абонамент не беше успешно',
+          );
+        }
+
+        // Store subscription info for thank-you page
+        const sub = responseData.subscription as Record<string, unknown>;
+        sessionStorage.setItem(
+          'fitflow-last-order',
+          JSON.stringify({
+            orderNumber: null,
+            orderId: null,
+            subscriptionId: sub.id,
+            email: currentInput.email || user?.email,
+            isGuest: false,
+            isSubscription: true,
+            boxType: currentInput.boxType,
+            finalPriceEur: sub.current_price_eur ?? null,
+          }),
+        );
+      } else {
+        // ---- One-time order flow (existing) ----
+        const apiRequest = transformOrderToApiRequest(currentInput);
+        const response = await fetch('/api/order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(apiRequest),
+        });
+        responseData = await response.json();
+
+        if (!responseData.success) {
+          throw new Error(
+            (responseData.error as string) || 'Изпращането на поръчката не беше успешно',
+          );
+        }
+
+        // Store order info for thank-you page
+        sessionStorage.setItem(
+          'fitflow-last-order',
+          JSON.stringify({
+            orderNumber: responseData.orderNumber,
+            orderId: responseData.orderId,
+            email: currentInput.email || user?.email,
+            isGuest: currentInput.isGuest,
+            isSubscription: false,
+            finalPriceEur: responseData.finalPriceEur ?? null,
+          }),
+        );
       }
-
-      // Store order info for thank-you page
-      sessionStorage.setItem(
-        'fitflow-last-order',
-        JSON.stringify({
-          orderNumber: data.orderNumber,
-          orderId: data.orderId,
-          email: currentInput.email || user?.email,
-          isGuest: currentInput.isGuest,
-          finalPriceEur: data.finalPriceEur ?? null,
-        }),
-      );
 
       // Clear order store so next visit starts fresh
       useOrderStore.getState().reset();
