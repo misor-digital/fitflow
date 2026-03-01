@@ -239,11 +239,8 @@ export function transformOrderToSubscriptionRequest(
     throw new Error('A saved address is required for subscriptions');
   }
 
-  // Derive base box type and frequency from the full box type ID.
-  // 'monthly-standard'           → boxType: 'monthly-standard', frequency: 'monthly'
-  // 'monthly-premium'            → boxType: 'monthly-premium',  frequency: 'monthly'
-  // 'monthly-premium-monthly'    → boxType: 'monthly-premium',  frequency: 'monthly'
-  // 'monthly-premium-seasonal'   → boxType: 'monthly-premium',  frequency: 'seasonal'
+  // Derive base box type; use the store's frequency field for premium boxes.
+  // For standard boxes, frequency is always 'monthly'.
   let boxType: string;
   let frequency: string;
 
@@ -252,13 +249,11 @@ export function transformOrderToSubscriptionRequest(
     frequency = 'monthly';
   } else if (
     input.boxType === 'monthly-premium' ||
-    input.boxType === 'monthly-premium-monthly'
+    input.boxType === 'monthly-premium-monthly' ||
+    input.boxType === 'monthly-premium-seasonal'
   ) {
     boxType = 'monthly-premium';
-    frequency = 'monthly';
-  } else if (input.boxType === 'monthly-premium-seasonal') {
-    boxType = 'monthly-premium';
-    frequency = 'seasonal';
+    frequency = input.frequency || 'monthly';
   } else {
     throw new Error(`Unsupported subscription box type: ${input.boxType}`);
   }
@@ -326,6 +321,7 @@ const INITIAL_ADDRESS_INPUT: AddressInput = {
 export const INITIAL_ORDER_INPUT: OrderUserInput = {
   // Step 1: Box Selection
   boxType: null,
+  frequency: 'monthly',
 
   // Step 2: Personalization
   wantsPersonalization: null,

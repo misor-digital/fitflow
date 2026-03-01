@@ -121,6 +121,7 @@ export default function ConversionFlow({
       const currentInput = useOrderStore.getState();
       const apiRequest = transformOrderToApiRequest({
         boxType: currentInput.boxType,
+        frequency: currentInput.frequency,
         wantsPersonalization: currentInput.wantsPersonalization,
         sports: currentInput.sports,
         sportOther: currentInput.sportOther,

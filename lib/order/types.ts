@@ -56,6 +56,7 @@ export interface AddressInput {
 export interface OrderUserInput {
   // Step 1: Box Selection
   boxType: BoxTypeId | null;
+  frequency: string; // 'monthly' | 'seasonal'
 
   // Step 2: Personalization
   wantsPersonalization: boolean | null;
