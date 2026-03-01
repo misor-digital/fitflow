@@ -1,28 +1,67 @@
-# Email Service Setup Guide - Brevo Integration
-
-This document describes how to set up and configure the Brevo email service.
+# Email Service Setup Guide — Brevo Integration
 
 ## Overview
 
-This app uses [Brevo](https://www.brevo.com/) (formerly Sendinblue) for:
-- **Transactional emails**: Order confirmations, order updates, etc.
-- **Contact management**: Building a customer database for future marketing
-- **Campaign capability**: Ready for future marketing campaigns and newsletters
+FitFlow uses [Brevo](https://www.brevo.com/) as an SMTP transport layer for all transactional emails. **All email templates are code-controlled** in `lib/email/` — no Brevo dashboard templates are used for transactional emails.
+
+## Architecture
+
+```
+Email Templates (TypeScript)
+├── lib/email/constants.ts              — design tokens (colors, fonts, spacing)
+├── lib/email/layout.ts                 — shared header/footer/wrapper
+├── lib/email/templates.ts              — order, invite, magic-link, auth templates
+├── lib/email/subscription-templates.ts — subscription lifecycle templates
+└── lib/email/labels.ts                 — centralized DB label resolution
+
+Email Sending
+├── lib/email/emailService.ts           — low-level Brevo SDK wrapper
+├── lib/email/brevo/transactional.ts    — adds logging + usage tracking
+└── lib/email/brevo/campaigns.ts        — marketing campaign APIs
+
+Excluded (legacy, pending deletion):
+└── lib/email/preorder-campaign/        — separate preorder conversion module
+```
+
+## Email Template Inventory
+
+| Template | Function | Trigger |
+|----------|----------|---------|
+| Order confirmation | `generateConfirmationEmail()` | New order placed |
+| Customer invite | `generateCustomerInviteEmail()` | Admin creates customer |
+| Staff invite | `generateStaffInviteEmail()` | Admin invites staff |
+| Magic-link registration | `generateMagicRegistrationEmail()` | Magic-link register |
+| Magic-link login | `generateMagicLinkLoginEmail()` | Magic-link login |
+| Email confirmation | `generateEmailConfirmationEmail()` | Password registration |
+| Password reset | `generatePasswordResetEmail()` | Forgot password |
+| Subscription created | `generateSubscriptionCreatedEmail()` | Subscription activated |
+| Subscription paused | `generateSubscriptionPausedEmail()` | Subscription paused |
+| Subscription resumed | `generateSubscriptionResumedEmail()` | Subscription resumed |
+| Subscription cancelled | `generateSubscriptionCancelledEmail()` | Subscription cancelled |
+| Delivery upcoming | `generateDeliveryUpcomingEmail()` | Delivery approaching |
+
+## Label Resolution
+
+Emails displaying personalization options (sports, flavors, colors, dietary) use `resolveEmailLabels()` from `lib/email/labels.ts` to fetch human-readable display names from the database. This prevents raw DB IDs from appearing in customer-facing emails.
+
+## Adding a New Template
+
+1. Create function using `wrapInEmailLayout()`, `emailCtaButton()`, `emailContactLine()` from `lib/email/layout.ts`
+2. Import design tokens from `lib/email/constants.ts` — never hardcode colors
+3. If email displays DB values (box types, options), call `resolveEmailLabels()` before generating
+4. Send via `sendTransactionalEmail()` from `lib/email/brevo/transactional.ts`
+5. Add to barrel export in `lib/email/index.ts`
 
 ## Required Environment Variables
 
 Add these to your `.env.local` file:
 
-```env
-# Required - Brevo API Key
-BREVO_API_KEY=your-brevo-api-key-here
-BREVO_SENDER_EMAIL=your-email
-BREVO_SENDER_NAME=your-business-name
-
-# Optional - Contact List IDs (for marketing campaigns)
-BREVO_NEWSLETTER_LIST_ID=0
-BREVO_PREORDER_LIST_ID=0  # Legacy preorder list (kept for historical data)
-```
+| Variable | Description |
+|----------|-------------|
+| `BREVO_API_KEY` | Brevo API key (starts with `xkeysib-`) |
+| `BREVO_SENDER_EMAIL` | Verified sender email |
+| `BREVO_SENDER_NAME` | Sender display name |
+| `BREVO_NEWSLETTER_LIST_ID` | (Optional) Contact list for marketing |
 
 ## Getting Your Brevo API Key
 
@@ -60,103 +99,6 @@ To enable marketing campaigns:
 3. Note the List ID (visible in the URL or list details)
 4. Add it to your `.env.local` as `BREVO_NEWSLETTER_LIST_ID`
 
-## Using Brevo Templates (Optional)
-
-Instead of inline HTML templates, you can use Brevo's template editor:
-
-1. Go to **Campaigns** → **Templates**
-2. Create a new template
-3. Design your email using the drag-and-drop editor
-4. Use template variables like `{{ params.FULLNAME }}`, `{{ params.BOXTYPE }}`
-5. Note the Template ID
-6. Add it to your `.env.local` as your template ID
-
-### Template Variables Available
-
-When using templates, these variables are passed:
-- `FULLNAME` - Customer's full name
-- `EMAIL` - Customer's email
-- `BOXTYPE` - Selected box type
-- `BOXTYPEDISPLAY` - Human-readable box type name
-- `ORDERID` - Unique order ID
-- `WANTSPERSONALIZATION` - Boolean
-- `SPORTS`, `COLORS`, `FLAVORS` - Preferences (comma-separated)
-- `SIZEUPPER`, `SIZELOWER` - Size preferences
-- `DIETARY` - Dietary preferences
-- `ADDITIONALNOTES` - Customer notes
-
-## Architecture
-
-```
-lib/email/
-├── index.ts           # Main exports
-├── types.ts           # TypeScript interfaces
-├── client.ts          # Brevo API client configuration
-├── emailService.ts    # Core email sending functions
-└── templates.ts       # HTML email templates
-```
-
-## Usage Examples
-
-### Send a Custom Email
-
-```typescript
-import { sendEmail } from '@/lib/email';
-
-await sendEmail({
-  to: { email: 'customer@example.com', name: 'John Doe' },
-  subject: 'Welcome!',
-  htmlContent: '<h1>Welcome!</h1><p>Thanks for joining.</p>',
-  textContent: 'Welcome! Thanks for joining.',
-  tags: ['welcome', 'transactional'],
-});
-```
-
-### Send Order Confirmation
-
-```typescript
-import { generateConfirmationEmail } from '@/lib/email';
-import { sendEmail } from '@/lib/email';
-
-// After saving order to database
-const html = generateConfirmationEmail(emailData, 'order', labels);
-await sendEmail({ to: { email, name }, subject: '...', htmlContent: html });
-```
-
-### Add Contact to List
-
-```typescript
-import { createOrUpdateContact, addContactToList } from '@/lib/email';
-
-await createOrUpdateContact({
-  email: 'customer@example.com',
-  firstName: 'John',
-  lastName: 'Doe',
-  attributes: {
-    SIGNUP_SOURCE: 'website',
-  },
-  listIds: [123], // Your list ID
-});
-```
-
-## Testing
-
-### Test Email Sending
-
-```bash
-# Run the development server
-pnpm dev
-
-# Submit a test order through the UI
-# Check Brevo dashboard for sent emails
-```
-
-### Check Brevo Dashboard
-
-1. **Transactional** → **Logs**: View sent emails and delivery status
-2. **Contacts**: View added contacts
-3. **Statistics**: Monitor email performance
-
 ## Troubleshooting
 
 ### "BREVO_API_KEY environment variable is not set"
@@ -168,29 +110,3 @@ pnpm dev
 2. Verify sender email is authenticated
 3. Check spam folders
 4. Ensure domain DNS records are properly configured
-
-### Contact not being added
-1. Check if contact already exists (Brevo may return error)
-2. Verify list ID is correct
-3. Check Brevo API response in server logs
-
-## Rate Limits
-
-Brevo free tier includes:
-- 300 emails/day
-- Unlimited contacts
-
-For production, consider upgrading to a paid plan for:
-- Higher email limits
-- Better deliverability
-- Advanced analytics
-- Dedicated IP
-
-## Future Enhancements
-
-The email service is designed to support:
-- Marketing campaigns via Brevo Campaigns API
-- Email automation workflows
-- A/B testing for email templates
-- Advanced segmentation based on customer preferences
-- Webhook integration for delivery tracking
