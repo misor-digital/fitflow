@@ -177,13 +177,6 @@ export default function OrderFlow({
         break;
       case 3: {
         if (!freshDerived.isStep3Valid) return;
-        // Subscription boxes require a saved address
-        const freshInput = getOrderInput();
-        if (isSubscriptionBox(freshInput.boxType) && !freshInput.selectedAddressId) {
-          // This shouldn't happen in normal flow since auth users use saved addresses,
-          // but guard defensively
-          return;
-        }
         break;
       }
     }
@@ -198,13 +191,30 @@ export default function OrderFlow({
     setSubmitError(null);
 
     try {
-      const currentInput = getOrderInput();
+      let currentInput = getOrderInput();
       const isSubscription = isSubscriptionBox(currentInput.boxType);
 
       let responseData: Record<string, unknown>;
 
       if (isSubscription) {
         // ---- Subscription flow ----
+        // Subscriptions require a saved address. When the user entered a new
+        // inline address (selectedAddressId is null), persist it first via the
+        // address API and use the returned ID for the subscription request.
+        if (!currentInput.selectedAddressId) {
+          const addrRes = await fetch('/api/address', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(currentInput.address),
+          });
+          const addrData = await addrRes.json();
+          if (!addrRes.ok || !addrData.address?.id) {
+            throw new Error(addrData.error || 'Грешка при запазване на адреса');
+          }
+          currentInput = { ...currentInput, selectedAddressId: addrData.address.id };
+          useOrderStore.getState().setSelectedAddressId(addrData.address.id);
+        }
+
         const subscriptionRequest = transformOrderToSubscriptionRequest(currentInput);
         const response = await fetch('/api/subscription', {
           method: 'POST',

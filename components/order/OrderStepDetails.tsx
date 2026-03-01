@@ -86,7 +86,7 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
   const [contactErrors, setContactErrors] = useState<Record<string, string>>({});
   const [addressErrors, setAddressErrors] = useState<Record<string, string>>({});
 
-  // Fetch saved addresses for authenticated users
+  // Fetch saved addresses for authenticated users (runs once on mount)
   useEffect(() => {
     if (!isAuthenticated) return;
 
@@ -101,11 +101,14 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
           const addrs: SavedAddress[] = data.addresses || [];
           setSavedAddresses(addrs);
 
-          // Pre-select default address if none selected
-          if (!selectedAddressId && addrs.length > 0) {
-            const defaultAddr = addrs.find(a => a.is_default) || addrs[0];
-            setSelectedAddressId(defaultAddr.id);
-          }
+          // Pre-select default address if none selected yet
+          setSelectedAddressId((prev) => {
+            if (!prev && addrs.length > 0) {
+              const defaultAddr = addrs.find(a => a.is_default) || addrs[0];
+              return defaultAddr.id;
+            }
+            return prev;
+          });
         }
       } catch (err) {
         if (err instanceof DOMException && err.name === 'AbortError') return;
@@ -117,7 +120,8 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
 
     fetchAddresses();
     return () => controller.abort();
-  }, [isAuthenticated, selectedAddressId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
 
   // Pre-fill contact info from auth profile — but NOT during a conversion
   // flow where the store already holds the customer's details from the
