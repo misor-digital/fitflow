@@ -28,6 +28,17 @@ export type {
   UserProfileRow,
   UserProfileInsert,
   UserProfileUpdate,
+  FeedbackFormRow,
+  FeedbackFormInsert,
+  FeedbackFormUpdate,
+  FeedbackFormSchema,
+  FeedbackFormSettings,
+  FeedbackFieldDefinition,
+  FeedbackFieldType,
+  FeedbackResponseRow,
+  FeedbackResponseInsert,
+  FeedbackFormHistoryRow,
+  FeedbackFormHistoryInsert,
 } from './types';
 
 
