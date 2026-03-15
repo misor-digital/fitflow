@@ -2,6 +2,7 @@
 
 import { useRef, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import type { FeedbackFieldDefinition, FeedbackFieldType, FeedbackFormRow, FeedbackFormSettings } from '@/lib/supabase/types';
 
 // ============================================================================
@@ -1097,7 +1098,7 @@ export default function FeedbackFormBuilder({ initialForm }: { initialForm?: Fee
                               <span className="text-amber-600 text-[10px] block mb-0.5">ново:</span>
                               {f.image_url ? (
                                 <>
-                                  <img src={f.image_url} alt="ново" className="w-20 h-20 object-cover rounded border-2 border-amber-300" />
+                                  <Image src={f.image_url} alt="ново" width={80} height={80} className="w-20 h-20 object-cover rounded border-2 border-amber-300" />
                                   <a href={f.image_url} target="_blank" rel="noopener noreferrer" className="block text-[10px] text-blue-500 hover:underline mt-0.5 max-w-[80px] truncate">линк</a>
                                 </>
                               ) : (
@@ -1109,7 +1110,7 @@ export default function FeedbackFormBuilder({ initialForm }: { initialForm?: Fee
                               <span className="text-gray-400 text-[10px] block mb-0.5">преди:</span>
                               {old!.image_url ? (
                                 <>
-                                  <img src={old!.image_url} alt="преди" className="w-20 h-20 object-cover rounded border border-gray-200 opacity-60" />
+                                  <Image src={old!.image_url} alt="преди" width={80} height={80} className="w-20 h-20 object-cover rounded border border-gray-200 opacity-60" />
                                   <a href={old!.image_url} target="_blank" rel="noopener noreferrer" className="block text-[10px] text-gray-400 hover:underline mt-0.5 max-w-[80px] truncate">линк</a>
                                 </>
                               ) : (
