@@ -43,6 +43,8 @@ const NAV_ITEMS: Array<{
     allowedRoles: ['super_admin', 'admin', 'content'] },
   { href: '/admin/analytics', label: 'Анализи', icon: '📈',
     allowedRoles: ['super_admin', 'admin', 'analyst', 'marketing'] },
+  { href: '/admin/feedback', label: 'Обратна връзка', icon: '💬',
+    allowedRoles: ['super_admin', 'admin', 'marketing', 'content', 'support'] },
   { href: '/admin/settings', label: 'Настройки', icon: '⚙️',
     allowedRoles: ['super_admin', 'admin'] },
 ];

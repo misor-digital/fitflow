@@ -194,3 +194,21 @@ export {
   getCustomersPaginated,
   getCustomersStats,
 } from './customers';
+
+// Feedback forms
+export {
+  validateFormSchema,
+  isValidSlug,
+  createFeedbackForm,
+  updateFeedbackForm,
+  deleteFeedbackForm,
+  getFeedbackFormById,
+  getFeedbackFormBySlug,
+  getFeedbackFormsPaginated,
+  createFeedbackResponse,
+  getResponsesByForm,
+  getResponseCountByForm,
+  hasUserResponded,
+  recordFormAction,
+  getFormHistory,
+} from './feedback-forms';

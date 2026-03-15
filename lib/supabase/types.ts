@@ -913,6 +913,122 @@ export interface EmailUnsubscribeInsert {
 }
 
 // ============================================================================
+// Feedback Form Types
+// ============================================================================
+
+/** Supported field types in feedback form schemas */
+export type FeedbackFieldType = 'rating' | 'text' | 'textarea' | 'select' | 'multi_select' | 'boolean' | 'nps';
+
+export interface FeedbackFieldDefinition {
+  id: string;
+  type: FeedbackFieldType;
+  label: string;
+  required: boolean;
+  image_url?: string | null;
+  choices?: string[];
+  options?: Record<string, unknown>;
+  /** Client-only stable key for React — not persisted to the database. */
+  _key?: string;
+}
+
+export interface FeedbackFormSchema {
+  version: number;
+  fields: FeedbackFieldDefinition[];
+}
+
+export interface FeedbackFormSettings {
+  requireAuth?: boolean;
+  allowMultiple?: boolean;
+  thankYouMessage?: string;
+  requireToken?: boolean;
+}
+
+export interface FeedbackFormRow {
+  id: string;
+  slug: string;
+  title: string;
+  description: string | null;
+  schema: FeedbackFormSchema;
+  settings: FeedbackFormSettings;
+  version: number;
+  campaign_id: string | null;
+  delivery_cycle_id: string | null;
+  is_active: boolean;
+  starts_at: string | null;
+  ends_at: string | null;
+  access_token: string | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FeedbackFormInsert {
+  slug: string;
+  title: string;
+  description?: string | null;
+  schema: FeedbackFormSchema;
+  settings?: FeedbackFormSettings;
+  access_token?: string | null;
+  campaign_id?: string | null;
+  delivery_cycle_id?: string | null;
+  is_active?: boolean;
+  starts_at?: string | null;
+  ends_at?: string | null;
+  created_by: string;
+}
+
+export interface FeedbackFormUpdate {
+  slug?: string;
+  title?: string;
+  description?: string | null;
+  schema?: FeedbackFormSchema;
+  settings?: FeedbackFormSettings;
+  access_token?: string | null;
+  version?: number;
+  campaign_id?: string | null;
+  delivery_cycle_id?: string | null;
+  is_active?: boolean;
+  starts_at?: string | null;
+  ends_at?: string | null;
+}
+
+export interface FeedbackResponseRow {
+  id: string;
+  form_id: string;
+  form_version: number;
+  user_id: string | null;
+  answers: Record<string, unknown>;
+  metadata: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface FeedbackResponseInsert {
+  form_id: string;
+  form_version: number;
+  user_id?: string | null;
+  answers: Record<string, unknown>;
+  metadata?: Record<string, unknown>;
+}
+
+export interface FeedbackFormHistoryRow {
+  id: string;
+  form_id: string;
+  action: string;
+  changed_by: string;
+  previous_schema: FeedbackFormSchema | null;
+  metadata: Record<string, unknown>;
+  created_at: string;
+}
+
+export interface FeedbackFormHistoryInsert {
+  form_id: string;
+  action: string;
+  changed_by: string;
+  previous_schema?: FeedbackFormSchema | null;
+  metadata?: Record<string, unknown>;
+}
+
+// ============================================================================
 // RPC Function Return Types
 // ============================================================================
 
@@ -1243,6 +1359,54 @@ export interface Database {
           foreignKeyName: 'email_unsubscribes_campaign_id_fkey';
           columns: ['campaign_id'];
           referencedRelation: 'email_campaigns';
+          referencedColumns: ['id'];
+        }];
+      };
+      feedback_forms: {
+        Row: ToRecord<FeedbackFormRow>;
+        Insert: ToRecord<FeedbackFormInsert>;
+        Update: ToRecord<FeedbackFormUpdate>;
+        Relationships: [{
+          foreignKeyName: 'feedback_forms_campaign_id_fkey';
+          columns: ['campaign_id'];
+          referencedRelation: 'email_campaigns';
+          referencedColumns: ['id'];
+        }, {
+          foreignKeyName: 'feedback_forms_delivery_cycle_id_fkey';
+          columns: ['delivery_cycle_id'];
+          referencedRelation: 'delivery_cycles';
+          referencedColumns: ['id'];
+        }, {
+          foreignKeyName: 'feedback_forms_created_by_fkey';
+          columns: ['created_by'];
+          referencedRelation: 'users';
+          referencedColumns: ['id'];
+        }];
+      };
+      feedback_responses: {
+        Row: ToRecord<FeedbackResponseRow>;
+        Insert: ToRecord<FeedbackResponseInsert>;
+        Update: ToRecord<Partial<FeedbackResponseInsert>>;
+        Relationships: [{
+          foreignKeyName: 'feedback_responses_form_id_fkey';
+          columns: ['form_id'];
+          referencedRelation: 'feedback_forms';
+          referencedColumns: ['id'];
+        }];
+      };
+      feedback_form_history: {
+        Row: ToRecord<FeedbackFormHistoryRow>;
+        Insert: ToRecord<FeedbackFormHistoryInsert>;
+        Update: ToRecord<Partial<FeedbackFormHistoryInsert>>;
+        Relationships: [{
+          foreignKeyName: 'feedback_form_history_form_id_fkey';
+          columns: ['form_id'];
+          referencedRelation: 'feedback_forms';
+          referencedColumns: ['id'];
+        }, {
+          foreignKeyName: 'feedback_form_history_changed_by_fkey';
+          columns: ['changed_by'];
+          referencedRelation: 'users';
           referencedColumns: ['id'];
         }];
       };
