@@ -119,8 +119,8 @@ export default async function FeedbackPage({ params, searchParams }: FeedbackPag
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4">
-      <div className="max-w-lg mx-auto">
+    <div className="min-h-screen bg-gray-50 py-4 px-3 sm:py-8 sm:px-4">
+      <div className="max-w-3xl mx-auto">
         {/* Logo */}
         <div className="text-center mb-6">
           <Link href="/" className="text-2xl font-extrabold italic text-[var(--color-brand-navy)] hover:text-[var(--color-brand-orange)] transition-colors">
@@ -128,25 +128,22 @@ export default async function FeedbackPage({ params, searchParams }: FeedbackPag
           </Link>
         </div>
 
-        {/* Form card */}
-        <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
+        {/* Form header */}
+        <div className="mb-5 px-1">
           <h1 className="text-xl font-bold text-[var(--color-brand-navy)] mb-1">
             {form.title}
           </h1>
           {form.description && (
             <p className="text-sm text-gray-600">{form.description}</p>
           )}
-          <hr className="border-gray-200 my-4" />
-
-          <div>
-            <DynamicFeedbackForm
-              slug={form.slug}
-              schema={form.schema}
-              settings={form.settings}
-              accessToken={form.access_token}
-            />
-          </div>
         </div>
+
+        <DynamicFeedbackForm
+          slug={form.slug}
+          schema={form.schema}
+          settings={form.settings}
+          accessToken={form.access_token}
+        />
 
         <p className="text-center text-xs text-gray-400 mt-6">
           © {new Date().getFullYear()} FitFlow
