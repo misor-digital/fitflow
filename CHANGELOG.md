@@ -1,5 +1,11 @@
 # fitflow
 
+## 1.2.0
+
+### Minor Changes
+
+- Add dynamic feedback form system with admin builder, public submission pages, and response tracking
+
 ## 1.1.2
 
 ### Patch Changes
