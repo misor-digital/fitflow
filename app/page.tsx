@@ -121,7 +121,7 @@ function HomeContent() {
         <div className="absolute inset-0 z-10">
           {/* Portrait viewport: tall hero */}
           <Image
-            src="/storage/hero_mobile.webp"
+            src="/storage/hero-portrait.png"
             alt="FitFlow кутия с фитнес продукти"
             fill
             className="object-cover hero-portrait"
@@ -130,7 +130,7 @@ function HomeContent() {
           />
           {/* Landscape viewport: wide hero */}
           <Image
-            src="/storage/hero.webp"
+            src="/storage/hero-landscape.png"
             alt="FitFlow кутия с фитнес продукти"
             fill
             className="object-cover hero-landscape"
