@@ -117,20 +117,28 @@ function HomeContent() {
           }}
         />
 
-        {/* Product cut-out — top half on mobile (shifted down), centered overlay on desktop */}
-        <div className="relative z-10 flex items-end justify-center h-[70dvh] pt-12 sm:pt-0 sm:absolute sm:inset-0 sm:h-auto sm:items-center sm:pb-4 md:pb-0">
-          <div className="relative w-[90vw] h-[45dvh] sm:w-[70vw] sm:h-[60vh] md:w-[55vw] md:h-[65vh] lg:w-[48vw] lg:h-[70vh] xl:w-[42vw] scale-[2] sm:scale-[1.35]">
-            <Image
-              src="/storage/hero_mobile.jpg"
-              // src="/storage/hero.webp"
-              alt="FitFlow кутия с фитнес продукти"
-              fill
-              className="object-contain drop-shadow-2xl"
-              priority
-              unoptimized
-              sizes="(max-width: 640px) 90vw, (max-width: 768px) 70vw, (max-width: 1024px) 55vw, 48vw"
-            />
-          </div>
+        {/* Hero image — full viewport cover */}
+        <div className="absolute inset-0 z-10">
+          {/* Mobile: portrait hero */}
+          <Image
+            src="/storage/hero_mobile.webp"
+            alt="FitFlow кутия с фитнес продукти"
+            fill
+            className="object-cover sm:hidden"
+            priority
+            unoptimized
+            sizes="100vw"
+          />
+          {/* sm+: landscape hero */}
+          <Image
+            src="/storage/hero.webp"
+            alt="FitFlow кутия с фитнес продукти"
+            fill
+            className="object-cover hidden sm:block"
+            priority
+            unoptimized
+            sizes="100vw"
+          />
         </div>
 
         {/* Bottom fade — contrast behind text (desktop only, mobile uses stacked layout) */}
@@ -219,10 +227,10 @@ function HomeContent() {
         </h2>
         <div className="max-w-3xl mx-auto grid grid-cols-2 md:grid-cols-2 gap-3 sm:gap-5 md:gap-8">
           {[
-            { img: 'protein  nameless.png', title: 'Протеинови продукти', desc: 'Протеинови продукти за подсилване преди и след тренировка', gradient: 'from-[var(--color-brand-orange)] to-[#ff9a3d]' },
-            { img: 'botttle no brand.png', title: 'Спортни аксесоари', desc: 'Спортни аксесоари за по-лесни и интересни тренировки', gradient: 'from-[#8ECAE6] to-[#5ab4db]' },
-            { img: 'supplement no brand.png', title: 'Добавки', desc: 'Хранителни добавки за здрав дух и здраво тяло', gradient: 'from-[var(--color-brand-navy)] to-[#045a7f]' },
-            { img: 'sports bra no logo 2.png', title: 'Спортно облекло', desc: 'Клин, спортен сутиен, тениска и др.', gradient: 'from-[var(--color-brand-orange)] to-[#ff9a3d]' }
+            { img: 'protein  nameless.webp', title: 'Протеинови продукти', desc: 'Протеинови продукти за подсилване преди и след тренировка', gradient: 'from-[var(--color-brand-orange)] to-[#ff9a3d]' },
+            { img: 'botttle no brand.webp', title: 'Спортни аксесоари', desc: 'Спортни аксесоари за по-лесни и интересни тренировки', gradient: 'from-[#8ECAE6] to-[#5ab4db]' },
+            { img: 'supplement no brand.webp', title: 'Добавки', desc: 'Хранителни добавки за здрав дух и здраво тяло', gradient: 'from-[var(--color-brand-navy)] to-[#045a7f]' },
+            { img: 'sports bra no logo 2.webp', title: 'Спортно облекло', desc: 'Клин, спортен сутиен, тениска и др.', gradient: 'from-[var(--color-brand-orange)] to-[#ff9a3d]' }
           ].map((product, idx) => (
             <div key={idx} className="bg-white p-4 sm:p-6 md:p-8 rounded-xl sm:rounded-2xl shadow-lg text-center hover:-translate-y-1 hover:shadow-xl transition-all border-2 border-transparent hover:border-[var(--color-brand-orange)]">
               <div className="relative w-20 h-20 sm:w-28 sm:h-28 md:w-32 md:h-32 mx-auto mb-3 sm:mb-4 md:mb-5">
