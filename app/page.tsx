@@ -119,24 +119,23 @@ function HomeContent() {
 
         {/* Hero image — full viewport cover */}
         <div className="absolute inset-0 z-10">
-          {/* Mobile: portrait hero */}
+          {/* Portrait viewport: tall hero */}
           <Image
             src="/storage/hero_mobile.webp"
             alt="FitFlow кутия с фитнес продукти"
             fill
-            className="object-cover sm:hidden"
+            className="object-cover hero-portrait"
             priority
-            unoptimized
             sizes="100vw"
           />
-          {/* sm+: landscape hero */}
+          {/* Landscape viewport: wide hero */}
           <Image
             src="/storage/hero.webp"
             alt="FitFlow кутия с фитнес продукти"
             fill
-            className="object-cover hidden sm:block"
+            className="object-cover hero-landscape"
+            style={{ objectPosition: 'var(--hero-pos, left center)' }}
             priority
-            unoptimized
             sizes="100vw"
           />
         </div>
@@ -150,18 +149,18 @@ function HomeContent() {
           }}
         />
 
-        {/* Text & CTA — bottom on mobile, bottom-right overlay on sm+ */}
-        <div className="relative z-30 flex-1 flex items-end justify-center px-4 pb-6 sm:flex-none sm:mt-auto sm:px-6 sm:pb-20 md:px-8 md:pb-20 lg:px-12 lg:pb-24 sm:flex sm:justify-end">
-          <div className="w-full sm:w-auto sm:max-w-xs md:max-w-sm lg:max-w-md bg-[var(--color-brand-navy)]/35 backdrop-blur-[6px] rounded-2xl px-4 py-4 sm:px-6 sm:py-5 md:px-7 md:py-6 text-center sm:text-right">
-            <h1 className="text-2xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-white mb-1.5 sm:mb-2 md:mb-3 tracking-wide leading-tight">
-              <span className="block pb-0.5 sm:pb-1">Кутия за</span>
+        {/* Text & CTA — bottom-center in portrait, center-right in landscape */}
+        <div className="relative z-30 flex-1 flex items-end justify-center px-4 pb-6 hero-cta-wrapper">
+          <div className="w-full hero-cta-box bg-[var(--color-brand-navy)]/35 backdrop-blur-[6px] rounded-2xl px-4 py-4 text-center">
+            <h1 className="text-2xl hero-cta-heading font-bold text-white mb-1.5 tracking-wide leading-tight">
+              <span className="block pb-0.5">Кутия за</span>
               <span className="block text-[var(--color-brand-orange)]">АКТИВНИ дами</span>
             </h1>
-            <p className="text-sm sm:text-xs md:text-sm lg:text-base text-white/85 mt-2 mb-3 sm:mt-3 sm:mb-4 md:mb-5 leading-relaxed">
+            <p className="text-sm hero-cta-text text-white/85 mt-2 mb-3 leading-relaxed">
               Протеин, облекло, аксесоари, здравословни снакове, добавки и мотивация
             </p>
             <Link href="/order" onClick={() => trackCTAClick({ cta_text: 'Поръчай сега', cta_location: 'hero', destination: '/order' })}>
-              <button className="bg-[var(--color-brand-orange)] text-white px-6 py-2.5 sm:px-8 sm:py-3 md:px-10 md:py-3.5 rounded-full text-sm sm:text-base md:text-lg font-semibold uppercase tracking-wide shadow-lg hover:bg-[var(--color-brand-orange-dark)] transition-all hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0">
+              <button className="bg-[var(--color-brand-orange)] text-white px-6 py-2.5 hero-cta-button rounded-full text-sm font-semibold uppercase tracking-wide shadow-lg hover:bg-[var(--color-brand-orange-dark)] transition-all hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0">
                 Поръчай сега
               </button>
             </Link>
