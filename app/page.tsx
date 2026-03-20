@@ -124,6 +124,7 @@ function HomeContent() {
             src="/storage/hero-portrait.png"
             alt="FitFlow кутия с фитнес продукти"
             fill
+            quality={100}
             className="object-cover hero-portrait"
             priority
             sizes="100vw"
@@ -133,6 +134,7 @@ function HomeContent() {
             src="/storage/hero-landscape.png"
             alt="FitFlow кутия с фитнес продукти"
             fill
+            quality={100}
             className="object-cover hero-landscape"
             style={{ objectPosition: 'var(--hero-pos, left center)' }}
             priority
@@ -204,7 +206,7 @@ function HomeContent() {
             <Link
               href="/order"
               onClick={() => trackCTAClick({ cta_text: 'Абонирай се', cta_location: 'subscription_cta', destination: '/order' })}
-              className="rounded-lg bg-[var(--color-brand-orange)] px-8 py-3 text-lg font-semibold text-white hover:opacity-90 transition-opacity"
+              className="rounded-lg bg-[var(--color-brand-orange)] px-8 py-3 text-lg font-semibold text-white hover:opacity-100 transition-opacity"
             >
               Абонирай се
             </Link>
@@ -281,13 +283,13 @@ function HomeContent() {
             <div className="bg-white rounded-xl p-4 sm:p-5 shadow-md border border-gray-100">
               <h3 className="text-sm sm:text-base font-bold text-[var(--color-brand-navy)] mb-1">Стандартна</h3>
               <p className="text-xs text-gray-500 mb-1">5-7 продукта</p>
-              <p className="text-base sm:text-lg font-bold text-[var(--color-brand-orange)]">29.90€</p>
+              <p className="text-base sm:text-lg font-bold text-[var(--color-brand-orange)]">29.100€</p>
             </div>
             <div className="bg-white rounded-xl p-4 sm:p-5 shadow-md border-2 border-[var(--color-brand-orange)] relative">
               <div className="absolute -top-2 right-2 bg-[var(--color-brand-orange)] text-white px-2 py-0.5 rounded-full text-[0.6rem] font-semibold uppercase">Премиум</div>
               <h3 className="text-sm sm:text-base font-bold text-[var(--color-brand-navy)] mb-1">Премиум</h3>
               <p className="text-xs text-gray-500 mb-1">5-7 продукта</p>
-              <p className="text-base sm:text-lg font-bold text-[var(--color-brand-orange)]">39.90€</p>
+              <p className="text-base sm:text-lg font-bold text-[var(--color-brand-orange)]">39.100€</p>
             </div>
           </div>
           <Link href="/box/mystery" onClick={() => trackCTAClick({ cta_text: 'Поръчай еднократна кутия', cta_location: 'mystery_box_section', destination: '/box/mystery' })}>
