@@ -101,29 +101,70 @@ function HomeContent() {
       <Navigation />
       <div className="min-h-screen">
         {/* Hero Section */}
-        <section className="relative flex flex-col justify-center items-center text-center px-4 sm:px-5 overflow-hidden h-[calc(100vh)] sm:h-[calc(100vh)]">
-        <Image
-          src="/storage/hero.jpg"
-          alt="FitFlow активна жена"
-          fill
-          className="object-cover"
-          priority
+        <section
+          className="relative flex flex-col overflow-hidden h-[100dvh]"
+          style={{
+            background:
+              'linear-gradient(165deg, #6B1D3A 0%, #4A1838 20%, #1E2D45 45%, #023047 70%, #011a28 100%)',
+          }}
+        >
+        {/* Warm magenta glow upper area — matches hero_web.jpg lighting */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              'radial-gradient(ellipse 70% 50% at 45% 25%, rgba(139,34,82,0.45) 0%, transparent 70%), radial-gradient(ellipse 40% 35% at 50% 45%, rgba(251,125,0,0.08) 0%, transparent 70%)',
+          }}
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-[var(--color-brand-navy)]/40 to-[var(--color-brand-orange)]/35 z-10" />
 
-        <div className="relative z-20 max-w-[90%]">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-3 md:mb-4 drop-shadow-lg tracking-wide text-left">
-            <p className='pb-1 sm:pb-2 md:pb-3'>Кутия за</p>
-            <p>АКТИВНИ дами</p>
-          </h1>
-          <p className="text-sm sm:text-base md:text-xl text-white my-6 md:my-8 drop-shadow-md text-left">
-            Спортно облекло, аксесоари, протеинови продукти, здравословни снакове, хранителни добавки и мотивация на едно място
-          </p>
-          <Link href="/order" onClick={() => trackCTAClick({ cta_text: 'Поръчай сега', cta_location: 'hero', destination: '/order' })}>
-            <button className="bg-[var(--color-brand-orange)] text-white px-10 py-4 rounded-full text-lg font-semibold uppercase tracking-wide shadow-lg hover:bg-[var(--color-brand-orange-dark)] transition-all hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0">
-              Поръчай сега
-            </button>
-          </Link>
+        {/* Hero image — full viewport cover */}
+        <div className="absolute inset-0 z-10">
+          {/* Portrait viewport: tall hero */}
+          <Image
+            src="/storage/hero-portrait.png"
+            alt="FitFlow кутия с фитнес продукти"
+            fill
+            className="object-cover hero-portrait"
+            priority
+            sizes="100vw"
+          />
+          {/* Landscape viewport: wide hero */}
+          <Image
+            src="/storage/hero-landscape.png"
+            alt="FitFlow кутия с фитнес продукти"
+            fill
+            className="object-cover hero-landscape"
+            style={{ objectPosition: 'var(--hero-pos, left center)' }}
+            priority
+            sizes="100vw"
+          />
+        </div>
+
+        {/* Bottom fade — contrast behind text (desktop only, mobile uses stacked layout) */}
+        <div
+          className="absolute inset-x-0 bottom-0 h-[45%] sm:h-[40%] z-20 pointer-events-none hidden sm:block"
+          style={{
+            background:
+              'linear-gradient(to top, rgba(2,48,71,0.95) 0%, rgba(2,48,71,0.5) 50%, transparent 100%)',
+          }}
+        />
+
+        {/* Text & CTA — bottom-center in portrait, center-right in landscape */}
+        <div className="relative z-30 flex-1 flex items-end justify-center px-4 pb-6 hero-cta-wrapper">
+          <div className="w-full hero-cta-box bg-[var(--color-brand-navy)]/35 backdrop-blur-[6px] rounded-2xl px-4 py-4 text-center">
+            <h1 className="text-2xl hero-cta-heading font-bold text-white mb-1.5 tracking-wide leading-tight">
+              <span className="block pb-0.5">Кутия за</span>
+              <span className="block text-[var(--color-brand-orange)]">АКТИВНИ дами</span>
+            </h1>
+            <p className="text-sm hero-cta-text text-white/85 mt-2 mb-3 leading-relaxed">
+              Протеин, облекло, аксесоари, здравословни снакове, добавки и мотивация
+            </p>
+            <Link href="/order" onClick={() => trackCTAClick({ cta_text: 'Поръчай сега', cta_location: 'hero', destination: '/order' })}>
+              <button className="bg-[var(--color-brand-orange)] text-white px-6 py-2.5 hero-cta-button rounded-full text-sm font-semibold uppercase tracking-wide shadow-lg hover:bg-[var(--color-brand-orange-dark)] transition-all hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0">
+                Поръчай сега
+              </button>
+            </Link>
+          </div>
         </div>
       </section>
 

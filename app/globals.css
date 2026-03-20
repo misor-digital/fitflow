@@ -40,6 +40,62 @@ body {
   }
 }
 
+/* Hero image orientation switching */
+.hero-portrait { display: block !important; }
+.hero-landscape { display: none !important; }
+
+/* Hero CTA — portrait: bottom-center */
+.hero-cta-wrapper {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.hero-cta-box {
+  max-width: 100%;
+}
+.hero-cta-heading { font-size: 1.5rem; }
+.hero-cta-text { font-size: 0.875rem; }
+.hero-cta-button { font-size: 0.875rem; }
+
+@media (orientation: landscape) {
+  .hero-portrait { display: none !important; }
+  .hero-landscape { display: block !important; }
+
+  /* Landscape: center-right */
+  .hero-cta-wrapper {
+    position: absolute;
+    inset: 0;
+    padding: 0 2vw;
+    align-items: center;
+    justify-content: flex-end;
+  }
+  .hero-cta-box {
+    width: auto;
+    max-width: 35vw;
+    padding: 2vw;
+  }
+  .hero-cta-heading { font-size: 2.5vw; margin-bottom: 0.5vw; }
+  .hero-cta-text { font-size: 1.2vw; margin-top: 1vw; margin-bottom: 2vw; }
+  .hero-cta-button { font-size: 1.2vw; padding: 1vw 1.85vw; }
+}
+
+/* Progressive landscape shift: smoothly slides the image left as the viewport
+   narrows, keeping the FitFlow box clear of the CTA overlay.
+   At wide viewports (≥16:9 aspect): left-aligned, no shift.
+   As it narrows: shifts toward center progressively.
+   Uses % so zoom doesn't cause over-shifting. */
+@media (orientation: landscape) and (max-aspect-ratio: 16/9) {
+  :root { --hero-pos: 20% center; }
+}
+@media (orientation: landscape) and (max-aspect-ratio: 14/9) {
+  :root { --hero-pos: 30% center; }
+}
+@media (orientation: landscape) and (max-aspect-ratio: 12/9) {
+  :root { --hero-pos: 40% center; }
+}
+
 .sliding-banner-content {
   animation: slide 45s linear infinite;
 }
