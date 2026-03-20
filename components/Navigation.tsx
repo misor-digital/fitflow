@@ -82,7 +82,7 @@ export default function Navigation() {
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
         <div className="flex justify-between items-center h-10 sm:h-12">
           {/* Desktop Menu - Left Side */}
-          <div className="hidden md:flex items-center space-x-8">
+          <div className="hidden lg:flex items-center space-x-8">
             <Link
               href="/"
               className={`font-semibold transition-colors ${
@@ -155,7 +155,7 @@ export default function Navigation() {
           {/* Mobile Menu Button - Left Side */}
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className="md:hidden p-1.5 sm:p-2 rounded-lg text-[var(--color-brand-navy)] hover:bg-gray-100 transition-colors"
+            className="lg:hidden p-1.5 sm:p-2 rounded-lg text-[var(--color-brand-navy)] hover:bg-gray-100 transition-colors"
             aria-label="Toggle menu"
           >
             <svg
@@ -271,7 +271,7 @@ export default function Navigation() {
 
         {/* Mobile Menu */}
         {isOpen && (
-          <div className="md:hidden py-3 sm:py-4 border-t border-gray-200">
+          <div className="lg:hidden py-3 sm:py-4 border-t border-gray-200">
             <div className="flex flex-col space-y-3 sm:space-y-4">
               <Link
                 href="/"
