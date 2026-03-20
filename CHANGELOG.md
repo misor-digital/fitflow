@@ -1,5 +1,18 @@
 # fitflow
 
+## 1.3.0
+
+### Minor Changes
+
+- Redesign hero section with orientation-aware layout
+
+  - Replace single hero image with portrait/landscape variants toggled via CSS orientation media queries
+  - Position CTA bottom-center in portrait, center-right in landscape with vw-based sizing
+  - Add progressive object-position shift at narrower aspect ratios to keep product box visible
+  - Add radial-gradient glow layer for smoother image-to-background transitions
+  - Raise nav desktop/mobile breakpoint from md to lg for better tablet experience
+  - Move OrderTrackingWidget from bottom-right to top-right
+
 ## 1.2.0
 
 ### Minor Changes
