@@ -434,7 +434,7 @@ export function OrdersList({
         <button
           type="button"
           onClick={() => toggleExpand(order.id)}
-          className="w-full text-left"
+          className="w-full text-left hover:bg-gray-50 transition-colors rounded-xl"
         >
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
             {/* Left: order number + date */}

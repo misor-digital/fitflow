@@ -104,7 +104,7 @@ export default function CampaignHistoryTimeline({ history }: CampaignHistoryTime
                   <button
                     type="button"
                     onClick={() => setExpandedId(isExpanded ? null : entry.id)}
-                    className="text-xs text-gray-400 hover:text-gray-600 mt-1"
+                    className="text-xs text-gray-400 hover:text-gray-600 mt-1 transition-colors"
                   >
                     {isExpanded ? 'Скрий детайли ▲' : 'Покажи детайли ▼'}
                   </button>
