@@ -257,7 +257,7 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
     <div className="bg-gray-50 rounded-xl sm:rounded-2xl overflow-hidden shadow-sm border border-gray-100">
       <button
         onClick={() => setOpen(!open)}
-        className="w-full flex items-center justify-between p-4 sm:p-5 md:p-6 text-left"
+        className="w-full flex items-center justify-between p-4 sm:p-5 md:p-6 text-left hover:bg-gray-50 transition-colors"
       >
         <span className="text-sm sm:text-base md:text-lg font-semibold text-[var(--color-brand-navy)] pr-4">
           {question}

@@ -214,7 +214,7 @@ export function SubscriptionDetailView({
       {error && (
         <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
           {error}
-          <button onClick={() => setError(null)} className="ml-2 font-bold">✕</button>
+          <button onClick={() => setError(null)} className="ml-2 font-bold hover:opacity-70 transition-opacity">✕</button>
         </div>
       )}
       {success && (

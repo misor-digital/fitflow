@@ -22,7 +22,7 @@ export default function AdminError({
         </h2>
         <p className="text-gray-600 mb-6">{error.message || 'Неочаквана грешка'}</p>
         <div className="flex gap-4 justify-center">
-          <button onClick={reset} className="bg-[var(--color-brand-orange)] text-white px-4 py-2 rounded-lg text-sm font-semibold">
+          <button onClick={reset} className="bg-[var(--color-brand-orange)] text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-[var(--color-brand-orange-dark)] transition-colors">
             Опитай отново
           </button>
           <Link href="/admin" className="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-semibold">
