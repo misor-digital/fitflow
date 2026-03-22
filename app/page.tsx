@@ -3,13 +3,16 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useRef, Suspense, Fragment, useMemo } from 'react';
+import { useEffect, useRef, useState, Suspense, Fragment, useMemo } from 'react';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
+import HowItWorks from '@/components/HowItWorks';
 import { useOrderStore } from '@/store/orderStore';
 import { useDeliveryStore } from '@/store/deliveryStore';
 import { trackViewContent, trackViewItem, trackCTAClick, trackPromoCode } from '@/lib/analytics';
 import { formatDeliveryDate, formatMonthYear } from '@/lib/delivery';
+import { formatPrice } from '@/lib/catalog';
+import type { PricesMap } from '@/lib/catalog';
 
 function HomeContent() {
   const searchParams = useSearchParams();
@@ -19,6 +22,25 @@ function HomeContent() {
     revealedBox: rawRevealedBox, fetchRevealedBox,
     upcomingDelivery, fetchUpcomingDelivery,
   } = useDeliveryStore();
+
+  // Fetch box prices from catalog API
+  const [boxPrices, setBoxPrices] = useState<PricesMap>({});
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/catalog?type=prices');
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!cancelled && data.prices) {
+          setBoxPrices(data.prices);
+        }
+      } catch {
+        // keep empty on error
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
 
   // Derive display-ready revealed box with formatted monthYear
   const revealedBox = useMemo(() => {
@@ -171,28 +193,11 @@ function HomeContent() {
       </section>
 
       {/* How It Works */}
-      <section className="py-10 sm:py-12 md:py-16 px-4 sm:px-5 bg-gradient-to-b from-white to-gray-50">
-        <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[var(--color-brand-navy)] text-center mb-8 sm:mb-10 md:mb-12 relative after:content-[''] after:block after:w-12 sm:after:w-16 after:h-1 after:bg-[var(--color-brand-orange)] after:mx-auto after:mt-3 sm:after:mt-4 after:rounded">
-          Как работи
-        </h2>
-        <div className="max-w-lg mx-auto space-y-6 sm:space-y-8">
-          {[
-            { num: 1, title: 'Избери честота', desc: 'Избери колко често искаш да получаваш своята кутия' },
-            { num: 2, title: 'Кажи ни предпочитанията си', desc: 'Отговори на кратък въпросник, за да те опознаем по-добре (по желание)' },
-            { num: 3, title: 'Завърши', desc: 'Попълни личните си данни и поръчай' }
-          ].map((step) => (
-            <div key={step.num} className="relative bg-white p-5 sm:p-6 md:p-8 rounded-2xl shadow-lg border-l-4 border-[var(--color-brand-orange)] hover:-translate-y-1 hover:shadow-xl transition-all">
-              <div className="absolute -top-3 sm:-top-4 left-4 sm:left-5 w-10 h-10 sm:w-12 sm:h-12 bg-[var(--color-brand-orange)] text-white rounded-full flex items-center justify-center text-lg sm:text-xl font-bold shadow-lg">
-                {step.num}
-              </div>
-              <div className="mt-3 sm:mt-4">
-                <h3 className="text-lg sm:text-xl font-semibold text-[var(--color-brand-navy)] mb-1 sm:mb-2">{step.title}</h3>
-                <p className="text-sm sm:text-base text-gray-600">{step.desc}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+      <HowItWorks steps={[
+        { num: 1, title: 'Избери честота', desc: 'Избери колко често искаш да получаваш своята кутия' },
+        { num: 2, title: 'Кажи ни предпочитанията си', desc: 'Отговори на кратък въпросник, за да те опознаем по-добре (по желание)' },
+        { num: 3, title: 'Завърши', desc: 'Попълни личните си данни и поръчай' },
+      ]} />
 
       {/* Subscription CTA Section */}
       <section className="bg-[var(--color-brand-navy)] py-12 sm:py-14 md:py-16 text-white">
@@ -283,18 +288,18 @@ function HomeContent() {
             <div className="bg-white rounded-xl p-4 sm:p-5 shadow-md border border-gray-100">
               <h3 className="text-sm sm:text-base font-bold text-[var(--color-brand-navy)] mb-1">Стандартна</h3>
               <p className="text-xs text-gray-500 mb-1">5-7 продукта</p>
-              <p className="text-base sm:text-lg font-bold text-[var(--color-brand-orange)]">29.100€</p>
+              <p className="text-base sm:text-lg font-bold text-[var(--color-brand-orange)]">{boxPrices['onetime-standard'] ? `${formatPrice(boxPrices['onetime-standard'].finalPriceEur)}€` : '-'}</p>
             </div>
             <div className="bg-white rounded-xl p-4 sm:p-5 shadow-md border-2 border-[var(--color-brand-orange)] relative">
               <div className="absolute -top-2 right-2 bg-[var(--color-brand-orange)] text-white px-2 py-0.5 rounded-full text-[0.6rem] font-semibold uppercase">Премиум</div>
               <h3 className="text-sm sm:text-base font-bold text-[var(--color-brand-navy)] mb-1">Премиум</h3>
-              <p className="text-xs text-gray-500 mb-1">5-7 продукта</p>
-              <p className="text-base sm:text-lg font-bold text-[var(--color-brand-orange)]">39.100€</p>
+              <p className="text-xs text-gray-500 сmb-1">5-7 продукта</p>
+              <p className="text-base sm:text-lg font-bold text-[var(--color-brand-orange)]">{boxPrices['onetime-premium'] ? `${formatPrice(boxPrices['onetime-premium'].finalPriceEur)}€` : '-'}</p>
             </div>
           </div>
-          <Link href="/box/mystery" onClick={() => trackCTAClick({ cta_text: 'Поръчай еднократна кутия', cta_location: 'mystery_box_section', destination: '/box/mystery' })}>
+          <Link href="/order" onClick={() => trackCTAClick({ cta_text: 'Поръчай еднократна кутия', cta_location: 'mystery_box_section', destination: '/box/mystery' })}>
             <button className="bg-[var(--color-brand-navy)] text-white px-9 py-3.5 rounded-full text-base font-semibold uppercase tracking-wide shadow-lg hover:bg-[#034561] transition-all hover:-translate-y-0.5 hover:shadow-xl">
-              Поръчай еднократно →
+              Поръчай еднократно
             </button>
           </Link>
         </div>
