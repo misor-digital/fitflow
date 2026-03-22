@@ -7,6 +7,7 @@
  *
  * - Each resource is fetched **once**, then served from memory.
  * - Concurrent in-flight requests are deduplicated (module-level promises).
+ * - TTL timestamps live inside the store so they survive HMR in dev mode.
  * - Re-fetches after CACHE_TTL (5 min) — matches the API `s-maxage`.
  */
 
@@ -57,16 +58,17 @@ interface DeliveryState {
   isUpcomingLoaded: boolean;
   /** Trigger an upcoming-delivery fetch (deduped + TTL-gated). */
   fetchUpcomingDelivery: () => Promise<void>;
+
+  /** Timestamps for TTL checks (inside store so they survive HMR). */
+  _revealedLastFetchedAt: number;
+  _upcomingLastFetchedAt: number;
 }
 
-// ---- Module-level dedup / TTL state ----------------------------------------
+// ---- Module-level dedup state (in-flight promise; OK to reset on HMR) ------
 
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
-let revealedLastFetchedAt = 0;
 let revealedFetchPromise: Promise<void> | null = null;
-
-let upcomingLastFetchedAt = 0;
 let upcomingFetchPromise: Promise<void> | null = null;
 
 // ---- Store -----------------------------------------------------------------
@@ -76,10 +78,11 @@ export const useDeliveryStore = create<DeliveryState>((set, get) => ({
   revealedBox: null,
   revealedBoxAvailable: false,
   isLoaded: false,
+  _revealedLastFetchedAt: 0,
 
   fetchRevealedBox: async () => {
     const now = Date.now();
-    if (get().isLoaded && now - revealedLastFetchedAt < CACHE_TTL) return;
+    if (get().isLoaded && now - get()._revealedLastFetchedAt < CACHE_TTL) return;
     if (revealedFetchPromise) return revealedFetchPromise;
 
     revealedFetchPromise = (async () => {
@@ -101,7 +104,7 @@ export const useDeliveryStore = create<DeliveryState>((set, get) => ({
       } catch {
         set({ revealedBox: null, revealedBoxAvailable: false, isLoaded: true });
       } finally {
-        revealedLastFetchedAt = Date.now();
+        set({ _revealedLastFetchedAt: Date.now() });
         revealedFetchPromise = null;
       }
     })();
@@ -112,10 +115,11 @@ export const useDeliveryStore = create<DeliveryState>((set, get) => ({
   // -- Upcoming delivery --
   upcomingDelivery: null,
   isUpcomingLoaded: false,
+  _upcomingLastFetchedAt: 0,
 
   fetchUpcomingDelivery: async () => {
     const now = Date.now();
-    if (get().isUpcomingLoaded && now - upcomingLastFetchedAt < CACHE_TTL) return;
+    if (get().isUpcomingLoaded && now - get()._upcomingLastFetchedAt < CACHE_TTL) return;
     if (upcomingFetchPromise) return upcomingFetchPromise;
 
     upcomingFetchPromise = (async () => {
@@ -132,7 +136,7 @@ export const useDeliveryStore = create<DeliveryState>((set, get) => ({
       } catch {
         set({ upcomingDelivery: null, isUpcomingLoaded: true });
       } finally {
-        upcomingLastFetchedAt = Date.now();
+        set({ _upcomingLastFetchedAt: Date.now() });
         upcomingFetchPromise = null;
       }
     })();

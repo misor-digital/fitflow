@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useOrderStore } from '@/store/orderStore';
 import { useAuthStore } from '@/store/authStore';
 import { useDeliveryStore } from '@/store/deliveryStore';
+import { useShallow } from 'zustand/shallow';
 import { createClient } from '@/lib/supabase/browser';
 import { trackCTAClick } from '@/lib/analytics';
 import PromoDiscountPrompt from './PromoDiscountPrompt';
@@ -18,7 +19,12 @@ export default function Navigation() {
   const router = useRouter();
   const { promoCode } = useOrderStore();
   const { user, isLoading } = useAuthStore();
-  const { revealedBoxAvailable, fetchRevealedBox } = useDeliveryStore();
+  const { revealedBoxAvailable, fetchRevealedBox } = useDeliveryStore(
+    useShallow((s) => ({
+      revealedBoxAvailable: s.revealedBoxAvailable,
+      fetchRevealedBox: s.fetchRevealedBox,
+    }))
+  );
 
   // ---- Fix P2: Cache discount in state, only fetch when promoCode changes ----
   const [discountPercent, setDiscountPercent] = useState(0);

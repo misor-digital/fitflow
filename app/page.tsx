@@ -8,6 +8,7 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { useOrderStore } from '@/store/orderStore';
 import { useDeliveryStore } from '@/store/deliveryStore';
+import { useShallow } from 'zustand/shallow';
 import { trackViewContent, trackViewItem, trackCTAClick, trackPromoCode } from '@/lib/analytics';
 import { formatDeliveryDate, formatMonthYear } from '@/lib/delivery';
 
@@ -18,7 +19,14 @@ function HomeContent() {
   const {
     revealedBox: rawRevealedBox, fetchRevealedBox,
     upcomingDelivery, fetchUpcomingDelivery,
-  } = useDeliveryStore();
+  } = useDeliveryStore(
+    useShallow((s) => ({
+      revealedBox: s.revealedBox,
+      fetchRevealedBox: s.fetchRevealedBox,
+      upcomingDelivery: s.upcomingDelivery,
+      fetchUpcomingDelivery: s.fetchUpcomingDelivery,
+    }))
+  );
 
   // Derive display-ready revealed box with formatted monthYear
   const revealedBox = useMemo(() => {
