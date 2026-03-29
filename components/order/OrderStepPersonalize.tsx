@@ -34,7 +34,11 @@ export default function OrderStepPersonalize({ catalogData, onNext, onBack }: Or
   const isPremium = isPremiumBox(store.boxType);
 
   // Local state for each step
-  const [wantsPersonalization, setWantsPersonalization] = useState<boolean | null>(store.wantsPersonalization);
+  // Always start with wantsPersonalization = null so the user must re-confirm
+  // their choice each time step 2 mounts. This prevents stale store data from
+  // auto-enabling the Next button and advancing to a substep (e.g. sport) that
+  // may render blank if catalog options failed to load or box type changed.
+  const [wantsPersonalization, setWantsPersonalization] = useState<boolean | null>(null);
   const [sports, setSports] = useState<string[]>(store.sports);
   const [sportOther, setSportOther] = useState(store.sportOther);
   const [colors, setColors] = useState<string[]>(store.colors);

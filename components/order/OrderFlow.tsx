@@ -63,13 +63,10 @@ export default function OrderFlow({
 
     const store = useOrderStore.getState();
 
-    // Set delivery cycle fields
-    if (propCycleId) {
-      store.setDeliveryCycleId(propCycleId);
-    }
-    if (propOrderType) {
-      store.setOrderType(propOrderType);
-    }
+    // Always sync delivery cycle and order type from URL params.
+    // Clears stale values from abandoned sessions when visiting /order without params.
+    store.setDeliveryCycleId(propCycleId ?? null);
+    store.setOrderType(propOrderType ?? null);
 
     // Pre-select box type and auto-advance
     if (initialBoxType && !store.boxType) {
@@ -85,6 +82,16 @@ export default function OrderFlow({
       }
     }
   }, [hydrated, initialBoxType, propCycleId, propOrderType]);
+
+  // ---------------------------------------------------------------------------
+  // Safety: if a stale session left currentStep outside the current activeSteps
+  // (e.g. step 2 persisted but activeSteps is [1,3,4]), snap to step 1
+  // ---------------------------------------------------------------------------
+  useEffect(() => {
+    if (hydrated && !activeSteps.includes(currentStep)) {
+      setStep(activeSteps[0]);
+    }
+  }, [hydrated, currentStep, activeSteps, setStep]);
 
   // ---------------------------------------------------------------------------
   // Hydration guard — avoid server/client mismatch with sessionStorage
