@@ -6,10 +6,11 @@ import {
   deleteAddress,
   setDefaultAddress,
 } from '@/lib/data';
-import { validateAddress } from '@/lib/order';
+import { validateAddress, validateSpeedyOffice } from '@/lib/order';
+import type { SpeedyOfficeSelection } from '@/lib/order';
 import { isValidPhone } from '@/lib/catalog';
 import { checkRateLimit } from '@/lib/utils/rateLimit';
-import { validateFieldLengths } from '../route';
+import { validateFieldLengths, sanitizeAddressBody } from '../route';
 import type { AddressUpdate } from '@/lib/supabase/types';
 
 /** Rate limit: 20 requests per minute */
@@ -99,7 +100,7 @@ export async function PUT(
       );
     }
 
-    // Phone format validation (optional field)
+    // Phone format validation (optional for address, required for speedy — enforced below)
     if (sanitized.phone && !isValidPhone(sanitized.phone)) {
       return NextResponse.json(
         {
@@ -117,42 +118,105 @@ export async function PUT(
       );
     }
 
-    // Domain validation (required fields, postal code format, etc.)
-    const validationResult = validateAddress({
-      label: sanitized.label ?? '',
-      fullName: sanitized.fullName ?? '',
-      phone: sanitized.phone ?? '',
-      city: sanitized.city ?? '',
-      postalCode: sanitized.postalCode ?? '',
-      streetAddress: sanitized.streetAddress ?? '',
-      buildingEntrance: sanitized.buildingEntrance ?? '',
-      floor: sanitized.floor ?? '',
-      apartment: sanitized.apartment ?? '',
-      deliveryNotes: sanitized.deliveryNotes ?? '',
-      isDefault: sanitized.isDefault ?? false,
-    });
+    const deliveryMethod = sanitized.deliveryMethod ?? 'address';
 
-    if (!validationResult.valid) {
-      return NextResponse.json(
-        { error: 'Невалидни данни', details: validationResult.errors },
-        { status: 400 },
+    // Domain validation — conditional on delivery method
+    if (deliveryMethod === 'speedy_office') {
+      const officeSelection: SpeedyOfficeSelection | null =
+        sanitized.speedyOfficeId && sanitized.speedyOfficeName
+          ? {
+              id: sanitized.speedyOfficeId,
+              name: sanitized.speedyOfficeName,
+              address: sanitized.speedyOfficeAddress ?? '',
+            }
+          : null;
+
+      const validationResult = validateSpeedyOffice(
+        {
+          label: sanitized.label ?? '',
+          fullName: sanitized.fullName ?? '',
+          phone: sanitized.phone ?? '',
+          city: '',
+          postalCode: '',
+          streetAddress: '',
+          buildingEntrance: '',
+          floor: '',
+          apartment: '',
+          deliveryNotes: sanitized.deliveryNotes ?? '',
+          isDefault: sanitized.isDefault ?? false,
+        },
+        officeSelection,
       );
+
+      if (!validationResult.valid) {
+        return NextResponse.json(
+          { error: 'Невалидни данни', details: validationResult.errors },
+          { status: 400 },
+        );
+      }
+    } else {
+      const validationResult = validateAddress({
+        label: sanitized.label ?? '',
+        fullName: sanitized.fullName ?? '',
+        phone: sanitized.phone ?? '',
+        city: sanitized.city ?? '',
+        postalCode: sanitized.postalCode ?? '',
+        streetAddress: sanitized.streetAddress ?? '',
+        buildingEntrance: sanitized.buildingEntrance ?? '',
+        floor: sanitized.floor ?? '',
+        apartment: sanitized.apartment ?? '',
+        deliveryNotes: sanitized.deliveryNotes ?? '',
+        isDefault: sanitized.isDefault ?? false,
+      });
+
+      if (!validationResult.valid) {
+        return NextResponse.json(
+          { error: 'Невалидни данни', details: validationResult.errors },
+          { status: 400 },
+        );
+      }
     }
 
-    // Build update payload
-    const updateData: AddressUpdate = {
-      full_name: sanitized.fullName!,
-      city: sanitized.city!,
-      postal_code: sanitized.postalCode!,
-      street_address: sanitized.streetAddress!,
-      label: sanitized.label || null,
-      phone: sanitized.phone || null,
-      building_entrance: sanitized.buildingEntrance || null,
-      floor: sanitized.floor || null,
-      apartment: sanitized.apartment || null,
-      delivery_notes: sanitized.deliveryNotes || null,
-      is_default: sanitized.isDefault ?? false,
-    };
+    // Build update payload — conditional on delivery method
+    // When switching method, explicitly null out fields that no longer apply
+    const updateData: AddressUpdate =
+      deliveryMethod === 'speedy_office'
+        ? {
+            delivery_method: 'speedy_office',
+            full_name: sanitized.fullName!,
+            phone: sanitized.phone || null,
+            speedy_office_id: sanitized.speedyOfficeId!,
+            speedy_office_name: sanitized.speedyOfficeName!,
+            speedy_office_address: sanitized.speedyOfficeAddress || null,
+            label: sanitized.label || null,
+            delivery_notes: sanitized.deliveryNotes || null,
+            is_default: sanitized.isDefault ?? false,
+            // Null out home-delivery fields
+            city: null,
+            postal_code: null,
+            street_address: null,
+            building_entrance: null,
+            floor: null,
+            apartment: null,
+          }
+        : {
+            delivery_method: 'address',
+            full_name: sanitized.fullName!,
+            city: sanitized.city!,
+            postal_code: sanitized.postalCode!,
+            street_address: sanitized.streetAddress!,
+            label: sanitized.label || null,
+            phone: sanitized.phone || null,
+            building_entrance: sanitized.buildingEntrance || null,
+            floor: sanitized.floor || null,
+            apartment: sanitized.apartment || null,
+            delivery_notes: sanitized.deliveryNotes || null,
+            is_default: sanitized.isDefault ?? false,
+            // Null out Speedy fields
+            speedy_office_id: null,
+            speedy_office_name: null,
+            speedy_office_address: null,
+          };
 
     try {
       const address = await updateAddress(id, session.userId, updateData);
@@ -286,41 +350,5 @@ export async function PATCH(
 }
 
 // ============================================================================
-// Helpers
+// Helpers — sanitizeAddressBody imported from ../route
 // ============================================================================
-
-interface SanitizedBody {
-  label?: string;
-  fullName?: string;
-  phone?: string;
-  city?: string;
-  postalCode?: string;
-  streetAddress?: string;
-  buildingEntrance?: string;
-  floor?: string;
-  apartment?: string;
-  deliveryNotes?: string;
-  isDefault?: boolean;
-}
-
-/**
- * Trim all string fields from the request body.
- */
-function sanitizeAddressBody(body: Record<string, unknown>): SanitizedBody {
-  const trimStr = (v: unknown): string | undefined =>
-    typeof v === 'string' ? v.trim() : undefined;
-
-  return {
-    label: trimStr(body.label),
-    fullName: trimStr(body.fullName),
-    phone: trimStr(body.phone),
-    city: trimStr(body.city),
-    postalCode: trimStr(body.postalCode),
-    streetAddress: trimStr(body.streetAddress),
-    buildingEntrance: trimStr(body.buildingEntrance),
-    floor: trimStr(body.floor),
-    apartment: trimStr(body.apartment),
-    deliveryNotes: trimStr(body.deliveryNotes),
-    isDefault: typeof body.isDefault === 'boolean' ? body.isDefault : undefined,
-  };
-}

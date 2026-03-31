@@ -5,7 +5,8 @@ import {
   createAddress,
   countAddressesByUser,
 } from '@/lib/data';
-import { validateAddress } from '@/lib/order';
+import { validateAddress, validateSpeedyOffice } from '@/lib/order';
+import type { SpeedyOfficeSelection } from '@/lib/order';
 import { isValidPhone } from '@/lib/catalog';
 import { checkRateLimit } from '@/lib/utils/rateLimit';
 import type { AddressInsert } from '@/lib/supabase/types';
@@ -17,7 +18,13 @@ const MAX_STREET = 500;
 const MAX_LABEL = 50;
 const MAX_OPTIONAL_FIELD = 50; // buildingEntrance, floor, apartment
 const MAX_DELIVERY_NOTES = 500;
+const MAX_SPEEDY_OFFICE_NAME = 200;
+const MAX_SPEEDY_OFFICE_ADDRESS = 500;
+const MAX_SPEEDY_OFFICE_ID = 100;
 const MAX_ADDRESSES = 10;
+
+const VALID_DELIVERY_METHODS = ['address', 'speedy_office'] as const;
+type DeliveryMethodValue = (typeof VALID_DELIVERY_METHODS)[number];
 
 /** Rate limit: 20 requests per minute */
 const RATE_LIMIT_MAX = 20;
@@ -99,7 +106,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // Phone format validation (optional field)
+    // Phone format validation (optional for address, required for speedy — enforced below)
     if (sanitized.phone && !isValidPhone(sanitized.phone)) {
       return NextResponse.json(
         {
@@ -117,43 +124,95 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // Domain validation (required fields, postal code format, etc.)
-    const validationResult = validateAddress({
-      label: sanitized.label ?? '',
-      fullName: sanitized.fullName ?? '',
-      phone: sanitized.phone ?? '',
-      city: sanitized.city ?? '',
-      postalCode: sanitized.postalCode ?? '',
-      streetAddress: sanitized.streetAddress ?? '',
-      buildingEntrance: sanitized.buildingEntrance ?? '',
-      floor: sanitized.floor ?? '',
-      apartment: sanitized.apartment ?? '',
-      deliveryNotes: sanitized.deliveryNotes ?? '',
-      isDefault: sanitized.isDefault ?? false,
-    });
+    const deliveryMethod = sanitized.deliveryMethod ?? 'address';
 
-    if (!validationResult.valid) {
-      return NextResponse.json(
-        { error: 'Невалидни данни', details: validationResult.errors },
-        { status: 400 },
+    // Domain validation — conditional on delivery method
+    if (deliveryMethod === 'speedy_office') {
+      const officeSelection: SpeedyOfficeSelection | null =
+        sanitized.speedyOfficeId && sanitized.speedyOfficeName
+          ? {
+              id: sanitized.speedyOfficeId,
+              name: sanitized.speedyOfficeName,
+              address: sanitized.speedyOfficeAddress ?? '',
+            }
+          : null;
+
+      const validationResult = validateSpeedyOffice(
+        {
+          label: sanitized.label ?? '',
+          fullName: sanitized.fullName ?? '',
+          phone: sanitized.phone ?? '',
+          city: '',
+          postalCode: '',
+          streetAddress: '',
+          buildingEntrance: '',
+          floor: '',
+          apartment: '',
+          deliveryNotes: sanitized.deliveryNotes ?? '',
+          isDefault: sanitized.isDefault ?? false,
+        },
+        officeSelection,
       );
+
+      if (!validationResult.valid) {
+        return NextResponse.json(
+          { error: 'Невалидни данни', details: validationResult.errors },
+          { status: 400 },
+        );
+      }
+    } else {
+      const validationResult = validateAddress({
+        label: sanitized.label ?? '',
+        fullName: sanitized.fullName ?? '',
+        phone: sanitized.phone ?? '',
+        city: sanitized.city ?? '',
+        postalCode: sanitized.postalCode ?? '',
+        streetAddress: sanitized.streetAddress ?? '',
+        buildingEntrance: sanitized.buildingEntrance ?? '',
+        floor: sanitized.floor ?? '',
+        apartment: sanitized.apartment ?? '',
+        deliveryNotes: sanitized.deliveryNotes ?? '',
+        isDefault: sanitized.isDefault ?? false,
+      });
+
+      if (!validationResult.valid) {
+        return NextResponse.json(
+          { error: 'Невалидни данни', details: validationResult.errors },
+          { status: 400 },
+        );
+      }
     }
 
-    // Build insert payload
-    const insertData: AddressInsert = {
-      user_id: session.userId,
-      full_name: sanitized.fullName!,
-      city: sanitized.city!,
-      postal_code: sanitized.postalCode!,
-      street_address: sanitized.streetAddress!,
-      label: sanitized.label || null,
-      phone: sanitized.phone || null,
-      building_entrance: sanitized.buildingEntrance || null,
-      floor: sanitized.floor || null,
-      apartment: sanitized.apartment || null,
-      delivery_notes: sanitized.deliveryNotes || null,
-      is_default: sanitized.isDefault ?? false,
-    };
+    // Build insert payload — conditional on delivery method
+    const insertData: AddressInsert =
+      deliveryMethod === 'speedy_office'
+        ? {
+            user_id: session.userId,
+            delivery_method: 'speedy_office',
+            full_name: sanitized.fullName!,
+            phone: sanitized.phone || null,
+            speedy_office_id: sanitized.speedyOfficeId!,
+            speedy_office_name: sanitized.speedyOfficeName!,
+            speedy_office_address: sanitized.speedyOfficeAddress || null,
+            label: sanitized.label || null,
+            delivery_notes: sanitized.deliveryNotes || null,
+            is_default: sanitized.isDefault ?? false,
+          }
+        : {
+            user_id: session.userId,
+            delivery_method: 'address',
+            full_name: sanitized.fullName!,
+            city: sanitized.city!,
+            postal_code: sanitized.postalCode!,
+            street_address: sanitized.streetAddress!,
+            label: sanitized.label || null,
+            phone: sanitized.phone || null,
+            building_entrance: sanitized.buildingEntrance || null,
+            floor: sanitized.floor || null,
+            apartment: sanitized.apartment || null,
+            delivery_notes: sanitized.deliveryNotes || null,
+            is_default: sanitized.isDefault ?? false,
+          };
 
     const address = await createAddress(insertData);
     return NextResponse.json({ address }, { status: 201 });
@@ -170,7 +229,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 // Helpers
 // ============================================================================
 
-interface SanitizedBody {
+export interface SanitizedBody {
+  deliveryMethod?: DeliveryMethodValue;
   label?: string;
   fullName?: string;
   phone?: string;
@@ -182,16 +242,26 @@ interface SanitizedBody {
   apartment?: string;
   deliveryNotes?: string;
   isDefault?: boolean;
+  speedyOfficeId?: string;
+  speedyOfficeName?: string;
+  speedyOfficeAddress?: string;
 }
 
 /**
  * Trim all string fields from the request body.
  */
-function sanitizeAddressBody(body: Record<string, unknown>): SanitizedBody {
+export function sanitizeAddressBody(body: Record<string, unknown>): SanitizedBody {
   const trimStr = (v: unknown): string | undefined =>
     typeof v === 'string' ? v.trim() : undefined;
 
+  const rawMethod = trimStr(body.deliveryMethod);
+  const deliveryMethod: DeliveryMethodValue =
+    rawMethod && (VALID_DELIVERY_METHODS as readonly string[]).includes(rawMethod)
+      ? (rawMethod as DeliveryMethodValue)
+      : 'address';
+
   return {
+    deliveryMethod,
     label: trimStr(body.label),
     fullName: trimStr(body.fullName),
     phone: trimStr(body.phone),
@@ -203,6 +273,9 @@ function sanitizeAddressBody(body: Record<string, unknown>): SanitizedBody {
     apartment: trimStr(body.apartment),
     deliveryNotes: trimStr(body.deliveryNotes),
     isDefault: typeof body.isDefault === 'boolean' ? body.isDefault : undefined,
+    speedyOfficeId: trimStr(body.speedyOfficeId),
+    speedyOfficeName: trimStr(body.speedyOfficeName),
+    speedyOfficeAddress: trimStr(body.speedyOfficeAddress),
   };
 }
 
@@ -274,6 +347,30 @@ export function validateFieldLengths(
     errors.push({
       field: 'deliveryNotes',
       message: `Бележките трябва да са най-много ${MAX_DELIVERY_NOTES} символа`,
+      code: 'too_long',
+    });
+  }
+
+  if (data.speedyOfficeName && data.speedyOfficeName.length > MAX_SPEEDY_OFFICE_NAME) {
+    errors.push({
+      field: 'speedyOfficeName',
+      message: `Името на офиса трябва да е най-много ${MAX_SPEEDY_OFFICE_NAME} символа`,
+      code: 'too_long',
+    });
+  }
+
+  if (data.speedyOfficeAddress && data.speedyOfficeAddress.length > MAX_SPEEDY_OFFICE_ADDRESS) {
+    errors.push({
+      field: 'speedyOfficeAddress',
+      message: `Адресът на офиса трябва да е най-много ${MAX_SPEEDY_OFFICE_ADDRESS} символа`,
+      code: 'too_long',
+    });
+  }
+
+  if (data.speedyOfficeId && data.speedyOfficeId.length > MAX_SPEEDY_OFFICE_ID) {
+    errors.push({
+      field: 'speedyOfficeId',
+      message: `ID на офиса трябва да е най-много ${MAX_SPEEDY_OFFICE_ID} символа`,
       code: 'too_long',
     });
   }
