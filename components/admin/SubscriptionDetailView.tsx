@@ -183,7 +183,13 @@ export function SubscriptionDetailView({
   // ============================================================================
 
   function formatAddress(addr: AddressRow): string {
-    const parts = [addr.street_address, addr.city, addr.postal_code];
+    if (addr.delivery_method === 'speedy_office') {
+      const name = addr.speedy_office_name ?? 'Speedy офис';
+      return addr.speedy_office_address
+        ? `📦 ${name} — ${addr.speedy_office_address}`
+        : `📦 ${name}`;
+    }
+    const parts = [addr.street_address, addr.city, addr.postal_code].filter(Boolean);
     if (addr.building_entrance) parts.push(`вх. ${addr.building_entrance}`);
     if (addr.floor) parts.push(`ет. ${addr.floor}`);
     if (addr.apartment) parts.push(`ап. ${addr.apartment}`);
@@ -282,7 +288,22 @@ export function SubscriptionDetailView({
           <InfoItem label="Стартиран" value={formatDeliveryDate(subscription.started_at)} />
           <InfoItem
             label="Адрес"
-            value={defaultAddress ? formatAddress(defaultAddress) : 'Не е зададен'}
+            value={
+              defaultAddress ? (
+                <span className="flex items-center gap-2">
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded ${
+                    defaultAddress.delivery_method === 'speedy_office'
+                      ? 'bg-orange-100 text-orange-800'
+                      : 'bg-blue-100 text-blue-800'
+                  }`}>
+                    {defaultAddress.delivery_method === 'speedy_office' ? 'Speedy офис' : 'До адрес'}
+                  </span>
+                  <span>{formatAddress(defaultAddress)}</span>
+                </span>
+              ) : (
+                'Не е зададен'
+              )
+            }
           />
           {subscription.first_cycle_id && (
             <InfoItem
