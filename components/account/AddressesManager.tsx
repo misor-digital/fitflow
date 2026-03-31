@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import type { AddressRow } from '@/lib/supabase/types';
 import AddressForm from './AddressForm';
 
@@ -37,8 +38,11 @@ function formatAddressDisplay(addr: AddressRow): { primary: string; secondary?: 
 // ============================================================================
 
 export default function AddressesManager({ initialAddresses }: AddressesManagerProps) {
+  const searchParams = useSearchParams();
   const [addresses, setAddresses] = useState<AddressRow[]>(initialAddresses);
-  const [formMode, setFormMode] = useState<FormMode>('hidden');
+  const [formMode, setFormMode] = useState<FormMode>(
+    searchParams.get('new') === 'true' ? 'create' : 'hidden',
+  );
   const [editingAddress, setEditingAddress] = useState<AddressRow | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
@@ -121,14 +125,31 @@ export default function AddressesManager({ initialAddresses }: AddressesManagerP
         const data = await res.json().catch(() => null);
         throw new Error(data?.error ?? `Грешка при изтриване (${res.status})`);
       }
-      setAddresses((prev) => prev.filter((a) => a.id !== id));
+
+      // Check if we deleted the default address
+      const wasDefault = addresses.find((a) => a.id === id)?.is_default;
+
+      if (wasDefault && addresses.length > 1) {
+        // Re-fetch from server to get the promoted default
+        const listRes = await fetch('/api/address');
+        if (listRes.ok) {
+          const listData = await listRes.json();
+          setAddresses(listData.addresses ?? []);
+        } else {
+          // Fallback: just remove locally
+          setAddresses((prev) => prev.filter((a) => a.id !== id));
+        }
+      } else {
+        setAddresses((prev) => prev.filter((a) => a.id !== id));
+      }
+
       setConfirmDeleteId(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Възникна неочаквана грешка');
     } finally {
       setDeletingId(null);
     }
-  }, []);
+  }, [addresses]);
 
   const handleSetDefault = useCallback(async (id: string) => {
     setSettingDefaultId(id);
@@ -137,7 +158,7 @@ export default function AddressesManager({ initialAddresses }: AddressesManagerP
       const res = await fetch(`/api/address/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'set_default' }),
+        body: JSON.stringify({ isDefault: true }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => null);

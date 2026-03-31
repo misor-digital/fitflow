@@ -69,13 +69,7 @@ export default function AddressModal({
 
         {addresses.length === 0 ? (
           <div className="text-center py-6">
-            <p className="text-sm text-gray-500 mb-4">Нямате запазени адреси.</p>
-            <a
-              href="/account/addresses"
-              className="text-sm text-[var(--color-brand-orange)] hover:underline font-medium"
-            >
-              Добавете адрес в профила си →
-            </a>
+            <p className="text-sm text-gray-500">Нямате запазени адреси.</p>
           </div>
         ) : (
           <div className="space-y-2 mb-4">
@@ -128,12 +122,20 @@ export default function AddressModal({
           </div>
         )}
 
-        <a
-          href="/account/addresses"
-          className="inline-block text-sm text-[var(--color-brand-orange)] hover:underline font-medium mb-4"
-        >
-          + Използвай нов адрес
-        </a>
+        <div className="flex flex-col gap-1 mb-4">
+          <a
+            href="/account/addresses"
+            className="inline-block text-sm text-[var(--color-brand-orange)] hover:underline font-medium"
+          >
+            Към моите адреси →
+          </a>
+          <a
+            href="/account/addresses?new=true"
+            className="inline-block text-sm text-[var(--color-brand-orange)] hover:underline font-medium"
+          >
+            + Добави нов адрес
+          </a>
+        </div>
 
         {error && (
           <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2 mb-4">{error}</p>
