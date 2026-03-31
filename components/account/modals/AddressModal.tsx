@@ -122,16 +122,16 @@ export default function AddressModal({
           </div>
         )}
 
-        <div className="flex flex-col gap-1 mb-4">
+        <div className="flex flex-wrap gap-2 mb-4 justify-center">
           <a
             href="/account/addresses"
-            className="inline-block text-sm text-[var(--color-brand-orange)] hover:underline font-medium"
+            className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 font-medium transition-colors"
           >
-            Към моите адреси →
+            📋 Към моите адреси
           </a>
           <a
             href="/account/addresses?new=true"
-            className="inline-block text-sm text-[var(--color-brand-orange)] hover:underline font-medium"
+            className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg bg-orange-50 text-orange-700 hover:bg-orange-100 font-medium transition-colors"
           >
             + Добави нов адрес
           </a>
