@@ -64,9 +64,12 @@ export default function SubscriptionCard({
 
   // Build address display
   const address = addresses.find((a) => a.id === subscription.default_address_id);
-  const addressDisplay = address
-    ? `${address.street_address}, ${address.city} ${address.postal_code}`
-    : 'Не е зададен';
+  const addressLabel = address?.label || null;
+  const addressDetail = address
+    ? address.delivery_method === 'speedy_office'
+      ? address.speedy_office_name ?? ''
+      : [address.street_address, address.city, address.postal_code].filter(Boolean).join(', ')
+    : null;
 
   // Build price display info
   const priceDisplayInfo: PriceDisplayInfo | null = priceInfo
@@ -165,7 +168,27 @@ export default function SubscriptionCard({
 
           <div>
             <span className="text-xs text-gray-500 uppercase tracking-wide">Адрес</span>
-            <p className="text-sm font-medium text-gray-900 mt-0.5">{addressDisplay}</p>
+            {address ? (
+              <div className="mt-0.5">
+                <div className="flex flex-wrap items-center gap-2">
+                  {addressLabel && (
+                    <span className="text-sm font-bold text-[var(--color-brand-navy)]">{addressLabel}</span>
+                  )}
+                  {address.delivery_method === 'address' ? (
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded bg-blue-100 text-blue-800">
+                      📍 До адрес
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded bg-orange-100 text-orange-800">
+                      📦 Speedy офис
+                    </span>
+                  )}
+                </div>
+                <p className="text-sm text-gray-700 mt-0.5">{addressDetail}</p>
+              </div>
+            ) : (
+              <p className="text-sm font-medium text-gray-900 mt-0.5">Не е зададен</p>
+            )}
           </div>
         </div>
 
