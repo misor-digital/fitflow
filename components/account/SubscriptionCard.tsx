@@ -29,7 +29,6 @@ type ModalType = 'pause' | 'resume' | 'cancel' | 'preferences' | 'address' | 'fr
 interface SubscriptionCardProps {
   subscription: SubscriptionWithDelivery;
   boxTypeName: string;
-  upcomingCycle: { id: string; deliveryDate: string; title: string | null } | null;
   addresses: AddressRow[];
   prices: PricesMap;
   catalogOptions: CatalogData;
@@ -40,7 +39,6 @@ interface SubscriptionCardProps {
 export default function SubscriptionCard({
   subscription,
   boxTypeName,
-  upcomingCycle,
   addresses,
   prices,
   catalogOptions,
@@ -122,9 +120,9 @@ export default function SubscriptionCard({
             <h3 className="text-lg font-semibold text-[var(--color-brand-navy)]">
               {formatSubscriptionSummary(subscription, { [subscription.box_type]: boxTypeName })}
             </h3>
-            {state.isActive && upcomingCycle && (
+            {state.isActive && subscription.nextDeliveryDate && (
               <p className="text-xs text-gray-500 mt-1">
-                Следваща доставка: <span className="font-medium text-gray-700">{formatDeliveryDate(upcomingCycle.deliveryDate)}</span>
+                Следваща доставка: <span className="font-medium text-gray-700">{formatDeliveryDate(subscription.nextDeliveryDate)}</span>
               </p>
             )}
           </div>
@@ -140,9 +138,9 @@ export default function SubscriptionCard({
           <div>
             <span className="text-xs text-gray-500 uppercase tracking-wide">Следваща доставка</span>
             <p className="text-sm font-medium text-gray-900 mt-0.5">
-              {state.isCancelled || state.isPaused || !upcomingCycle
+              {state.isCancelled || state.isPaused || !subscription.nextDeliveryDate
                 ? '—'
-                : formatDeliveryDate(upcomingCycle.deliveryDate)}
+                : formatDeliveryDate(subscription.nextDeliveryDate)}
             </p>
           </div>
 
@@ -219,7 +217,7 @@ export default function SubscriptionCard({
               pastOrders={pastOrders}
               pausedAt={subscription.paused_at ?? null}
               cancelledAt={subscription.cancelled_at ?? null}
-              nextDeliveryDate={upcomingCycle?.deliveryDate ?? null}
+              nextDeliveryDate={subscription.nextDeliveryDate}
               onLoadOrders={loadPastOrders}
               loadingOrders={loadingOrders}
             />
@@ -394,7 +392,7 @@ export default function SubscriptionCard({
       {activeModal === 'resume' && (
         <ResumeModal
           subscriptionId={subscription.id}
-          nextDeliveryDate={upcomingCycle?.deliveryDate ?? null}
+          nextDeliveryDate={subscription.nextDeliveryDate}
           onSuccess={handleActionSuccess}
           onClose={closeModal}
         />

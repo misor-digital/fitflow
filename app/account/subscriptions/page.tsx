@@ -1,7 +1,8 @@
 import { requireAuth } from '@/lib/auth';
 import {
   getSubscriptionsByUser,
-  getUpcomingCycle,
+  getUpcomingCycles,
+  getDeliveryCycles,
   getAllBoxPricesMap,
   getBoxTypeNames,
   getAddressesByUser,
@@ -9,8 +10,10 @@ import {
   getOptions,
   getColors,
   getEurToBgnRate,
+  enrichSubscriptionsWithLastCycle,
 } from '@/lib/data';
 import { SubscriptionDashboard } from '@/components/account/SubscriptionDashboard';
+import { findNextCycleForSubscription } from '@/lib/subscription';
 import type { SubscriptionWithDelivery } from '@/lib/subscription';
 import type { Metadata } from 'next';
 
@@ -24,7 +27,8 @@ export default async function SubscriptionsPage() {
   // Fetch all data in parallel
   const [
     subscriptions,
-    upcomingCycle,
+    upcomingCycles,
+    allCycles,
     boxTypeNames,
     prices,
     addresses,
@@ -37,7 +41,8 @@ export default async function SubscriptionsPage() {
     eurToBgnRate,
   ] = await Promise.all([
     getSubscriptionsByUser(userId),
-    getUpcomingCycle(),
+    getUpcomingCycles(),
+    getDeliveryCycles(),
     getBoxTypeNames(),
     getAllBoxPricesMap(null),
     getAddressesByUser(userId),
@@ -50,12 +55,23 @@ export default async function SubscriptionsPage() {
     getEurToBgnRate(),
   ]);
 
-  // Enrich subscriptions with next delivery info
-  const enriched: SubscriptionWithDelivery[] = subscriptions.map((sub) => ({
-    ...sub,
-    nextDeliveryDate: upcomingCycle?.delivery_date ?? null,
-    nextCycleId: upcomingCycle?.id ?? null,
-  }));
+  // Sort all cycles ascending by date for shouldIncludeInCycle
+  const allCyclesSorted = [...allCycles].sort(
+    (a, b) => a.delivery_date.localeCompare(b.delivery_date),
+  );
+
+  // Self-heal subscriptions with missing last_delivered_cycle_id
+  const healedSubscriptions = await enrichSubscriptionsWithLastCycle(subscriptions);
+
+  // Enrich subscriptions with next delivery info (per-subscription cycle matching)
+  const enriched: SubscriptionWithDelivery[] = healedSubscriptions.map((sub) => {
+    const nextCycle = findNextCycleForSubscription(sub, upcomingCycles, allCyclesSorted);
+    return {
+      ...sub,
+      nextDeliveryDate: nextCycle?.delivery_date ?? null,
+      nextCycleId: nextCycle?.id ?? null,
+    };
+  });
 
   // Build label maps for catalog data
   const sportLabels = sports.reduce((acc, o) => { acc[o.id] = o.label; return acc; }, {} as Record<string, string>);
@@ -94,11 +110,6 @@ export default async function SubscriptionsPage() {
       </h1>
       <SubscriptionDashboard
         subscriptions={enriched}
-        upcomingCycle={
-          upcomingCycle
-            ? { id: upcomingCycle.id, deliveryDate: upcomingCycle.delivery_date, title: upcomingCycle.title }
-            : null
-        }
         boxTypeNames={boxTypeNames}
         addresses={addresses}
         prices={prices}

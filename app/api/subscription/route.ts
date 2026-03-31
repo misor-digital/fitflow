@@ -2,15 +2,17 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { verifySession } from '@/lib/auth';
 import {
   getSubscriptionsByUser,
-  getUpcomingCycle,
+  getUpcomingCycles,
+  getDeliveryCycles,
   getAddressById,
   calculatePrice,
   createSubscription,
   createAddress,
   validatePromoCode,
   incrementPromoCodeUsage,
+  enrichSubscriptionsWithLastCycle,
 } from '@/lib/data';
-import { validatePreferenceUpdate } from '@/lib/subscription';
+import { validatePreferenceUpdate, findNextCycleForSubscription } from '@/lib/subscription';
 import { checkRateLimit } from '@/lib/utils/rateLimit';
 import { determineFirstCycle } from '@/lib/delivery/assignment';
 import { generateSingleOrderForSubscription } from '@/lib/delivery/generate';
@@ -59,15 +61,27 @@ export async function GET(): Promise<NextResponse> {
     // 2. Load subscriptions
     const subscriptions = await getSubscriptionsByUser(session.userId);
 
-    // 3. Load upcoming cycle for enrichment
-    const upcomingCycle = await getUpcomingCycle();
+    // 3. Load upcoming cycles and all cycles for per-subscription matching
+    const [upcomingCycles, allCycles] = await Promise.all([
+      getUpcomingCycles(),
+      getDeliveryCycles(),
+    ]);
 
-    // 4. Enrich with next delivery info
-    const enriched: SubscriptionWithDelivery[] = subscriptions.map((sub) => ({
-      ...sub,
-      nextDeliveryDate: upcomingCycle?.delivery_date ?? null,
-      nextCycleId: upcomingCycle?.id ?? null,
-    }));
+    // Sort all cycles ascending by date for shouldIncludeInCycle
+    const allCyclesSorted = [...allCycles].sort(
+      (a, b) => a.delivery_date.localeCompare(b.delivery_date),
+    );
+
+    // 4. Enrich with next delivery info (per-subscription cycle matching)
+    const healedSubscriptions = await enrichSubscriptionsWithLastCycle(subscriptions);
+    const enriched: SubscriptionWithDelivery[] = healedSubscriptions.map((sub) => {
+      const nextCycle = findNextCycleForSubscription(sub, upcomingCycles, allCyclesSorted);
+      return {
+        ...sub,
+        nextDeliveryDate: nextCycle?.delivery_date ?? null,
+        nextCycleId: nextCycle?.id ?? null,
+      };
+    });
 
     return NextResponse.json({ subscriptions: enriched });
   } catch (error) {

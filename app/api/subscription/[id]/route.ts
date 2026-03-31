@@ -5,12 +5,15 @@ import {
   getSubscriptionHistory,
   getOrdersByUser,
   getAddressById,
+  getUpcomingCycles,
+  getDeliveryCycles,
   pauseSubscription,
   resumeSubscription,
   cancelSubscription,
   updateSubscriptionPreferences,
   updateSubscriptionAddress,
   updateSubscriptionFrequency,
+  enrichSubscriptionsWithLastCycle,
 } from '@/lib/data';
 import {
   canPause,
@@ -19,6 +22,7 @@ import {
   validatePreferenceUpdate,
   validateFrequencyChange,
   validateCancellationReason,
+  findNextCycleForSubscription,
 } from '@/lib/subscription';
 import { checkRateLimit } from '@/lib/utils/rateLimit';
 import {
@@ -57,17 +61,32 @@ export async function GET(
       );
     }
 
-    // 3. Load history
-    const history = await getSubscriptionHistory(id);
+    // 3. Load history + cycles for next delivery
+    const [history, allOrders, upcomingCycles, allCycles] = await Promise.all([
+      getSubscriptionHistory(id),
+      getOrdersByUser(session.userId),
+      getUpcomingCycles(),
+      getDeliveryCycles(),
+    ]);
 
-    // 4. Load linked orders for this user (filter by subscription_id client-side)
-    const allOrders = await getOrdersByUser(session.userId);
+    // 4. Compute per-subscription next delivery (self-heal last_delivered_cycle_id)
+    const allCyclesSorted = [...allCycles].sort(
+      (a, b) => a.delivery_date.localeCompare(b.delivery_date),
+    );
+    const [healedSub] = await enrichSubscriptionsWithLastCycle([subscription]);
+    const nextCycle = findNextCycleForSubscription(healedSub, upcomingCycles, allCyclesSorted);
+
+    // 5. Load linked orders for this user (filter by subscription_id client-side)
     const linkedOrders = allOrders.filter(
       (order) => order.subscription_id === id,
     );
 
     return NextResponse.json({
-      subscription,
+      subscription: {
+        ...subscription,
+        nextDeliveryDate: nextCycle?.delivery_date ?? null,
+        nextCycleId: nextCycle?.id ?? null,
+      },
       history,
       linkedOrders,
     });
