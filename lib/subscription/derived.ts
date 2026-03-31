@@ -115,6 +115,29 @@ export function shouldIncludeInCycle(
   return false;
 }
 
+/**
+ * Find the next delivery cycle for a subscription, respecting its frequency.
+ *
+ * For monthly subscriptions, returns the first upcoming cycle.
+ * For seasonal subscriptions, returns the first upcoming cycle that passes
+ * the shouldIncludeInCycle check (i.e. 3+ cycles since last delivery).
+ */
+export function findNextCycleForSubscription(
+  sub: SubscriptionRow,
+  upcomingCycles: DeliveryCycleRow[],
+  allCyclesSorted: DeliveryCycleRow[],
+): DeliveryCycleRow | null {
+  if (sub.status !== 'active') return null;
+
+  for (const cycle of upcomingCycles) {
+    if (shouldIncludeInCycle(sub, cycle, allCyclesSorted)) {
+      return cycle;
+    }
+  }
+
+  return null;
+}
+
 // ============================================================================
 // Status Labels & Colors (Bulgarian)
 // ============================================================================

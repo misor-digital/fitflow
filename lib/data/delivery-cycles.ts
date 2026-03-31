@@ -101,6 +101,33 @@ export const getUpcomingCycle = cache(
 );
 
 /**
+ * Get all upcoming cycles (status = 'upcoming', delivery_date in the future).
+ * Sorted by delivery_date ascending. Used to find the correct next cycle
+ * for subscriptions with different frequencies (monthly vs seasonal).
+ */
+export const getUpcomingCycles = cache(
+  unstable_cache(
+    async (): Promise<DeliveryCycleRow[]> => {
+      const { data, error } = await supabaseAdmin
+        .from('delivery_cycles')
+        .select('*')
+        .eq('status', 'upcoming')
+        .gte('delivery_date', new Date().toISOString().split('T')[0])
+        .order('delivery_date', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching upcoming cycles:', error);
+        return [];
+      }
+
+      return data ?? [];
+    },
+    ['upcoming-cycles'],
+    { revalidate: 300, tags: [TAG_DELIVERY] },
+  ),
+);
+
+/**
  * Get the earliest upcoming cycle whose delivery_date <= today.
  * This is the cycle eligible for automatic order generation by the cron job.
  */

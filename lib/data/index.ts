@@ -91,6 +91,7 @@ export {
   getDeliveryCycles,
   getDeliveryCycleById,
   getUpcomingCycle,
+  getUpcomingCycles,
   getEarliestEligibleCycle,
   getCurrentRevealedCycle,
   getDeliveredCycles,
@@ -130,6 +131,7 @@ export {
   getSubscriptionsPaginated,
   getSubscriptionsForCycle,
   getOrdersBySubscription,
+  enrichSubscriptionsWithLastCycle,
 } from './subscriptions';
 
 // Email campaigns

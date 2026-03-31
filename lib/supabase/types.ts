@@ -455,6 +455,7 @@ export interface OrderUpdate {
   shipping_address?: ShippingAddressSnapshot;
   address_id?: string | null;
   shipped_at?: string | null;
+  delivery_cycle_id?: string | null;
   // Pricing / promo fields (admin-only mutations via applyPromoToOrder)
   promo_code?: string | null;
   discount_percent?: number | null;

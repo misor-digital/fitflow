@@ -67,6 +67,121 @@ function addressToSnapshot(address: AddressRow): ShippingAddressSnapshot {
 }
 
 // ============================================================================
+// Self-healing: resolve last_delivered_cycle_id from orders
+// ============================================================================
+
+/**
+ * For subscriptions where last_delivered_cycle_id is null, look up
+ * the most recent order's delivery_cycle_id as a fallback.
+ * Also self-heals the subscription record in the background.
+ */
+export async function resolveLastDeliveredCycleId(
+  subscriptionId: string,
+): Promise<string | null> {
+  // 1. Try orders that already have a delivery_cycle_id
+  const { data } = await supabaseAdmin
+    .from('orders')
+    .select('delivery_cycle_id')
+    .eq('subscription_id', subscriptionId)
+    .not('delivery_cycle_id', 'is', null)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (data?.delivery_cycle_id) {
+    selfHealSubscription(subscriptionId, data.delivery_cycle_id);
+    return data.delivery_cycle_id;
+  }
+
+  // 2. Fallback: orders without delivery_cycle_id (e.g. from preorder conversion).
+  //    Match the order to the nearest past/current cycle by date.
+  const { data: unlinkedOrder } = await supabaseAdmin
+    .from('orders')
+    .select('id, created_at')
+    .eq('subscription_id', subscriptionId)
+    .is('delivery_cycle_id', null)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (!unlinkedOrder) return null;
+
+  const orderDate = unlinkedOrder.created_at.split('T')[0];
+
+  // Find the cycle whose delivery_date is closest to the order's created_at
+  // (allow the cycle to be up to 30 days after the order — orders are pre-generated)
+  const allCycles = await getDeliveryCycles();
+  const sortedCycles = [...allCycles].sort(
+    (a, b) => a.delivery_date.localeCompare(b.delivery_date),
+  );
+
+  let matchedCycle: typeof allCycles[number] | null = null;
+  for (const cycle of sortedCycles) {
+    const diffMs = new Date(cycle.delivery_date).getTime() - new Date(orderDate).getTime();
+    const diffDays = diffMs / (1000 * 60 * 60 * 24);
+    // Cycle delivery within 30 days after order creation, or up to 7 days before
+    if (diffDays >= -7 && diffDays <= 30) {
+      matchedCycle = cycle;
+      break;
+    }
+  }
+
+  if (!matchedCycle) return null;
+
+  // Self-heal: link the order to the cycle
+  supabaseAdmin
+    .from('orders')
+    .update({ delivery_cycle_id: matchedCycle.id })
+    .eq('id', unlinkedOrder.id)
+    .is('delivery_cycle_id', null)
+    .then(({ error }) => {
+      if (error) console.error(`Self-heal order delivery_cycle_id for ${unlinkedOrder.id}:`, error);
+    });
+
+  selfHealSubscription(subscriptionId, matchedCycle.id);
+  return matchedCycle.id;
+}
+
+/** Self-heal: update subscription.last_delivered_cycle_id in the background. */
+function selfHealSubscription(subscriptionId: string, cycleId: string): void {
+  supabaseAdmin
+    .from('subscriptions')
+    .update({ last_delivered_cycle_id: cycleId })
+    .eq('id', subscriptionId)
+    .is('last_delivered_cycle_id', null)
+    .then(({ error }) => {
+      if (error) console.error(`Self-heal last_delivered_cycle_id for ${subscriptionId}:`, error);
+    });
+}
+
+/**
+ * Enrich an array of subscriptions: resolve last_delivered_cycle_id
+ * from actual orders for any subscription where it's null.
+ */
+export async function enrichSubscriptionsWithLastCycle<
+  T extends { id: string; last_delivered_cycle_id: string | null },
+>(subs: T[]): Promise<T[]> {
+  const needsResolving = subs.filter((s) => s.last_delivered_cycle_id === null);
+  if (needsResolving.length === 0) return subs;
+
+  const resolved = await Promise.all(
+    needsResolving.map(async (s) => ({
+      id: s.id,
+      cycleId: await resolveLastDeliveredCycleId(s.id),
+    })),
+  );
+
+  const resolvedMap = new Map(resolved.map((r) => [r.id, r.cycleId]));
+
+  return subs.map((s) => {
+    if (s.last_delivered_cycle_id !== null) return s;
+    const cycleId = resolvedMap.get(s.id);
+    if (!cycleId) return s;
+    return { ...s, last_delivered_cycle_id: cycleId };
+  });
+}
+
+// ============================================================================
 // Subscription CRUD
 // ============================================================================
 
