@@ -165,6 +165,72 @@ export async function deleteAddress(addressId: string, userId: string): Promise<
   }
 }
 
+// ============================================================================
+// Admin operations (no ownership check — requires staff auth at API layer)
+// ============================================================================
+
+/**
+ * Get a single address by ID without ownership check (admin use).
+ */
+export async function getAddressByIdAdmin(addressId: string): Promise<AddressRow | null> {
+  const { data, error } = await supabaseAdmin
+    .from('addresses')
+    .select('*')
+    .eq('id', addressId)
+    .single();
+
+  if (error) {
+    if (error.code === 'PGRST116') {
+      return null;
+    }
+    console.error('Error fetching address (admin):', error);
+    return null;
+  }
+
+  return data;
+}
+
+/**
+ * Update an address without ownership check (admin use).
+ */
+export async function updateAddressAdmin(
+  addressId: string,
+  data: AddressUpdate,
+): Promise<AddressRow> {
+  const { data: updated, error } = await supabaseAdmin
+    .from('addresses')
+    .update(data)
+    .eq('id', addressId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating address (admin):', error);
+    throw new Error('Failed to update address.');
+  }
+
+  return updated;
+}
+
+/**
+ * Delete an address without ownership check (admin use).
+ */
+export async function deleteAddressAdmin(addressId: string): Promise<void> {
+  const { error, count } = await supabaseAdmin
+    .from('addresses')
+    .delete({ count: 'exact' })
+    .eq('id', addressId);
+
+  if (error) {
+    console.error('Error deleting address (admin):', error);
+    throw new Error('Failed to delete address.');
+  }
+
+  if (count === 0) {
+    throw new Error('Address not found.');
+  }
+}
+
 /**
  * Set an address as default. The DB trigger unsets other defaults for the user.
  */

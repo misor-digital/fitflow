@@ -58,6 +58,9 @@ export {
   deleteAddress,
   setDefaultAddress,
   countAddressesByUser,
+  getAddressByIdAdmin,
+  updateAddressAdmin,
+  deleteAddressAdmin,
 } from './addresses';
 
 // Order data
