@@ -32,6 +32,7 @@ export {
   canCancel,
   computeSubscriptionState,
   shouldIncludeInCycle,
+  findNextCycleForSubscription,
   formatSubscriptionSummary,
   SUBSCRIPTION_STATUS_LABELS,
   SUBSCRIPTION_STATUS_COLORS,
