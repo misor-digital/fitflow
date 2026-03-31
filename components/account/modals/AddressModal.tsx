@@ -49,7 +49,10 @@ export default function AddressModal({
   };
 
   const formatAddress = (addr: AddressRow) => {
-    const parts = [addr.street_address, addr.city, addr.postal_code];
+    if (addr.delivery_method === 'speedy_office') {
+      return addr.speedy_office_name ?? 'Speedy офис';
+    }
+    const parts = [addr.street_address, addr.city, addr.postal_code].filter(Boolean);
     if (addr.building_entrance) parts.push(`вх. ${addr.building_entrance}`);
     if (addr.floor) parts.push(`ет. ${addr.floor}`);
     if (addr.apartment) parts.push(`ап. ${addr.apartment}`);
@@ -68,7 +71,7 @@ export default function AddressModal({
           <div className="text-center py-6">
             <p className="text-sm text-gray-500 mb-4">Нямате запазени адреси.</p>
             <a
-              href="/account/edit"
+              href="/account/addresses"
               className="text-sm text-[var(--color-brand-orange)] hover:underline font-medium"
             >
               Добавете адрес в профила си →
@@ -105,7 +108,16 @@ export default function AddressModal({
                     )}
                   </div>
                   <p className="text-xs text-gray-500 mt-0.5 truncate">
-                    {formatAddress(addr)}
+                    {addr.delivery_method === 'speedy_office' ? (
+                      <>
+                        <span>📦 {formatAddress(addr)}</span>
+                        {addr.speedy_office_address && (
+                          <span className="block text-gray-400">{addr.speedy_office_address}</span>
+                        )}
+                      </>
+                    ) : (
+                      formatAddress(addr)
+                    )}
                   </p>
                   {addr.phone && (
                     <p className="text-xs text-gray-400 mt-0.5">{addr.phone}</p>
@@ -117,7 +129,7 @@ export default function AddressModal({
         )}
 
         <a
-          href="/account/edit"
+          href="/account/addresses"
           className="inline-block text-sm text-[var(--color-brand-orange)] hover:underline font-medium mb-4"
         >
           + Използвай нов адрес
