@@ -5,6 +5,7 @@ import type { AddressRow } from '@/lib/supabase/types';
 import type { AddressInput, SpeedyOfficeSelection, DeliveryMethod } from '@/lib/order';
 import { validateAddress, validateSpeedyOffice } from '@/lib/order';
 import SpeedyOfficeSelector from '@/components/order/SpeedyOfficeSelector';
+import { useAuthStore } from '@/store/authStore';
 
 // ============================================================================
 // Types
@@ -21,12 +22,15 @@ interface AddressFormProps {
 // Helpers
 // ============================================================================
 
-function buildInitialAddress(initialData?: AddressRow): AddressInput {
+function buildInitialAddress(
+  initialData?: AddressRow,
+  profileDefaults?: { fullName?: string; phone?: string | null },
+): AddressInput {
   if (!initialData) {
     return {
       label: '',
-      fullName: '',
-      phone: '',
+      fullName: profileDefaults?.fullName ?? '',
+      phone: profileDefaults?.phone ?? '',
       city: '',
       postalCode: '',
       streetAddress: '',
@@ -73,10 +77,13 @@ function buildInitialOffice(initialData?: AddressRow): SpeedyOfficeSelection | n
 
 export default function AddressForm({ mode, initialData, onSuccess, onCancel }: AddressFormProps) {
   const uid = useId();
+  const user = useAuthStore((s) => s.user);
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>(
     initialData?.delivery_method ?? 'address',
   );
-  const [address, setAddress] = useState<AddressInput>(() => buildInitialAddress(initialData));
+  const [address, setAddress] = useState<AddressInput>(() =>
+    buildInitialAddress(initialData, { fullName: user?.fullName, phone: user?.phone }),
+  );
   const [selectedOffice, setSelectedOffice] = useState<SpeedyOfficeSelection | null>(() =>
     buildInitialOffice(initialData),
   );
