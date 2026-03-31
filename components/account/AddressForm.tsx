@@ -207,8 +207,8 @@ export default function AddressForm({ mode, initialData, onSuccess, onCancel }: 
         throw new Error(data?.error ?? `Грешка при запазване (${res.status})`);
       }
 
-      const saved: AddressRow = await res.json();
-      onSuccess(saved);
+      const data = await res.json();
+      onSuccess(data.address ?? data);
     } catch (err) {
       setApiError(err instanceof Error ? err.message : 'Възникна неочаквана грешка');
     } finally {
