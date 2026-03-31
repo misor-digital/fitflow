@@ -240,7 +240,7 @@ export default function AddressesManager({ initialAddresses }: AddressesManagerP
               >
                 {/* Header: label + badges */}
                 <div className="flex flex-wrap items-center gap-2 mb-2">
-                  <span className="font-medium text-[var(--color-brand-navy)]">
+                  <span className="text-base font-bold text-[var(--color-brand-navy)]">
                     {addr.label || 'Без етикет'}
                   </span>
 
