@@ -21,6 +21,7 @@ import type {
   OrderRow,
   ShippingAddressSnapshot,
   SubscriptionHistoryRow,
+  AddressRow,
 } from '@/lib/supabase/types';
 import type { BatchGenerationResult, SubscriptionPreferencesUpdate, SubscriptionWithUserInfo } from '@/lib/subscription';
 import { getUserEmailsByIds } from '@/lib/auth/get-users-by-ids';
@@ -47,27 +48,21 @@ async function insertHistory(entry: SubscriptionHistoryInsert): Promise<void> {
 }
 
 /** Build a ShippingAddressSnapshot from an address row. */
-function addressToSnapshot(address: {
-  full_name: string;
-  phone: string | null;
-  city: string;
-  postal_code: string;
-  street_address: string;
-  building_entrance: string | null;
-  floor: string | null;
-  apartment: string | null;
-  delivery_notes: string | null;
-}): ShippingAddressSnapshot {
+function addressToSnapshot(address: AddressRow): ShippingAddressSnapshot {
   return {
     full_name: address.full_name,
     phone: address.phone,
-    city: address.city,
-    postal_code: address.postal_code,
-    street_address: address.street_address,
+    city: address.city ?? '',
+    postal_code: address.postal_code ?? '',
+    street_address: address.street_address ?? '',
     building_entrance: address.building_entrance,
     floor: address.floor,
     apartment: address.apartment,
     delivery_notes: address.delivery_notes,
+    delivery_method: address.delivery_method,
+    speedy_office_id: address.speedy_office_id ?? undefined,
+    speedy_office_name: address.speedy_office_name ?? undefined,
+    speedy_office_address: address.speedy_office_address ?? undefined,
   };
 }
 

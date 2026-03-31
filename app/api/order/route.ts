@@ -490,13 +490,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       addressSnapshot = {
         full_name: savedAddress.full_name,
         phone: savedAddress.phone,
-        city: savedAddress.city,
-        postal_code: savedAddress.postal_code,
-        street_address: savedAddress.street_address,
+        city: savedAddress.city ?? '',
+        postal_code: savedAddress.postal_code ?? '',
+        street_address: savedAddress.street_address ?? '',
         building_entrance: savedAddress.building_entrance,
         floor: savedAddress.floor,
         apartment: savedAddress.apartment,
         delivery_notes: savedAddress.delivery_notes,
+        delivery_method: savedAddress.delivery_method,
+        speedy_office_id: savedAddress.speedy_office_id ?? undefined,
+        speedy_office_name: savedAddress.speedy_office_name ?? undefined,
+        speedy_office_address: savedAddress.speedy_office_address ?? undefined,
       };
       addressId = selectedAddressId;
 

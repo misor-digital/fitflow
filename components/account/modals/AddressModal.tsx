@@ -49,7 +49,10 @@ export default function AddressModal({
   };
 
   const formatAddress = (addr: AddressRow) => {
-    const parts = [addr.street_address, addr.city, addr.postal_code];
+    if (addr.delivery_method === 'speedy_office') {
+      return addr.speedy_office_name ?? 'Speedy офис';
+    }
+    const parts = [addr.street_address, addr.city, addr.postal_code].filter(Boolean);
     if (addr.building_entrance) parts.push(`вх. ${addr.building_entrance}`);
     if (addr.floor) parts.push(`ет. ${addr.floor}`);
     if (addr.apartment) parts.push(`ап. ${addr.apartment}`);
@@ -66,13 +69,7 @@ export default function AddressModal({
 
         {addresses.length === 0 ? (
           <div className="text-center py-6">
-            <p className="text-sm text-gray-500 mb-4">Нямате запазени адреси.</p>
-            <a
-              href="/account/edit"
-              className="text-sm text-[var(--color-brand-orange)] hover:underline font-medium"
-            >
-              Добавете адрес в профила си →
-            </a>
+            <p className="text-sm text-gray-500">Нямате запазени адреси.</p>
           </div>
         ) : (
           <div className="space-y-2 mb-4">
@@ -105,7 +102,16 @@ export default function AddressModal({
                     )}
                   </div>
                   <p className="text-xs text-gray-500 mt-0.5 truncate">
-                    {formatAddress(addr)}
+                    {addr.delivery_method === 'speedy_office' ? (
+                      <>
+                        <span>📦 {formatAddress(addr)}</span>
+                        {addr.speedy_office_address && (
+                          <span className="block text-gray-400">{addr.speedy_office_address}</span>
+                        )}
+                      </>
+                    ) : (
+                      formatAddress(addr)
+                    )}
                   </p>
                   {addr.phone && (
                     <p className="text-xs text-gray-400 mt-0.5">{addr.phone}</p>
@@ -116,12 +122,20 @@ export default function AddressModal({
           </div>
         )}
 
-        <a
-          href="/account/edit"
-          className="inline-block text-sm text-[var(--color-brand-orange)] hover:underline font-medium mb-4"
-        >
-          + Използвай нов адрес
-        </a>
+        <div className="flex flex-wrap gap-2 mb-4 justify-center">
+          <a
+            href="/account/addresses"
+            className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 font-medium transition-colors"
+          >
+            📋 Към моите адреси
+          </a>
+          <a
+            href="/account/addresses?new=true"
+            className="inline-flex items-center gap-1.5 text-sm px-3 py-1.5 rounded-lg bg-orange-50 text-orange-700 hover:bg-orange-100 font-medium transition-colors"
+          >
+            + Добави нов адрес
+          </a>
+        </div>
 
         {error && (
           <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2 mb-4">{error}</p>
