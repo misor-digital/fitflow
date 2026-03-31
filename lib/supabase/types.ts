@@ -323,13 +323,17 @@ export interface AddressRow {
   label: string | null;
   full_name: string;
   phone: string | null;
-  city: string;
-  postal_code: string;
-  street_address: string;
+  city: string | null;
+  postal_code: string | null;
+  street_address: string | null;
   building_entrance: string | null;
   floor: string | null;
   apartment: string | null;
   delivery_notes: string | null;
+  delivery_method: 'address' | 'speedy_office';
+  speedy_office_id: string | null;
+  speedy_office_name: string | null;
+  speedy_office_address: string | null;
   is_default: boolean;
   created_at: string;
   updated_at: string;
@@ -340,13 +344,17 @@ export interface AddressInsert {
   label?: string | null;
   full_name: string;
   phone?: string | null;
-  city: string;
-  postal_code: string;
-  street_address: string;
+  city?: string | null;
+  postal_code?: string | null;
+  street_address?: string | null;
   building_entrance?: string | null;
   floor?: string | null;
   apartment?: string | null;
   delivery_notes?: string | null;
+  delivery_method?: 'address' | 'speedy_office';
+  speedy_office_id?: string | null;
+  speedy_office_name?: string | null;
+  speedy_office_address?: string | null;
   is_default?: boolean;
 }
 
@@ -354,13 +362,17 @@ export interface AddressUpdate {
   label?: string | null;
   full_name?: string;
   phone?: string | null;
-  city?: string;
-  postal_code?: string;
-  street_address?: string;
+  city?: string | null;
+  postal_code?: string | null;
+  street_address?: string | null;
   building_entrance?: string | null;
   floor?: string | null;
   apartment?: string | null;
   delivery_notes?: string | null;
+  delivery_method?: 'address' | 'speedy_office';
+  speedy_office_id?: string | null;
+  speedy_office_name?: string | null;
+  speedy_office_address?: string | null;
   is_default?: boolean;
 }
 
