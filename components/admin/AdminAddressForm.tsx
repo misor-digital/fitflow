@@ -4,6 +4,7 @@ import { useState, useCallback, useId } from 'react';
 import type { AddressRow } from '@/lib/supabase/types';
 import type { AddressInput, SpeedyOfficeSelection, DeliveryMethod } from '@/lib/order';
 import { validateAddress, validateSpeedyOffice } from '@/lib/order';
+import SpeedyOfficeSelector from '@/components/order/SpeedyOfficeSelector';
 
 // ============================================================================
 // Types
@@ -103,21 +104,15 @@ export default function AdminAddressForm({
     [],
   );
 
-  const handleSpeedyFieldChange = useCallback(
-    (field: keyof SpeedyOfficeSelection, value: string) => {
-      setSpeedyOffice((prev) => {
-        const base = prev ?? { id: '', name: '', address: '' };
-        return { ...base, [field]: value };
-      });
-      setFieldErrors((prev) => {
-        if (!prev.speedyOffice) return prev;
-        const next = { ...prev };
-        delete next.speedyOffice;
-        return next;
-      });
-    },
-    [],
-  );
+  const handleOfficeSelect = useCallback((office: SpeedyOfficeSelection) => {
+    setSpeedyOffice(office);
+    setFieldErrors((prev) => {
+      if (!prev.speedyOffice) return prev;
+      const next = { ...prev };
+      delete next.speedyOffice;
+      return next;
+    });
+  }, []);
 
   const handleMethodChange = useCallback(
     (method: DeliveryMethod) => {
@@ -425,58 +420,14 @@ export default function AdminAddressForm({
         </div>
       )}
 
-      {/* Speedy Office Fields (plain text inputs for admin) */}
+      {/* Speedy Office Selector */}
       {deliveryMethod === 'speedy_office' && (
-        <div className="space-y-4">
-          <p className="text-xs text-gray-500">
-            Въведете данните на Speedy офиса ръчно. Проверете ID-то в системата на Speedy.
-          </p>
-          <div>
-            <label htmlFor={`${uid}-speedyId`} className="block text-sm font-medium text-gray-700 mb-1">
-              Speedy офис ID <span className="text-red-500">*</span>
-            </label>
-            <input
-              id={`${uid}-speedyId`}
-              type="text"
-              value={speedyOffice?.id ?? ''}
-              onChange={(e) => handleSpeedyFieldChange('id', e.target.value)}
-              placeholder="напр. 1234"
-              aria-invalid={!!errorFor('speedyOffice')}
-              aria-describedby={errorFor('speedyOffice') ? errorId('speedyOffice') : undefined}
-              className={inputClass('speedyOffice')}
-            />
-            {errorFor('speedyOffice') && (
-              <p id={errorId('speedyOffice')} className="text-xs text-red-600 mt-1">
-                {errorFor('speedyOffice')}
-              </p>
-            )}
-          </div>
-          <div>
-            <label htmlFor={`${uid}-speedyName`} className="block text-sm font-medium text-gray-700 mb-1">
-              Име на офиса <span className="text-red-500">*</span>
-            </label>
-            <input
-              id={`${uid}-speedyName`}
-              type="text"
-              value={speedyOffice?.name ?? ''}
-              onChange={(e) => handleSpeedyFieldChange('name', e.target.value)}
-              placeholder="напр. София - Офис Витоша"
-              className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-[var(--color-brand-orange)] focus:border-[var(--color-brand-orange)] outline-none"
-            />
-          </div>
-          <div>
-            <label htmlFor={`${uid}-speedyAddress`} className="block text-sm font-medium text-gray-700 mb-1">
-              Адрес на офиса
-            </label>
-            <input
-              id={`${uid}-speedyAddress`}
-              type="text"
-              value={speedyOffice?.address ?? ''}
-              onChange={(e) => handleSpeedyFieldChange('address', e.target.value)}
-              placeholder="Пълен адрес на офиса"
-              className="w-full border rounded-lg px-3 py-2 text-sm focus:ring-[var(--color-brand-orange)] focus:border-[var(--color-brand-orange)] outline-none"
-            />
-          </div>
+        <div>
+          <SpeedyOfficeSelector
+            selectedOffice={speedyOffice}
+            onSelect={handleOfficeSelect}
+            error={errorFor('speedyOffice')}
+          />
         </div>
       )}
 
