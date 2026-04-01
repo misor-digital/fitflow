@@ -293,7 +293,7 @@ function HomeContent() {
             <div className="bg-white rounded-xl p-4 sm:p-5 shadow-md border-2 border-[var(--color-brand-orange)] relative">
               <div className="absolute -top-2 right-2 bg-[var(--color-brand-orange)] text-white px-2 py-0.5 rounded-full text-[0.6rem] font-semibold uppercase">Премиум</div>
               <h3 className="text-sm sm:text-base font-bold text-[var(--color-brand-navy)] mb-1">Премиум</h3>
-              <p className="text-xs text-gray-500 сmb-1">5-7 продукта</p>
+              <p className="text-xs text-gray-500 mb-1">5-7 продукта</p>
               <p className="text-base sm:text-lg font-bold text-[var(--color-brand-orange)]">{boxPrices['onetime-premium'] ? `${formatPrice(boxPrices['onetime-premium'].finalPriceEur)}€` : '-'}</p>
             </div>
           </div>
