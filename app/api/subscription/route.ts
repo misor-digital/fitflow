@@ -6,6 +6,7 @@ import {
   getAddressById,
   calculatePrice,
   createSubscription,
+  createAddress,
   validatePromoCode,
   incrementPromoCodeUsage,
 } from '@/lib/data';
@@ -15,6 +16,13 @@ import { determineFirstCycle } from '@/lib/delivery/assignment';
 import { generateSingleOrderForSubscription } from '@/lib/delivery/generate';
 import { sendSubscriptionCreatedEmail } from '@/lib/subscription/notifications';
 import { syncSubscriptionChange } from '@/lib/email/contact-sync';
+import {
+  generateSubscriptionConversionEmail,
+  SUBSCRIPTION_CONVERSION_SUBJECT,
+} from '@/lib/email/order-subscription-conversion-email';
+import { resolveEmailLabels, FREQUENCY_LABELS } from '@/lib/email/labels';
+import { sendTransactionalEmail } from '@/lib/email/brevo/transactional';
+import { eurToBgn } from '@/lib/data';
 import {
   getOrderByConversionToken,
   markOrderConvertedToSubscription,
@@ -121,6 +129,23 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       conversionToken?: string | null;
       onBehalfOfUserId?: string | null;
       campaignPromoCode?: string | null;
+      address?: {
+        fullName?: string;
+        phone?: string;
+        city?: string;
+        postalCode?: string;
+        streetAddress?: string;
+        buildingEntrance?: string;
+        floor?: string;
+        apartment?: string;
+        deliveryNotes?: string;
+      };
+      deliveryMethod?: string;
+      speedyOfficeId?: string;
+      speedyOfficeName?: string;
+      speedyOfficeAddress?: string;
+      fullName?: string;
+      phone?: string;
     };
 
     // ------------------------------------------------------------------
@@ -203,7 +228,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // ------------------------------------------------------------------
     // Step 3c: Guest Auto-Account Creation (conversion flow)
     // ------------------------------------------------------------------
-    let accountSetupUrl: string | null = null;
+    let accountLoginUrl: string | null = null;
     let isNewAccount = false;
 
     if (!userId && sourceOrder) {
@@ -212,7 +237,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         sourceOrder.customer_full_name,
       );
       userId = accountResult.userId;
-      accountSetupUrl = accountResult.setupUrl;
+      accountLoginUrl = accountResult.loginUrl;
       isNewAccount = accountResult.isNew;
     }
 
@@ -268,14 +293,63 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // Validate addressId — must be provided and owned by resolved user
-    if (!addressId || typeof addressId !== 'string') {
+    // For conversion flow, create address from inline data if no addressId
+    let resolvedAddressId = addressId;
+
+    if (!resolvedAddressId && sourceOrder && userId) {
+      const {
+        address: inlineAddress,
+        deliveryMethod: dm,
+        speedyOfficeId: soId,
+        speedyOfficeName: soName,
+        speedyOfficeAddress: soAddr,
+        fullName: bodyFullName,
+        phone: bodyPhone,
+      } = data as Record<string, unknown>;
+      const addr = inlineAddress as Record<string, string> | undefined;
+
+      if (dm === 'speedy_office' && soId) {
+        const created = await createAddress({
+          user_id: userId,
+          full_name: (addr?.fullName || bodyFullName as string || sourceOrder.customer_full_name).trim(),
+          phone: (addr?.phone || bodyPhone as string || sourceOrder.customer_phone || '').trim() || null,
+          city: '',
+          postal_code: '',
+          street_address: '',
+          delivery_method: 'speedy_office',
+          speedy_office_id: soId as string,
+          speedy_office_name: (soName as string) || null,
+          speedy_office_address: (soAddr as string) || null,
+          is_default: true,
+        });
+        resolvedAddressId = created.id;
+      } else if (addr?.city && addr?.streetAddress) {
+        const created = await createAddress({
+          user_id: userId,
+          full_name: (addr.fullName || bodyFullName as string || sourceOrder.customer_full_name).trim(),
+          phone: (addr.phone || bodyPhone as string || sourceOrder.customer_phone || '').trim() || null,
+          city: addr.city.trim(),
+          postal_code: (addr.postalCode || '').trim(),
+          street_address: addr.streetAddress.trim(),
+          building_entrance: (addr.buildingEntrance || '').trim() || null,
+          floor: (addr.floor || '').trim() || null,
+          apartment: (addr.apartment || '').trim() || null,
+          delivery_notes: (addr.deliveryNotes || '').trim() || null,
+          delivery_method: 'address',
+          is_default: true,
+        });
+        resolvedAddressId = created.id;
+      }
+    }
+
+    if (!resolvedAddressId || typeof resolvedAddressId !== 'string') {
       return NextResponse.json(
         { error: 'Адресът е задължителен.' },
         { status: 400 },
       );
     }
 
-    const savedAddress = await getAddressById(addressId, userId);
+    const savedAddress = await getAddressById(resolvedAddressId, userId);
     if (!savedAddress) {
       return NextResponse.json(
         { error: 'Избраният адрес не е намерен.' },
@@ -311,15 +385,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       const prefsForValidation = {
         wants_personalization: true,
         sports: effectiveSports,
-        sport_other: preferences?.sportOther ?? null,
+        sport_other: preferences?.sportOther ?? sourceOrder?.sport_other ?? null,
         colors: effectiveColors,
         flavors: effectiveFlavors,
-        flavor_other: preferences?.flavorOther ?? null,
+        flavor_other: preferences?.flavorOther ?? sourceOrder?.flavor_other ?? null,
         dietary: effectiveDietary,
-        dietary_other: preferences?.dietaryOther ?? null,
+        dietary_other: preferences?.dietaryOther ?? sourceOrder?.dietary_other ?? null,
         size_upper: effectiveSizeUpper,
         size_lower: effectiveSizeLower,
-        additional_notes: preferences?.additionalNotes ?? null,
+        additional_notes: preferences?.additionalNotes ?? sourceOrder?.additional_notes ?? null,
       };
 
       const validation = validatePreferenceUpdate(prefsForValidation, effectiveBoxType);
@@ -370,20 +444,20 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       frequency,
       wants_personalization: effectiveWantsPersonalization,
       sports: effectiveSports,
-      sport_other: preferences?.sportOther ?? null,
+      sport_other: preferences?.sportOther ?? sourceOrder?.sport_other ?? null,
       colors: effectiveColors,
       flavors: effectiveFlavors,
-      flavor_other: preferences?.flavorOther ?? null,
+      flavor_other: preferences?.flavorOther ?? sourceOrder?.flavor_other ?? null,
       dietary: effectiveDietary,
-      dietary_other: preferences?.dietaryOther ?? null,
+      dietary_other: preferences?.dietaryOther ?? sourceOrder?.dietary_other ?? null,
       size_upper: effectiveSizeUpper,
       size_lower: effectiveSizeLower,
-      additional_notes: preferences?.additionalNotes ?? null,
+      additional_notes: preferences?.additionalNotes ?? sourceOrder?.additional_notes ?? null,
       promo_code: priceInfo.promoCode ?? null,
       discount_percent: priceInfo.discountPercent ?? null,
       base_price_eur: priceInfo.originalPriceEur ?? priceInfo.finalPriceEur,
       current_price_eur: priceInfo.finalPriceEur,
-      default_address_id: addressId,
+      default_address_id: resolvedAddressId,
       first_cycle_id: cycleId,
     };
 
@@ -422,12 +496,51 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       // Mark the source order as converted
       await markOrderConvertedToSubscription(sourceOrder.id, subscription.id);
 
-      // Send confirmation email (fire-and-forget)
+      // Send conversion-specific email with setup-password link (fire-and-forget)
       const upcomingForEmail = await getUpcomingCycle();
       const nextDate = upcomingForEmail?.delivery_date ?? '';
       const customerEmail = sourceOrder.customer_email;
 
-      sendSubscriptionCreatedEmail(customerEmail, subscription, nextDate).catch(() => {});
+      (async () => {
+        try {
+          const labels = await resolveEmailLabels();
+          const boxName = labels.boxTypes[effectiveBoxType] ?? effectiveBoxType;
+          const frequencyLabel = FREQUENCY_LABELS[frequency] ?? frequency;
+          const basePriceBgn = await eurToBgn(subscription.base_price_eur);
+          const currentPriceBgn = await eurToBgn(subscription.current_price_eur);
+
+          const html = generateSubscriptionConversionEmail({
+            fullName: sourceOrder.customer_full_name,
+            email: customerEmail,
+            boxType: effectiveBoxType,
+            boxName,
+            frequency,
+            frequencyLabel,
+            basePriceEur: subscription.base_price_eur,
+            currentPriceEur: subscription.current_price_eur,
+            basePriceBgn,
+            currentPriceBgn,
+            promoCode: subscription.promo_code,
+            discountPercent: subscription.discount_percent,
+            nextDeliveryDate: nextDate,
+            orderNumber: sourceOrder.order_number,
+            isNewAccount,
+            loginUrl: accountLoginUrl,
+          });
+
+          await sendTransactionalEmail({
+            to: { email: customerEmail, name: sourceOrder.customer_full_name },
+            subject: SUBSCRIPTION_CONVERSION_SUBJECT,
+            htmlContent: html,
+            tags: ['subscription', 'conversion'],
+            category: 'sub-conversion',
+            relatedEntityType: 'subscription',
+            relatedEntityId: subscription.id,
+          });
+        } catch (err) {
+          console.error('[EMAIL] subscription-conversion failed:', err);
+        }
+      })();
 
       // Brevo sync — subscription activation
       syncSubscriptionChange({
@@ -463,8 +576,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       subscription,
     };
 
-    if (accountSetupUrl) {
-      responsePayload.accountSetupUrl = accountSetupUrl;
+    if (accountLoginUrl) {
+      responsePayload.accountLoginUrl = accountLoginUrl;
     }
     if (isNewAccount) {
       responsePayload.isNewAccount = isNewAccount;
