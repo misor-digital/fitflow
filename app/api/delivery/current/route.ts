@@ -8,7 +8,7 @@ import {
 import { getDeliveryConfig } from '@/lib/delivery';
 
 // ============================================================================
-// GET /api/delivery/current — Public: Current revealed box
+// GET /api/delivery/current - Public: Current revealed box
 // ============================================================================
 
 export async function GET(): Promise<NextResponse> {

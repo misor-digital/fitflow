@@ -1,5 +1,5 @@
 /**
- * Brevo API Wrapper — Barrel Exports
+ * Brevo API Wrapper - Barrel Exports
  */
 
 export {

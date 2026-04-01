@@ -27,7 +27,7 @@ export function CancelRequestButton({ orderNumber }: CancelRequestButtonProps) {
       });
       setSubmitted(true);
     } catch {
-      // Silently fail — the API does not exist yet
+      // Silently fail - the API does not exist yet
       setSubmitted(true);
     } finally {
       setLoading(false);

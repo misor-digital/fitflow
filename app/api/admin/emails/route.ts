@@ -1,7 +1,7 @@
 /**
  * Admin Email Log API
  *
- * GET /api/admin/emails — Paginated email send log with filters.
+ * GET /api/admin/emails - Paginated email send log with filters.
  * Protected by requireAdmin().
  */
 

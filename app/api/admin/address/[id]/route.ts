@@ -23,7 +23,7 @@ const UUID_REGEX =
 type RouteParams = { params: Promise<{ id: string }> };
 
 // ============================================================================
-// GET /api/admin/address/:id — Get single address
+// GET /api/admin/address/:id - Get single address
 // ============================================================================
 
 export async function GET(
@@ -75,7 +75,7 @@ export async function GET(
 }
 
 // ============================================================================
-// PUT /api/admin/address/:id — Update address
+// PUT /api/admin/address/:id - Update address
 // ============================================================================
 
 export async function PUT(
@@ -129,7 +129,7 @@ export async function PUT(
 
     const body = await request.json();
 
-    // Handle "set default only" — no full validation needed
+    // Handle "set default only" - no full validation needed
     const isDefaultOnly =
       typeof body.isDefault === 'boolean' &&
       Object.keys(body).length === 1;
@@ -172,7 +172,7 @@ export async function PUT(
 
     const deliveryMethod = sanitized.deliveryMethod ?? 'address';
 
-    // Domain validation — conditional on delivery method
+    // Domain validation - conditional on delivery method
     if (deliveryMethod === 'speedy_office') {
       const officeSelection: SpeedyOfficeSelection | null =
         sanitized.speedyOfficeId && sanitized.speedyOfficeName
@@ -229,7 +229,7 @@ export async function PUT(
       }
     }
 
-    // Build update payload — null out inapplicable fields when switching method
+    // Build update payload - null out inapplicable fields when switching method
     const updateData: AddressUpdate =
       deliveryMethod === 'speedy_office'
         ? {
@@ -281,7 +281,7 @@ export async function PUT(
 }
 
 // ============================================================================
-// DELETE /api/admin/address/:id — Delete address
+// DELETE /api/admin/address/:id - Delete address
 // ============================================================================
 
 export async function DELETE(

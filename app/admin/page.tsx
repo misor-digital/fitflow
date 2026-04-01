@@ -102,7 +102,7 @@ export default async function AdminDashboard() {
 
       <div className="mt-8 bg-white rounded-xl shadow-sm p-6">
         <p className="text-gray-400 text-center py-12">
-          Детайлни статистики — очаквайте скоро
+          Детайлни статистики - очаквайте скоро
         </p>
       </div>
     </div>

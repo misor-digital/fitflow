@@ -414,6 +414,10 @@ export interface OrderRow {
   order_type: string; // OrderType
   subscription_id: string | null;
   converted_from_preorder_id: string | null;
+  subscription_conversion_token: string | null;
+  subscription_conversion_token_expires_at: string | null;
+  subscription_conversion_status: string | null; // NULL | 'pending' | 'converted' | 'expired'
+  converted_to_subscription_id: string | null;
   shipped_at: string | null;       // TIMESTAMPTZ as ISO string, set when status → shipped
   created_at: string;
   updated_at: string;
@@ -448,9 +452,14 @@ export interface OrderInsert {
   converted_from_preorder_id?: string | null;
   delivery_cycle_id?: string | null;
   order_type?: string;
+  subscription_conversion_token?: string | null;
+  subscription_conversion_token_expires_at?: string | null;
+  subscription_conversion_status?: string | null;
+  converted_to_subscription_id?: string | null;
 }
 
 export interface OrderUpdate {
+  user_id?: string | null;
   status?: OrderStatus;
   shipping_address?: ShippingAddressSnapshot;
   address_id?: string | null;
@@ -460,6 +469,11 @@ export interface OrderUpdate {
   discount_percent?: number | null;
   original_price_eur?: number | null;
   final_price_eur?: number | null;
+  // Subscription conversion fields
+  subscription_conversion_token?: string | null;
+  subscription_conversion_token_expires_at?: string | null;
+  subscription_conversion_status?: string | null;
+  converted_to_subscription_id?: string | null;
 }
 
 // ============================================================================
@@ -939,7 +953,7 @@ export interface FeedbackFieldDefinition {
   image_url?: string | null;
   choices?: string[];
   options?: Record<string, unknown>;
-  /** Client-only stable key for React — not persisted to the database. */
+  /** Client-only stable key for React - not persisted to the database. */
   _key?: string;
 }
 

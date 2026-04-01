@@ -4,7 +4,7 @@ import type { Database } from './types';
 
 /**
  * Admin Supabase client using the secret key.
- * Bypasses RLS — use ONLY for:
+ * Bypasses RLS - use ONLY for:
  * - Server-side data access that doesn't need per-user auth (catalog, promo, etc.)
  * - Admin operations (user management, bulk queries)
  * - Background jobs

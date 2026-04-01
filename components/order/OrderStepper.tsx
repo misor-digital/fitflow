@@ -8,7 +8,7 @@ interface OrderStepperProps {
   isStep1Valid: boolean;
   isStep2Valid: boolean;
   isStep3Valid: boolean;
-  steps?: OrderStep[]; // default [1,2,3,4] — pass [1,3,4] to skip personalization
+  steps?: OrderStep[]; // default [1,2,3,4] - pass [1,3,4] to skip personalization
 }
 
 const ALL_STEP_LABELS: Record<OrderStep, string> = {
@@ -90,7 +90,7 @@ export default function OrderStepper({
                 )}
               </div>
 
-              {/* Label — hidden on mobile, shown on sm+ */}
+              {/* Label - hidden on mobile, shown on sm+ */}
               <span
                 className={`hidden sm:inline text-xs sm:text-sm font-semibold transition-colors ${
                   active

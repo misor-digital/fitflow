@@ -249,7 +249,7 @@ export default async function OrderDetailPage({
         </div>
       </div>
 
-      {/* Tracking placeholder — shown when order is shipped */}
+      {/* Tracking placeholder - shown when order is shipped */}
       {/* TODO: Integrate real tracking number from carrier API */}
       {statusKey === 'shipped' && (
         <div className="bg-purple-50 border border-purple-100 rounded-lg p-4 text-sm text-purple-700 mb-6 flex items-start gap-3">

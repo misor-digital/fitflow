@@ -384,7 +384,7 @@ export function CycleDetailView({
       <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
-            {/* Title — editable inline */}
+            {/* Title - editable inline */}
             <input
               type="text"
               value={title}
@@ -437,7 +437,7 @@ export function CycleDetailView({
           )}
         </div>
 
-        {/* Description — editable */}
+        {/* Description - editable */}
         <div>
           <label className="block text-sm font-medium text-gray-600 mb-1">
             Описание (публично, при разкриване)

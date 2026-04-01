@@ -1,26 +1,26 @@
-# Email Service Setup Guide — Brevo Integration
+# Email Service Setup Guide - Brevo Integration
 
 ## Overview
 
-FitFlow uses [Brevo](https://www.brevo.com/) as an SMTP transport layer for all transactional emails. **All email templates are code-controlled** in `lib/email/` — no Brevo dashboard templates are used for transactional emails.
+FitFlow uses [Brevo](https://www.brevo.com/) as an SMTP transport layer for all transactional emails. **All email templates are code-controlled** in `lib/email/` - no Brevo dashboard templates are used for transactional emails.
 
 ## Architecture
 
 ```
 Email Templates (TypeScript)
-├── lib/email/constants.ts              — design tokens (colors, fonts, spacing)
-├── lib/email/layout.ts                 — shared header/footer/wrapper
-├── lib/email/templates.ts              — order, invite, magic-link, auth templates
-├── lib/email/subscription-templates.ts — subscription lifecycle templates
-└── lib/email/labels.ts                 — centralized DB label resolution
+├── lib/email/constants.ts              - design tokens (colors, fonts, spacing)
+├── lib/email/layout.ts                 - shared header/footer/wrapper
+├── lib/email/templates.ts              - order, invite, magic-link, auth templates
+├── lib/email/subscription-templates.ts - subscription lifecycle templates
+└── lib/email/labels.ts                 - centralized DB label resolution
 
 Email Sending
-├── lib/email/emailService.ts           — low-level Brevo SDK wrapper
-├── lib/email/brevo/transactional.ts    — adds logging + usage tracking
-└── lib/email/brevo/campaigns.ts        — marketing campaign APIs
+├── lib/email/emailService.ts           - low-level Brevo SDK wrapper
+├── lib/email/brevo/transactional.ts    - adds logging + usage tracking
+└── lib/email/brevo/campaigns.ts        - marketing campaign APIs
 
 Excluded (legacy, pending deletion):
-└── lib/email/preorder-campaign/        — separate preorder conversion module
+└── lib/email/preorder-campaign/        - separate preorder conversion module
 ```
 
 ## Email Template Inventory
@@ -47,7 +47,7 @@ Emails displaying personalization options (sports, flavors, colors, dietary) use
 ## Adding a New Template
 
 1. Create function using `wrapInEmailLayout()`, `emailCtaButton()`, `emailContactLine()` from `lib/email/layout.ts`
-2. Import design tokens from `lib/email/constants.ts` — never hardcode colors
+2. Import design tokens from `lib/email/constants.ts` - never hardcode colors
 3. If email displays DB values (box types, options), call `resolveEmailLabels()` before generating
 4. Send via `sendTransactionalEmail()` from `lib/email/brevo/transactional.ts`
 5. Add to barrel export in `lib/email/index.ts`

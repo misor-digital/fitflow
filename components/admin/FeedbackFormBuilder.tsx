@@ -65,7 +65,7 @@ function toSlug(text: string): string {
     .slice(0, 80);
 }
 
-/** Lighter sanitiser for manual slug typing — strips non-Latin chars without transliteration. */
+/** Lighter sanitiser for manual slug typing - strips non-Latin chars without transliteration. */
 function sanitiseSlug(raw: string): string {
   return raw
     .toLowerCase()
@@ -924,7 +924,7 @@ export default function FeedbackFormBuilder({ initialForm }: { initialForm?: Fee
     const isTokenChanged = isEditing && (formData.settings.requireToken ?? false) !== (initialForm?.settings?.requireToken ?? false);
     const isThankYouChanged = isEditing && (formData.settings.thankYouMessage ?? '') !== (initialForm?.settings?.thankYouMessage ?? '');
 
-    // Per-field diff — match by _key (stable across ID renames)
+    // Per-field diff - match by _key (stable across ID renames)
     const oldFieldsByKey = new Map(
       (initialForm?.schema.fields ?? []).map((f, i) => [`_k${i}`, f]),
     );
@@ -1041,7 +1041,7 @@ export default function FeedbackFormBuilder({ initialForm }: { initialForm?: Fee
                   if (removed) {
                     return (
                       <div key={f.id} className="bg-red-50 rounded px-1.5 py-0.5 text-red-400 pl-6">
-                        {f.label || '(без етикет)'} — <span>{renderFieldTypeLabel(f.type)}</span>
+                        {f.label || '(без етикет)'} - <span>{renderFieldTypeLabel(f.type)}</span>
                         <span className="ml-2 text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded">премахнато</span>
                       </div>
                     );
@@ -1079,7 +1079,7 @@ export default function FeedbackFormBuilder({ initialForm }: { initialForm?: Fee
                   return (
                     <div key={f._key ?? f.id} className={fChanged ? 'bg-amber-50 rounded px-1.5 py-0.5' : ''}>
                       <span className="text-gray-400 inline-block w-5 text-right mr-1">{num}.</span>
-                      {f.label || '(без етикет)'} — <span className="text-gray-400">{renderFieldTypeLabel(f.type)}</span>
+                      {f.label || '(без етикет)'} - <span className="text-gray-400">{renderFieldTypeLabel(f.type)}</span>
                       {f.required && <span className="text-red-500 ml-1">*</span>}
                       {isNew && <span className={`ml-2 text-[10px] ${hi}`}>ново</span>}
                       {fChanged && !isNew && <span className={`ml-2 text-[10px] ${hi}`}>променено</span>}

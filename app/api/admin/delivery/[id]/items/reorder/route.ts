@@ -4,7 +4,7 @@ import { ORDER_VIEW_ROLES } from '@/lib/auth/permissions';
 import { reorderCycleItems, getDeliveryCycleById } from '@/lib/data';
 
 // ============================================================================
-// POST /api/admin/delivery/:id/items/reorder — Reorder items
+// POST /api/admin/delivery/:id/items/reorder - Reorder items
 // ============================================================================
 
 export async function POST(

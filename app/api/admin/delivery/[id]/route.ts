@@ -9,7 +9,7 @@ import {
 import { revalidateDataTag, TAG_DELIVERY } from '@/lib/data/cache-tags';
 
 // ============================================================================
-// PATCH /api/admin/delivery/:id — Update cycle fields
+// PATCH /api/admin/delivery/:id - Update cycle fields
 // ============================================================================
 
 export async function PATCH(
@@ -70,7 +70,7 @@ export async function PATCH(
 }
 
 // ============================================================================
-// DELETE /api/admin/delivery/:id — Delete cycle
+// DELETE /api/admin/delivery/:id - Delete cycle
 // ============================================================================
 
 export async function DELETE(

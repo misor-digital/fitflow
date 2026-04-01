@@ -1,7 +1,7 @@
 /**
- * GET    /api/admin/campaigns/:id — Campaign detail with recipient stats.
- * PATCH  /api/admin/campaigns/:id — Update draft campaign fields.
- * DELETE /api/admin/campaigns/:id — Delete a draft campaign.
+ * GET    /api/admin/campaigns/:id - Campaign detail with recipient stats.
+ * PATCH  /api/admin/campaigns/:id - Update draft campaign fields.
+ * DELETE /api/admin/campaigns/:id - Delete a draft campaign.
  */
 
 import { NextResponse } from 'next/server';
@@ -21,7 +21,7 @@ import {
 type RouteContext = { params: Promise<{ id: string }> };
 
 // ---------------------------------------------------------------------------
-// GET — Campaign detail with recipient stats
+// GET - Campaign detail with recipient stats
 // ---------------------------------------------------------------------------
 
 export async function GET(
@@ -53,7 +53,7 @@ export async function GET(
 }
 
 // ---------------------------------------------------------------------------
-// PATCH — Update draft campaign
+// PATCH - Update draft campaign
 // ---------------------------------------------------------------------------
 
 export async function PATCH(
@@ -97,7 +97,7 @@ export async function PATCH(
       filter?: Record<string, unknown>;
     };
 
-    // Build update payload — only include provided fields
+    // Build update payload - only include provided fields
     const updatePayload: Record<string, unknown> = {
       updated_by: session.userId,
     };
@@ -157,7 +157,7 @@ export async function PATCH(
 }
 
 // ---------------------------------------------------------------------------
-// DELETE — Remove draft campaign
+// DELETE - Remove draft campaign
 // ---------------------------------------------------------------------------
 
 export async function DELETE(

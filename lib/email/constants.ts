@@ -3,7 +3,7 @@ import { BRAND } from '@/lib/constants/colors';
 /**
  * Single source of truth for all email design tokens.
  *
- * Every email template imports from this file — no hardcoded
+ * Every email template imports from this file - no hardcoded
  * colors, fonts, sizes, or brand copy anywhere else.
  */
 export const EMAIL = {

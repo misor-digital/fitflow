@@ -25,11 +25,11 @@ export default function OrderTrackingWidget() {
     // Check sessionStorage for dismissal
     try {
       if (sessionStorage.getItem(DISMISS_KEY) === '1') {
-        // Already dismissed — keep initial dismissed=true state
+        // Already dismissed - keep initial dismissed=true state
         return;
       }
     } catch {
-      // sessionStorage unavailable — show the widget
+      // sessionStorage unavailable - show the widget
     }
 
     // Defer state update to avoid synchronous setState in effect body

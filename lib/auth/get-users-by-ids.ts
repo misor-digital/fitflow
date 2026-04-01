@@ -2,7 +2,7 @@
  * Batch-fetch auth user emails by IDs via a single RPC call.
  *
  * Uses the `get_user_emails_by_ids` Postgres function (SECURITY DEFINER)
- * which queries `auth.users` inside the DB — no need for PostgREST to
+ * which queries `auth.users` inside the DB - no need for PostgREST to
  * expose the `auth` schema.
  *
  * Falls back to sequential `getUserById` calls if the RPC is not yet

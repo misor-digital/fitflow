@@ -2,7 +2,7 @@
  * Email Campaign Recipients Data Access Layer
  *
  * Manage per-campaign recipient lists: bulk insert, batch fetching, status updates.
- * Uses supabaseAdmin (service_role) — bypasses RLS.
+ * Uses supabaseAdmin (service_role) - bypasses RLS.
  */
 
 import 'server-only';

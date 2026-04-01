@@ -21,7 +21,7 @@ import {
 import { syncSubscriptionChange } from '@/lib/email/contact-sync';
 
 // ============================================================================
-// PATCH /api/admin/subscription/:id — Admin subscription management
+// PATCH /api/admin/subscription/:id - Admin subscription management
 // ============================================================================
 
 export async function PATCH(
@@ -85,7 +85,7 @@ export async function PATCH(
     }
 
     // ------------------------------------------------------------------
-    // Step 4: Load subscription (no ownership check — admin)
+    // Step 4: Load subscription (no ownership check - admin)
     // ------------------------------------------------------------------
     const sub = await getSubscriptionById(id);
     if (!sub) {
@@ -103,7 +103,7 @@ export async function PATCH(
       const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(sub.user_id);
       customerEmail = authUser?.user?.email ?? null;
     } catch {
-      // Non-fatal — emails will be skipped if we can't resolve
+      // Non-fatal - emails will be skipped if we can't resolve
     }
 
     // ------------------------------------------------------------------

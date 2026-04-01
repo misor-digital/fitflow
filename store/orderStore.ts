@@ -25,7 +25,7 @@ interface OrderStore extends OrderUserInput {
   setBoxType: (boxType: BoxTypeId | null) => void;
   setFrequency: (frequency: string) => void;
 
-  // Step 2 — personalization
+  // Step 2 - personalization
   setPersonalization: (wants: boolean) => void;
   setSports: (sports: string[]) => void;
   setSportOther: (other: string) => void;

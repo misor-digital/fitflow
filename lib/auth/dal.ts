@@ -17,10 +17,10 @@ export interface AuthSession {
 
 /**
  * Verify the current session and return user + profile data.
- * Uses getClaims() — validates JWT signature without a network call.
+ * Uses getClaims() - validates JWT signature without a network call.
  * Returns null if no valid session exists (not an error).
  * 
- * Cached per-request via React.cache() — safe to call multiple times
+ * Cached per-request via React.cache() - safe to call multiple times
  * in the same request without redundant work.
  */
 export const verifySession = cache(async (): Promise<AuthSession | null> => {

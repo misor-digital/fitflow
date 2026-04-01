@@ -1,5 +1,5 @@
 -- Migration: Add webhook tracking columns to email_send_log
--- Part of Phase E7 — Admin Email Dashboard & Webhooks
+-- Part of Phase E7 - Admin Email Dashboard & Webhooks
 
 -- Add new status values for webhook events
 ALTER TYPE email_log_status ADD VALUE IF NOT EXISTS 'spam';

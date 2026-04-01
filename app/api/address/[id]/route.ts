@@ -20,7 +20,7 @@ const RATE_LIMIT_WINDOW = 60;
 type RouteParams = { params: Promise<{ id: string }> };
 
 // ============================================================================
-// GET /api/address/:id — Get a specific address
+// GET /api/address/:id - Get a specific address
 // ============================================================================
 
 export async function GET(
@@ -56,7 +56,7 @@ export async function GET(
 }
 
 // ============================================================================
-// PUT /api/address/:id — Update an address
+// PUT /api/address/:id - Update an address
 // ============================================================================
 
 export async function PUT(
@@ -88,7 +88,7 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
 
-    // Sanitize — trim all string fields
+    // Sanitize - trim all string fields
     const sanitized = sanitizeAddressBody(body);
 
     // Server-side length validation
@@ -100,7 +100,7 @@ export async function PUT(
       );
     }
 
-    // Phone format validation (optional for address, required for speedy — enforced below)
+    // Phone format validation (optional for address, required for speedy - enforced below)
     if (sanitized.phone && !isValidPhone(sanitized.phone)) {
       return NextResponse.json(
         {
@@ -120,7 +120,7 @@ export async function PUT(
 
     const deliveryMethod = sanitized.deliveryMethod ?? 'address';
 
-    // Domain validation — conditional on delivery method
+    // Domain validation - conditional on delivery method
     if (deliveryMethod === 'speedy_office') {
       const officeSelection: SpeedyOfficeSelection | null =
         sanitized.speedyOfficeId && sanitized.speedyOfficeName
@@ -177,7 +177,7 @@ export async function PUT(
       }
     }
 
-    // Build update payload — conditional on delivery method
+    // Build update payload - conditional on delivery method
     // When switching method, explicitly null out fields that no longer apply
     const updateData: AddressUpdate =
       deliveryMethod === 'speedy_office'
@@ -237,7 +237,7 @@ export async function PUT(
 }
 
 // ============================================================================
-// DELETE /api/address/:id — Delete an address
+// DELETE /api/address/:id - Delete an address
 // ============================================================================
 
 export async function DELETE(
@@ -268,7 +268,7 @@ export async function DELETE(
 
     const { id } = await params;
 
-    // Ownership check — 404 for not-found AND not-owned
+    // Ownership check - 404 for not-found AND not-owned
     const address = await getAddressById(id, session.userId);
     if (!address) {
       return NextResponse.json(
@@ -289,7 +289,7 @@ export async function DELETE(
 }
 
 // ============================================================================
-// PATCH /api/address/:id — Set as default address
+// PATCH /api/address/:id - Set as default address
 // ============================================================================
 
 export async function PATCH(
@@ -324,12 +324,12 @@ export async function PATCH(
     const body = await request.json();
     if (body.isDefault !== true) {
       return NextResponse.json(
-        { error: 'Невалидна заявка — очаква се { isDefault: true }' },
+        { error: 'Невалидна заявка - очаква се { isDefault: true }' },
         { status: 400 },
       );
     }
 
-    // Ownership check — 404 for not-found AND not-owned
+    // Ownership check - 404 for not-found AND not-owned
     const address = await getAddressById(id, session.userId);
     if (!address) {
       return NextResponse.json(
@@ -350,5 +350,5 @@ export async function PATCH(
 }
 
 // ============================================================================
-// Helpers — sanitizeAddressBody imported from ../route
+// Helpers - sanitizeAddressBody imported from ../route
 // ============================================================================

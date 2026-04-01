@@ -200,7 +200,7 @@ export function SubscriptionDetailView({
     if (addr.delivery_method === 'speedy_office') {
       const name = addr.speedy_office_name ?? 'Speedy офис';
       return addr.speedy_office_address
-        ? `📦 ${name} — ${addr.speedy_office_address}`
+        ? `📦 ${name} - ${addr.speedy_office_address}`
         : `📦 ${name}`;
     }
     const parts = [addr.street_address, addr.city, addr.postal_code].filter(Boolean);
@@ -251,7 +251,7 @@ export function SubscriptionDetailView({
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold text-[var(--color-brand-navy)]">
-              {boxTypeName} — {FREQUENCY_LABELS[subscription.frequency] ?? subscription.frequency}
+              {boxTypeName} - {FREQUENCY_LABELS[subscription.frequency] ?? subscription.frequency}
             </h1>
             <p className="text-sm text-gray-500 mt-1">ID: {subscription.id}</p>
           </div>

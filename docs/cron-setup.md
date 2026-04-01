@@ -1,4 +1,4 @@
-# Cron Job Setup — Automated Order Generation
+# Cron Job Setup - Automated Order Generation
 
 ## Overview
 
@@ -31,7 +31,7 @@ The cron endpoint: `GET /api/cron/generate-orders`
      ```
    - Scope: Production (and Preview if testing)
 
-2. **Deploy** — the `vercel.json` file in the project root configures the cron:
+2. **Deploy** - the `vercel.json` file in the project root configures the cron:
    ```json
    {
      "crons": [
@@ -53,7 +53,7 @@ The cron endpoint: `GET /api/cron/generate-orders`
 - Vercel automatically injects `CRON_SECRET` as `Authorization: Bearer <value>` header
 - **Pro plan**: Cron runs reliably on schedule; 1 cron job allowed on Hobby plan
 - **Hobby plan**: Daily cron is supported (min interval = 1 day)
-- Timeout: max 60 seconds on Hobby, 300 on Pro — should be sufficient
+- Timeout: max 60 seconds on Hobby, 300 on Pro - should be sufficient
 - Logs visible in Vercel dashboard → Logs tab (filter by `/api/cron/`)
 
 ## Option B: GitHub Actions (Fallback/Alternative)
@@ -88,8 +88,8 @@ The cron endpoint: `GET /api/cron/generate-orders`
 - Filter by path: `/api/cron/generate-orders`
 - Look for `[CRON]` prefix in log messages
 - Key log entries:
-  - `[CRON] Order generation completed: {...}` — success
-  - `[CRON] Order generation failed: ...` — failure
+  - `[CRON] Order generation completed: {...}` - success
+  - `[CRON] Order generation failed: ...` - failure
 
 ### Admin Dashboard
 
@@ -104,9 +104,9 @@ Three types of email notifications (requires Brevo template IDs configured):
 
 | Notification | Template ID Env Var | Brevo Subject |
 |---|---|---|
-| **Success** | `BREVO_CRON_SUCCESS_TEMPLATE_ID` | `[FitFlow] Генериране на поръчки — успешно` |
-| **Partial errors** | `BREVO_CRON_ERRORS_TEMPLATE_ID` | `[FitFlow] ⚠ Генериране на поръчки — частични грешки` |
-| **Complete failure** | `BREVO_CRON_FAILURE_TEMPLATE_ID` | `[FitFlow] ❌ Генериране на поръчки — неуспешно` |
+| **Success** | `BREVO_CRON_SUCCESS_TEMPLATE_ID` | `[FitFlow] Генериране на поръчки - успешно` |
+| **Partial errors** | `BREVO_CRON_ERRORS_TEMPLATE_ID` | `[FitFlow] ⚠ Генериране на поръчки - частични грешки` |
+| **Complete failure** | `BREVO_CRON_FAILURE_TEMPLATE_ID` | `[FitFlow] ❌ Генериране на поръчки - неуспешно` |
 
 Recipient: `ADMIN_EMAIL` env var (default: `admin@fitflow.bg`)
 
@@ -177,4 +177,4 @@ These keys are auto-created on first cron run:
 | Timeout | Too many subscriptions to process | Increase `maxDuration` or batch in smaller groups |
 | Email not sent | Template ID env var not set or Brevo config issue | Check env vars and Brevo API key |
 | GitHub Actions delayed | Normal GH Actions schedule variance | Use Vercel Cron as primary; GH Actions as backup |
-| Duplicate orders | Job ran twice for same cycle | Safe — `generateOrdersForCycle` skips subs that already have an order for the cycle |
+| Duplicate orders | Job ran twice for same cycle | Safe - `generateOrdersForCycle` skips subs that already have an order for the cycle |

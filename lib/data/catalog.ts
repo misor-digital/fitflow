@@ -3,8 +3,8 @@
  * Server-only functions for fetching box types, options, and site config from Supabase
  *
  * Caching strategy:
- *   • `unstable_cache` — cross-request data cache (TTL 300 s, tag "catalog").
- *   • `React.cache`   — per-request deduplication on top of the data cache.
+ *   • `unstable_cache` - cross-request data cache (TTL 300 s, tag "catalog").
+ *   • `React.cache`   - per-request deduplication on top of the data cache.
  *
  * Admin mutations call `revalidateDataTag(TAG_CATALOG)` to bust the cache
  * immediately after writes.
@@ -53,7 +53,7 @@ export const getBoxTypes = cache(
 
 /**
  * Get a single box type by ID.
- * Reads from the cached box types list — no extra DB call.
+ * Reads from the cached box types list - no extra DB call.
  */
 export const getBoxTypeById = cache(async (id: string): Promise<BoxTypeRow | null> => {
   const types = await getBoxTypes();
@@ -117,7 +117,7 @@ export const getAllOptions = cache(
 
 /**
  * Get all enabled options for a specific option set.
- * Reads from the cached full option list — no extra DB call.
+ * Reads from the cached full option list - no extra DB call.
  */
 export const getOptions = cache(async (optionSetId: OptionSetId): Promise<OptionRow[]> => {
   const all = await getAllOptions();
@@ -190,7 +190,7 @@ export const getSiteConfig = cache(
 
 /**
  * Upsert a site config value (insert or update on conflict).
- * Uses service-role client — bypasses RLS.
+ * Uses service-role client - bypasses RLS.
  */
 export async function upsertSiteConfig(key: string, value: string): Promise<void> {
   const { error } = await supabaseAdmin
@@ -227,13 +227,13 @@ export const getEurToBgnRate = cache(
         .single();
 
       if (error || !data) {
-        console.warn('EUR_TO_BGN_RATE not found in site_config — using default 1.9558');
+        console.warn('EUR_TO_BGN_RATE not found in site_config - using default 1.9558');
         return DEFAULT_EUR_TO_BGN_RATE;
       }
 
       const rate = parseFloat((data as { value: string }).value);
       if (isNaN(rate) || rate <= 0) {
-        console.warn(`Invalid EUR_TO_BGN_RATE value "${(data as { value: string }).value}" — using default 1.9558`);
+        console.warn(`Invalid EUR_TO_BGN_RATE value "${(data as { value: string }).value}" - using default 1.9558`);
         return DEFAULT_EUR_TO_BGN_RATE;
       }
 
@@ -269,7 +269,7 @@ const _getAllBoxPricesInner = unstable_cache(
 
     if (error) {
       console.error('Error calling calculate_box_prices:', error);
-      // Return empty array instead of throwing — allows ISR pages to
+      // Return empty array instead of throwing - allows ISR pages to
       // prerender gracefully when Supabase is unreachable (e.g. CI).
       return [];
     }

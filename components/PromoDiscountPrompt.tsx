@@ -6,7 +6,7 @@ interface PromoDiscountPromptProps {
 
 /**
  * Animated discount prompt that appears below the CTA button.
- * Uses pure CSS animation (pulse-gentle) — no JS setInterval, no re-renders.
+ * Uses pure CSS animation (pulse-gentle) - no JS setInterval, no re-renders.
  */
 export default function PromoDiscountPrompt({ discountPercent }: PromoDiscountPromptProps) {
   if (discountPercent <= 0) {

@@ -4,7 +4,7 @@
  * Single source of truth for valid order status transitions.
  * Used by admin APIs, customer APIs, cron jobs, and UI components.
  *
- * NOTE: No 'server-only' import — this module is shared between
+ * NOTE: No 'server-only' import - this module is shared between
  * server and client code.
  */
 

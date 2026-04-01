@@ -15,6 +15,11 @@ import {
   generateSubscriptionCancelledEmail,
   generateDeliveryUpcomingEmail,
 } from '@/lib/email/subscription-templates';
+import {
+  generateSubscriptionConversionEmail,
+  SUBSCRIPTION_CONVERSION_SUBJECT,
+  type SubscriptionConversionEmailData,
+} from '@/lib/email/order-subscription-conversion-email';
 import type { SubscriptionRow } from '@/lib/supabase/types';
 
 /**
@@ -39,7 +44,7 @@ export async function sendSubscriptionCreatedEmail(
 
     await sendTransactionalEmail({
       to: { email },
-      subject: 'FitFlow — Абонаментът ви е активиран!',
+      subject: 'FitFlow - Абонаментът ти е активиран!',
       htmlContent,
       tags: ['subscription', 'created'],
       category: 'sub-created',
@@ -69,7 +74,7 @@ export async function sendSubscriptionPausedEmail(
 
     await sendTransactionalEmail({
       to: { email },
-      subject: 'FitFlow — Абонаментът ви е на пауза',
+      subject: 'FitFlow - Абонаментът ти е на пауза',
       htmlContent,
       tags: ['subscription', 'paused'],
       category: 'sub-paused',
@@ -101,7 +106,7 @@ export async function sendSubscriptionResumedEmail(
 
     await sendTransactionalEmail({
       to: { email },
-      subject: 'FitFlow — Абонаментът ви е възобновен',
+      subject: 'FitFlow - Абонаментът ти е възобновен',
       htmlContent,
       tags: ['subscription', 'resumed'],
       category: 'sub-resumed',
@@ -131,7 +136,7 @@ export async function sendSubscriptionCancelledEmail(
 
     await sendTransactionalEmail({
       to: { email },
-      subject: 'FitFlow — Абонаментът ви е отменен',
+      subject: 'FitFlow - Абонаментът ти е отменен',
       htmlContent,
       tags: ['subscription', 'cancelled'],
       category: 'sub-cancelled',
@@ -164,7 +169,7 @@ export async function sendDeliveryUpcomingEmail(
 
     await sendTransactionalEmail({
       to: { email },
-      subject: 'FitFlow — Доставката ви наближава!',
+      subject: 'FitFlow - Доставката ти наближава!',
       htmlContent,
       tags: ['subscription', 'delivery-upcoming'],
       category: 'delivery-upcoming',
@@ -173,5 +178,28 @@ export async function sendDeliveryUpcomingEmail(
     });
   } catch (err) {
     console.error('[EMAIL] delivery-upcoming failed:', err);
+  }
+}
+
+/**
+ * Send combined subscription-conversion + optional account-setup email.
+ */
+export async function sendSubscriptionConversionEmail(
+  data: SubscriptionConversionEmailData & { subscriptionId: string },
+): Promise<void> {
+  try {
+    const htmlContent = generateSubscriptionConversionEmail(data);
+
+    await sendTransactionalEmail({
+      to: { email: data.email, name: data.fullName },
+      subject: SUBSCRIPTION_CONVERSION_SUBJECT,
+      htmlContent,
+      tags: ['subscription', 'order-conversion'],
+      category: 'subscription-conversion',
+      relatedEntityType: 'subscription',
+      relatedEntityId: data.subscriptionId,
+    });
+  } catch (err) {
+    console.error('[EMAIL] subscription-conversion failed:', err);
   }
 }

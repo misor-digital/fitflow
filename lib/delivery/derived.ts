@@ -2,7 +2,7 @@
  * Delivery Cycle Derived State
  *
  * Pure functions for delivery date calculation, cycle state, and formatting.
- * No database or API calls — all inputs are passed as arguments.
+ * No database or API calls - all inputs are passed as arguments.
  */
 
 import type {

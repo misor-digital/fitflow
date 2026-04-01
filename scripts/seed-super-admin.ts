@@ -81,7 +81,7 @@ function validatePassword(password: string): PasswordValidation {
 // Main
 // ---------------------------------------------------------------------------
 async function main(): Promise<void> {
-  console.log('🔧 FitFlow — Seed Super Admin\n');
+  console.log('🔧 FitFlow - Seed Super Admin\n');
 
   // 1. Validate environment ------------------------------------------------
   validateEnv();

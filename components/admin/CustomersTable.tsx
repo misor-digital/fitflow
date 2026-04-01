@@ -84,7 +84,7 @@ export function CustomersTable({
                   key={customer.id}
                   className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
                 >
-                  {/* Name — masked with tooltip */}
+                  {/* Name - masked with tooltip */}
                   <td className="px-4 py-3">
                     <Link
                       href={`/admin/customers/${customer.id}`}
@@ -99,7 +99,7 @@ export function CustomersTable({
                     </Link>
                   </td>
 
-                  {/* Email — masked with tooltip */}
+                  {/* Email - masked with tooltip */}
                   <td className="px-4 py-3">
                     <span className="relative group cursor-default">
                       <span className="text-gray-600">
@@ -111,7 +111,7 @@ export function CustomersTable({
                     </span>
                   </td>
 
-                  {/* Phone — masked with tooltip */}
+                  {/* Phone - masked with tooltip */}
                   <td className="px-4 py-3">
                     <span className="relative group cursor-default">
                       <span className="text-gray-600">

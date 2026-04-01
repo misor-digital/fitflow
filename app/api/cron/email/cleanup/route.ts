@@ -36,7 +36,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   let usageReset = false;
 
   try {
-    // 2. Monthly usage reset — only on the 1st of the month
+    // 2. Monthly usage reset - only on the 1st of the month
     const now = new Date();
     if (now.getUTCDate() === 1) {
       const currentMonth = now.toISOString().slice(0, 7) + '-01';
@@ -63,7 +63,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       }
     }
 
-    // 3. Log cleanup — delete email_send_log entries older than 90 days
+    // 3. Log cleanup - delete email_send_log entries older than 90 days
     const logCutoff = new Date(
       Date.now() - LOG_RETENTION_DAYS * 24 * 60 * 60 * 1000,
     ).toISOString();
@@ -81,7 +81,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       console.log(`[email-cleanup] Deleted ${logsDeleted} old log entries (> ${LOG_RETENTION_DAYS} days)`);
     }
 
-    // 4. Draft cleanup — delete empty drafts older than 30 days
+    // 4. Draft cleanup - delete empty drafts older than 30 days
     const draftCutoff = new Date(
       Date.now() - DRAFT_CLEANUP_DAYS * 24 * 60 * 60 * 1000,
     ).toISOString();
@@ -101,7 +101,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       console.log(`[email-cleanup] Deleted ${draftsDeleted} empty draft campaigns (> ${DRAFT_CLEANUP_DAYS} days)`);
     }
 
-    // 5. Expired token cleanup — mark expired preorder conversion tokens
+    // 5. Expired token cleanup - mark expired preorder conversion tokens
     const { data: expiredTokens, error: tokenError } = await supabaseAdmin
       .from('preorders')
       .update({ conversion_status: 'expired' })
@@ -110,7 +110,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       .select('id');
 
     if (tokenError) {
-      // Non-fatal — table may not have conversion columns yet
+      // Non-fatal - table may not have conversion columns yet
       console.warn('[email-cleanup] Token cleanup skipped or failed:', tokenError.message);
     } else {
       tokensExpired = expiredTokens?.length ?? 0;

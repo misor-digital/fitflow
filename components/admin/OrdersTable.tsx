@@ -15,7 +15,7 @@ import OrderPromoAction from './OrderPromoAction';
 // Types
 // ============================================================================
 
-/** Label maps fetched from the `options` table — single source of truth */
+/** Label maps fetched from the `options` table - single source of truth */
 export interface OptionLabelMaps {
   sports: Record<string, string>;
   colors: Record<string, string>;
@@ -97,7 +97,7 @@ function formatShortDelivery(order: OrderRow): { text: string; tooltip: string; 
     const name = addr.speedy_office_name ?? 'Speedy офис';
     return {
       text: name,
-      tooltip: addr.speedy_office_address ? `📦 ${name} — ${addr.speedy_office_address}` : `📦 ${name}`,
+      tooltip: addr.speedy_office_address ? `📦 ${name} - ${addr.speedy_office_address}` : `📦 ${name}`,
       isSpeedy: true,
     };
   }
@@ -306,7 +306,7 @@ export function OrdersTable({
           setStatusHistory(prev => ({ ...prev, [orderId]: data.history }));
         }
       } catch {
-        // Silently fail — history is non-critical
+        // Silently fail - history is non-critical
       } finally {
         setLoadingHistory(null);
       }
@@ -713,7 +713,7 @@ function OrderRowDetail({
     return ids.map(id => labelMap[id] ?? id).join(', ');
   }
 
-  // Personalization fields — values are mapped through DB label maps
+  // Personalization fields - values are mapped through DB label maps
   const personalizationEntries: [string, string | null | undefined][] = [
     ['sports', mapLabels(order.sports, optionLabels.sports)],
     ['sport_other', order.sport_other ?? null],
@@ -852,7 +852,7 @@ function OrderRowDetail({
 
         {order.status === 'shipped' && reminderCounts?.[order.id] && (
           <div className="mt-2 p-3 bg-amber-50 rounded-lg text-sm">
-            <p className="font-medium text-amber-800">Доставка — напомняния</p>
+            <p className="font-medium text-amber-800">Доставка - напомняния</p>
             <p className="text-amber-700 mt-1">
               Изпратени напомняния: {reminderCounts[order.id].count} от 3
             </p>

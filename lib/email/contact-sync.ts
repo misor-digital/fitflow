@@ -3,7 +3,7 @@
  *
  * Centralizes all Brevo contact synchronization logic.
  * Called from API routes and services when user data changes.
- * Never throws — logs errors and returns result.
+ * Never throws - logs errors and returns result.
  *
  * Fire-and-forget pattern: sync calls must never block the primary operation.
  * If Brevo is down, the primary action succeeds; full sync recovers any drift.
@@ -52,6 +52,11 @@ export interface SyncPreorderData {
 
 export interface SyncPreorderConvertedData {
   email: string;
+}
+
+export interface SyncOrderConvertedToSubscriptionData {
+  email: string;
+  orderNumber: string;
 }
 
 export interface SyncResult {
@@ -234,6 +239,44 @@ export async function syncPreorderConverted(data: SyncPreorderConvertedData): Pr
     return { success: result.success, error: result.error };
   } catch (error) {
     console.error('[ContactSync] Unexpected error syncing preorder conversion:', error);
+    return { success: false, error: String(error) };
+  }
+}
+
+/**
+ * Sync an order-to-subscription conversion to Brevo.
+ * Updates IS_SUBSCRIBER, LAST_CONVERSION_DATE, CONVERSION_SOURCE attributes.
+ * Adds to `subscribers` list.
+ */
+export async function syncOrderConvertedToSubscription(
+  data: SyncOrderConvertedToSubscriptionData,
+): Promise<SyncResult> {
+  try {
+    const result = await syncCustomerContact(
+      data.email,
+      '', // Don't overwrite name
+      undefined,
+      {
+        IS_SUBSCRIBER: 'true',
+        LAST_CONVERSION_DATE: new Date().toISOString().split('T')[0],
+        CONVERSION_SOURCE: 'order-to-subscription',
+      } as Record<string, string>,
+    );
+
+    if (!result.success) {
+      console.error('[ContactSync] Failed to sync order-to-subscription conversion:', result.error);
+    }
+
+    // Add to subscribers list
+    if (EMAIL_CONFIG.lists.subscribers) {
+      await addToBrevoList(data.email, EMAIL_CONFIG.lists.subscribers).catch((err) =>
+        console.error('[ContactSync] Failed to add converted order to subscribers list:', err),
+      );
+    }
+
+    return { success: result.success, error: result.error };
+  } catch (error) {
+    console.error('[ContactSync] Unexpected error syncing order-to-subscription conversion:', error);
     return { success: false, error: String(error) };
   }
 }

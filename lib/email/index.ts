@@ -1,5 +1,5 @@
 /**
- * Email Module — Barrel Exports
+ * Email Module - Barrel Exports
  *
  * Core email service + Brevo API wrappers + usage tracking
  */

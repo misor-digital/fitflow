@@ -21,12 +21,12 @@ export async function PATCH(
       return NextResponse.json({ error: 'Поръчката не е намерена.' }, { status: 404 });
     }
 
-    // 3. Verify ownership — customer can only confirm their own orders
+    // 3. Verify ownership - customer can only confirm their own orders
     if (order.user_id !== session.userId) {
       return NextResponse.json({ error: 'Нямате достъп до тази поръчка.' }, { status: 403 });
     }
 
-    // 4. Validate transition — must be shipped → delivered
+    // 4. Validate transition - must be shipped → delivered
     if (order.status !== 'shipped') {
       // Idempotency: if already delivered, return success
       if (order.status === 'delivered') {

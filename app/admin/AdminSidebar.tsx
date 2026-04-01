@@ -35,7 +35,7 @@ const NAV_ITEMS: Array<{
     allowedRoles: ['super_admin', 'admin', 'marketing'] },
   { href: '/admin/campaigns', label: 'Кампании', icon: '📧',
     allowedRoles: ['super_admin', 'admin', 'content', 'marketing'] },
-  { href: '/admin/preorder-campaign', label: 'Кампания за предварителни поръчки', icon: '📬',
+  { href: '/admin/order-subscription-campaign', label: 'Кампания за конвертиране в абонаменти', icon: '🔀',
     allowedRoles: ['super_admin', 'admin', 'marketing'] },
   { href: '/admin/emails/unsubscribes', label: 'Отписани', icon: '🚫',
     allowedRoles: ['super_admin', 'admin', 'marketing'] },

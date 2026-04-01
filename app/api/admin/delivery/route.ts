@@ -5,7 +5,7 @@ import { createDeliveryCycle, getDeliveryCycles } from '@/lib/data';
 import { revalidateDataTag, TAG_DELIVERY } from '@/lib/data/cache-tags';
 
 // ============================================================================
-// POST /api/admin/delivery — Create delivery cycle
+// POST /api/admin/delivery - Create delivery cycle
 // ============================================================================
 
 export async function POST(request: NextRequest): Promise<NextResponse> {

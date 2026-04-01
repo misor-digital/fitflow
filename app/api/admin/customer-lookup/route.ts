@@ -1,5 +1,5 @@
 /**
- * Admin API — Customer Lookup
+ * Admin API - Customer Lookup
  *
  * GET /api/admin/customer-lookup?email=...
  *

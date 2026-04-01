@@ -1,9 +1,9 @@
 -- ============================================================================
--- FitFlow — Complete Database Schema (as of 2026-02-24, Phase E1)
+-- FitFlow - Complete Database Schema (as of 2026-02-24, Phase E1)
 -- ============================================================================
 --
 -- This file represents the complete database schema after all migrations.
--- DO NOT run directly — use migrations for all schema changes.
+-- DO NOT run directly - use migrations for all schema changes.
 -- This is a documentation/reference file only.
 --
 -- Migrations are the source of truth for DB changes.
@@ -107,7 +107,7 @@ CREATE TYPE email_log_status AS ENUM (
   'bounced',
   'failed'
 );
-COMMENT ON TYPE email_log_status IS 'Status for all email sends — both transactional and campaign';
+COMMENT ON TYPE email_log_status IS 'Status for all email sends - both transactional and campaign';
 
 CREATE TYPE target_list_type AS ENUM (
   'preorder-holders',
@@ -187,7 +187,7 @@ CREATE TABLE preorders (
   updated_at TIMESTAMPTZ DEFAULT NOW() NOT NULL
 );
 
-COMMENT ON TABLE preorders IS 'Stores FitFlow subscription box preorder information (legacy — new flow uses orders table)';
+COMMENT ON TABLE preorders IS 'Stores FitFlow subscription box preorder information (legacy - new flow uses orders table)';
 COMMENT ON COLUMN preorders.box_type IS 'Type of subscription box selected';
 COMMENT ON COLUMN preorders.wants_personalization IS 'Whether user opted for personalized box';
 COMMENT ON COLUMN preorders.sports IS 'Array of sports/activities selected for personalization';
@@ -197,7 +197,7 @@ COMMENT ON COLUMN preorders.promo_code IS 'Applied promo code (e.g., FITFLOW10, 
 COMMENT ON COLUMN preorders.discount_percent IS 'Discount percentage applied (e.g., 10, 25)';
 COMMENT ON COLUMN preorders.original_price_eur IS 'Original price in EUR before discount';
 COMMENT ON COLUMN preorders.final_price_eur IS 'Final price in EUR after discount';
-COMMENT ON COLUMN preorders.user_id IS 'FK to auth.users — NULL for anonymous preorders, set when user links their preorder';
+COMMENT ON COLUMN preorders.user_id IS 'FK to auth.users - NULL for anonymous preorders, set when user links their preorder';
 COMMENT ON COLUMN preorders.conversion_token IS 'UUID token for the preorder-to-order conversion link';
 COMMENT ON COLUMN preorders.conversion_token_expires_at IS 'Expiry timestamp for the conversion token (default: 90 days from creation)';
 COMMENT ON COLUMN preorders.conversion_status IS 'Tracks whether this preorder has been converted to a full order';
@@ -467,7 +467,7 @@ CREATE TABLE user_profiles (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-COMMENT ON TABLE user_profiles IS 'Extended profile for auth.users — stores name, type, role, and subscriber flag';
+COMMENT ON TABLE user_profiles IS 'Extended profile for auth.users - stores name, type, role, and subscriber flag';
 COMMENT ON COLUMN user_profiles.user_type IS 'customer or staff';
 COMMENT ON COLUMN user_profiles.staff_role IS 'Staff-only role. NULL for customers. Enforced by CHECK constraint.';
 COMMENT ON COLUMN user_profiles.is_subscriber IS 'Whether the user is subscribed to marketing emails';
@@ -556,7 +556,7 @@ CREATE TABLE delivery_cycles (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-COMMENT ON TABLE delivery_cycles IS 'Monthly delivery cycles — each row represents one box shipment date';
+COMMENT ON TABLE delivery_cycles IS 'Monthly delivery cycles - each row represents one box shipment date';
 COMMENT ON COLUMN delivery_cycles.delivery_date IS 'The date this cycle ships (e.g. 2026-03-08)';
 COMMENT ON COLUMN delivery_cycles.status IS 'Lifecycle state: upcoming, delivered, archived';
 COMMENT ON COLUMN delivery_cycles.title IS 'Display name (e.g. "Март 2026 кутия")';
@@ -602,8 +602,8 @@ CREATE TABLE delivery_cycle_items (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-COMMENT ON TABLE delivery_cycle_items IS 'Contents of each delivery cycle box — revealed publicly after delivery';
-COMMENT ON COLUMN delivery_cycle_items.delivery_cycle_id IS 'FK to delivery_cycles — cascade deletes items when cycle is removed';
+COMMENT ON TABLE delivery_cycle_items IS 'Contents of each delivery cycle box - revealed publicly after delivery';
+COMMENT ON COLUMN delivery_cycle_items.delivery_cycle_id IS 'FK to delivery_cycles - cascade deletes items when cycle is removed';
 COMMENT ON COLUMN delivery_cycle_items.name IS 'Item display name (e.g. "Whey Protein 500g")';
 COMMENT ON COLUMN delivery_cycle_items.description IS 'Item description';
 COMMENT ON COLUMN delivery_cycle_items.image_url IS 'Path in Supabase Storage (e.g. box-contents/march-2026/protein.jpg)';
@@ -721,6 +721,12 @@ CREATE TABLE orders (
   order_type TEXT NOT NULL DEFAULT 'direct',
   subscription_id UUID REFERENCES subscriptions(id) ON DELETE SET NULL,
   converted_from_preorder_id UUID UNIQUE REFERENCES preorders(id) ON DELETE SET NULL,
+  subscription_conversion_token UUID UNIQUE,                    -- one-time token for order-to-subscription conversion emails
+  subscription_conversion_token_expires_at TIMESTAMPTZ,         -- token expiry (default 90 days)
+  subscription_conversion_status TEXT DEFAULT NULL               -- NULL | pending | converted | expired
+    CHECK (subscription_conversion_status IN ('pending', 'converted', 'expired')),
+  converted_to_subscription_id UUID UNIQUE                      -- FK to subscription created from this order
+    REFERENCES subscriptions(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
@@ -752,14 +758,18 @@ CREATE TABLE orders (
 );
 
 COMMENT ON TABLE orders IS 'Customer orders for FitFlow subscription boxes';
-COMMENT ON COLUMN orders.shipping_address IS 'Frozen address snapshot at order time — immutable source of truth';
-COMMENT ON COLUMN orders.address_id IS 'Optional back-reference to saved address — SET NULL on delete';
+COMMENT ON COLUMN orders.shipping_address IS 'Frozen address snapshot at order time - immutable source of truth';
+COMMENT ON COLUMN orders.address_id IS 'Optional back-reference to saved address - SET NULL on delete';
 COMMENT ON COLUMN orders.delivery_method IS 'Delivery method: address (to door) or speedy_office (Speedy office pickup)';
-COMMENT ON COLUMN orders.customer_email IS 'Customer email frozen at order time — used for guest tracking';
-COMMENT ON COLUMN orders.delivery_cycle_id IS 'FK to delivery cycle — set for subscription-generated, mystery, and revealed orders';
+COMMENT ON COLUMN orders.customer_email IS 'Customer email frozen at order time - used for guest tracking';
+COMMENT ON COLUMN orders.delivery_cycle_id IS 'FK to delivery cycle - set for subscription-generated, mystery, and revealed orders';
 COMMENT ON COLUMN orders.order_type IS 'Order origin: subscription (auto-generated), onetime-mystery (ships with cycle batch), onetime-revealed (ships ASAP, past cycle contents), direct (legacy/standard)';
-COMMENT ON COLUMN orders.subscription_id IS 'FK to parent subscription — set for auto-generated subscription cycle orders';
+COMMENT ON COLUMN orders.subscription_id IS 'FK to parent subscription - set for auto-generated subscription cycle orders';
 COMMENT ON COLUMN orders.converted_from_preorder_id IS 'Links to the preorder this order was converted from (if any)';
+COMMENT ON COLUMN orders.subscription_conversion_token IS 'One-time UUID token for order-to-subscription conversion emails. Cleared after conversion.';
+COMMENT ON COLUMN orders.subscription_conversion_token_expires_at IS 'Token expiry (default 90 days from generation).';
+COMMENT ON COLUMN orders.subscription_conversion_status IS 'NULL = not targeted, pending = email sent, converted = subscription created, expired = token expired.';
+COMMENT ON COLUMN orders.converted_to_subscription_id IS 'FK to the subscription created from this order. UNIQUE enforces one-to-one.';
 
 CREATE INDEX idx_orders_user_id ON orders(user_id);
 CREATE INDEX idx_orders_order_number ON orders(order_number);
@@ -771,6 +781,7 @@ CREATE INDEX idx_orders_delivery_cycle ON orders(delivery_cycle_id) WHERE delive
 CREATE INDEX idx_orders_order_type ON orders(order_type);
 CREATE INDEX idx_orders_delivery_method ON orders(delivery_method);
 CREATE INDEX idx_orders_subscription ON orders(subscription_id) WHERE subscription_id IS NOT NULL;
+CREATE INDEX idx_orders_sub_conversion_token ON orders(subscription_conversion_token) WHERE subscription_conversion_token IS NOT NULL;
 
 CREATE TRIGGER trigger_orders_updated_at
   BEFORE UPDATE ON orders FOR EACH ROW
@@ -813,7 +824,7 @@ GRANT SELECT ON order_status_history TO authenticated;
 GRANT ALL ON order_status_history TO service_role;
 
 -- NOTE: Auto-insert trigger for status changes was removed in migration
--- 20260224120006_remove_auto_status_trigger.sql — status history is now
+-- 20260224120006_remove_auto_status_trigger.sql - status history is now
 -- managed explicitly by the application DAL to support changed_by and notes.
 
 
@@ -826,7 +837,7 @@ CREATE TABLE subscriptions (
   status subscription_status NOT NULL DEFAULT 'active',
   frequency TEXT NOT NULL DEFAULT 'monthly',
 
-  -- Personalization preferences (stored independently — updates affect future orders only)
+  -- Personalization preferences (stored independently - updates affect future orders only)
   wants_personalization BOOLEAN NOT NULL DEFAULT false,
   sports TEXT[],
   sport_other TEXT,
@@ -867,8 +878,8 @@ CREATE TABLE subscriptions (
   CONSTRAINT valid_sub_box_type CHECK (box_type IN ('monthly-standard', 'monthly-premium'))
 );
 
-COMMENT ON TABLE subscriptions IS 'Active and historical subscriptions — one row per subscriber per box type';
-COMMENT ON COLUMN subscriptions.user_id IS 'FK to auth.users — subscriptions require authentication';
+COMMENT ON TABLE subscriptions IS 'Active and historical subscriptions - one row per subscriber per box type';
+COMMENT ON COLUMN subscriptions.user_id IS 'FK to auth.users - subscriptions require authentication';
 COMMENT ON COLUMN subscriptions.box_type IS 'monthly-standard or monthly-premium';
 COMMENT ON COLUMN subscriptions.status IS 'Lifecycle state: active, paused, cancelled, expired';
 COMMENT ON COLUMN subscriptions.frequency IS 'Delivery frequency: monthly (every cycle) or seasonal (every 3rd cycle)';
@@ -935,10 +946,10 @@ CREATE TABLE subscription_history (
 );
 
 COMMENT ON TABLE subscription_history IS 'Audit trail for subscription lifecycle events';
-COMMENT ON COLUMN subscription_history.subscription_id IS 'FK to parent subscription — cascade deletes history when subscription is removed';
+COMMENT ON COLUMN subscription_history.subscription_id IS 'FK to parent subscription - cascade deletes history when subscription is removed';
 COMMENT ON COLUMN subscription_history.action IS 'Event type: created, paused, resumed, cancelled, expired, preferences_updated, address_changed, frequency_changed, order_generated';
 COMMENT ON COLUMN subscription_history.details IS 'JSONB payload with before/after snapshots or contextual data';
-COMMENT ON COLUMN subscription_history.performed_by IS 'FK to auth.users — the user or admin who triggered the action';
+COMMENT ON COLUMN subscription_history.performed_by IS 'FK to auth.users - the user or admin who triggered the action';
 
 CREATE INDEX idx_sub_history_sub ON subscription_history(subscription_id, created_at DESC);
 
@@ -1003,8 +1014,8 @@ CREATE TABLE email_campaigns (
 );
 
 COMMENT ON TABLE email_campaigns IS 'Email campaign definitions with targeting, scheduling, and progress tracking';
-COMMENT ON COLUMN email_campaigns.template_id IS 'Brevo template ID — used for Brevo-managed campaign emails';
-COMMENT ON COLUMN email_campaigns.html_content IS 'Inline HTML content — used for code-managed campaign emails';
+COMMENT ON COLUMN email_campaigns.template_id IS 'Brevo template ID - used for Brevo-managed campaign emails';
+COMMENT ON COLUMN email_campaigns.html_content IS 'Inline HTML content - used for code-managed campaign emails';
 COMMENT ON COLUMN email_campaigns.target_filter IS 'JSONB filter criteria applied to the target audience (e.g. conversion_status, box_type)';
 COMMENT ON COLUMN email_campaigns.params IS 'Global template variables passed to every recipient';
 COMMENT ON COLUMN email_campaigns.brevo_campaign_id IS 'Brevo platform campaign ID when using their Campaign API for sending';
@@ -1069,6 +1080,7 @@ CREATE TABLE email_campaign_recipients (
   email           TEXT NOT NULL,
   full_name       TEXT,
   preorder_id     UUID REFERENCES preorders(id) ON DELETE SET NULL,
+  order_id        UUID REFERENCES orders(id) ON DELETE CASCADE,
   variant_id      UUID REFERENCES email_ab_variants(id) ON DELETE SET NULL,
   params          JSONB DEFAULT '{}'::jsonb,
   status          email_recipient_status NOT NULL DEFAULT 'pending',
@@ -1083,7 +1095,7 @@ CREATE TABLE email_campaign_recipients (
 
 COMMENT ON TABLE email_campaign_recipients IS 'Individual recipients for each campaign with per-recipient params and delivery status';
 COMMENT ON COLUMN email_campaign_recipients.params IS 'Per-recipient template variables (e.g. conversion URL with token)';
-COMMENT ON COLUMN email_campaign_recipients.brevo_message_id IS 'Brevo message ID — used to correlate webhook events';
+COMMENT ON COLUMN email_campaign_recipients.brevo_message_id IS 'Brevo message ID - used to correlate webhook events';
 
 CREATE INDEX idx_ecr_campaign_pending ON email_campaign_recipients(campaign_id)
   WHERE status = 'pending';
@@ -1127,7 +1139,7 @@ CREATE TABLE email_campaign_history (
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-COMMENT ON TABLE email_campaign_history IS 'Audit trail for email campaign lifecycle — every state change is logged with the staff member who performed it';
+COMMENT ON TABLE email_campaign_history IS 'Audit trail for email campaign lifecycle - every state change is logged with the staff member who performed it';
 COMMENT ON COLUMN email_campaign_history.action IS 'Campaign action: created, updated, scheduled, started, paused, resumed, cancelled, completed, failed';
 COMMENT ON COLUMN email_campaign_history.changed_by IS 'Staff member UUID who performed this action';
 COMMENT ON COLUMN email_campaign_history.metadata IS 'Action-specific metadata (e.g. {recipientCount, filter, previousStatus, errorDetail})';
@@ -1179,7 +1191,7 @@ CREATE TABLE email_send_log (
   created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-COMMENT ON TABLE email_send_log IS 'Unified audit log for all email sends (transactional + campaign) — used by admin email dashboard';
+COMMENT ON TABLE email_send_log IS 'Unified audit log for all email sends (transactional + campaign) - used by admin email dashboard';
 COMMENT ON COLUMN email_send_log.email_category IS 'Descriptive category: order-confirmation, sub-created, sub-paused, preorder-conversion, cron-success, etc.';
 COMMENT ON COLUMN email_send_log.related_entity_type IS 'Type of the related business entity (order, subscription, preorder)';
 COMMENT ON COLUMN email_send_log.related_entity_id IS 'UUID of the related business entity';
@@ -1228,7 +1240,7 @@ CREATE TABLE email_monthly_usage (
 
 COMMENT ON TABLE email_monthly_usage IS 'Monthly email send volume tracking against Brevo plan limits';
 COMMENT ON COLUMN email_monthly_usage.month IS 'First day of the month this row tracks (e.g. 2026-03-01)';
-COMMENT ON COLUMN email_monthly_usage.monthly_limit IS 'Email send limit from Brevo plan — Starter: 5000, adjustable on upgrade';
+COMMENT ON COLUMN email_monthly_usage.monthly_limit IS 'Email send limit from Brevo plan - Starter: 5000, adjustable on upgrade';
 
 ALTER TABLE email_monthly_usage ENABLE ROW LEVEL SECURITY;
 
@@ -1267,7 +1279,7 @@ CREATE TABLE email_ab_variants (
   created_at           TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-COMMENT ON TABLE email_ab_variants IS 'A/B test variants for email campaigns — each variant can override subject, template, or params';
+COMMENT ON TABLE email_ab_variants IS 'A/B test variants for email campaigns - each variant can override subject, template, or params';
 
 ALTER TABLE email_ab_variants ENABLE ROW LEVEL SECURITY;
 
@@ -1290,7 +1302,7 @@ CREATE TABLE email_unsubscribes (
   unsubscribed_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-COMMENT ON TABLE email_unsubscribes IS 'Global unsubscribe list — recipients who opted out of marketing emails';
+COMMENT ON TABLE email_unsubscribes IS 'Global unsubscribe list - recipients who opted out of marketing emails';
 
 CREATE INDEX idx_email_unsubscribes_email ON email_unsubscribes(email);
 
@@ -1569,7 +1581,7 @@ COMMENT ON FUNCTION increment_email_usage IS 'Atomically increment email usage c
 
 
 -- ============================================================================
--- 5. Seed Data (reference only — DO NOT run directly)
+-- 5. Seed Data (reference only - DO NOT run directly)
 -- ============================================================================
 
 -- Box types:
@@ -1581,8 +1593,8 @@ COMMENT ON FUNCTION increment_email_usage IS 'Atomically increment email usage c
 --   ('onetime-premium',          'Еднократна - Премиум',                   39.90, one-time,     premium)
 
 -- Promo codes:
---   FITFLOW10 — 10% discount
---   FITFLOW25 — 25% discount
+--   FITFLOW10 - 10% discount
+--   FITFLOW25 - 25% discount
 
 -- Site config:
 --   EUR_TO_BGN_RATE             = 1.9558
@@ -1595,7 +1607,7 @@ COMMENT ON FUNCTION increment_email_usage IS 'Atomically increment email usage c
 --   REVEALED_BOX_ENABLED        = false
 
 -- Delivery cycles:
---   2026-03-08 — Март 2026 кутия (upcoming, first delivery)
+--   2026-03-08 - Март 2026 кутия (upcoming, first delivery)
 
 -- Options: sports (7), colors (10), flavors (6), dietary (5), sizes (5)
 -- See migration 20251228120002_create_options.sql for full seed data.

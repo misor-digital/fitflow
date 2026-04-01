@@ -5,7 +5,7 @@
  * Checks unsubscribe status before sending campaign emails.
  *
  * Design decisions:
- * - Single global unsubscribe list — covers all campaign types.
+ * - Single global unsubscribe list - covers all campaign types.
  * - Transactional emails (order confirmation, etc.) are NOT affected.
  * - Re-subscribe requires admin action (compliance).
  * - Upsert on insert to handle duplicate unsubscribe events gracefully.
@@ -66,7 +66,7 @@ export async function isUnsubscribed(email: string): Promise<boolean> {
 
   if (error) {
     console.error('Error checking unsubscribe status:', error);
-    // Fail open — don't block sending on a check error
+    // Fail open - don't block sending on a check error
     return false;
   }
 
@@ -127,7 +127,7 @@ export async function getUnsubscribeCount(): Promise<number> {
 
 /**
  * Remove an email from the unsubscribe list (re-subscribe).
- * Requires admin action — logged for audit purposes.
+ * Requires admin action - logged for audit purposes.
  */
 export async function removeUnsubscribe(
   email: string,

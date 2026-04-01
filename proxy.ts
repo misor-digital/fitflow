@@ -2,13 +2,13 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 
 /**
- * Next.js 16 proxy handler — runs on every request.
+ * Next.js 16 proxy handler - runs on every request.
  *
  * Responsibilities:
  * 1. Redirect legacy routes.
  * 2. Refresh Supabase auth session cookies (best-effort).
  *
- * Does NOT perform authorization — that's the DAL's job.
+ * Does NOT perform authorization - that's the DAL's job.
  */
 
 /** Timeout for the Supabase Auth call so the proxy never stalls a request. */
@@ -59,7 +59,7 @@ export default async function proxy(request: NextRequest) {
   // Refresh the session (best-effort).
   //
   // Fast path: getClaims() validates the JWT locally without a network call.
-  // If the token is still valid (not expired) there's nothing to refresh —
+  // If the token is still valid (not expired) there's nothing to refresh -
   // we skip the expensive getUser() round-trip and save ~50-100 ms per request.
   //
   // Slow path: when the JWT IS expired, getClaims() still succeeds (it
@@ -83,7 +83,7 @@ export default async function proxy(request: NextRequest) {
       }
     }
   } catch {
-    // Non-fatal — if Supabase is unreachable the user will see the
+    // Non-fatal - if Supabase is unreachable the user will see the
     // unauthorized boundary on protected pages, but public pages and
     // cached data still render immediately.
   }

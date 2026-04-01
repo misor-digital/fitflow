@@ -3,7 +3,7 @@
  *
  * Server-only functions for fetching customer user data with
  * aggregated stats (order count, subscription status).
- * Uses supabaseAdmin (service_role) — bypasses RLS.
+ * Uses supabaseAdmin (service_role) - bypasses RLS.
  * Read functions wrapped in React.cache() for per-request deduplication.
  */
 
@@ -91,7 +91,7 @@ export const getCustomersPaginated = cache(
         .eq('status', 'active'),
     ]);
 
-    // Process orders — aggregate count and last order date per user
+    // Process orders - aggregate count and last order date per user
     const orderRows = orderStatsResult.data ?? [];
     const orderCountMap = new Map<string, number>();
     const lastOrderMap = new Map<string, string>();
@@ -106,12 +106,12 @@ export const getCustomersPaginated = cache(
       }
     }
 
-    // Process subscriptions — build set of users with active subscription
+    // Process subscriptions - build set of users with active subscription
     const activeSubUserIds = new Set(
       (activeSubsResult.data ?? []).map((s) => s.user_id),
     );
 
-    // Fetch emails from Supabase Auth — single batch query via PostgREST
+    // Fetch emails from Supabase Auth - single batch query via PostgREST
     const emailMap = await getUserEmailsByIds(userIds);
 
     // Assemble CustomerWithStats array
@@ -181,7 +181,7 @@ export const getCustomersStats = cache(
 );
 
 /**
- * Staff member count — for admin dashboard.
+ * Staff member count - for admin dashboard.
  * Cached across requests for 60s (tag: customers).
  */
 export const getStaffCount = cache(

@@ -1,6 +1,6 @@
 /**
- * GET  /api/admin/feedback/upload — List existing images in the bucket
- * POST /api/admin/feedback/upload — Upload image to Supabase Storage
+ * GET  /api/admin/feedback/upload - List existing images in the bucket
+ * POST /api/admin/feedback/upload - Upload image to Supabase Storage
  *
  * POST accepts a multipart/form-data request with a single `file` field.
  * Stores in the `feedback-images` bucket under a UUID-based path.

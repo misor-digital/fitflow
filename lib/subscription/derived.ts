@@ -2,7 +2,7 @@
  * Subscription Derived State
  *
  * Pure functions that compute state from SubscriptionRow.
- * No database calls — safe for both client and server.
+ * No database calls - safe for both client and server.
  */
 
 import type { SubscriptionRow, SubscriptionStatus } from '@/lib/supabase/types';
@@ -82,11 +82,11 @@ export function shouldIncludeInCycle(
 
   // Seasonal logic
   if (sub.frequency === 'seasonal') {
-    // Never delivered — include in first available cycle on or after first_cycle_id
+    // Never delivered - include in first available cycle on or after first_cycle_id
     if (sub.last_delivered_cycle_id === null) {
-      if (!sub.first_cycle_id) return true; // No first_cycle_id constraint — include
+      if (!sub.first_cycle_id) return true; // No first_cycle_id constraint - include
       const firstCycle = allCyclesSorted.find((c) => c.id === sub.first_cycle_id);
-      if (!firstCycle) return true; // first_cycle deleted — include
+      if (!firstCycle) return true; // first_cycle deleted - include
       // Include if current cycle is at or after the first cycle by date
       return currentCycle.delivery_date >= firstCycle.delivery_date;
     }
@@ -111,7 +111,7 @@ export function shouldIncludeInCycle(
     return cyclesBetween >= 3;
   }
 
-  // Unknown frequency — exclude
+  // Unknown frequency - exclude
   return false;
 }
 

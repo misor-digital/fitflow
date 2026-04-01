@@ -98,7 +98,7 @@ export default function DynamicFeedbackForm({ slug, schema, settings, accessToke
                 isWide ? 'md:col-span-2' : ''
               }`}
             >
-              {/* Product image — consistent sizing */}
+              {/* Product image - consistent sizing */}
               {field.image_url && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img

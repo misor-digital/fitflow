@@ -7,7 +7,7 @@
  *
  * - Each resource is fetched **once**, then served from memory.
  * - Concurrent in-flight requests are deduplicated (module-level promises).
- * - Re-fetches after CACHE_TTL (5 min) — matches the API `s-maxage`.
+ * - Re-fetches after CACHE_TTL (5 min) - matches the API `s-maxage`.
  */
 
 import { create } from 'zustand';
@@ -44,7 +44,7 @@ export interface UpcomingDeliveryPayload {
 interface DeliveryState {
   /** Full revealed-box API response (null when unavailable / not yet loaded). */
   revealedBox: RevealedBoxPayload | null;
-  /** Convenience boolean — true when a revealed box exists. */
+  /** Convenience boolean - true when a revealed box exists. */
   revealedBoxAvailable: boolean;
   /** True after the first revealed-box fetch completes (success or failure). */
   isLoaded: boolean;

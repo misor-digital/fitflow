@@ -76,7 +76,7 @@ export async function GET(request: Request): Promise<NextResponse> {
       ? await eurToBgn(order.final_price_eur)
       : null;
 
-    // 5. Build safe response — no internal IDs, no email
+    // 5. Build safe response - no internal IDs, no email
     const trackingData: OrderTrackingData & { statusLabel: string; boxTypeName: string; finalPriceBgn: number | null } = {
       orderNumber: order.order_number,
       status: order.status,

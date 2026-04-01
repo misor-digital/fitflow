@@ -80,7 +80,7 @@ export function SubscriptionDashboard({
           </div>
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <span className="text-green-500">✓</span>
-            <span>Лесно управление — пауза или отказ по всяко време</span>
+            <span>Лесно управление - пауза или отказ по всяко време</span>
           </div>
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <span className="text-green-500">✓</span>

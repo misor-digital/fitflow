@@ -1,5 +1,5 @@
 /**
- * Public API — Magic-Link Registration
+ * Public API - Magic-Link Registration
  *
  * POST /api/auth/register-magic
  *
@@ -104,7 +104,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       // Race condition: user was created between the check and createUser
       if (createError.message?.includes('already registered')) {
         console.warn(
-          '[register-magic] Race condition — user already registered:',
+          '[register-magic] Race condition - user already registered:',
           normalizedEmail,
         );
         return NextResponse.json(SUCCESS_RESPONSE);
@@ -144,7 +144,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     if (setupUrl) {
       await sendEmail({
         to: { email: normalizedEmail, name: sanitizedName },
-        subject: 'Активирайте акаунта си във FitFlow',
+        subject: 'Активирай акаунта си във FitFlow',
         htmlContent: generateMagicRegistrationEmail(sanitizedName, setupUrl),
         tags: ['magic-registration'],
       });

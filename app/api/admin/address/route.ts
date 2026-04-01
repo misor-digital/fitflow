@@ -20,7 +20,7 @@ const UUID_REGEX =
 const MAX_ADDRESSES = 10;
 
 // ============================================================================
-// GET /api/admin/address?userId=<uuid> — List addresses for a user
+// GET /api/admin/address?userId=<uuid> - List addresses for a user
 // ============================================================================
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
@@ -72,7 +72,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 }
 
 // ============================================================================
-// POST /api/admin/address — Create address for a user
+// POST /api/admin/address - Create address for a user
 // ============================================================================
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
@@ -171,7 +171,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     const deliveryMethod = sanitized.deliveryMethod ?? 'address';
 
-    // Domain validation — conditional on delivery method
+    // Domain validation - conditional on delivery method
     if (deliveryMethod === 'speedy_office') {
       const officeSelection: SpeedyOfficeSelection | null =
         sanitized.speedyOfficeId && sanitized.speedyOfficeName
@@ -228,7 +228,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       }
     }
 
-    // Build insert payload — use target userId, not session userId
+    // Build insert payload - use target userId, not session userId
     const insertData: AddressInsert =
       deliveryMethod === 'speedy_office'
         ? {

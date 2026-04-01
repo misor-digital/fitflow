@@ -2,7 +2,7 @@
  * Email Send Log Data Access Layer
  *
  * Unified logging for all email sends (transactional + campaign).
- * Uses supabaseAdmin (service_role) — bypasses RLS.
+ * Uses supabaseAdmin (service_role) - bypasses RLS.
  * Read functions wrapped in React.cache() for per-request deduplication.
  */
 
@@ -23,7 +23,7 @@ import type {
 
 /**
  * Insert a send log row.
- * Fire-and-forget — errors are logged to console, never thrown.
+ * Fire-and-forget - errors are logged to console, never thrown.
  * This ensures email sending never fails due to logging issues.
  */
 export async function logEmailSent(data: EmailSendLogInsert): Promise<void> {
@@ -61,7 +61,7 @@ export async function updateEmailLogStatus(
 
 /**
  * Update email log entry from a Brevo webhook event.
- * Idempotent — only updates if the event provides new information.
+ * Idempotent - only updates if the event provides new information.
  * Appends the raw event to the webhook_events audit trail.
  */
 export async function updateEmailLogFromWebhook(
@@ -87,7 +87,7 @@ export async function updateEmailLogFromWebhook(
   }
 
   if (!logEntry) {
-    // No matching log entry — skip silently (message may not be tracked)
+    // No matching log entry - skip silently (message may not be tracked)
     return { campaignId: null, recipientEmail: null };
   }
 
@@ -139,7 +139,7 @@ export async function updateEmailLogFromWebhook(
       }
       break;
     default:
-      // Unknown event — just append to audit trail
+      // Unknown event - just append to audit trail
       break;
   }
 

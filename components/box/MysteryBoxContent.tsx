@@ -137,7 +137,7 @@ export default function MysteryBoxContent({
           ))}
         </div>
         <p className="text-center text-sm sm:text-base text-gray-600 mt-6 sm:mt-8 max-w-lg mx-auto">
-          Конкретните продукти остават тайна — ще бъдат разкрити на <span className="font-semibold text-[var(--color-brand-navy)]">{nextDeliveryDate}</span>!
+          Конкретните продукти остават тайна - ще бъдат разкрити на <span className="font-semibold text-[var(--color-brand-navy)]">{nextDeliveryDate}</span>!
         </p>
       </section>
 
@@ -147,7 +147,7 @@ export default function MysteryBoxContent({
           Избери своята кутия
         </h2>
         <p className="text-center text-sm sm:text-base text-gray-500 mb-8 sm:mb-10 md:mb-12">
-          Еднократна покупка — без абонамент
+          Еднократна покупка - без абонамент
         </p>
 
         {/* Discount Banner */}
@@ -199,7 +199,7 @@ export default function MysteryBoxContent({
       <HowItWorks
         bgClass="bg-gradient-to-b from-gray-50 to-white"
         steps={[
-          { num: 1, title: 'Избери кутия', desc: 'Стандартна или Премиум — според предпочитанията ти' },
+          { num: 1, title: 'Избери кутия', desc: 'Стандартна или Премиум - според предпочитанията ти' },
           { num: 2, title: 'Сподели предпочитания', desc: 'Персонализацията помага да подберем продуктите за теб' },
           { num: 3, title: `Получи`, desc: 'Доставяме заедно с абонаментните кутии' },
         ]}

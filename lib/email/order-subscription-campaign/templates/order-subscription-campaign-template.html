@@ -1,0 +1,156 @@
+<html lang="bg">
+
+<body>
+  <title></title>
+
+  <table role="presentation"
+    style="width:100%;border-collapse:collapse;margin:0;padding:0;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;background-color:#f6f3f0;border:none;empty-cells:show;max-width:100%;font-size:16px;">
+    <tbody>
+      <tr>
+        <td align="center" style="padding:40px 0;background:unset;border:1px solid transparent;">
+          <table role="presentation"
+            style="width:600px;max-width:100%;border-collapse:collapse;background-color:#ffffff;border-radius:12px;border:none;empty-cells:show;font-size:16px;">
+            <tbody>
+              <!-- HEADER -->
+              <tr>
+                <td
+                  style="background:linear-gradient(135deg,#9c3b00 0%,#ff6a00 100%);padding:40px 30px;text-align:center;border-radius:12px 12px 0 0;border:1px solid transparent;">
+                  <h1 style="color:#ffffff;margin:0;font-size:36px;font-weight:700;">FitFlow</h1>
+                  <p style="color:#ffffff;margin:10px 0 0;font-size:14px;opacity:0.9;font-family:Arial;">
+                    Защото можем
+                  </p>
+                </td>
+              </tr>
+
+              <!-- BODY -->
+              <tr>
+                <td style="padding:40px 30px;border:1px solid transparent;background:unset;">
+                  <!-- Greeting -->
+                  <h2 style="color:#363636;margin-top:0;font-size:24px;">
+                    Здравей, {{firstName}}!
+                  </h2>
+
+                  <!-- Thank you -->
+                  <div
+                    style="background-color:#fff8f3;padding:22px;border-radius:8px;margin:0 0 25px 0;text-align:center;font-family:Arial;">
+                    <p style="color:#363636;font-size:18px;line-height:1.6;margin:0 0 10px 0;font-weight:600;">
+                      Благодарим ти за поръчка {{order_number}} - {{box_name}}.
+                    </p>
+                    <p style="color:#4a5568;font-size:16px;line-height:1.7;margin:0;">
+                      Надяваме се, че си доволна от своята кутия! Искаш ли да получаваш
+                      <span style="color:#ff6a00;font-weight:600;">FitFlow</span> всеки месец?
+                    </p>
+                  </div>
+
+                  <!-- Subscription benefits -->
+                  <div
+                    style="border-left:4px solid #ff6a00;padding-left:20px;margin:25px 0;font-size:16px;font-family:Arial;">
+                    <h3 style="color:#363636;margin-top:0;margin-bottom:10px;">
+                      Защо да се абонираш?
+                    </h3>
+                    <ul style="color:#4a5568;line-height:1.8;padding-left:18px;margin:0;">
+                      <li><strong>Спестяваш</strong> - абонаментните цени са по-ниски от еднократните.</li>
+                      <li><strong>Удобство</strong> - кутията идва автоматично всеки месец без допълнителни стъпки.</li>
+                      <li><strong>Приоритетна доставка</strong> - абонатите получават първи.</li>
+                      <li><strong>Гъвкавост</strong> - можеш да паузираш или откажеш по всяко време.</li>
+                    </ul>
+                  </div>
+
+                  <!-- Promo block (conditional) -->
+                  {{#has_promo}}
+                  <div
+                    style="background-color:#e8f5e9;border:2px solid #4caf50;padding:15px 20px;border-radius:8px;margin:20px 0;text-align:center;font-size:16px;font-family:Arial;">
+                    <p style="margin:0;color:#2e7d32;font-size:18px;font-weight:bold;font-family:Arial;">
+                      Използвай код <strong>{{promo_code}}</strong> за {{promo_discount}} отстъпка от първия абонамент!
+                    </p>
+                  </div>
+                  {{/has_promo}}
+
+                  <!-- Order recap -->
+                  <div
+                    style="background-color:#fff4ec;padding:20px;border-radius:8px;margin:20px 0;font-size:16px;font-family:Arial;">
+                    <h3 style="color:#363636;margin-top:0;margin-bottom:10px;">
+                      <img data-emoji="📦" alt="📦" aria-label="📦" draggable="false"
+                        src="https://fonts.gstatic.com/s/e/notoemoji/16.0/1f4e6/32.png" loading="lazy"
+                        style="cursor:pointer;padding:0 1px;position:relative;max-width:100%;" />
+                      Обобщение на поръчката
+                    </h3>
+
+                    <p style="margin:6px 0;font-family:Arial;">
+                      <strong style="font-weight:700;">Номер:</strong> {{order_number}}
+                    </p>
+                    <p style="margin:6px 0;font-family:Arial;">
+                      <strong style="font-weight:700;">Кутия:</strong> {{box_name}} ({{box_price}})
+                    </p>
+                    <p style="margin:6px 0;font-family:Arial;">
+                      <strong style="font-weight:700;">Персонализация:</strong> {{personalization}}
+                    </p>
+
+                    {{#wantsPersonalization}}
+                    <div style="margin-top:12px;padding-top:12px;border-top:1px solid #f2d6c6;">
+                      <p style="margin:6px 0;font-family:Arial;">
+                        <strong style="font-weight:700;">Спорт:</strong> {{sport}}
+                      </p>
+                      <p style="margin:6px 0;font-family:Arial;">
+                        <strong style="font-weight:700;">Цветове:</strong> {{colors}}
+                      </p>
+                      <p style="margin:6px 0;font-family:Arial;">
+                        <strong style="font-weight:700;">Вкусове:</strong> {{flavors}}
+                      </p>
+                      <p style="margin:6px 0;font-family:Arial;">
+                        <strong style="font-weight:700;">Размер:</strong> {{size}}
+                      </p>
+                      <p style="margin:6px 0;font-family:Arial;">
+                        <strong style="font-weight:700;">Хранителни ограничения:</strong> {{dietary_restrictions}}
+                      </p>
+                    </div>
+                    {{/wantsPersonalization}}
+                  </div>
+
+                  <!-- CTA -->
+                  <div style="text-align:center;margin:30px 0;">
+                    <a href="{{{custom_link}}}" target="_blank"
+                      style="display:inline-block;background-color:#ff6a00;color:#ffffff;text-decoration:none;font-weight:700;font-family:Arial;padding:14px 28px;border-radius:10px;font-size:18px;">
+                      Абонирай се сега
+                    </a>
+                  </div>
+
+                  <!-- Link validity -->
+                  <p style="color:#888;font-size:13px;text-align:center;margin:0 0 20px;font-family:Arial;">
+                    Този линк е валиден 90 дни.
+                  </p>
+
+                  <!-- Contact -->
+                  <p style="color:#4a5568;font-size:16px;line-height:1.6;font-family:Arial;margin:0;">
+                    Ако имаш въпроси, не се колебай да се свържеш с нас на
+                    <a href="mailto:info@fitflow.bg" style="color:#ff6a00;font-weight:600;"
+                      target="_blank">info@fitflow.bg</a>
+                  </p>
+                </td>
+              </tr>
+
+              <!-- FOOTER -->
+              <tr>
+                <td
+                  style="background-color:#fdf6f1;padding:30px;text-align:center;border-radius:0 0 12px 12px;border:1px solid transparent;">
+                  <p style="color:#7a4a2a;font-size:14px;margin:0 0 10px;font-family:Arial;">
+                    С любов към спорта,<br />
+                    <strong style="font-weight:700;">Екипът на FitFlow</strong>
+                    <img data-emoji="💪" alt="💪" aria-label="💪" draggable="false"
+                      src="https://fonts.gstatic.com/s/e/notoemoji/16.0/1f4aa/32.png" loading="lazy"
+                      style="cursor:pointer;padding:0 1px;position:relative;max-width:100%;" />
+                  </p>
+                  <p style="color:#b08968;font-size:12px;margin:0;font-family:Arial;">
+                    © 2026 FitFlow. Всички права запазени.
+                  </p>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</body>
+
+</html>

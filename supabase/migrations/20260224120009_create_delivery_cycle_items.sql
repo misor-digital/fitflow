@@ -14,8 +14,8 @@ CREATE TABLE delivery_cycle_items (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-COMMENT ON TABLE delivery_cycle_items IS 'Contents of each delivery cycle box — revealed publicly after delivery';
-COMMENT ON COLUMN delivery_cycle_items.delivery_cycle_id IS 'FK to delivery_cycles — cascade deletes items when cycle is removed';
+COMMENT ON TABLE delivery_cycle_items IS 'Contents of each delivery cycle box - revealed publicly after delivery';
+COMMENT ON COLUMN delivery_cycle_items.delivery_cycle_id IS 'FK to delivery_cycles - cascade deletes items when cycle is removed';
 COMMENT ON COLUMN delivery_cycle_items.name IS 'Item display name (e.g. "Whey Protein 500g")';
 COMMENT ON COLUMN delivery_cycle_items.description IS 'Item description';
 COMMENT ON COLUMN delivery_cycle_items.image_url IS 'Path in Supabase Storage (e.g. box-contents/march-2026/protein.jpg)';

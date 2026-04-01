@@ -76,9 +76,9 @@ pnpm seed:admin
 ## Verify Setup
 
 1. **Login**: Navigate to `/login` and sign in with the super admin credentials.
-2. **Admin panel**: Navigate to `/admin` — you should see the admin dashboard.
-3. **Supabase Auth**: Check **Authentication → Users** in the Supabase dashboard — confirm the user exists with `email_confirmed_at` set.
-4. **Profile**: Query the `user_profiles` table — confirm `user_type = 'staff'` and `staff_role = 'super_admin'`.
+2. **Admin panel**: Navigate to `/admin` - you should see the admin dashboard.
+3. **Supabase Auth**: Check **Authentication → Users** in the Supabase dashboard - confirm the user exists with `email_confirmed_at` set.
+4. **Profile**: Query the `user_profiles` table - confirm `user_type = 'staff'` and `staff_role = 'super_admin'`.
 
 ## Troubleshooting
 

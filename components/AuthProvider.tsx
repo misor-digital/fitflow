@@ -65,7 +65,7 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
         } else if (event === 'SIGNED_OUT') {
           clear();
         } else if (event === 'TOKEN_REFRESHED' && session?.user) {
-          // Profile might have changed — refresh
+          // Profile might have changed - refresh
           await fetchAndSetProfile(session.user.id, session.user.email ?? '');
         }
       }

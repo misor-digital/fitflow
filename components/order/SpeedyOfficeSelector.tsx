@@ -36,7 +36,7 @@ export default function SpeedyOfficeSelector({
       if (event.origin !== WIDGET_ORIGIN) return;
 
       try {
-        // The widget sends office data — extract what we need
+        // The widget sends office data - extract what we need
         const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
 
         // The widget postMessage payload includes office details

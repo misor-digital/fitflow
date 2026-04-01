@@ -1,22 +1,22 @@
-# FitFlow — Next.js Application
+# FitFlow - Next.js Application
 
 A modern subscription box e-commerce platform for active women, built with Next.js 15, TypeScript, Tailwind CSS, Supabase, and Zustand.
 
 ## Features
 
-- **Order System** — Multi-step order flow with guest checkout and authenticated checkout
-- **Order Tracking** — Track orders by email + order number
-- **Preorder Conversion** — Convert legacy preorders to full orders via token-based links
-- **Authentication** — Supabase Auth with email/password, session management, password reset
-- **Admin Panel** — Staff dashboard for orders, promo codes, analytics, content, and settings
-- **Promo Codes** — Database-driven promotional discount codes with validation
-- **Dynamic Pricing** — Box prices and currency conversion managed via database
-- **Address Management** — Save, edit, and reuse shipping addresses
-- **Email Notifications** — Transactional emails via Brevo (confirmation, contacts sync)
-- **Analytics** — Google Analytics 4 + Meta Pixel + Meta Conversions API (server-side)
-- **GDPR Compliance** — Cookie consent banner with granular preferences
-- **Responsive Design** — Mobile-first approach
-- **Type Safety** — Full TypeScript with Supabase-generated types
+- **Order System** - Multi-step order flow with guest checkout and authenticated checkout
+- **Order Tracking** - Track orders by email + order number
+- **Preorder Conversion** - Convert legacy preorders to full orders via token-based links
+- **Authentication** - Supabase Auth with email/password, session management, password reset
+- **Admin Panel** - Staff dashboard for orders, promo codes, analytics, content, and settings
+- **Promo Codes** - Database-driven promotional discount codes with validation
+- **Dynamic Pricing** - Box prices and currency conversion managed via database
+- **Address Management** - Save, edit, and reuse shipping addresses
+- **Email Notifications** - Transactional emails via Brevo (confirmation, contacts sync)
+- **Analytics** - Google Analytics 4 + Meta Pixel + Meta Conversions API (server-side)
+- **GDPR Compliance** - Cookie consent banner with granular preferences
+- **Responsive Design** - Mobile-first approach
+- **Type Safety** - Full TypeScript with Supabase-generated types
 
 ## Tech Stack
 
@@ -136,7 +136,7 @@ META_CAPI_ACCESS_TOKEN=your-capi-token
 CRON_SECRET=your-cron-secret-here
 ADMIN_EMAIL=admin@fitflow.bg
 
-# Brevo Cron Notification Template IDs (optional — set after creating templates)
+# Brevo Cron Notification Template IDs (optional - set after creating templates)
 # BREVO_CRON_SUCCESS_TEMPLATE_ID=0
 # BREVO_CRON_ERRORS_TEMPLATE_ID=0
 # BREVO_CRON_FAILURE_TEMPLATE_ID=0

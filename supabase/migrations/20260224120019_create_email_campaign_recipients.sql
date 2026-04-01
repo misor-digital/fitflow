@@ -23,7 +23,7 @@ CREATE TABLE email_campaign_recipients (
 
 COMMENT ON TABLE email_campaign_recipients IS 'Individual recipients for each campaign with per-recipient params and delivery status';
 COMMENT ON COLUMN email_campaign_recipients.params IS 'Per-recipient template variables (e.g. conversion URL with token)';
-COMMENT ON COLUMN email_campaign_recipients.brevo_message_id IS 'Brevo message ID — used to correlate webhook events';
+COMMENT ON COLUMN email_campaign_recipients.brevo_message_id IS 'Brevo message ID - used to correlate webhook events';
 
 -- Indexes
 CREATE INDEX idx_ecr_campaign_pending ON email_campaign_recipients(campaign_id)

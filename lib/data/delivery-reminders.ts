@@ -27,7 +27,7 @@ export interface OrderNeedingAction {
 
 /**
  * Insert a row into delivery_confirmation_reminders.
- * The UNIQUE(order_id, reminder_number) constraint ensures idempotency —
+ * The UNIQUE(order_id, reminder_number) constraint ensures idempotency -
  * if the cron runs twice, the second insert will fail gracefully.
  * Catches the unique violation (code 23505) and returns the existing row.
  */

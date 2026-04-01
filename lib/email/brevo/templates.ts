@@ -2,7 +2,7 @@
  * Brevo Template API Wrapper
  *
  * List and manage transactional email templates via Brevo API.
- * Templates are created in the Brevo dashboard — this provides
+ * Templates are created in the Brevo dashboard - this provides
  * read access for admin display and validation.
  */
 
@@ -60,7 +60,7 @@ export async function listBrevoTemplates(
 }
 
 /**
- * Get a specific template by ID — used for validation
+ * Get a specific template by ID - used for validation
  */
 export async function getBrevoTemplate(templateId: number): Promise<{
   success: boolean;

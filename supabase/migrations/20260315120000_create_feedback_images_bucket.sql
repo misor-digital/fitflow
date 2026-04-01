@@ -1,5 +1,5 @@
 -- ============================================================================
--- Feedback Images — Supabase Storage bucket for feedback form field images
+-- Feedback Images - Supabase Storage bucket for feedback form field images
 -- Migration: 20260315120000_create_feedback_images_bucket
 --
 -- Creates a public Storage bucket for images attached to feedback form fields.

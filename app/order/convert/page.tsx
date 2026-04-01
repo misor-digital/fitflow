@@ -72,7 +72,7 @@ export default async function ConvertPage({ searchParams }: ConvertPageProps) {
     );
   }
 
-  // Token is valid — fetch catalog data and calculate price
+  // Token is valid - fetch catalog data and calculate price
   const [
     boxTypeNames,
     boxTypes,

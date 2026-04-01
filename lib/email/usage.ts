@@ -39,7 +39,7 @@ export async function checkUsage(count: number = 1): Promise<UsageCheck> {
     return usageChecker(count);
   }
 
-  // Fallback: no DB — always allow, unknown usage
+  // Fallback: no DB - always allow, unknown usage
   return {
     canSend: true,
     remaining: DEFAULT_MONTHLY_LIMIT,

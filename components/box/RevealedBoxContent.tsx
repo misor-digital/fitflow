@@ -147,7 +147,7 @@ export default function RevealedBoxContent({
               <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
-              Поръчай до {availableUntil} — бърза доставка!
+              Поръчай до {availableUntil} - бърза доставка!
             </div>
           )}
         </div>
@@ -232,7 +232,7 @@ export default function RevealedBoxContent({
           Поръчай сега
         </h2>
         <p className="text-center text-sm sm:text-base text-gray-500 mb-8 sm:mb-10 md:mb-12">
-          Еднократна покупка — бърза доставка до 2-3 работни дни
+          Еднократна покупка - бърза доставка до 2-3 работни дни
         </p>
 
         {/* Discount Banner */}
@@ -288,7 +288,7 @@ export default function RevealedBoxContent({
         <div className="max-w-2xl mx-auto space-y-4 sm:space-y-6">
           <FAQItem
             question="Как се доставя?"
-            answer="Тази кутия се изпраща веднага след поръчка — доставка до 2-3 работни дни."
+            answer="Тази кутия се изпраща веднага след поръчка - доставка до 2-3 работни дни."
           />
           <FAQItem
             question="Каква е разликата от еднократна кутия?"
@@ -296,7 +296,7 @@ export default function RevealedBoxContent({
           />
           <FAQItem
             question="Не е нужна регистрация"
-            answer="Можете да поръчате като гост — не е нужно да се регистрирате."
+            answer="Можете да поръчате като гост - не е нужно да се регистрирате."
           />
         </div>
       </section>
@@ -308,7 +308,7 @@ export default function RevealedBoxContent({
             Хареса ли ти кутията?
           </h2>
           <p className="text-base sm:text-lg text-white/80 mb-6 sm:mb-8">
-            Поръчай сега — доставка до 2-3 работни дни!
+            Поръчай сега - доставка до 2-3 работни дни!
           </p>
           <button
             onClick={() => handleOrderClick('onetime-standard')}

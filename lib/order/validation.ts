@@ -240,7 +240,7 @@ export function validateOrderStep3(input: OrderUserInput): boolean {
     if (input.isGuest) {
       if (!input.fullName.trim() || input.fullName.trim().length < 2) return false;
       if (!input.email.trim() || !isValidEmail(input.email)) return false;
-      // Phone is optional — only reject if provided but invalid
+      // Phone is optional - only reject if provided but invalid
       if (input.phone.trim() && !isValidPhone(input.phone)) return false;
     }
     return true;
@@ -250,7 +250,7 @@ export function validateOrderStep3(input: OrderUserInput): boolean {
   if (input.isGuest) {
     if (!input.fullName.trim() || input.fullName.trim().length < 2) return false;
     if (!input.email.trim() || !isValidEmail(input.email)) return false;
-    // Phone is optional — only reject if provided but invalid
+    // Phone is optional - only reject if provided but invalid
     if (input.phone.trim() && !isValidPhone(input.phone)) return false;
     const addressResult = validateAddress(input.address);
     return addressResult.valid;
@@ -469,7 +469,7 @@ export function getAddressFieldError(field: string, address: AddressInput): stri
 
     case 'phone':
       // Phone validation is context-dependent (required for office delivery)
-      // Return null here — office-specific validation is in validateSpeedyOffice
+      // Return null here - office-specific validation is in validateSpeedyOffice
       return null;
 
     default:

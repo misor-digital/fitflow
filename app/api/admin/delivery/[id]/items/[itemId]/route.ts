@@ -4,7 +4,7 @@ import { ORDER_VIEW_ROLES } from '@/lib/auth/permissions';
 import { getCycleItemById, updateCycleItem, deleteCycleItem } from '@/lib/data';
 
 // ============================================================================
-// PATCH /api/admin/delivery/:id/items/:itemId — Update item
+// PATCH /api/admin/delivery/:id/items/:itemId - Update item
 // ============================================================================
 
 export async function PATCH(
@@ -56,7 +56,7 @@ export async function PATCH(
 }
 
 // ============================================================================
-// DELETE /api/admin/delivery/:id/items/:itemId — Delete item
+// DELETE /api/admin/delivery/:id/items/:itemId - Delete item
 // ============================================================================
 
 export async function DELETE(

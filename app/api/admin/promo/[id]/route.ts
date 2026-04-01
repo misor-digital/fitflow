@@ -47,7 +47,7 @@ async function authorizeStaff() {
 }
 
 // ============================================================================
-// GET /api/admin/promo/:id — Single promo with stats
+// GET /api/admin/promo/:id - Single promo with stats
 // ============================================================================
 
 export async function GET(
@@ -100,7 +100,7 @@ export async function GET(
 }
 
 // ============================================================================
-// PATCH /api/admin/promo/:id — Update promo fields
+// PATCH /api/admin/promo/:id - Update promo fields
 // ============================================================================
 
 export async function PATCH(
@@ -145,7 +145,7 @@ export async function PATCH(
       );
     }
 
-    // Strip current_uses — prevent manual manipulation
+    // Strip current_uses - prevent manual manipulation
     delete body.current_uses;
 
     // Validate
@@ -277,7 +277,7 @@ export async function PATCH(
 }
 
 // ============================================================================
-// DELETE /api/admin/promo/:id — Delete (with usage guard)
+// DELETE /api/admin/promo/:id - Delete (with usage guard)
 // ============================================================================
 
 export async function DELETE(

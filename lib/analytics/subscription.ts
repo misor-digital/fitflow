@@ -102,3 +102,29 @@ export function trackRevealedBoxViewed(price: number): void {
     });
   }
 }
+
+// ============================================================================
+// Conversion events
+// ============================================================================
+
+/**
+ * Track when an order is converted to a subscription.
+ */
+export function trackOrderToSubscriptionConversion(params: {
+  orderNumber: string;
+  boxType: string;
+  frequency: string;
+  value: number;
+  wasGuest: boolean;
+}): void {
+  if (isGA4Available()) {
+    window.gtag!('event', 'order_to_subscription_conversion', {
+      order_number: params.orderNumber,
+      box_type: params.boxType,
+      frequency: params.frequency,
+      value: params.value,
+      currency: 'EUR',
+      was_guest: params.wasGuest,
+    });
+  }
+}

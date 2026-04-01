@@ -93,7 +93,7 @@ function validatePromoInput(body: Record<string, unknown>, isCreate: boolean) {
 }
 
 // ============================================================================
-// GET /api/admin/promo — Paginated list with filters
+// GET /api/admin/promo - Paginated list with filters
 // ============================================================================
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
@@ -185,7 +185,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 }
 
 // ============================================================================
-// POST /api/admin/promo — Create a new promo code
+// POST /api/admin/promo - Create a new promo code
 // ============================================================================
 
 export async function POST(request: NextRequest): Promise<NextResponse> {

@@ -112,7 +112,7 @@ export async function incrementPromoCodeUsage(
 
 /**
  * Atomically decrement the usage count for a promo code.
- * Inverse of incrementPromoCodeUsage — used when an admin removes or replaces
+ * Inverse of incrementPromoCodeUsage - used when an admin removes or replaces
  * a promo code on an existing order.
  * The DB function floors current_uses at 0 and removes the promo_code_usages record.
  */
@@ -192,7 +192,7 @@ export interface PromoCodeListResult {
 /**
  * List promo codes with filtering, sorting, and pagination.
  * Status filtering is computed in JS because some statuses (active, exhausted)
- * involve multiple conditions that are hard to express in a single query —
+ * involve multiple conditions that are hard to express in a single query -
  * promo code volume is low so this is acceptable.
  */
 export const listPromoCodes = cache(
@@ -205,7 +205,7 @@ export const listPromoCodes = cache(
       limit = 20,
     } = filters;
 
-    // Build base query — fetch all rows (volume is low)
+    // Build base query - fetch all rows (volume is low)
     let query = supabaseAdmin.from('promo_codes').select('*');
 
     // Search filter (applied at DB level)

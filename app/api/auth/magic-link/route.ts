@@ -1,5 +1,5 @@
 /**
- * Public API — Magic-Link Login
+ * Public API - Magic-Link Login
  *
  * POST /api/auth/magic-link
  *

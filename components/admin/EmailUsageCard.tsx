@@ -78,7 +78,7 @@ export default function EmailUsageCard({ sent, limit, previousMonthSent }: Email
       {/* Warning messages */}
       {percentage >= 95 && (
         <p className="text-xs text-red-600 font-semibold mt-2">
-          ⚠️ Критично ниво — близо до лимита!
+          ⚠️ Критично ниво - близо до лимита!
         </p>
       )}
       {percentage >= 80 && percentage < 95 && (

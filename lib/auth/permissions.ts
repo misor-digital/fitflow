@@ -2,7 +2,7 @@ import 'server-only';
 import type { StaffRole } from '@/lib/supabase/types';
 
 /**
- * Staff role hierarchy — higher index = more permission.
+ * Staff role hierarchy - higher index = more permission.
  * Used for "can user X manage user Y" checks.
  */
 const ROLE_HIERARCHY: Record<StaffRole, number> = {
@@ -67,7 +67,7 @@ export const ORDER_VIEW_ROLES: ReadonlySet<StaffRole> = new Set([
 
 /**
  * Roles that can edit order pricing / apply promo codes.
- * Intentionally more restrictive than ORDER_VIEW_ROLES —
+ * Intentionally more restrictive than ORDER_VIEW_ROLES -
  * support and warehouse can view but not modify pricing.
  */
 export const ORDER_EDIT_ROLES: ReadonlySet<StaffRole> = new Set([
@@ -78,7 +78,7 @@ export const ORDER_EDIT_ROLES: ReadonlySet<StaffRole> = new Set([
 
 /**
  * Roles that can view the customer listing page.
- * Mirrors ORDER_VIEW_ROLES — separate constant allows future divergence.
+ * Mirrors ORDER_VIEW_ROLES - separate constant allows future divergence.
  */
 export const CUSTOMER_VIEW_ROLES: ReadonlySet<StaffRole> = new Set([
   'super_admin',

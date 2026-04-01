@@ -16,7 +16,7 @@ import type { OrderNeedingAction } from '@/lib/data';
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
-const MAX_PROCESSING_TIME_MS = 50_000; // 50s — leave 10s buffer
+const MAX_PROCESSING_TIME_MS = 50_000; // 50s - leave 10s buffer
 const CONTACT_URL =
   process.env.NEXT_PUBLIC_SUPPORT_URL || 'https://fitflow.bg/faqs';
 
@@ -138,7 +138,7 @@ async function handleReminder(
   // 2. Send email
   const emailResult = await sendTransactionalEmail({
     to: { email: order.customer_email, name: order.customer_full_name },
-    subject: `Потвърдете доставката на поръчка ${order.order_number}`,
+    subject: `Потвърди доставката на поръчка ${order.order_number}`,
     htmlContent: html,
     category: 'delivery-reminder',
     relatedEntityType: 'order',
@@ -150,7 +150,7 @@ async function handleReminder(
       `[delivery-cron] Email failed for order ${order.id}:`,
       emailResult.error,
     );
-    // Still record the reminder — don't retry sending on next cron run
+    // Still record the reminder - don't retry sending on next cron run
     // The email log tracks the failure separately
   }
 
@@ -169,7 +169,7 @@ async function handleAutoConfirm(item: OrderNeedingAction): Promise<void> {
   await updateOrderStatus(
     order.id,
     'delivered',
-    null, // System action — no user ID
+    null, // System action - no user ID
     'Автоматично потвърдена доставка (след 3 напомняния)',
   );
 

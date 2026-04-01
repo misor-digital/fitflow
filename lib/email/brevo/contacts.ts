@@ -1,7 +1,7 @@
 /**
  * Brevo Contacts API Wrapper
  *
- * Higher-level wrapper for contact management —
+ * Higher-level wrapper for contact management -
  * syncing customers, managing lists, and bulk operations.
  */
 

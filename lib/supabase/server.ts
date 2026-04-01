@@ -5,7 +5,7 @@ import type { Database } from './types';
 
 /**
  * Server-side Supabase client that reads/writes auth cookies.
- * Uses the publishable key — auth state comes from cookies, not the key.
+ * Uses the publishable key - auth state comes from cookies, not the key.
  *
  * Must be called per-request (not cached as a singleton) because
  * it accesses the request-scoped cookie store.
@@ -27,7 +27,7 @@ export async function createClient() {
               cookieStore.set(name, value, options);
             });
           } catch {
-            // setAll called from Server Component — ignore.
+            // setAll called from Server Component - ignore.
             // Cookies can only be set in Server Actions / Route Handlers.
           }
         },

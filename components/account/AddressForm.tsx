@@ -91,7 +91,7 @@ export default function AddressForm({ mode, initialData, onSuccess, onCancel }: 
   const [apiError, setApiError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // Field change handler — clears error for given field
+  // Field change handler - clears error for given field
   const handleFieldChange = useCallback(
     (field: keyof AddressInput, value: string | boolean) => {
       setAddress((prev) => ({ ...prev, [field]: value }));
@@ -105,7 +105,7 @@ export default function AddressForm({ mode, initialData, onSuccess, onCancel }: 
     [],
   );
 
-  // Toggle delivery method — resets method-specific fields, preserves shared ones
+  // Toggle delivery method - resets method-specific fields, preserves shared ones
   const handleMethodChange = useCallback(
     (method: DeliveryMethod) => {
       if (method === deliveryMethod) return;

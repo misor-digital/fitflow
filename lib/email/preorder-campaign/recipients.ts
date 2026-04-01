@@ -1,5 +1,5 @@
 /**
- * Preorder Campaign — Recipient Query
+ * Preorder Campaign - Recipient Query
  *
  * Server-only module that queries eligible preorders and returns
  * structured recipient data for the conversion email campaign.

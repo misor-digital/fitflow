@@ -2,7 +2,7 @@
 -- Email Monthly Usage Tracking
 -- ============================================================================
 -- Tracks monthly email volume against Brevo plan limit (Starter: 5,000/month).
--- No daily cap on Starter plan — monthly is the only constraint.
+-- No daily cap on Starter plan - monthly is the only constraint.
 
 CREATE TABLE email_monthly_usage (
   month               DATE PRIMARY KEY,                  -- First day of month (e.g. '2026-03-01')
@@ -16,7 +16,7 @@ CREATE TABLE email_monthly_usage (
 
 COMMENT ON TABLE email_monthly_usage IS 'Monthly email send volume tracking against Brevo plan limits';
 COMMENT ON COLUMN email_monthly_usage.month IS 'First day of the month this row tracks (e.g. 2026-03-01)';
-COMMENT ON COLUMN email_monthly_usage.monthly_limit IS 'Email send limit from Brevo plan — Starter: 5000, adjustable on upgrade';
+COMMENT ON COLUMN email_monthly_usage.monthly_limit IS 'Email send limit from Brevo plan - Starter: 5000, adjustable on upgrade';
 
 -- RLS
 ALTER TABLE email_monthly_usage ENABLE ROW LEVEL SECURITY;

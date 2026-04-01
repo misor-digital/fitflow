@@ -1,5 +1,5 @@
 -- ============================================================================
--- Feedback Forms — Dynamic no-code form builder for campaigns/delivery cycles
+-- Feedback Forms - Dynamic no-code form builder for campaigns/delivery cycles
 -- Migration: 20260314120000_create_feedback_forms
 -- ============================================================================
 
@@ -33,10 +33,10 @@ COMMENT ON TABLE feedback_forms IS 'Dynamic feedback form definitions, created v
 COMMENT ON COLUMN feedback_forms.slug IS 'URL-friendly identifier for public route /feedback/[slug]';
 COMMENT ON COLUMN feedback_forms.schema IS 'JSONB field definitions: {version, fields: [{id, type, label, required, choices, options}]}';
 COMMENT ON COLUMN feedback_forms.settings IS 'Form settings: {requireAuth, allowMultiple, thankYouMessage}';
-COMMENT ON COLUMN feedback_forms.version IS 'Incremented on each schema edit — responses store this for historical accuracy';
+COMMENT ON COLUMN feedback_forms.version IS 'Incremented on each schema edit - responses store this for historical accuracy';
 COMMENT ON COLUMN feedback_forms.campaign_id IS 'Optional link to an email campaign';
 COMMENT ON COLUMN feedback_forms.delivery_cycle_id IS 'Optional link to a delivery cycle';
-COMMENT ON COLUMN feedback_forms.is_active IS 'Published toggle — only active forms are visible to customers';
+COMMENT ON COLUMN feedback_forms.is_active IS 'Published toggle - only active forms are visible to customers';
 COMMENT ON COLUMN feedback_forms.starts_at IS 'Optional start of time window';
 COMMENT ON COLUMN feedback_forms.ends_at IS 'Optional end of time window';
 
@@ -124,9 +124,9 @@ CREATE TABLE feedback_responses (
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-COMMENT ON TABLE feedback_responses IS 'Individual responses to feedback forms — append-only for historical retention';
+COMMENT ON TABLE feedback_responses IS 'Individual responses to feedback forms - append-only for historical retention';
 COMMENT ON COLUMN feedback_responses.form_version IS 'Snapshot of form schema version at submission time';
-COMMENT ON COLUMN feedback_responses.user_id IS 'FK to auth.users — NULL for anonymous submissions';
+COMMENT ON COLUMN feedback_responses.user_id IS 'FK to auth.users - NULL for anonymous submissions';
 COMMENT ON COLUMN feedback_responses.answers IS 'JSONB map of {field_id: value}';
 COMMENT ON COLUMN feedback_responses.metadata IS 'Optional metadata: user-agent, locale, submission source';
 
@@ -179,7 +179,7 @@ CREATE TABLE feedback_form_history (
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-COMMENT ON TABLE feedback_form_history IS 'Audit trail for feedback form lifecycle — schema changes, publish/unpublish, etc.';
+COMMENT ON TABLE feedback_form_history IS 'Audit trail for feedback form lifecycle - schema changes, publish/unpublish, etc.';
 COMMENT ON COLUMN feedback_form_history.action IS 'Event type: created, published, unpublished, schema_updated, deleted';
 COMMENT ON COLUMN feedback_form_history.previous_schema IS 'Snapshot of the schema BEFORE this change (null for creation)';
 COMMENT ON COLUMN feedback_form_history.metadata IS 'Additional context for the change';

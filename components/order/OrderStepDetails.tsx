@@ -122,7 +122,7 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
     return () => controller.abort();
   }, [isAuthenticated]);
 
-  // Pre-fill contact info from auth profile — but NOT during a conversion
+  // Pre-fill contact info from auth profile - but NOT during a conversion
   // flow where the store already holds the customer's details from the
   // preorder. We check conversionToken (set synchronously at prefill) rather
   // than onBehalfOfUserId (set asynchronously after a lookup/create call).

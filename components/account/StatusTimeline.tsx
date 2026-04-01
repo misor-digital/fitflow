@@ -127,7 +127,7 @@ export function StatusTimeline({ statusHistory, currentStatus }: StatusTimelineP
         );
       })}
 
-      {/* Future statuses (grayed out) — only if not cancelled/refunded */}
+      {/* Future statuses (grayed out) - only if not cancelled/refunded */}
       {!isCancelled &&
         currentStatusIndex >= 0 &&
         currentStatusIndex < STATUS_ORDER.length - 1 && (

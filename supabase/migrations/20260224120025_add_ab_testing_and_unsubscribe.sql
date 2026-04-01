@@ -1,5 +1,5 @@
 -- Migration: Add A/B testing variants and unsubscribe tracking
--- Phase E9 — Advanced Campaign Features
+-- Phase E9 - Advanced Campaign Features
 
 -- ============================================================================
 -- A/B test variants table

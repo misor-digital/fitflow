@@ -82,7 +82,7 @@ export const getDefaultAddress = cache(
 );
 
 /**
- * Count addresses for a user — used to enforce max 10 addresses per user.
+ * Count addresses for a user - used to enforce max 10 addresses per user.
  * Wrapped in cache() for per-request deduplication.
  */
 export const countAddressesByUser = cache(async (userId: string): Promise<number> => {
@@ -166,7 +166,7 @@ export async function deleteAddress(addressId: string, userId: string): Promise<
 }
 
 // ============================================================================
-// Admin operations (no ownership check — requires staff auth at API layer)
+// Admin operations (no ownership check - requires staff auth at API layer)
 // ============================================================================
 
 /**

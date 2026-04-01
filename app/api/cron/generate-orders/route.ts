@@ -8,7 +8,7 @@ import {
 import { upsertSiteConfig } from '@/lib/data';
 
 // ============================================================================
-// GET /api/cron/generate-orders — Automated order generation (Vercel Cron)
+// GET /api/cron/generate-orders - Automated order generation (Vercel Cron)
 // ============================================================================
 
 export const runtime = 'nodejs';

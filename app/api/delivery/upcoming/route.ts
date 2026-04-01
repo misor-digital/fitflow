@@ -8,7 +8,7 @@ import {
 } from '@/lib/delivery';
 
 // ============================================================================
-// GET /api/delivery/upcoming — Public: Next delivery date
+// GET /api/delivery/upcoming - Public: Next delivery date
 // ============================================================================
 
 export async function GET(): Promise<NextResponse> {
@@ -40,7 +40,7 @@ export async function GET(): Promise<NextResponse> {
       return response;
     }
 
-    // 3. No upcoming cycle — derive from config
+    // 3. No upcoming cycle - derive from config
     const nextDate = calculateNextDeliveryDate(config);
     const nextDateStr = nextDate.toISOString().split('T')[0];
 

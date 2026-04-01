@@ -9,7 +9,7 @@ CREATE TABLE subscriptions (
   status subscription_status NOT NULL DEFAULT 'active',
   frequency TEXT NOT NULL DEFAULT 'monthly',
 
-  -- Personalization preferences (stored independently — updates affect future orders only)
+  -- Personalization preferences (stored independently - updates affect future orders only)
   wants_personalization BOOLEAN NOT NULL DEFAULT false,
   sports TEXT[],
   sport_other TEXT,
@@ -50,8 +50,8 @@ CREATE TABLE subscriptions (
   CONSTRAINT valid_sub_box_type CHECK (box_type IN ('monthly-standard', 'monthly-premium'))
 );
 
-COMMENT ON TABLE subscriptions IS 'Active and historical subscriptions — one row per subscriber per box type';
-COMMENT ON COLUMN subscriptions.user_id IS 'FK to auth.users — subscriptions require authentication';
+COMMENT ON TABLE subscriptions IS 'Active and historical subscriptions - one row per subscriber per box type';
+COMMENT ON COLUMN subscriptions.user_id IS 'FK to auth.users - subscriptions require authentication';
 COMMENT ON COLUMN subscriptions.box_type IS 'monthly-standard or monthly-premium';
 COMMENT ON COLUMN subscriptions.status IS 'Lifecycle state: active, paused, cancelled, expired';
 COMMENT ON COLUMN subscriptions.frequency IS 'Delivery frequency: monthly (every cycle) or seasonal (every 3rd cycle)';

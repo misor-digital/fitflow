@@ -1,6 +1,6 @@
 /**
- * GET  /api/admin/feedback       — Paginated feedback form list
- * POST /api/admin/feedback       — Create a new feedback form
+ * GET  /api/admin/feedback       - Paginated feedback form list
+ * POST /api/admin/feedback       - Create a new feedback form
  */
 
 import { type NextRequest, NextResponse } from 'next/server';

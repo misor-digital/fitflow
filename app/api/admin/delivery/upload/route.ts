@@ -12,7 +12,7 @@ const ALLOWED_TYPES = new Set([
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 
 // ============================================================================
-// POST /api/admin/delivery/upload — Upload image to Supabase Storage
+// POST /api/admin/delivery/upload - Upload image to Supabase Storage
 // ============================================================================
 
 export async function POST(request: NextRequest): Promise<NextResponse> {

@@ -52,7 +52,7 @@ camelCase keys directly:
 ### Subject Line
 
 ```
-🎁 Вашата FitFlow кутия е готова — завършете поръчката!
+🎁 Вашата FitFlow кутия е готова - завършете поръчката!
 ```
 
 ### Header Section

@@ -2,7 +2,7 @@
  * Email Campaigns Data Access Layer
  *
  * CRUD for email campaigns with status lifecycle management.
- * Uses supabaseAdmin (service_role) — bypasses RLS.
+ * Uses supabaseAdmin (service_role) - bypasses RLS.
  * Read functions wrapped in React.cache() for per-request deduplication.
  */
 

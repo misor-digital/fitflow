@@ -1,5 +1,5 @@
 /**
- * POST /api/admin/campaigns/:id/duplicate — Duplicate a campaign.
+ * POST /api/admin/campaigns/:id/duplicate - Duplicate a campaign.
  *
  * Creates a new draft campaign with the same settings, audience filter,
  * template, and params. Recipients are re-populated from the filter.

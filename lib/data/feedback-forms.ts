@@ -2,7 +2,7 @@
  * Feedback Forms Data Access Layer
  *
  * CRUD for feedback forms, responses, and history.
- * Uses supabaseAdmin (service_role) — bypasses RLS.
+ * Uses supabaseAdmin (service_role) - bypasses RLS.
  * Read functions wrapped in cache() for per-request deduplication.
  */
 
@@ -356,7 +356,7 @@ export async function recordFormAction(
 
   if (error) {
     console.error('Error recording form history:', error);
-    // Non-critical — don't throw
+    // Non-critical - don't throw
   }
 }
 

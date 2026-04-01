@@ -4,7 +4,7 @@ import { ORDER_VIEW_ROLES } from '@/lib/auth/permissions';
 import { getCycleItems, createCycleItem, getDeliveryCycleById } from '@/lib/data';
 
 // ============================================================================
-// GET /api/admin/delivery/:id/items — List items for a cycle
+// GET /api/admin/delivery/:id/items - List items for a cycle
 // ============================================================================
 
 export async function GET(
@@ -33,7 +33,7 @@ export async function GET(
 }
 
 // ============================================================================
-// POST /api/admin/delivery/:id/items — Create item
+// POST /api/admin/delivery/:id/items - Create item
 // ============================================================================
 
 export async function POST(

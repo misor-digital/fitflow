@@ -162,7 +162,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         { status: 400 },
       );
     }
-    // Safe cast — validated above
+    // Safe cast - validated above
     const validatedBoxType = boxType as BoxType;
 
     // Validate email format
@@ -406,7 +406,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         );
       }
 
-      // Override client data from preorder record — prevents tampering
+      // Override client data from preorder record - prevents tampering
       effectiveBoxType = preorder.box_type as BoxType;
       effectiveWantsPersonalization = preorder.wants_personalization;
       effectivePreferences = {
@@ -539,7 +539,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           addressId = newAddress.id;
         } catch (addressError) {
           console.error('Failed to save address for authenticated user:', addressError);
-          // Non-fatal — we still have the snapshot for the order
+          // Non-fatal - we still have the snapshot for the order
         }
       }
     } else {
@@ -646,7 +646,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         );
       } catch (promoError) {
         console.warn('Failed to increment promo code usage:', promoError);
-        // Non-fatal — the order was saved successfully
+        // Non-fatal - the order was saved successfully
       }
     }
 
@@ -712,7 +712,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       // Send via Brevo wrapper (auto-logs to email_send_log)
       const result = await sendTransactionalEmail({
         to: { email: email.trim().toLowerCase(), name: fullName.trim() },
-        subject: 'FitFlow — Поръчката ви е потвърдена!',
+        subject: 'FitFlow - Поръчката ти е потвърдена!',
         htmlContent,
         tags: ['order', preorder ? 'preorder-conversion' : 'confirmation'],
         category: 'order-confirmation',

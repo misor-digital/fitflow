@@ -5,7 +5,7 @@ import { markCycleDelivered, archiveCycle, getDeliveryCycleById } from '@/lib/da
 import { revalidateDataTag, TAG_DELIVERY } from '@/lib/data/cache-tags';
 
 // ============================================================================
-// POST /api/admin/delivery/:id/status — Change cycle status
+// POST /api/admin/delivery/:id/status - Change cycle status
 // ============================================================================
 
 export async function POST(

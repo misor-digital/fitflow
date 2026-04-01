@@ -7,13 +7,13 @@ import type { EmailOtpType } from '@supabase/supabase-js';
  * Handles the auth callback from Supabase (email confirmations, magic links, password reset).
  *
  * Supports two verification flows:
- *  1. PKCE code exchange  — `?code=<AUTH_CODE>` (OAuth, client-initiated OTP)
- *  2. Token-hash verify   — `?token_hash=<HASH>&type=<OTP_TYPE>` (server-generated magic links)
+ *  1. PKCE code exchange  - `?code=<AUTH_CODE>` (OAuth, client-initiated OTP)
+ *  2. Token-hash verify   - `?token_hash=<HASH>&type=<OTP_TYPE>` (server-generated magic links)
  *
  * Error codes:
- *  - missing_code    — neither `code` nor `token_hash` present
- *  - code_expired    — the auth code / token was already used or has expired
- *  - exchange_failed — generic verification failure
+ *  - missing_code    - neither `code` nor `token_hash` present
+ *  - code_expired    - the auth code / token was already used or has expired
+ *  - exchange_failed - generic verification failure
  */
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);

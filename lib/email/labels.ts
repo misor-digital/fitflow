@@ -1,6 +1,6 @@
 /**
  * Centralized label resolution for email templates.
- * Single source of truth — all email senders call this instead of
+ * Single source of truth - all email senders call this instead of
  * assembling label maps manually.
  */
 
@@ -13,15 +13,16 @@ import type { EmailLabelMaps } from './templates';
  * Call once per email-sending flow, then pass the result to template functions.
  */
 export async function resolveEmailLabels(): Promise<EmailLabelMaps> {
-  const [boxTypes, sports, flavors, dietary, colors] = await Promise.all([
+  const [boxTypes, sports, flavors, dietary, colors, sizes] = await Promise.all([
     getBoxTypeNames(),
     getOptionLabels('sports'),
     getOptionLabels('flavors'),
     getOptionLabels('dietary'),
     getColorNames(),
+    getOptionLabels('sizes'),
   ]);
 
-  return { boxTypes, sports, flavors, dietary, colors, contents: {} };
+  return { boxTypes, sports, flavors, dietary, colors, contents: {}, sizes };
 }
 
 /** Static display labels for subscription frequency values */

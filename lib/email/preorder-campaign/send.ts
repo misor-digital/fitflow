@@ -1,12 +1,12 @@
 /**
- * Preorder Campaign — Send Orchestrator
+ * Preorder Campaign - Send Orchestrator
  *
  * Server-only module that orchestrates the conversion email send:
  * fetches eligible recipients, renders templates, and either sends
  * via Brevo (live) or logs only (dry-run).
  *
  * - Live sends go through `sendTransactionalEmail` which already
- *   logs to `email_send_log` via its wired callback — no double-logging.
+ *   logs to `email_send_log` via its wired callback - no double-logging.
  * - Dry-run sends log directly via `logEmailSent` with a distinct
  *   category ('preorder-conversion-dry-run') for easy identification.
  * - Sequential processing with a delay between sends to respect
@@ -19,13 +19,14 @@ import { getEligiblePreorderRecipients } from './recipients';
 import { renderPreorderEmail } from './template';
 import { sendTransactionalEmail } from '@/lib/email/brevo/transactional';
 import { logEmailSent } from '@/lib/data/email-log';
+import { getOptionLabels, getColorNames } from '@/lib/data/catalog';
 import type { EmailSendLogInsert } from '@/lib/supabase/types';
 
 // ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
-const EMAIL_SUBJECT = 'FitFlow — Твоята кутия е готова!';
+const EMAIL_SUBJECT = 'FitFlow - Твоята кутия е готова!';
 const EMAIL_CATEGORY = 'preorder-conversion';
 const DRY_RUN_CATEGORY = 'preorder-conversion-dry-run';
 
@@ -78,6 +79,16 @@ export async function sendPreorderConversionEmails(options: {
 }): Promise<SendResult> {
   const { dryRun, includeIds } = options;
 
+  // Step 0: Preload catalog labels for Bulgarian display
+  const [sportLabels, flavorLabels, dietaryLabels, sizeLabels, colorNames] = await Promise.all([
+    getOptionLabels('sports'),
+    getOptionLabels('flavors'),
+    getOptionLabels('dietary'),
+    getOptionLabels('sizes'),
+    getColorNames(),
+  ]);
+  const labelMaps = { sportLabels, flavorLabels, dietaryLabels, sizeLabels, colorNames };
+
   // Step 1: Fetch eligible recipients (optionally scoped by includeIds)
   const allRecipients = await getEligiblePreorderRecipients();
   const recipients = includeIds
@@ -107,7 +118,7 @@ export async function sendPreorderConversionEmails(options: {
     try {
       if (dryRun) {
         // Render the template to validate it works
-        renderPreorderEmail(recipient);
+        renderPreorderEmail(recipient, labelMaps);
 
         // Log to email_send_log with dry-run category
         const logEntry: EmailSendLogInsert = {
@@ -138,9 +149,9 @@ export async function sendPreorderConversionEmails(options: {
         });
       } else {
         // Render the final HTML
-        const html = renderPreorderEmail(recipient);
+        const html = renderPreorderEmail(recipient, labelMaps);
 
-        // Send via Brevo — the callback already logs to email_send_log
+        // Send via Brevo - the callback already logs to email_send_log
         const result = await sendTransactionalEmail({
           to: { email: recipient.email, name: recipient.fullName },
           subject: EMAIL_SUBJECT,

@@ -2,7 +2,7 @@
  * Cron Notification Helpers
  *
  * Email notifications for automated order generation results.
- * Uses Brevo template emails — templates must be created in the Brevo dashboard.
+ * Uses Brevo template emails - templates must be created in the Brevo dashboard.
  */
 
 import { sendTransactionalTemplateEmail } from '@/lib/email/brevo';
@@ -25,7 +25,7 @@ const CRON_TEMPLATE_IDS = {
  */
 export async function sendCronErrorNotification(result: GenerationResult): Promise<void> {
   if (!CRON_TEMPLATE_IDS.errors) {
-    console.warn('[CRON] Skipping error notification — BREVO_CRON_ERRORS_TEMPLATE_ID not configured');
+    console.warn('[CRON] Skipping error notification - BREVO_CRON_ERRORS_TEMPLATE_ID not configured');
     return;
   }
 
@@ -47,7 +47,7 @@ export async function sendCronErrorNotification(result: GenerationResult): Promi
       category: 'cron-errors',
     });
   } catch (emailError) {
-    // Don't let email failure cascade — just log it
+    // Don't let email failure cascade - just log it
     console.error('[CRON] Failed to send error notification email:', emailError);
   }
 }
@@ -57,7 +57,7 @@ export async function sendCronErrorNotification(result: GenerationResult): Promi
  */
 export async function sendCronSuccessNotification(result: GenerationResult): Promise<void> {
   if (!CRON_TEMPLATE_IDS.success) {
-    console.warn('[CRON] Skipping success notification — BREVO_CRON_SUCCESS_TEMPLATE_ID not configured');
+    console.warn('[CRON] Skipping success notification - BREVO_CRON_SUCCESS_TEMPLATE_ID not configured');
     return;
   }
 
@@ -86,7 +86,7 @@ export async function sendCronSuccessNotification(result: GenerationResult): Pro
  */
 export async function sendCronFailureNotification(error: unknown): Promise<void> {
   if (!CRON_TEMPLATE_IDS.failure) {
-    console.warn('[CRON] Skipping failure notification — BREVO_CRON_FAILURE_TEMPLATE_ID not configured');
+    console.warn('[CRON] Skipping failure notification - BREVO_CRON_FAILURE_TEMPLATE_ID not configured');
     return;
   }
 

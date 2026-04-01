@@ -2,7 +2,7 @@
  * Delivery Cycles Data Access Layer
  *
  * Server-only CRUD functions for delivery_cycles and delivery_cycle_items.
- * Uses supabaseAdmin (service_role) — bypasses RLS.
+ * Uses supabaseAdmin (service_role) - bypasses RLS.
  * Read functions are wrapped in React.cache() for per-request deduplication.
  */
 
@@ -34,7 +34,7 @@ const DELIVERY_CONFIG_KEYS = [
 type DeliveryConfigKey = (typeof DELIVERY_CONFIG_KEYS)[number];
 
 // ============================================================================
-// Delivery Cycle — Read (cached)
+// Delivery Cycle - Read (cached)
 // ============================================================================
 
 /**
@@ -63,7 +63,7 @@ export const getDeliveryCycles = cache(
 
 /**
  * Get a single delivery cycle by ID.
- * Reads from the cached cycle list — no extra DB call.
+ * Reads from the cached cycle list - no extra DB call.
  */
 export const getDeliveryCycleById = cache(
   async (id: string): Promise<DeliveryCycleRow | null> => {
@@ -171,8 +171,17 @@ export const getDeliveredCycles = cache(
   },
 );
 
+/**
+ * Returns the most recently delivered cycle (newest delivery_date).
+ * Used as the default filter for order-to-subscription conversion campaigns.
+ */
+export async function getPreviousDeliveredCycle(): Promise<DeliveryCycleRow | null> {
+  const delivered = await getDeliveredCycles();
+  return delivered[0] ?? null;
+}
+
 // ============================================================================
-// Delivery Cycle — Write
+// Delivery Cycle - Write
 // ============================================================================
 
 /**
@@ -338,7 +347,7 @@ export async function revealCycle(id: string): Promise<DeliveryCycleRow> {
       'Error activating REVEALED_BOX_ENABLED:',
       configError,
     );
-    // Non-fatal — cycle was already revealed
+    // Non-fatal - cycle was already revealed
   }
 
   return cycle;
@@ -361,7 +370,7 @@ export async function archiveCycle(id: string): Promise<void> {
 }
 
 // ============================================================================
-// Delivery Cycle Items — Read (cached)
+// Delivery Cycle Items - Read (cached)
 // ============================================================================
 
 /**
@@ -406,7 +415,7 @@ export async function getCycleItemById(
 }
 
 // ============================================================================
-// Delivery Cycle Items — Write
+// Delivery Cycle Items - Write
 // ============================================================================
 
 /**
@@ -547,7 +556,7 @@ export const getDeliveryConfigMap = cache(
 
       if (error) {
         console.error('Error fetching delivery config:', error);
-        // Return empty map instead of throwing — allows ISR pages to
+        // Return empty map instead of throwing - allows ISR pages to
         // prerender gracefully when Supabase is unreachable (e.g. CI).
         return {} as Record<string, string | null>;
       }

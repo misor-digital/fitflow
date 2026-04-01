@@ -104,7 +104,7 @@ export default function OrderStepConfirm({
                       ? 'bg-orange-100 text-orange-700'
                       : 'bg-gray-100 text-gray-700'
                 }`}>
-                  {isSubscription ? 'Абонамент' : isRevealedBox ? 'Еднократна — разкрита кутия' : 'Еднократна'}
+                  {isSubscription ? 'Абонамент' : isRevealedBox ? 'Еднократна - разкрита кутия' : 'Еднократна'}
                 </span>
                 {isPremium && (
                   <span className="inline-block text-xs px-2 py-0.5 rounded-full font-semibold bg-[var(--color-brand-orange)]/10 text-[var(--color-brand-orange)]">
@@ -152,7 +152,7 @@ export default function OrderStepConfirm({
             </div>
             <div className="space-y-2">
               <p className="text-sm sm:text-base text-gray-600">
-                Разкрита кутия — съдържанието е фиксирано
+                Разкрита кутия - съдържанието е фиксирано
               </p>
               <div className="flex items-center gap-2 text-sm text-[var(--color-brand-navy)]">
                 <svg className="w-4 h-4 text-[var(--color-brand-orange)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">

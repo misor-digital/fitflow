@@ -49,12 +49,12 @@ export default async function EmailDashboardPage() {
         </div>
       </div>
 
-      {/* Section 0 — System Health */}
+      {/* Section 0 - System Health */}
       <section className="mb-8">
         <EmailHealthCard />
       </section>
 
-      {/* Section 1 — Monthly Usage */}
+      {/* Section 1 - Monthly Usage */}
       <section className="mb-8">
         <EmailUsageCard
           sent={usage.total_sent}
@@ -63,7 +63,7 @@ export default async function EmailDashboardPage() {
         />
       </section>
 
-      {/* Section 2 — Summary Stats */}
+      {/* Section 2 - Summary Stats */}
       <section className="mb-8">
         <h2 className="text-lg font-semibold text-[var(--color-brand-navy)] mb-4">
           Обобщение
@@ -82,7 +82,7 @@ export default async function EmailDashboardPage() {
         />
       </section>
 
-      {/* Section 3 — Email Log */}
+      {/* Section 3 - Email Log */}
       <section>
         <h2 className="text-lg font-semibold text-[var(--color-brand-navy)] mb-4">
           Имейл Лог

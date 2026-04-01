@@ -7,7 +7,7 @@ ALTER TABLE orders
   ADD COLUMN delivery_cycle_id UUID REFERENCES delivery_cycles(id) ON DELETE SET NULL,
   ADD COLUMN order_type TEXT NOT NULL DEFAULT 'direct';
 
-COMMENT ON COLUMN orders.delivery_cycle_id IS 'FK to delivery cycle — set for subscription-generated, mystery, and revealed orders';
+COMMENT ON COLUMN orders.delivery_cycle_id IS 'FK to delivery cycle - set for subscription-generated, mystery, and revealed orders';
 COMMENT ON COLUMN orders.order_type IS 'Order origin: subscription (auto-generated), onetime-mystery (ships with cycle batch), onetime-revealed (ships ASAP, past cycle contents), direct (legacy/standard)';
 
 -- Index for querying orders by cycle

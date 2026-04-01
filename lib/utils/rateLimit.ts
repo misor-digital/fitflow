@@ -23,7 +23,7 @@ export async function checkRateLimit(
 
     if (error) {
       console.error('Rate limit check failed:', error);
-      return true; // Fail open — don't block requests if rate limiting fails
+      return true; // Fail open - don't block requests if rate limiting fails
     }
 
     return data as boolean;

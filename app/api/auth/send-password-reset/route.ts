@@ -55,7 +55,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       });
 
     if (linkError || !linkData?.properties?.hashed_token) {
-      // User may not exist — always return success to prevent enumeration
+      // User may not exist - always return success to prevent enumeration
       console.warn('[send-password-reset] generateLink failed:', linkError);
       return NextResponse.json({ success: true });
     }
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     await sendTransactionalEmail({
       to: { email: normalizedEmail, name: name.trim() },
-      subject: 'FitFlow — Нулиране на парола',
+      subject: 'FitFlow - Нулиране на парола',
       htmlContent,
       tags: ['auth', 'password-reset'],
       category: 'password-reset',
