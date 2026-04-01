@@ -8,7 +8,7 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin, AdminApiError } from '@/lib/auth/admin';
 import {
-  getEligibleOrderConversionRecipients,
+  getAllCampaignRecipients,
   sendOrderConversionEmails,
 } from '@/lib/email/order-subscription-campaign';
 import { getDeliveredCycles } from '@/lib/data/delivery-cycles';
@@ -34,7 +34,7 @@ export async function GET(request: Request): Promise<NextResponse> {
     const { searchParams } = new URL(request.url);
     const cycleId = searchParams.get('cycleId') || undefined;
 
-    const recipients = await getEligibleOrderConversionRecipients(cycleId);
+    const recipients = await getAllCampaignRecipients(cycleId);
 
     const cycles = await getDeliveredCycles();
 
@@ -48,13 +48,14 @@ export async function GET(request: Request): Promise<NextResponse> {
       boxType: r.boxType,
       boxName: r.boxName,
       conversionUrl: r.conversionUrl,
+      conversionToken: r.subscriptionConversionToken ?? null,
       wantsPersonalization: r.wantsPersonalization,
       promoCode: r.promoCode,
       originalPriceEur: r.originalPriceEur,
       finalPriceEur: r.finalPriceEur,
       originalPriceBgn: r.originalPriceBgn,
       finalPriceBgn: r.finalPriceBgn,
-      conversionStatus: r.subscriptionConversionToken ? 'sent' : 'none',
+      conversionStatus: r.conversionStatus,
     }));
 
     return NextResponse.json({

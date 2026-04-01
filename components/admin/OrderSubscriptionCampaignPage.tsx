@@ -16,6 +16,7 @@ interface Recipient {
   boxType: string;
   boxName: string;
   conversionUrl: string;
+  conversionToken: string | null;
   wantsPersonalization: boolean;
   promoCode: string | null;
   originalPriceEur: number;
@@ -84,6 +85,7 @@ export default function OrderSubscriptionCampaignPage() {
   const [boxTypeFilter, setBoxTypeFilter] = useState<Set<string>>(new Set());
   const [accountFilter, setAccountFilter] = useState<AccountFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   /* ---- Derived: box types present in data ---- */
   const availableBoxTypes = useMemo(
@@ -111,10 +113,16 @@ export default function OrderSubscriptionCampaignPage() {
     });
   }, [recipients, boxTypeFilter, accountFilter, searchQuery]);
 
+  /* ---- Derived: sendable recipients (not yet converted) ---- */
+  const sendableFilteredRecipients = useMemo(
+    () => filteredRecipients.filter((r) => r.conversionStatus !== 'converted'),
+    [filteredRecipients],
+  );
+
   /* ---- Derived: selected within filtered ---- */
   const selectedFilteredRecipients = useMemo(
-    () => filteredRecipients.filter((r) => selectedIds.has(r.orderId)),
-    [filteredRecipients, selectedIds],
+    () => sendableFilteredRecipients.filter((r) => selectedIds.has(r.orderId)),
+    [sendableFilteredRecipients, selectedIds],
   );
 
   /* ---- Derived: stats ---- */
@@ -129,23 +137,23 @@ export default function OrderSubscriptionCampaignPage() {
 
   /* ---- Selection helpers ---- */
   const allFilteredSelected =
-    filteredRecipients.length > 0 &&
-    filteredRecipients.every((r) => selectedIds.has(r.orderId));
+    sendableFilteredRecipients.length > 0 &&
+    sendableFilteredRecipients.every((r) => selectedIds.has(r.orderId));
 
   const someFilteredSelected =
-    !allFilteredSelected && filteredRecipients.some((r) => selectedIds.has(r.orderId));
+    !allFilteredSelected && sendableFilteredRecipients.some((r) => selectedIds.has(r.orderId));
 
   const toggleSelectAll = useCallback(() => {
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (allFilteredSelected) {
-        for (const r of filteredRecipients) next.delete(r.orderId);
+        for (const r of sendableFilteredRecipients) next.delete(r.orderId);
       } else {
-        for (const r of filteredRecipients) next.add(r.orderId);
+        for (const r of sendableFilteredRecipients) next.add(r.orderId);
       }
       return next;
     });
-  }, [allFilteredSelected, filteredRecipients]);
+  }, [allFilteredSelected, sendableFilteredRecipients]);
 
   const toggleSelectOne = useCallback((id: string) => {
     setSelectedIds((prev) => {
@@ -161,6 +169,30 @@ export default function OrderSubscriptionCampaignPage() {
     setAccountFilter('all');
     setSearchQuery('');
   }, []);
+
+  /* ---- Copy conversion link ---- */
+  const buildConversionUrl = useCallback(
+    (token: string) => {
+      const base = `${window.location.origin}/subscription/convert?token=${token}`;
+      const promo = campaignPromoCode.trim();
+      return promo ? `${base}&promo=${encodeURIComponent(promo)}` : base;
+    },
+    [campaignPromoCode],
+  );
+
+  const handleCopyLink = useCallback(
+    async (r: Recipient) => {
+      if (!r.conversionToken) return;
+      try {
+        await navigator.clipboard.writeText(buildConversionUrl(r.conversionToken));
+        setCopiedId(r.orderId);
+        setTimeout(() => setCopiedId((prev) => (prev === r.orderId ? null : prev)), 2000);
+      } catch {
+        // Fallback: ignore clipboard errors
+      }
+    },
+    [buildConversionUrl],
+  );
 
   /* ---- Fetch recipients ---- */
   const fetchRecipients = useCallback(async (cycleId?: string) => {
@@ -178,8 +210,12 @@ export default function OrderSubscriptionCampaignPage() {
 
       setRecipients(data.recipients);
       if (data.cycles) setCycles(data.cycles);
-      // Select all by default
-      setSelectedIds(new Set((data.recipients as Recipient[]).map((r) => r.orderId)));
+      // Select all sendable (non-converted) by default
+      setSelectedIds(new Set(
+        (data.recipients as Recipient[])
+          .filter((r) => r.conversionStatus !== 'converted')
+          .map((r) => r.orderId),
+      ));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Грешка при зареждане');
     } finally {
@@ -246,7 +282,7 @@ export default function OrderSubscriptionCampaignPage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">
-          Конвертиране поръчка → абонамент
+          Кампания за конвертиране на поръчки в абонаменти
         </h1>
         <p className="mt-1 text-sm text-gray-600">
           Изпращане на имейли за конвертиране на еднократни поръчки в абонаменти.
@@ -537,7 +573,7 @@ export default function OrderSubscriptionCampaignPage() {
                     title="Избери / Премахни всички"
                   />
                 </th>
-                {['Поръчка #', 'Имейл', 'Име', 'Тип кутия', 'Цена', 'Акаунт', 'Конверсия'].map(
+                {['Поръчка #', 'Имейл', 'Име', 'Тип кутия', 'Цена', 'Акаунт', 'Конверсия', 'Линк'].map(
                   (header) => (
                     <th
                       key={header}
@@ -550,18 +586,25 @@ export default function OrderSubscriptionCampaignPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 bg-white">
-              {filteredRecipients.map((r) => (
+              {filteredRecipients.map((r) => {
+                const isConverted = r.conversionStatus === 'converted';
+                return (
                 <tr
                   key={r.orderId}
-                  onClick={() => toggleSelectOne(r.orderId)}
-                  className={`cursor-pointer transition-colors ${
-                    selectedIds.has(r.orderId) ? 'bg-orange-50' : 'even:bg-gray-50 hover:bg-gray-100'
+                  onClick={() => !isConverted && toggleSelectOne(r.orderId)}
+                  className={`transition-colors ${
+                    isConverted
+                      ? 'bg-green-50/50 opacity-60'
+                      : selectedIds.has(r.orderId)
+                        ? 'bg-orange-50 cursor-pointer'
+                        : 'even:bg-gray-50 hover:bg-gray-100 cursor-pointer'
                   }`}
                 >
                   <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
                     <input
                       type="checkbox"
                       checked={selectedIds.has(r.orderId)}
+                      disabled={isConverted}
                       onChange={() => toggleSelectOne(r.orderId)}
                       className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
                     />
@@ -583,8 +626,50 @@ export default function OrderSubscriptionCampaignPage() {
                   <td className="px-4 py-3 text-sm">
                     <ConversionBadge status={r.conversionStatus} />
                   </td>
+                  <td className="px-4 py-3 text-sm" onClick={(e) => e.stopPropagation()}>
+                    {r.conversionToken ? (
+                      <div className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => handleCopyLink(r)}
+                          title="Копирай линк"
+                          className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded px-2 py-1 transition-colors"
+                        >
+                          {copiedId === r.orderId ? (
+                            <>
+                              <svg className="w-3.5 h-3.5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                              </svg>
+                              <span className="text-green-600">Копиран</span>
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                              </svg>
+                              Копирай
+                            </>
+                          )}
+                        </button>
+                        <a
+                          href={buildConversionUrl(r.conversionToken)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Отвори в нов таб"
+                          className="inline-flex items-center text-xs text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded px-1.5 py-1 transition-colors"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                          </svg>
+                        </a>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-gray-400">—</span>
+                    )}
+                  </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>

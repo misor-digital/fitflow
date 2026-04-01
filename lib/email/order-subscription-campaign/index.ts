@@ -12,7 +12,7 @@
  * 'order-to-sub-conversion-dry-run' can be kept for historical records.
  */
 
-export { getEligibleOrderConversionRecipients } from './recipients';
+export { getEligibleOrderConversionRecipients, getAllCampaignRecipients } from './recipients';
 export type { OrderConversionRecipient } from './recipients';
 
 export { renderOrderConversionEmail } from './template';
