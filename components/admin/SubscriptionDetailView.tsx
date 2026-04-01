@@ -68,6 +68,7 @@ interface SubscriptionDetailViewProps {
   linkedOrders: OrderRow[];
   boxTypeName: string;
   defaultAddress: AddressRow | null;
+  allAddresses: AddressRow[];
   canManage: boolean;
   userName: string;
   userEmail: string;
@@ -85,6 +86,7 @@ export function SubscriptionDetailView({
   linkedOrders,
   boxTypeName,
   defaultAddress,
+  allAddresses,
   canManage,
   userName,
   userEmail,
@@ -104,6 +106,10 @@ export function SubscriptionDetailView({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [expandedHistoryId, setExpandedHistoryId] = useState<string | null>(null);
+  const [showAddressPicker, setShowAddressPicker] = useState(false);
+  const [selectedAddressId, setSelectedAddressId] = useState<string | null>(
+    subscription.default_address_id ?? null,
+  );
 
   // ============================================================================
   // Admin Actions
@@ -178,12 +184,26 @@ export function SubscriptionDetailView({
     executeAction(confirmModal.action, body);
   };
 
+  const handleSaveAddress = () => {
+    executeAction('update_address', {
+      action: 'update_address',
+      addressId: selectedAddressId,
+    });
+    setShowAddressPicker(false);
+  };
+
   // ============================================================================
   // Helpers
   // ============================================================================
 
   function formatAddress(addr: AddressRow): string {
-    const parts = [addr.street_address, addr.city, addr.postal_code];
+    if (addr.delivery_method === 'speedy_office') {
+      const name = addr.speedy_office_name ?? 'Speedy офис';
+      return addr.speedy_office_address
+        ? `📦 ${name} — ${addr.speedy_office_address}`
+        : `📦 ${name}`;
+    }
+    const parts = [addr.street_address, addr.city, addr.postal_code].filter(Boolean);
     if (addr.building_entrance) parts.push(`вх. ${addr.building_entrance}`);
     if (addr.floor) parts.push(`ет. ${addr.floor}`);
     if (addr.apartment) parts.push(`ап. ${addr.apartment}`);
@@ -282,7 +302,22 @@ export function SubscriptionDetailView({
           <InfoItem label="Стартиран" value={formatDeliveryDate(subscription.started_at)} />
           <InfoItem
             label="Адрес"
-            value={defaultAddress ? formatAddress(defaultAddress) : 'Не е зададен'}
+            value={
+              defaultAddress ? (
+                <span className="flex items-center gap-2">
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded ${
+                    defaultAddress.delivery_method === 'speedy_office'
+                      ? 'bg-orange-100 text-orange-800'
+                      : 'bg-blue-100 text-blue-800'
+                  }`}>
+                    {defaultAddress.delivery_method === 'speedy_office' ? 'Speedy офис' : 'До адрес'}
+                  </span>
+                  <span>{formatAddress(defaultAddress)}</span>
+                </span>
+              ) : (
+                'Не е зададен'
+              )
+            }
           />
           {subscription.first_cycle_id && (
             <InfoItem
@@ -397,6 +432,18 @@ export function SubscriptionDetailView({
                   className="bg-gray-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-600 transition-colors disabled:opacity-50"
                 >
                   ⏹ Изтичане
+                </button>
+              )}
+              {canManage && (
+                <button
+                  onClick={() => {
+                    setSelectedAddressId(subscription.default_address_id ?? null);
+                    setShowAddressPicker(true);
+                  }}
+                  disabled={isPending}
+                  className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                >
+                  📍 Промени адрес
                 </button>
               )}
               {derivedState.isCancelled && (
@@ -530,6 +577,92 @@ export function SubscriptionDetailView({
           </div>
         )}
       </div>
+
+      {/* ================================================================ */}
+      {/* Address Picker Modal */}
+      {/* ================================================================ */}
+      {showAddressPicker && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowAddressPicker(false)} />
+          <div className="relative bg-white rounded-xl shadow-xl p-6 max-w-lg w-full mx-4 max-h-[80vh] overflow-y-auto">
+            <h3 className="text-lg font-bold text-[var(--color-brand-navy)] mb-4">
+              Промяна на адрес за абонамент
+            </h3>
+
+            <div className="space-y-2">
+              {/* No address option */}
+              <label className="flex items-start gap-3 p-3 rounded-lg border cursor-pointer hover:bg-gray-50 transition-colors" style={{ borderColor: selectedAddressId === null ? 'var(--color-brand-navy)' : undefined }}>
+                <input
+                  type="radio"
+                  name="address"
+                  checked={selectedAddressId === null}
+                  onChange={() => setSelectedAddressId(null)}
+                  className="mt-1"
+                />
+                <span className="text-sm text-gray-600">Без адрес</span>
+              </label>
+
+              {allAddresses.map((addr) => (
+                <label
+                  key={addr.id}
+                  className="flex items-start gap-3 p-3 rounded-lg border cursor-pointer hover:bg-gray-50 transition-colors"
+                  style={{ borderColor: selectedAddressId === addr.id ? 'var(--color-brand-navy)' : undefined }}
+                >
+                  <input
+                    type="radio"
+                    name="address"
+                    checked={selectedAddressId === addr.id}
+                    onChange={() => setSelectedAddressId(addr.id)}
+                    className="mt-1"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {addr.label && (
+                        <span className="text-sm font-semibold text-gray-900">{addr.label}</span>
+                      )}
+                      <span
+                        className={`text-xs font-semibold px-2 py-0.5 rounded ${
+                          addr.delivery_method === 'speedy_office'
+                            ? 'bg-orange-100 text-orange-800'
+                            : 'bg-blue-100 text-blue-800'
+                        }`}
+                      >
+                        {addr.delivery_method === 'speedy_office' ? 'Speedy офис' : 'До адрес'}
+                      </span>
+                      {addr.is_default && (
+                        <span className="text-xs font-semibold px-2 py-0.5 rounded bg-green-100 text-green-800">
+                          По подразбиране
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-gray-600 mt-1">{formatAddress(addr)}</p>
+                    {addr.phone && (
+                      <p className="text-xs text-gray-400 mt-0.5">Тел: {addr.phone}</p>
+                    )}
+                  </div>
+                </label>
+              ))}
+            </div>
+
+            <div className="flex gap-3 justify-end mt-4">
+              <button
+                onClick={() => setShowAddressPicker(false)}
+                className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50"
+                disabled={isPending}
+              >
+                Отказ
+              </button>
+              <button
+                onClick={handleSaveAddress}
+                disabled={isPending}
+                className="px-4 py-2 text-sm bg-[var(--color-brand-navy)] text-white rounded-lg font-semibold hover:opacity-90 disabled:opacity-50"
+              >
+                {isPending ? 'Запазва се...' : 'Запази'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ================================================================ */}
       {/* Confirmation Modal */}
