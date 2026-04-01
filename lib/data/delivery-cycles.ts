@@ -171,6 +171,15 @@ export const getDeliveredCycles = cache(
   },
 );
 
+/**
+ * Returns the most recently delivered cycle (newest delivery_date).
+ * Used as the default filter for order-to-subscription conversion campaigns.
+ */
+export async function getPreviousDeliveredCycle(): Promise<DeliveryCycleRow | null> {
+  const delivered = await getDeliveredCycles();
+  return delivered[0] ?? null;
+}
+
 // ============================================================================
 // Delivery Cycle — Write
 // ============================================================================
