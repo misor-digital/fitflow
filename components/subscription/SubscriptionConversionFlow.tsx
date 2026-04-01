@@ -122,6 +122,10 @@ export default function SubscriptionConversionFlow({
   const [dietary, setDietary] = useState<string[]>(source.dietary ?? []);
   const [sizeUpper, setSizeUpper] = useState(source.sizeUpper ?? '');
   const [sizeLower, setSizeLower] = useState(source.sizeLower ?? '');
+  const [sportOther, setSportOther] = useState(source.sportOther ?? '');
+  const [flavorOther, setFlavorOther] = useState(source.flavorOther ?? '');
+  const [dietaryOther, setDietaryOther] = useState(source.dietaryOther ?? '');
+  const [additionalNotes, setAdditionalNotes] = useState(source.additionalNotes ?? '');
 
   // ── Validation ──────────────────────────────────────────────────────────
   const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
@@ -220,12 +224,9 @@ export default function SubscriptionConversionFlow({
     if (!fullName.trim() || fullName.trim().length < 2) {
       errors.fullName = 'Името трябва да е поне 2 символа';
     }
-    if (!phone.trim()) {
-      errors.phone = 'Телефонът е задължителен';
-    }
     setContactErrors(errors);
     return Object.keys(errors).length === 0;
-  }, [fullName, phone]);
+  }, [fullName]);
 
   // ── Step 1 → Step 2 ────────────────────────────────────────────────────
   const handleSummaryNext = useCallback(() => {
@@ -296,7 +297,16 @@ export default function SubscriptionConversionFlow({
         boxType: source.boxType,
         frequency,
         wantsPersonalization: source.wantsPersonalization,
-        preferences: { sports, colors, flavors, dietary },
+        preferences: {
+          sports,
+          sportOther: sportOther.trim() || undefined,
+          colors,
+          flavors,
+          flavorOther: flavorOther.trim() || undefined,
+          dietary,
+          dietaryOther: dietaryOther.trim() || undefined,
+          additionalNotes: additionalNotes.trim() || undefined,
+        },
         sizes: { upper: sizeUpper, lower: sizeLower },
         conversionToken: source.conversionToken,
         campaignPromoCode: source.campaignPromoCode,
@@ -361,6 +371,7 @@ export default function SubscriptionConversionFlow({
         router.push('/account/subscriptions');
       } else {
         setSuccess(true);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Неочаквана грешка.');
@@ -651,12 +662,51 @@ export default function SubscriptionConversionFlow({
         {showPreferences && (
           <div className="space-y-4 mt-4 pt-4 border-t">
             {sportOpts.length > 0 && renderCheckboxGroup('Спорт', sportOpts, sports, setSports)}
+            {sports.includes('other') && (
+              <input
+                type="text"
+                value={sportOther}
+                onChange={(e) => setSportOther(e.target.value)}
+                placeholder="Уточнете кой спорт..."
+                className="w-full p-3 border-2 border-gray-300 rounded-lg text-sm text-[var(--color-brand-navy)] focus:border-[var(--color-brand-orange)] focus:outline-none"
+              />
+            )}
             {colorOpts.length > 0 && renderCheckboxGroup('Цветове', colorOpts, colors, setColors)}
             {flavorOpts.length > 0 && renderCheckboxGroup('Вкусове', flavorOpts, flavors, setFlavors)}
+            {flavors.includes('other') && (
+              <input
+                type="text"
+                value={flavorOther}
+                onChange={(e) => setFlavorOther(e.target.value)}
+                placeholder="Уточнете кой вкус..."
+                className="w-full p-3 border-2 border-gray-300 rounded-lg text-sm text-[var(--color-brand-navy)] focus:border-[var(--color-brand-orange)] focus:outline-none"
+              />
+            )}
             {dietaryOpts.length > 0 && renderCheckboxGroup('Хранителни предпочитания', dietaryOpts, dietary, setDietary)}
+            {dietary.includes('other') && (
+              <input
+                type="text"
+                value={dietaryOther}
+                onChange={(e) => setDietaryOther(e.target.value)}
+                placeholder="Уточнете хранителни предпочитания..."
+                className="w-full p-3 border-2 border-gray-300 rounded-lg text-sm text-[var(--color-brand-navy)] focus:border-[var(--color-brand-orange)] focus:outline-none"
+              />
+            )}
             <div className="grid grid-cols-2 gap-4">
               {renderSizeSelect('Размер горе', sizeUpper, setSizeUpper)}
               {renderSizeSelect('Размер долу', sizeLower, setSizeLower)}
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-[var(--color-brand-navy)] mb-2">
+                Има ли нещо, което забравихме да попитаме, но искаш да добавиш?
+              </label>
+              <textarea
+                value={additionalNotes}
+                onChange={(e) => setAdditionalNotes(e.target.value)}
+                placeholder="Напр. алергии, предпочитания, размери..."
+                rows={3}
+                className="w-full p-3 border-2 border-gray-300 rounded-lg text-sm text-[var(--color-brand-navy)] focus:border-[var(--color-brand-orange)] focus:outline-none resize-none"
+              />
             </div>
           </div>
         )}
@@ -709,6 +759,7 @@ export default function SubscriptionConversionFlow({
         {steps.map((s, i) => {
           const isActive = step === s;
           const isCompleted = i < currentIndex;
+          const isClickable = isCompleted;
 
           return (
             <div key={s} className="flex items-center gap-2">
@@ -719,13 +770,20 @@ export default function SubscriptionConversionFlow({
                   }`}
                 />
               )}
-              <div className="flex flex-col items-center gap-1">
+              <button
+                type="button"
+                disabled={!isClickable}
+                onClick={() => isClickable && setStep(s)}
+                className={`flex flex-col items-center gap-1 ${
+                  isClickable ? 'cursor-pointer' : 'cursor-default'
+                }`}
+              >
                 <div
-                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
                     isActive
                       ? 'bg-[var(--color-brand-orange)] text-white'
                       : isCompleted
-                        ? 'bg-[var(--color-brand-orange)]/20 text-[var(--color-brand-orange)]'
+                        ? 'bg-[var(--color-brand-orange)]/20 text-[var(--color-brand-orange)] hover:bg-[var(--color-brand-orange)]/30'
                         : 'bg-gray-200 text-gray-500'
                   }`}
                 >
@@ -744,7 +802,7 @@ export default function SubscriptionConversionFlow({
                 >
                   {labels[i]}
                 </span>
-              </div>
+              </button>
             </div>
           );
         })}
@@ -768,11 +826,12 @@ export default function SubscriptionConversionFlow({
           ) : (
             <>
               <p className="text-gray-600 mb-2">
-                Изпратихме потвърждение и линк за настройка на акаунта ти на{' '}
-                <span className="font-semibold">{source.customerEmail}</span>.
+                Изпратихме потвърждение на{' '}
+                <span className="font-semibold">{source.customerEmail}</span> с линк за преглед на абонамента ти.
               </p>
               <p className="text-gray-500 text-sm">
-                С акаунта си ще можеш да управляваш абонамента, да променяш предпочитанията си и да следиш доставките.
+                Можеш да влезеш в акаунта си по всяко време с магически линк от{' '}
+                <a href="/login" className="text-[var(--color-brand-orange)] underline">страницата за вход</a>.
               </p>
             </>
           )}
@@ -886,7 +945,7 @@ export default function SubscriptionConversionFlow({
                     </div>
                     <div>
                       <p className="font-semibold text-[var(--color-brand-navy)]">
-                        {freq === 'monthly' ? 'Месечен' : 'Сезонен'}
+                        {freq === 'monthly' ? 'Месечна' : 'Сезонна'}
                       </p>
                       <p className="text-sm text-gray-500">{FREQUENCY_LABELS[freq]}</p>
                     </div>
@@ -959,7 +1018,7 @@ export default function SubscriptionConversionFlow({
                   ),
                   hint: 'Имейлът е потвърден чрез линка',
                 })}
-                {renderField('Телефон', 'phone', phone, setPhone, true, contactErrors, { type: 'tel' })}
+                {renderField('Телефон', 'phone', phone, setPhone, false, contactErrors, { type: 'tel' })}
               </div>
             </div>
           )}
@@ -1127,6 +1186,7 @@ export default function SubscriptionConversionFlow({
                 <p>
                   <span className="font-medium">Спорт:</span>{' '}
                   {sports.map((v) => catalogData.labels.sports[v] ?? v).join(', ')}
+                  {sports.includes('other') && sportOther && ` (${sportOther})`}
                 </p>
               )}
               {colors.length > 0 && (
@@ -1139,12 +1199,14 @@ export default function SubscriptionConversionFlow({
                 <p>
                   <span className="font-medium">Вкусове:</span>{' '}
                   {flavors.map((v) => catalogData.labels.flavors[v] ?? v).join(', ')}
+                  {flavors.includes('other') && flavorOther && ` (${flavorOther})`}
                 </p>
               )}
               {dietary.length > 0 && (
                 <p>
                   <span className="font-medium">Диетични:</span>{' '}
                   {dietary.map((v) => catalogData.labels.dietary[v] ?? v).join(', ')}
+                  {dietary.includes('other') && dietaryOther && ` (${dietaryOther})`}
                 </p>
               )}
               {(sizeUpper || sizeLower) && (
@@ -1156,6 +1218,12 @@ export default function SubscriptionConversionFlow({
                   ]
                     .filter(Boolean)
                     .join(', ')}
+                </p>
+              )}
+              {additionalNotes.trim() && (
+                <p>
+                  <span className="font-medium">Допълнително:</span>{' '}
+                  {additionalNotes}
                 </p>
               )}
             </div>
