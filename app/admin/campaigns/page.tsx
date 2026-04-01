@@ -107,6 +107,17 @@ export default async function CampaignsPage({ searchParams }: CampaignsPageProps
         </Link>
       </div>
 
+      {/* Archived campaigns */}
+      <div className="mb-6 flex items-center gap-2 text-sm text-gray-500">
+        <span>📦</span>
+        <Link
+          href="/admin/preorder-campaign"
+          className="hover:text-[var(--color-brand-navy)] hover:underline"
+        >
+          Предварителни поръчки — конверсионна кампания (архив)
+        </Link>
+      </div>
+
       {/* Filters */}
       <form className="flex flex-wrap gap-3 mb-6">
         <select

@@ -218,10 +218,13 @@ export default function PreorderCampaignPage() {
         </p>
       </div>
 
-      {/* Info box */}
-      <div className="rounded-lg bg-blue-50 border border-blue-200 p-4 text-sm text-blue-800">
-        Тази кампания използва локален HTML шаблон и изпраща чрез Brevo (транзакционен имейл).
-        Всички изпратени имейли се записват в лога.
+      {/* Archived banner */}
+      <div className="rounded-lg bg-amber-50 border border-amber-300 p-4 text-sm text-amber-800 flex items-start gap-3">
+        <span className="text-lg">📦</span>
+        <div>
+          <p className="font-semibold">Тази кампания е приключила</p>
+          <p className="mt-0.5">Данните са достъпни за справка. Изпращането на нови имейли е деактивирано.</p>
+        </div>
       </div>
 
       {/* Filter bar */}
@@ -294,23 +297,21 @@ export default function PreorderCampaignPage() {
         </div>
       )}
 
-      {/* Action buttons */}
+      {/* Action buttons (disabled — campaign archived) */}
       <div className="flex items-center gap-3">
         <button
           type="button"
-          disabled={sending || selectedFilteredRecipients.length === 0}
-          onClick={() => handleSend(true)}
-          className="inline-flex items-center gap-2 rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          disabled
+          className="inline-flex items-center gap-2 rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 opacity-50 cursor-not-allowed"
         >
-          {sending ? 'Обработка...' : `🧪 Dry Run (${selectedFilteredRecipients.length})`}
+          🧪 Dry Run ({selectedFilteredRecipients.length})
         </button>
         <button
           type="button"
-          disabled={sending || selectedFilteredRecipients.length === 0}
-          onClick={() => handleSend(false)}
-          className="inline-flex items-center gap-2 rounded-lg bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          disabled
+          className="inline-flex items-center gap-2 rounded-lg bg-gray-300 px-4 py-2 text-sm font-medium text-gray-500 cursor-not-allowed"
         >
-          {sending ? 'Изпращане...' : `📧 Изпрати на ${selectedFilteredRecipients.length} получателя`}
+          📧 Изпращането е деактивирано
         </button>
       </div>
 
