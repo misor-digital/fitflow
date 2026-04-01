@@ -1,5 +1,5 @@
 import { requireStaff } from '@/lib/auth';
-import { CUSTOMER_VIEW_ROLES } from '@/lib/auth/permissions';
+import { CUSTOMER_VIEW_ROLES, STAFF_MANAGEMENT_ROLES } from '@/lib/auth/permissions';
 import {
   getAddressesByUser,
   getSubscriptionsByUser,
@@ -10,25 +10,12 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
-import type { AddressRow, SubscriptionRow, OrderRow, OrderStatus, SubscriptionStatus } from '@/lib/supabase/types';
+import type { SubscriptionRow, OrderRow, OrderStatus, SubscriptionStatus } from '@/lib/supabase/types';
+import AdminAddressManager from '@/components/admin/AdminAddressManager';
 
 export const metadata: Metadata = {
   title: 'Клиент | Администрация | FitFlow',
 };
-
-function formatCustomerAddress(addr: AddressRow): { primary: string; secondary?: string } {
-  if (addr.delivery_method === 'speedy_office') {
-    return {
-      primary: `📦 ${addr.speedy_office_name ?? 'Speedy офис'}`,
-      secondary: addr.speedy_office_address ?? undefined,
-    };
-  }
-  const parts = [addr.street_address, addr.city, addr.postal_code].filter(Boolean);
-  if (addr.building_entrance) parts.push(`вх. ${addr.building_entrance}`);
-  if (addr.floor) parts.push(`ет. ${addr.floor}`);
-  if (addr.apartment) parts.push(`ап. ${addr.apartment}`);
-  return { primary: parts.join(', ') };
-}
 
 const subscriptionStatusMap: Record<SubscriptionStatus, { label: string; className: string }> = {
   active: { label: 'Активен', className: 'bg-green-100 text-green-700' },
@@ -65,8 +52,12 @@ function formatPrice(eur: number | null) {
 }
 
 export default async function CustomerDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireStaff([...CUSTOMER_VIEW_ROLES]);
+  const session = await requireStaff([...CUSTOMER_VIEW_ROLES]);
   const { id } = await params;
+
+  const canManage = session.profile.staff_role
+    ? STAFF_MANAGEMENT_ROLES.has(session.profile.staff_role)
+    : false;
 
   const [profileResult, authResult, addresses, subscriptions, orders, boxTypeNames] = await Promise.all([
     supabaseAdmin.from('user_profiles').select('*').eq('id', id).single(),
@@ -121,46 +112,11 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
       </div>
 
       {/* Section B: Addresses */}
-      <section className="mb-6">
-        <h2 className="text-lg font-semibold text-[var(--color-brand-navy)] mb-3">
-          Адреси ({addresses.length})
-        </h2>
-        {addresses.length === 0 ? (
-          <p className="text-sm text-gray-400">Няма запазени адреси.</p>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {addresses.map((addr: AddressRow) => {
-              const formatted = formatCustomerAddress(addr);
-              return (
-                <div key={addr.id} className="bg-white rounded-xl border border-gray-200 p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="font-medium text-sm text-gray-800">
-                      {addr.label || 'Без етикет'}
-                    </span>
-                    <span className="text-xs text-gray-500">
-                      {addr.delivery_method === 'speedy_office' ? '📦 Speedy' : '📍 Адрес'}
-                    </span>
-                    {addr.is_default && (
-                      <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--color-brand-orange)] text-white">
-                        По подразбиране
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-sm text-gray-700">{addr.full_name}</p>
-                  {addr.phone && <p className="text-sm text-gray-500">{addr.phone}</p>}
-                  <p className="text-sm text-gray-600 mt-1">{formatted.primary}</p>
-                  {formatted.secondary && (
-                    <p className="text-sm text-gray-400">{formatted.secondary}</p>
-                  )}
-                  {addr.delivery_notes && (
-                    <p className="text-xs text-gray-400 mt-1 italic">{addr.delivery_notes}</p>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </section>
+      <AdminAddressManager
+        userId={id}
+        initialAddresses={addresses}
+        canManage={canManage}
+      />
 
       {/* Section C: Subscriptions */}
       <section className="mb-6">
