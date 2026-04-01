@@ -215,6 +215,64 @@ export async function PATCH(
         });
       }
 
+      case 'update_address': {
+        const addressId = body.addressId as string | null;
+
+        // addressId can be null (to clear the address) or a valid UUID
+        if (addressId !== null) {
+          const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+          if (!UUID_REGEX.test(addressId)) {
+            return NextResponse.json(
+              { error: 'Невалиден формат на адрес ID.' },
+              { status: 400 },
+            );
+          }
+
+          // Verify the address exists and belongs to the subscription's user
+          const { getAddressById } = await import('@/lib/data');
+          const address = await getAddressById(addressId, sub.user_id);
+          if (!address) {
+            return NextResponse.json(
+              { error: 'Адресът не е намерен или не принадлежи на потребителя.' },
+              { status: 404 },
+            );
+          }
+        }
+
+        // Update the subscription
+        const { error: updateError } = await supabaseAdmin
+          .from('subscriptions')
+          .update({ default_address_id: addressId })
+          .eq('id', id);
+
+        if (updateError) {
+          console.error('Failed to update subscription address:', updateError);
+          return NextResponse.json(
+            { error: 'Грешка при обновяване на адреса.' },
+            { status: 500 },
+          );
+        }
+
+        // Log to subscription_history
+        await supabaseAdmin.from('subscription_history').insert({
+          subscription_id: id,
+          action: 'address_changed',
+          details: {
+            previous_address_id: sub.default_address_id,
+            new_address_id: addressId,
+            changed_by: 'admin',
+          },
+          performed_by: performedBy,
+        });
+
+        revalidateDataTag(TAG_SUBSCRIPTIONS);
+
+        return NextResponse.json({
+          success: true,
+          message: addressId ? 'Адресът е обновен.' : 'Адресът е премахнат.',
+        });
+      }
+
       case 'expire': {
         if (sub.status === 'expired') {
           return NextResponse.json(
