@@ -15,6 +15,11 @@ import {
   generateSubscriptionCancelledEmail,
   generateDeliveryUpcomingEmail,
 } from '@/lib/email/subscription-templates';
+import {
+  generateSubscriptionConversionEmail,
+  SUBSCRIPTION_CONVERSION_SUBJECT,
+  type SubscriptionConversionEmailData,
+} from '@/lib/email/order-subscription-conversion-email';
 import type { SubscriptionRow } from '@/lib/supabase/types';
 
 /**
@@ -173,5 +178,28 @@ export async function sendDeliveryUpcomingEmail(
     });
   } catch (err) {
     console.error('[EMAIL] delivery-upcoming failed:', err);
+  }
+}
+
+/**
+ * Send combined subscription-conversion + optional account-setup email.
+ */
+export async function sendSubscriptionConversionEmail(
+  data: SubscriptionConversionEmailData & { subscriptionId: string },
+): Promise<void> {
+  try {
+    const htmlContent = generateSubscriptionConversionEmail(data);
+
+    await sendTransactionalEmail({
+      to: { email: data.email, name: data.fullName },
+      subject: SUBSCRIPTION_CONVERSION_SUBJECT,
+      htmlContent,
+      tags: ['subscription', 'order-conversion'],
+      category: 'subscription-conversion',
+      relatedEntityType: 'subscription',
+      relatedEntityId: data.subscriptionId,
+    });
+  } catch (err) {
+    console.error('[EMAIL] subscription-conversion failed:', err);
   }
 }
