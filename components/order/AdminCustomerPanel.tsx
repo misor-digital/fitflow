@@ -7,7 +7,7 @@ interface AdminCustomerPanelProps {
   /** Pre-filled from preorder data via order store */
   defaultFullName: string;
   defaultEmail: string;
-  /** When true, account creation is optional — the admin can skip it */
+  /** When true, account creation is optional - the admin can skip it */
   optional?: boolean;
 }
 
@@ -50,7 +50,7 @@ export default function AdminCustomerPanel({
     }
   }, [fullName]);
 
-  // On mount — auto-lookup
+  // On mount - auto-lookup
   useEffect(() => {
     if (!defaultEmail) {
       setStatus('ready');

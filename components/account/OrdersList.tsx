@@ -144,7 +144,7 @@ export interface OrdersListProps {
   preorders: Preorder[];
   boxTypeNames: Record<string, string>;
   eurToBgnRate: number;
-  /** Status history per order ID — enables inline progress indicator */
+  /** Status history per order ID - enables inline progress indicator */
   statusHistories?: Record<string, OrderStatusHistoryRow[]>;
 }
 
@@ -282,7 +282,7 @@ export function OrdersList({
     }
   }
 
-  // Counts per tab (unfiltered data — unchanged)
+  // Counts per tab (unfiltered data - unchanged)
   const counts = useMemo(() => {
     const onetimeOrders = orders.filter((o) => ONETIME_TYPES.has(o.order_type));
     return {
@@ -297,7 +297,7 @@ export function OrdersList({
     [orders],
   );
 
-  // Filtered items — chain: type filter → date range → status → search → sort
+  // Filtered items - chain: type filter → date range → status → search → sort
   const items: UnifiedItem[] = useMemo(() => {
     // Step 1: type filter
     let result: UnifiedItem[];
@@ -346,7 +346,7 @@ export function OrdersList({
             formatOrderNumber(item.data.order_number).toLowerCase().includes(q)
           );
         }
-        // Preorders — search against order_id
+        // Preorders - search against order_id
         return item.data.order_id?.toLowerCase().includes(q) ?? false;
       });
     }
@@ -534,7 +534,7 @@ export function OrdersList({
                         (h) => h.to_status === step,
                       );
                       const tooltipText = historyEntry
-                        ? `${ORDER_STATUS_LABELS[step]} — ${new Date(historyEntry.created_at).toLocaleDateString('bg-BG', { day: '2-digit', month: '2-digit', year: 'numeric' })}`
+                        ? `${ORDER_STATUS_LABELS[step]} - ${new Date(historyEntry.created_at).toLocaleDateString('bg-BG', { day: '2-digit', month: '2-digit', year: 'numeric' })}`
                         : ORDER_STATUS_LABELS[step];
 
                       return (
@@ -842,7 +842,7 @@ export function OrdersList({
             setSortDirection((prev) => (prev === 'desc' ? 'asc' : 'desc'));
             setVisibleCount(PAGE_SIZE);
           }}
-          aria-label={sortDirection === 'desc' ? 'Сортирай по дата — най-нови първо' : 'Сортирай по дата — най-стари първо'}
+          aria-label={sortDirection === 'desc' ? 'Сортирай по дата - най-нови първо' : 'Сортирай по дата - най-стари първо'}
           className="text-sm text-gray-600 hover:text-gray-900 flex items-center gap-1 transition-colors focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:ring-offset-2 rounded-lg px-2 py-1"
         >
           {sortDirection === 'desc' ? 'Най-нови' : 'Най-стари'}

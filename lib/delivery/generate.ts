@@ -106,7 +106,7 @@ export async function generateSingleOrderForSubscription(
   const cycle = await getDeliveryCycleById(cycleId);
   if (!cycle) throw new Error('Delivery cycle not found.');
 
-  // 3. Idempotency — check if order already exists for this sub + cycle
+  // 3. Idempotency - check if order already exists for this sub + cycle
   const { data: existingOrder } = await supabaseAdmin
     .from('orders')
     .select('id')

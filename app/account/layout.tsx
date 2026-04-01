@@ -5,7 +5,7 @@ import AccountNav from '@/components/AccountNav';
 /**
  * Account section layout.
  *
- * NOTE: Do NOT put auth checks here — layouts don't re-render on navigation.
+ * NOTE: Do NOT put auth checks here - layouts don't re-render on navigation.
  * Each page component must call requireAuth() individually.
  */
 export default function AccountLayout({ children }: { children: React.ReactNode }) {

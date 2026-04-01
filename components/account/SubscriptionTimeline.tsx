@@ -30,10 +30,10 @@ function buildEvents(props: SubscriptionTimelineProps): TimelineEvent[] {
   const { createdAt, status, pastOrders, pausedAt, cancelledAt, nextDeliveryDate } = props;
   const events: TimelineEvent[] = [];
 
-  // 1 — Created
+  // 1 - Created
   events.push({ key: 'created', label: 'Създ.', date: shortDate(createdAt), type: 'completed' });
 
-  // 2 — Delivered cycles from past orders
+  // 2 - Delivered cycles from past orders
   if (pastOrders && pastOrders.length > 0) {
     const sorted = [...pastOrders].sort(
       (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
@@ -69,17 +69,17 @@ function buildEvents(props: SubscriptionTimelineProps): TimelineEvent[] {
     }
   }
 
-  // 3 — Paused
+  // 3 - Paused
   if (pausedAt && status === 'paused') {
     events.push({ key: 'paused', label: 'Пауза', date: shortDate(pausedAt), type: 'paused' });
   }
 
-  // 4 — Cancelled
+  // 4 - Cancelled
   if (cancelledAt && (status === 'cancelled' || status === 'expired')) {
     events.push({ key: 'cancelled', label: 'Отказан', date: shortDate(cancelledAt), type: 'cancelled' });
   }
 
-  // 5 — Next delivery (future)
+  // 5 - Next delivery (future)
   if (status === 'active' && nextDeliveryDate) {
     events.push({ key: 'next', label: 'Следв.', date: shortDate(nextDeliveryDate), type: 'future' });
   }

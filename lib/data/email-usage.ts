@@ -3,7 +3,7 @@
  *
  * Tracks monthly email volume against Brevo plan limits.
  * Starter plan: 5,000 emails/month, no daily cap.
- * Uses supabaseAdmin (service_role) — bypasses RLS.
+ * Uses supabaseAdmin (service_role) - bypasses RLS.
  * Read functions wrapped in React.cache() for per-request deduplication.
  */
 
@@ -131,7 +131,7 @@ export async function canSendEmails(count: number): Promise<UsageCheck> {
   } catch {
     // Fail-closed: block sending when usage check fails.
     // This prevents runaway sends if the DB is unreachable.
-    console.error('Usage check failed — falling back to DENY');
+    console.error('Usage check failed - falling back to DENY');
     return {
       canSend: false,
       remaining: 0,

@@ -487,7 +487,7 @@ export default function OrderSubscriptionCampaignPage() {
       {sendResult && (
         sendResult.dryRun ? (
           <div className="rounded-lg bg-green-50 border border-green-200 p-4 text-sm text-green-800">
-            Dry run завърши — {sendResult.skipped} получателя логнати (без реално изпращане)
+            Dry run завърши - {sendResult.skipped} получателя логнати (без реално изпращане)
           </div>
         ) : (
           <div className="space-y-2">

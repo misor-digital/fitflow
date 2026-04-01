@@ -72,7 +72,7 @@ export default function RegisterForm() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, fullName: fullName.trim() }),
     }).catch(() => {
-      // Non-blocking — Supabase's built-in email serves as fallback
+      // Non-blocking - Supabase's built-in email serves as fallback
       console.warn('Failed to send branded confirmation email');
     });
 

@@ -14,7 +14,7 @@ CREATE TABLE email_campaign_history (
   created_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-COMMENT ON TABLE email_campaign_history IS 'Audit trail for email campaign lifecycle — every state change is logged with the staff member who performed it';
+COMMENT ON TABLE email_campaign_history IS 'Audit trail for email campaign lifecycle - every state change is logged with the staff member who performed it';
 COMMENT ON COLUMN email_campaign_history.action IS 'Campaign action: created, updated, scheduled, started, paused, resumed, cancelled, completed, failed';
 COMMENT ON COLUMN email_campaign_history.changed_by IS 'Staff member UUID who performed this action';
 COMMENT ON COLUMN email_campaign_history.metadata IS 'Action-specific metadata (e.g. {recipientCount, filter, previousStatus, errorDetail})';

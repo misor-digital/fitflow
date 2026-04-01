@@ -87,7 +87,7 @@ export default function OrderFlow({
   }, [hydrated, initialBoxType, propCycleId, propOrderType]);
 
   // ---------------------------------------------------------------------------
-  // Hydration guard — avoid server/client mismatch with sessionStorage
+  // Hydration guard - avoid server/client mismatch with sessionStorage
   // ---------------------------------------------------------------------------
   useEffect(() => {
     const unsub = useOrderStore.persist.onFinishHydration(() => {

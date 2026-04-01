@@ -9,7 +9,7 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import type { Preorder, PreorderConversionStatus } from '@/lib/supabase/types';
 
 // ============================================================================
-// Token-based lookup (NOT cached — security-sensitive)
+// Token-based lookup (NOT cached - security-sensitive)
 // ============================================================================
 
 /**
@@ -187,7 +187,7 @@ export const getPreordersByUser = cache(
 
 /**
  * Get paginated preorders enriched with the converted order's order_number.
- * For the admin legacy view — LEFT JOINs with orders table.
+ * For the admin legacy view - LEFT JOINs with orders table.
  */
 export async function getPreordersWithConversionInfo(
   page: number,

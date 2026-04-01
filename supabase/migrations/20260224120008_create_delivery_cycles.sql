@@ -14,7 +14,7 @@ CREATE TABLE delivery_cycles (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-COMMENT ON TABLE delivery_cycles IS 'Monthly delivery cycles — each row represents one box shipment date';
+COMMENT ON TABLE delivery_cycles IS 'Monthly delivery cycles - each row represents one box shipment date';
 COMMENT ON COLUMN delivery_cycles.delivery_date IS 'The date this cycle ships (e.g. 2026-03-08)';
 COMMENT ON COLUMN delivery_cycles.status IS 'Lifecycle state: upcoming, delivered, archived';
 COMMENT ON COLUMN delivery_cycles.title IS 'Display name (e.g. "Март 2026 кутия")';

@@ -1,5 +1,5 @@
 /**
- * GET /api/admin/emails/health — Email system health check.
+ * GET /api/admin/emails/health - Email system health check.
  *
  * Returns system health metrics for the admin dashboard.
  * Protected by admin auth.

@@ -1,5 +1,5 @@
 /**
- * POST /api/admin/campaigns/:id/start — Start (send) a campaign.
+ * POST /api/admin/campaigns/:id/start - Start (send) a campaign.
  *
  * Transitions the campaign to 'sending' and processes recipients.
  * For small campaigns (< 500 recipients), processing runs in-request.

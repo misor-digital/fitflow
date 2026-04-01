@@ -31,7 +31,7 @@ const RATE_LIMIT_MAX = 20;
 const RATE_LIMIT_WINDOW = 60;
 
 // ============================================================================
-// GET /api/address — List current user's addresses
+// GET /api/address - List current user's addresses
 // ============================================================================
 
 export async function GET(): Promise<NextResponse> {
@@ -56,7 +56,7 @@ export async function GET(): Promise<NextResponse> {
 }
 
 // ============================================================================
-// POST /api/address — Create a new address
+// POST /api/address - Create a new address
 // ============================================================================
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // Parse body
     const body = await request.json();
 
-    // Sanitize — trim all string fields
+    // Sanitize - trim all string fields
     const sanitized = sanitizeAddressBody(body);
 
     // Server-side length validation
@@ -106,7 +106,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // Phone format validation (optional for address, required for speedy — enforced below)
+    // Phone format validation (optional for address, required for speedy - enforced below)
     if (sanitized.phone && !isValidPhone(sanitized.phone)) {
       return NextResponse.json(
         {
@@ -126,7 +126,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     const deliveryMethod = sanitized.deliveryMethod ?? 'address';
 
-    // Domain validation — conditional on delivery method
+    // Domain validation - conditional on delivery method
     if (deliveryMethod === 'speedy_office') {
       const officeSelection: SpeedyOfficeSelection | null =
         sanitized.speedyOfficeId && sanitized.speedyOfficeName
@@ -183,7 +183,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       }
     }
 
-    // Build insert payload — conditional on delivery method
+    // Build insert payload - conditional on delivery method
     const insertData: AddressInsert =
       deliveryMethod === 'speedy_office'
         ? {

@@ -7,7 +7,7 @@ import type { OrderStatus } from '@/lib/supabase/types';
 import { isValidTransition, ALLOWED_TRANSITIONS } from '@/lib/order';
 
 // ============================================================================
-// PATCH /api/admin/order/:id/status — Update order status
+// PATCH /api/admin/order/:id/status - Update order status
 // ============================================================================
 
 export async function PATCH(
@@ -69,7 +69,7 @@ export async function PATCH(
 }
 
 // ============================================================================
-// GET /api/admin/order/:id/status — Get order status history
+// GET /api/admin/order/:id/status - Get order status history
 // ============================================================================
 
 export async function GET(

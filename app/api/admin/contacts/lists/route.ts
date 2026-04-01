@@ -4,7 +4,7 @@ import { getBrevoLists } from '@/lib/email/brevo/contacts';
 import { EMAIL_CONFIG } from '@/lib/email/client';
 
 // ============================================================================
-// GET /api/admin/contacts/lists — Fetch all Brevo lists with stats
+// GET /api/admin/contacts/lists - Fetch all Brevo lists with stats
 // ============================================================================
 
 export async function GET() {

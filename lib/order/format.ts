@@ -45,7 +45,7 @@ export function formatOrderStatus(status: OrderStatus): string {
 
 /**
  * Format an order number for display.
- * Currently identity function — exists for future formatting changes.
+ * Currently identity function - exists for future formatting changes.
  */
 export function formatOrderNumber(orderNumber: string): string {
   return orderNumber;

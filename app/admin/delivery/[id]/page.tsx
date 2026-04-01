@@ -57,7 +57,7 @@ export default async function CycleDetailPage({
       const eligible = await getSubscriptionsForCycle(id);
       eligibleCount = eligible.length;
     } catch {
-      // Non-fatal — will show 0
+      // Non-fatal - will show 0
     }
   }
 

@@ -238,7 +238,7 @@ export default function PromoCodeForm({ initialData }: PromoCodeFormProps) {
           id="promo-description"
           value={formState.description}
           onChange={(e) => update('description', e.target.value)}
-          placeholder="За вътрешно ползване — няма да се показва на клиенти"
+          placeholder="За вътрешно ползване - няма да се показва на клиенти"
           maxLength={500}
           rows={3}
           className={INPUT_CLASS}

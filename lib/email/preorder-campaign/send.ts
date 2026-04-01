@@ -1,12 +1,12 @@
 /**
- * Preorder Campaign — Send Orchestrator
+ * Preorder Campaign - Send Orchestrator
  *
  * Server-only module that orchestrates the conversion email send:
  * fetches eligible recipients, renders templates, and either sends
  * via Brevo (live) or logs only (dry-run).
  *
  * - Live sends go through `sendTransactionalEmail` which already
- *   logs to `email_send_log` via its wired callback — no double-logging.
+ *   logs to `email_send_log` via its wired callback - no double-logging.
  * - Dry-run sends log directly via `logEmailSent` with a distinct
  *   category ('preorder-conversion-dry-run') for easy identification.
  * - Sequential processing with a delay between sends to respect
@@ -26,7 +26,7 @@ import type { EmailSendLogInsert } from '@/lib/supabase/types';
 // Constants
 // ---------------------------------------------------------------------------
 
-const EMAIL_SUBJECT = 'FitFlow — Твоята кутия е готова!';
+const EMAIL_SUBJECT = 'FitFlow - Твоята кутия е готова!';
 const EMAIL_CATEGORY = 'preorder-conversion';
 const DRY_RUN_CATEGORY = 'preorder-conversion-dry-run';
 
@@ -151,7 +151,7 @@ export async function sendPreorderConversionEmails(options: {
         // Render the final HTML
         const html = renderPreorderEmail(recipient, labelMaps);
 
-        // Send via Brevo — the callback already logs to email_send_log
+        // Send via Brevo - the callback already logs to email_send_log
         const result = await sendTransactionalEmail({
           to: { email: recipient.email, name: recipient.fullName },
           subject: EMAIL_SUBJECT,

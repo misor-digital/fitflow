@@ -52,16 +52,16 @@ export default function OrderThankYou() {
   useEffect(() => {
     if (!orderInfo || hasTracked.current) return;
 
-    // Meta Pixel — Lead event (purchase tracking can be added when payments are live)
+    // Meta Pixel - Lead event (purchase tracking can be added when payments are live)
     trackLead();
 
-    // GA4 — generate_lead event
+    // GA4 - generate_lead event
     trackGenerateLead({
       currency: 'EUR',
       value: orderInfo.finalPriceEur ?? 0,
     });
 
-    // GA4 — user properties
+    // GA4 - user properties
     setUserProperties({
       promo_code_used: false, // order completed
     });

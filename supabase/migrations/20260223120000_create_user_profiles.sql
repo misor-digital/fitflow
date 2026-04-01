@@ -54,7 +54,7 @@ CREATE TRIGGER update_user_profiles_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION update_updated_at_column();
 
--- 5. Add user_id column to preorders (nullable — existing rows have no user)
+-- 5. Add user_id column to preorders (nullable - existing rows have no user)
 ALTER TABLE preorders ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL;
 CREATE INDEX IF NOT EXISTS idx_preorders_user_id ON preorders(user_id) WHERE user_id IS NOT NULL;
 
@@ -145,8 +145,8 @@ CREATE TRIGGER on_auth_user_created
   EXECUTE FUNCTION handle_new_user();
 
 -- 9. Comments
-COMMENT ON TABLE user_profiles IS 'Extended profile for auth.users — stores name, type, role, and subscriber flag';
+COMMENT ON TABLE user_profiles IS 'Extended profile for auth.users - stores name, type, role, and subscriber flag';
 COMMENT ON COLUMN user_profiles.user_type IS 'customer or staff';
 COMMENT ON COLUMN user_profiles.staff_role IS 'Staff-only role. NULL for customers. Enforced by CHECK constraint.';
 COMMENT ON COLUMN user_profiles.is_subscriber IS 'Whether the user is subscribed to marketing emails';
-COMMENT ON COLUMN preorders.user_id IS 'FK to auth.users — NULL for anonymous preorders, set when user links their preorder';
+COMMENT ON COLUMN preorders.user_id IS 'FK to auth.users - NULL for anonymous preorders, set when user links their preorder';

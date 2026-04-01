@@ -56,7 +56,7 @@ export async function createOrder(data: OrderInsert): Promise<OrderRow> {
 
   if (historyError) {
     console.error('Error creating initial status history:', historyError);
-    // Non-fatal — the order was already created successfully
+    // Non-fatal - the order was already created successfully
   }
 
   return order;
@@ -124,7 +124,7 @@ export async function updateOrderStatus(
 
   if (historyError) {
     console.error('Error recording status history:', historyError);
-    // Non-fatal — the status was already updated successfully
+    // Non-fatal - the status was already updated successfully
   }
 
   return updated;
@@ -261,7 +261,7 @@ export async function applyPromoToOrder(
 
   if (historyError) {
     console.error('Error recording price change history:', historyError);
-    // Non-fatal — the order was already updated successfully
+    // Non-fatal - the order was already updated successfully
   }
 
   return updated;
@@ -317,7 +317,7 @@ export const getOrderByNumber = cache(
 
 /**
  * Get an order by order number + email combo for guest order tracking.
- * Case-insensitive email comparison. NOT cached — security-sensitive operation.
+ * Case-insensitive email comparison. NOT cached - security-sensitive operation.
  */
 export async function getOrderByNumberAndEmail(
   orderNumber: string,
@@ -417,7 +417,7 @@ export async function getOrderStatusHistoryBatch(
 }
 
 /**
- * Get total order count — for admin dashboard.
+ * Get total order count - for admin dashboard.
  * Cached across requests for 30s (tag: orders).
  */
 export const getOrdersCount = cache(
@@ -441,7 +441,7 @@ export const getOrdersCount = cache(
 );
 
 /**
- * Get paginated orders with optional filters — for admin order management.
+ * Get paginated orders with optional filters - for admin order management.
  * `search` matches against order_number, customer_email, and customer_full_name.
  */
 export const getOrdersPaginated = cache(

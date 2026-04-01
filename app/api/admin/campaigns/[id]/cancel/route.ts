@@ -1,5 +1,5 @@
 /**
- * POST /api/admin/campaigns/:id/cancel — Cancel a campaign.
+ * POST /api/admin/campaigns/:id/cancel - Cancel a campaign.
  *
  * Can cancel from any active (non-terminal) status: draft, scheduled,
  * sending, or paused. Terminal statuses (sent, cancelled, failed) cannot

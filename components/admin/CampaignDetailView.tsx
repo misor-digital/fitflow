@@ -212,7 +212,7 @@ export default function CampaignDetailView({
   }
 
   function handleRestart() {
-    // Create a copy — redirect to create page with pre-filled type
+    // Create a copy - redirect to create page with pre-filled type
     router.push(`/admin/campaigns/create`);
   }
 
@@ -363,7 +363,7 @@ export default function CampaignDetailView({
     );
   }
 
-  // Duplicate button — available for all statuses
+  // Duplicate button - available for all statuses
   actionButtons.push(
     <button
       key="duplicate"

@@ -12,10 +12,10 @@ CREATE TABLE subscription_history (
 );
 
 COMMENT ON TABLE subscription_history IS 'Audit trail for subscription lifecycle events';
-COMMENT ON COLUMN subscription_history.subscription_id IS 'FK to parent subscription — cascade deletes history when subscription is removed';
+COMMENT ON COLUMN subscription_history.subscription_id IS 'FK to parent subscription - cascade deletes history when subscription is removed';
 COMMENT ON COLUMN subscription_history.action IS 'Event type: created, paused, resumed, cancelled, expired, preferences_updated, address_changed, frequency_changed, order_generated';
 COMMENT ON COLUMN subscription_history.details IS 'JSONB payload with before/after snapshots or contextual data';
-COMMENT ON COLUMN subscription_history.performed_by IS 'FK to auth.users — the user or admin who triggered the action';
+COMMENT ON COLUMN subscription_history.performed_by IS 'FK to auth.users - the user or admin who triggered the action';
 
 -- Indexes
 CREATE INDEX idx_sub_history_sub ON subscription_history(subscription_id, created_at DESC);

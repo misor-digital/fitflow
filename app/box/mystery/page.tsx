@@ -7,7 +7,7 @@ export const revalidate = 300; // ISR: regenerate at most every 5 min
 
 export const metadata: Metadata = {
   title: 'Еднократна кутия | FitFlow',
-  description: 'Поръчай еднократна FitFlow кутия — доставка на следващата дата за абонаменти. Съдържанието е изненада!',
+  description: 'Поръчай еднократна FitFlow кутия - доставка на следващата дата за абонаменти. Съдържанието е изненада!',
 };
 
 export default async function MysteryBoxPage() {

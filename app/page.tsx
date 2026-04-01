@@ -130,7 +130,7 @@ function HomeContent() {
               'linear-gradient(165deg, #6B1D3A 0%, #4A1838 20%, #1E2D45 45%, #023047 70%, #011a28 100%)',
           }}
         >
-        {/* Warm magenta glow upper area — matches hero_web.jpg lighting */}
+        {/* Warm magenta glow upper area - matches hero_web.jpg lighting */}
         <div
           className="absolute inset-0 pointer-events-none"
           style={{
@@ -139,7 +139,7 @@ function HomeContent() {
           }}
         />
 
-        {/* Hero image — full viewport cover */}
+        {/* Hero image - full viewport cover */}
         <div className="absolute inset-0 z-10">
           {/* Portrait viewport: tall hero */}
           <Image
@@ -164,7 +164,7 @@ function HomeContent() {
           />
         </div>
 
-        {/* Bottom fade — contrast behind text (desktop only, mobile uses stacked layout) */}
+        {/* Bottom fade - contrast behind text (desktop only, mobile uses stacked layout) */}
         <div
           className="absolute inset-x-0 bottom-0 h-[45%] sm:h-[40%] z-20 pointer-events-none hidden sm:block"
           style={{
@@ -173,7 +173,7 @@ function HomeContent() {
           }}
         />
 
-        {/* Text & CTA — bottom-center in portrait, center-right in landscape */}
+        {/* Text & CTA - bottom-center in portrait, center-right in landscape */}
         <div className="relative z-30 flex-1 flex items-end justify-center px-4 pb-6 hero-cta-wrapper">
           <div className="w-full hero-cta-box bg-[var(--color-brand-navy)]/35 backdrop-blur-[6px] rounded-2xl px-4 py-4 text-center">
             <h1 className="text-2xl hero-cta-heading font-bold text-white mb-1.5 tracking-wide leading-tight">
@@ -269,7 +269,7 @@ function HomeContent() {
             Еднократна Кутия
           </h2>
           <p className="text-sm sm:text-base md:text-lg text-gray-600 mb-6 sm:mb-8 max-w-lg mx-auto">
-            Не искаш абонамент? Поръчай кутия еднократно — доставяме на{' '}
+            Не искаш абонамент? Поръчай кутия еднократно - доставяме на{' '}
             {nextDeliveryDate ? (
               <span className="font-semibold text-[var(--color-brand-navy)]">{nextDeliveryDate}</span>
             ) : (
@@ -305,7 +305,7 @@ function HomeContent() {
         </div>
       </section>
 
-      {/* Revealed Box Featured Section — only when available */}
+      {/* Revealed Box Featured Section - only when available */}
       {revealedBox && (
         <section className="py-10 sm:py-12 md:py-16 px-4 sm:px-5 bg-gradient-to-br from-[var(--color-brand-orange)]/10 to-[var(--color-brand-orange)]/5">
           <div className="max-w-3xl mx-auto text-center">
@@ -316,7 +316,7 @@ function HomeContent() {
               Виж какво има в кутията за {revealedBox.monthYear}!
             </h2>
             <p className="text-sm sm:text-base md:text-lg text-gray-600 mb-6 sm:mb-8 max-w-lg mx-auto">
-              Съдържанието е разкрито — поръчай с бърза доставка!
+              Съдържанието е разкрито - поръчай с бърза доставка!
             </p>
 
             {/* Item Preview Grid */}

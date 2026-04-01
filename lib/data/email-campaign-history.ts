@@ -3,7 +3,7 @@
  *
  * Follows the pattern of order_status_history and subscription_history.
  * Records every campaign state change with who, when, and context.
- * Uses supabaseAdmin (service_role) — bypasses RLS.
+ * Uses supabaseAdmin (service_role) - bypasses RLS.
  * Read functions wrapped in React.cache() for per-request deduplication.
  */
 
@@ -32,7 +32,7 @@ export async function recordCampaignAction(
 
   if (error) {
     console.error('Error recording campaign action:', error);
-    // Non-fatal — the campaign operation itself succeeded
+    // Non-fatal - the campaign operation itself succeeded
   }
 }
 

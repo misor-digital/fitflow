@@ -3,7 +3,7 @@
  *
  * Server-only functions for subscription CRUD, lifecycle transitions,
  * preference updates, and batch order generation for delivery cycles.
- * Uses supabaseAdmin (service_role) — bypasses RLS.
+ * Uses supabaseAdmin (service_role) - bypasses RLS.
  * Read functions wrapped in React.cache() for per-request deduplication.
  */
 
@@ -117,7 +117,7 @@ export async function createSubscription(
 
   if (profileError) {
     console.error('Error updating user_profiles.is_subscriber:', profileError);
-    // Non-fatal — subscription was already created
+    // Non-fatal - subscription was already created
   }
 
   return subscription;
@@ -849,7 +849,7 @@ export const getSubscriptionsPaginated = cache(
       (profiles ?? []).map((p) => [p.id, p.full_name]),
     );
 
-    // Fetch emails via auth — single batch query via PostgREST
+    // Fetch emails via auth - single batch query via PostgREST
     const emailMap = await getUserEmailsByIds(uniqueUserIds);
 
     const subscriptions: SubscriptionWithUserInfo[] = rows.map((row) => ({

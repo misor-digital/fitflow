@@ -211,7 +211,7 @@ export default function PreorderCampaignPage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">
-          предварителни поръчки — Конверсионна кампания
+          предварителни поръчки - Конверсионна кампания
         </h1>
         <p className="mt-1 text-sm text-gray-600">
           Изпращане на имейли за конвертиране на предварителни поръчки в поръчки.
@@ -297,7 +297,7 @@ export default function PreorderCampaignPage() {
         </div>
       )}
 
-      {/* Action buttons (disabled — campaign archived) */}
+      {/* Action buttons (disabled - campaign archived) */}
       <div className="flex items-center gap-3">
         <button
           type="button"
@@ -319,7 +319,7 @@ export default function PreorderCampaignPage() {
       {result && (
         result.dryRun ? (
           <div className="rounded-lg bg-green-50 border border-green-200 p-4 text-sm text-green-800">
-            🧪 Dry run завърши — {result.skipped} получателя логнати (без реално изпращане)
+            🧪 Dry run завърши - {result.skipped} получателя логнати (без реално изпращане)
           </div>
         ) : (
           <div className="space-y-2">

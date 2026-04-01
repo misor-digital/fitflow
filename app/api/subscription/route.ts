@@ -42,7 +42,7 @@ const VALID_SUB_BOX_TYPES = new Set(['monthly-standard', 'monthly-premium']);
 const VALID_FREQUENCIES = new Set(['monthly', 'seasonal']);
 
 // ============================================================================
-// GET /api/subscription — List user's subscriptions
+// GET /api/subscription - List user's subscriptions
 // ============================================================================
 
 export async function GET(): Promise<NextResponse> {
@@ -80,13 +80,13 @@ export async function GET(): Promise<NextResponse> {
 }
 
 // ============================================================================
-// POST /api/subscription — Create a new subscription
+// POST /api/subscription - Create a new subscription
 // ============================================================================
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     // ------------------------------------------------------------------
-    // Step 1: Parse body (before auth — need conversionToken early)
+    // Step 1: Parse body (before auth - need conversionToken early)
     // ------------------------------------------------------------------
     let data: Record<string, unknown>;
     try {
@@ -180,7 +180,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (session) {
       userId = session.userId;
     } else if (sourceOrder) {
-      // Guest with valid conversion token — account created below
+      // Guest with valid conversion token - account created below
       userId = null;
     } else {
       return NextResponse.json(
@@ -292,7 +292,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // Validate addressId — must be provided and owned by resolved user
+    // Validate addressId - must be provided and owned by resolved user
     // For conversion flow, create address from inline data if no addressId
     let resolvedAddressId = addressId;
 
@@ -430,7 +430,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       cycleId = cycleResult.cycleId;
       needsImmediateOrder = cycleResult.needsImmediateOrder;
     } catch {
-      // No available cycle — subscription picked up when next cycle is created
+      // No available cycle - subscription picked up when next cycle is created
       const upcomingCycle = await getUpcomingCycle();
       cycleId = upcomingCycle?.id ?? null;
     }
@@ -485,12 +485,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         await generateSingleOrderForSubscription(subscription.id, cycleId, 'system');
       } catch (err) {
         console.error('Late-addition order generation failed:', err);
-        // Non-fatal — subscription was created, order can be manually added
+        // Non-fatal - subscription was created, order can be manually added
       }
     }
 
     // ------------------------------------------------------------------
-    // Step 10: Post-creation — mark order converted + send emails
+    // Step 10: Post-creation - mark order converted + send emails
     // ------------------------------------------------------------------
     if (sourceOrder) {
       // Mark the source order as converted
@@ -542,7 +542,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         }
       })();
 
-      // Brevo sync — subscription activation
+      // Brevo sync - subscription activation
       syncSubscriptionChange({
         email: customerEmail,
         status: 'active',
@@ -550,7 +550,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         frequency,
       }).catch(console.error);
     } else {
-      // Regular flow — send confirmation email
+      // Regular flow - send confirmation email
       const upcomingForEmail = await getUpcomingCycle();
       const nextDate = upcomingForEmail?.delivery_date ?? '';
       const emailAddr = session?.email ?? '';

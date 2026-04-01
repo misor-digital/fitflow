@@ -13,7 +13,7 @@ AS $$
   WHERE u.id = ANY(user_ids);
 $$;
 
--- Only service-role (postgres) can call this — not exposed to anon/authenticated
+-- Only service-role (postgres) can call this - not exposed to anon/authenticated
 REVOKE ALL ON FUNCTION get_user_emails_by_ids(UUID[]) FROM PUBLIC;
 REVOKE ALL ON FUNCTION get_user_emails_by_ids(UUID[]) FROM anon;
 REVOKE ALL ON FUNCTION get_user_emails_by_ids(UUID[]) FROM authenticated;

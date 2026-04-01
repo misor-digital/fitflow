@@ -5,7 +5,7 @@ import { syncCustomerContact, syncSubscriptionToContact, addToBrevoList, removeC
 import { EMAIL_CONFIG } from '@/lib/email/client';
 
 // ============================================================================
-// POST /api/admin/contacts/sync — Manual full re-sync to Brevo
+// POST /api/admin/contacts/sync - Manual full re-sync to Brevo
 // ============================================================================
 
 const BATCH_SIZE = 100;

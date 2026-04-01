@@ -30,7 +30,7 @@ import { syncSubscriptionChange } from '@/lib/email/contact-sync';
 import type { SubscriptionPreferencesUpdate } from '@/lib/subscription';
 
 // ============================================================================
-// GET /api/subscription/:id — Subscription detail
+// GET /api/subscription/:id - Subscription detail
 // ============================================================================
 
 export async function GET(
@@ -81,7 +81,7 @@ export async function GET(
 }
 
 // ============================================================================
-// PATCH /api/subscription/:id — Subscription lifecycle & updates
+// PATCH /api/subscription/:id - Subscription lifecycle & updates
 // ============================================================================
 
 export async function PATCH(

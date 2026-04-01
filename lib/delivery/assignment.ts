@@ -30,14 +30,14 @@ export async function determineFirstCycle(): Promise<{
     return { cycleId: upcoming.id, needsImmediateOrder: false };
   }
 
-  // Check for delivered cycle (orders generated but still active — not archived)
+  // Check for delivered cycle (orders generated but still active - not archived)
   const delivered = await getActiveCycleWithStatus('delivered');
   if (delivered) {
     return { cycleId: delivered.id, needsImmediateOrder: true };
   }
 
   // Fallback: no available cycle
-  // This is handled by the subscription creation — first_cycle_id will reference
+  // This is handled by the subscription creation - first_cycle_id will reference
   // the next cycle that gets created by admin
   throw new Error('Няма наличен цикъл за доставка. Моля, опитайте по-късно.');
 }

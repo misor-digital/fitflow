@@ -1,6 +1,6 @@
 /**
- * GET  /api/admin/emails/unsubscribes — Paginated unsubscribe list.
- * DELETE /api/admin/emails/unsubscribes — Re-subscribe an email (remove from unsubscribe list).
+ * GET  /api/admin/emails/unsubscribes - Paginated unsubscribe list.
+ * DELETE /api/admin/emails/unsubscribes - Re-subscribe an email (remove from unsubscribe list).
  */
 
 import { type NextRequest, NextResponse } from 'next/server';

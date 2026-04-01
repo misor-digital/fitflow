@@ -112,7 +112,7 @@ export default function CampaignCreateWizard() {
       case 'details':
         return formData.name.trim() !== '' && formData.subject.trim() !== '';
       case 'ab-test':
-        return true; // Optional step — always valid
+        return true; // Optional step - always valid
       case 'audience':
         return true;
       case 'review':
@@ -153,7 +153,7 @@ export default function CampaignCreateWizard() {
         setPreviewCount(json.total ?? 0);
       }
     } catch {
-      // Silently handle — preview is non-critical
+      // Silently handle - preview is non-critical
     } finally {
       setIsLoadingPreview(false);
     }
@@ -315,7 +315,7 @@ export default function CampaignCreateWizard() {
                 value={formData.name}
                 onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                 className="w-full border rounded-lg px-3 py-2 text-sm"
-                placeholder="напр. Февруари 2026 — маркетингова кампания"
+                placeholder="напр. Февруари 2026 - маркетингова кампания"
               />
             </div>
 

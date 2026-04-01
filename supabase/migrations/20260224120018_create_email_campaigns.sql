@@ -8,8 +8,8 @@ CREATE TABLE email_campaigns (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name            TEXT NOT NULL,
   subject         TEXT NOT NULL,
-  template_id     INTEGER,                          -- Brevo template ID (nullable — for Brevo-managed campaigns)
-  html_content    TEXT,                              -- Inline HTML (nullable — mutually exclusive with template_id)
+  template_id     INTEGER,                          -- Brevo template ID (nullable - for Brevo-managed campaigns)
+  html_content    TEXT,                              -- Inline HTML (nullable - mutually exclusive with template_id)
   campaign_type   email_campaign_type NOT NULL,
   status          email_campaign_status NOT NULL DEFAULT 'draft',
   target_list_type target_list_type NOT NULL,
@@ -36,8 +36,8 @@ CREATE TABLE email_campaigns (
 );
 
 COMMENT ON TABLE email_campaigns IS 'Email campaign definitions with targeting, scheduling, and progress tracking';
-COMMENT ON COLUMN email_campaigns.template_id IS 'Brevo template ID — used for Brevo-managed campaign emails';
-COMMENT ON COLUMN email_campaigns.html_content IS 'Inline HTML content — used for code-managed campaign emails';
+COMMENT ON COLUMN email_campaigns.template_id IS 'Brevo template ID - used for Brevo-managed campaign emails';
+COMMENT ON COLUMN email_campaigns.html_content IS 'Inline HTML content - used for code-managed campaign emails';
 COMMENT ON COLUMN email_campaigns.target_filter IS 'JSONB filter criteria applied to the target audience (e.g. conversion_status, box_type)';
 COMMENT ON COLUMN email_campaigns.params IS 'Global template variables passed to every recipient';
 COMMENT ON COLUMN email_campaigns.brevo_campaign_id IS 'Brevo platform campaign ID when using their Campaign API for sending';

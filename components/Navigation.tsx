@@ -61,7 +61,7 @@ export default function Navigation() {
     return () => controller.abort();
   }, [promoCode, lastValidatedCode]);
 
-  // ---- Check if revealed box is available (shared store — deduped) ----
+  // ---- Check if revealed box is available (shared store - deduped) ----
   useEffect(() => {
     fetchRevealedBox();
   }, [fetchRevealedBox]);

@@ -1,5 +1,5 @@
 /**
- * POST /api/admin/campaigns/:id/send-test — Send a test email to a specified address.
+ * POST /api/admin/campaigns/:id/send-test - Send a test email to a specified address.
  *
  * Uses the campaign's template and global params to send a single test email.
  * The subject is prefixed with "[ТЕСТ]" to clearly identify it as a test send.

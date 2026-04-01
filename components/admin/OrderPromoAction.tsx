@@ -127,7 +127,7 @@ export default function OrderPromoAction({
           className="w-48 rounded border bg-white px-2 py-1.5 font-mono text-sm disabled:opacity-50"
         >
           <option value="">
-            {loadingOptions ? 'Зареждане...' : '— Избери код —'}
+            {loadingOptions ? 'Зареждане...' : '- Избери код -'}
           </option>
           {promoOptions.map((p) => (
             <option key={p.code} value={p.code}>

@@ -11,7 +11,7 @@ const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // ============================================================================
-// PATCH /api/admin/promo/:id/toggle — Quick enable/disable
+// PATCH /api/admin/promo/:id/toggle - Quick enable/disable
 // ============================================================================
 
 export async function PATCH(

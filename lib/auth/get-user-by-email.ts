@@ -2,7 +2,7 @@
  * Lookup a single auth user by email via the service-role client.
  *
  * The Supabase JS admin API does not expose an email-filter param on
- * `listUsers()`.  Calling listUsers() therefore fetches ALL users — an
+ * `listUsers()`.  Calling listUsers() therefore fetches ALL users - an
  * O(n) operation that degrades as the user base grows.
  *
  * This helper queries the `auth.users` table directly through PostgREST
@@ -37,7 +37,7 @@ export async function getUserByEmail(
   // Primary path: query auth.users via PostgREST  
   // Service-role key has access to the auth schema
   const { data, error } = await supabaseAdmin
-    .schema('auth' as 'public')      // cast required — typed only for 'public'
+    .schema('auth' as 'public')      // cast required - typed only for 'public'
     .from('users')
     .select('id, email, raw_user_meta_data')
     .eq('email', email.toLowerCase())

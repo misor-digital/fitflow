@@ -6,13 +6,13 @@ import { generateOrdersForActiveCycle, generateOrdersForSpecificCycle } from '@/
 import { checkRateLimit } from '@/lib/utils/rateLimit';
 
 // ============================================================================
-// POST /api/admin/delivery/generate — Batch order generation for a cycle
+// POST /api/admin/delivery/generate - Batch order generation for a cycle
 // ============================================================================
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     // ------------------------------------------------------------------
-    // Step 1: Auth — support both admin auth and cron secret
+    // Step 1: Auth - support both admin auth and cron secret
     // ------------------------------------------------------------------
     const headersList = await headers();
     const authHeader = request.headers.get('authorization');
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     let performedBy = 'system';
 
     if (cronSecret && cronSecret === process.env.CRON_SECRET) {
-      // Cron-triggered — proceed without staff auth
+      // Cron-triggered - proceed without staff auth
       performedBy = 'system';
     } else {
       // Admin auth required
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       const body = await request.json();
       cycleId = typeof body.cycleId === 'string' ? body.cycleId : undefined;
     } catch {
-      // Empty body is fine — will auto-detect cycle
+      // Empty body is fine - will auto-detect cycle
     }
 
     // ------------------------------------------------------------------

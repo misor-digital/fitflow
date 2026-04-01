@@ -5,7 +5,7 @@ import { applyPromoToOrder } from '@/lib/data';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 
 // ============================================================================
-// PATCH /api/admin/order/:id/promo — Apply, replace, or remove a promo code
+// PATCH /api/admin/order/:id/promo - Apply, replace, or remove a promo code
 // ============================================================================
 
 export async function PATCH(
@@ -77,7 +77,7 @@ export async function PATCH(
 }
 
 // ============================================================================
-// GET /api/admin/order/:id/promo — Get price change history
+// GET /api/admin/order/:id/promo - Get price change history
 // ============================================================================
 
 export async function GET(

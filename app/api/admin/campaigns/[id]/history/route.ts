@@ -1,5 +1,5 @@
 /**
- * GET /api/admin/campaigns/:id/history — Campaign audit history.
+ * GET /api/admin/campaigns/:id/history - Campaign audit history.
  *
  * Returns all email_campaign_history rows for the given campaign,
  * ordered by created_at DESC (most recent first).

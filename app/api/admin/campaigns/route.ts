@@ -1,6 +1,6 @@
 /**
- * GET  /api/admin/campaigns  — Paginated campaign list with optional filters.
- * POST /api/admin/campaigns  — Create a new campaign and auto-populate recipients.
+ * GET  /api/admin/campaigns  - Paginated campaign list with optional filters.
+ * POST /api/admin/campaigns  - Create a new campaign and auto-populate recipients.
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
@@ -161,7 +161,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       case 'promotional':
         recipientCount = await buildCustomerRecipients(campaign.id, filter as never);
         break;
-      // 'one-off' — no auto-population; recipients added manually or via custom-list
+      // 'one-off' - no auto-population; recipients added manually or via custom-list
     }
 
     // Update campaign total_recipients

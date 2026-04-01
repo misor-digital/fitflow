@@ -953,7 +953,7 @@ export interface FeedbackFieldDefinition {
   image_url?: string | null;
   choices?: string[];
   options?: Record<string, unknown>;
-  /** Client-only stable key for React — not persisted to the database. */
+  /** Client-only stable key for React - not persisted to the database. */
   _key?: string;
 }
 

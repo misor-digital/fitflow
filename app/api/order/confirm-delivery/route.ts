@@ -24,7 +24,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       return redirectWithStatus('invalid');
     }
 
-    // 4. Check status — idempotent
+    // 4. Check status - idempotent
     if (order.status === 'delivered') {
       return redirectWithStatus('already');
     }
@@ -37,7 +37,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     await updateOrderStatus(
       orderId,
       'delivered',
-      null, // No user ID — token-based confirmation
+      null, // No user ID - token-based confirmation
       'Потвърдено от клиента чрез имейл линк',
     );
 

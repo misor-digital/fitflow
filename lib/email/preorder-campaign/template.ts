@@ -1,5 +1,5 @@
 /**
- * Preorder Campaign — Template Renderer
+ * Preorder Campaign - Template Renderer
  *
  * Server-only module that reads the HTML template and renders it
  * with recipient-specific data via Mustache.
@@ -170,7 +170,7 @@ export function renderPreorderEmail(recipient: PreorderRecipient, labelMaps?: Pr
     flavors: formatFlavors(recipient.flavors, recipient.flavorOther, labels.flavorLabels),
     size: formatSize(recipient.sizeUpper, recipient.sizeLower, labels.sizeLabels),
     dietary_restrictions: formatDietary(recipient.dietary, recipient.dietaryOther, labels.dietaryLabels),
-    // Used as {{{custom_link}}} in template — unescaped, validated above
+    // Used as {{{custom_link}}} in template - unescaped, validated above
     custom_link: recipient.conversionUrl,
   });
 }

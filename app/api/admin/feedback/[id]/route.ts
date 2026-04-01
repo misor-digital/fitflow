@@ -1,7 +1,7 @@
 /**
- * GET    /api/admin/feedback/[id]  — Feedback form detail
- * PATCH  /api/admin/feedback/[id]  — Update a feedback form
- * DELETE /api/admin/feedback/[id]  — Delete a feedback form
+ * GET    /api/admin/feedback/[id]  - Feedback form detail
+ * PATCH  /api/admin/feedback/[id]  - Update a feedback form
+ * DELETE /api/admin/feedback/[id]  - Delete a feedback form
  */
 
 import { type NextRequest, NextResponse } from 'next/server';
@@ -106,7 +106,7 @@ export async function PATCH(
       );
     }
 
-    // Build update payload — only include provided fields
+    // Build update payload - only include provided fields
     const update: Record<string, unknown> = {};
     if (title !== undefined) update.title = title;
     if (slug !== undefined) update.slug = slug;

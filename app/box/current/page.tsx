@@ -17,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const monthYear = cycle ? formatMonthYear(cycle.delivery_date) : '';
   return {
     title: `Текуща кутия ${monthYear} | FitFlow`,
-    description: `Виж какво има в кутията за ${monthYear} — поръчай еднократно с бърза доставка!`,
+    description: `Виж какво има в кутията за ${monthYear} - поръчай еднократно с бърза доставка!`,
   };
 }
 

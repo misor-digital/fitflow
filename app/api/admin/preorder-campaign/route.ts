@@ -1,8 +1,8 @@
 /**
- * Admin API — Preorder Conversion Campaign
+ * Admin API - Preorder Conversion Campaign
  *
- * GET  /api/admin/preorder-campaign  — Preview eligible recipients
- * POST /api/admin/preorder-campaign  — Send (or dry-run) conversion emails
+ * GET  /api/admin/preorder-campaign  - Preview eligible recipients
+ * POST /api/admin/preorder-campaign  - Send (or dry-run) conversion emails
  */
 
 import { NextResponse } from 'next/server';
@@ -22,7 +22,7 @@ function maskEmail(email: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// GET — Preview eligible recipients
+// GET - Preview eligible recipients
 // ---------------------------------------------------------------------------
 
 export async function GET(): Promise<NextResponse> {
@@ -65,7 +65,7 @@ export async function GET(): Promise<NextResponse> {
 }
 
 // ---------------------------------------------------------------------------
-// POST — Send or dry-run conversion emails
+// POST - Send or dry-run conversion emails
 // ---------------------------------------------------------------------------
 
 export async function POST(request: Request): Promise<NextResponse> {

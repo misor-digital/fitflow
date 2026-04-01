@@ -30,7 +30,7 @@ export default function UnlinkedPreordersBanner() {
         setCount(data.linked);
       }
     } catch {
-      // Silently fail — user can retry
+      // Silently fail - user can retry
     } finally {
       setLinking(false);
     }

@@ -260,7 +260,7 @@ export async function completeCampaign(
 // ---------------------------------------------------------------------------
 
 /**
- * Duplicate a campaign — creates a new draft campaign with the same settings,
+ * Duplicate a campaign - creates a new draft campaign with the same settings,
  * audience filter, template, and params. Recipients are re-populated from the filter.
  * A/B test config is NOT duplicated (must be re-created).
  */
@@ -299,7 +299,7 @@ export async function duplicateCampaign(
         original.target_filter as never,
       );
       break;
-    // 'one-off' — no auto-population
+    // 'one-off' - no auto-population
   }
 
   // Update total_recipients

@@ -18,7 +18,7 @@ import type { CatalogData, BoxType } from '@/lib/catalog';
 import type { SubscriptionConversionSource } from '@/components/subscription/conversion-types';
 
 export const metadata: Metadata = {
-  title: 'Конвертиране към абонамент — FitFlow',
+  title: 'Конвертиране към абонамент - FitFlow',
 };
 
 /** UUID v4 regex for basic format validation */
@@ -75,7 +75,7 @@ export default async function SubscriptionConvertPage({
     );
   }
 
-  // Token is valid — fetch catalog data, price, and delivery info
+  // Token is valid - fetch catalog data, price, and delivery info
   const subscriptionBoxType = mapOrderBoxToSubscriptionBox(order.box_type);
 
   const [

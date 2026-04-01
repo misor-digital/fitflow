@@ -1,5 +1,5 @@
 /**
- * Admin API — Create Customer Account
+ * Admin API - Create Customer Account
  *
  * POST /api/admin/create-customer
  *

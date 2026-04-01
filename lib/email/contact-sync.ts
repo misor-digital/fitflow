@@ -3,7 +3,7 @@
  *
  * Centralizes all Brevo contact synchronization logic.
  * Called from API routes and services when user data changes.
- * Never throws — logs errors and returns result.
+ * Never throws - logs errors and returns result.
  *
  * Fire-and-forget pattern: sync calls must never block the primary operation.
  * If Brevo is down, the primary action succeeds; full sync recovers any drift.

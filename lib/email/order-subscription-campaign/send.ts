@@ -1,12 +1,12 @@
 /**
- * Order-to-Subscription Campaign — Send Orchestrator
+ * Order-to-Subscription Campaign - Send Orchestrator
  *
  * Server-only module that orchestrates the conversion email send:
  * fetches eligible recipients, generates tokens, renders templates,
  * and either sends via Brevo (live) or logs only (dry-run).
  *
  * - Live sends go through `sendTransactionalEmail` which already
- *   logs to `email_send_log` via its wired callback — no double-logging.
+ *   logs to `email_send_log` via its wired callback - no double-logging.
  * - Dry-run sends log directly via `logEmailSent` with a distinct
  *   category ('order-to-sub-conversion-dry-run') for easy identification.
  * - Sequential processing with a delay between sends to respect
@@ -28,7 +28,7 @@ import type { EmailSendLogInsert } from '@/lib/supabase/types';
 // ---------------------------------------------------------------------------
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://fitflow.bg';
-const EMAIL_SUBJECT = 'FitFlow — Абонирай се и спести!';
+const EMAIL_SUBJECT = 'FitFlow - Абонирай се и спести!';
 const EMAIL_CATEGORY = 'order-to-sub-conversion';
 const DRY_RUN_CATEGORY = 'order-to-sub-conversion-dry-run';
 
@@ -181,7 +181,7 @@ export async function sendOrderConversionEmails(
         // Render the final HTML
         const html = renderOrderConversionEmail(recipient, labelMaps, campaignPromoCode ?? undefined);
 
-        // Send via Brevo — the callback already logs to email_send_log
+        // Send via Brevo - the callback already logs to email_send_log
         const result = await sendTransactionalEmail({
           to: { email: recipient.email, name: recipient.fullName },
           subject: EMAIL_SUBJECT,

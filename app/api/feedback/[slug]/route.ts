@@ -1,5 +1,5 @@
 /**
- * POST /api/feedback/[slug] — Public feedback form submission
+ * POST /api/feedback/[slug] - Public feedback form submission
  *
  * Rate-limited, validates answers against the form schema,
  * and supports both anonymous and authenticated submissions.

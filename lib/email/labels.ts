@@ -1,6 +1,6 @@
 /**
  * Centralized label resolution for email templates.
- * Single source of truth — all email senders call this instead of
+ * Single source of truth - all email senders call this instead of
  * assembling label maps manually.
  */
 

@@ -64,7 +64,7 @@ function mapEventToRecipientStatus(event: string): EmailRecipientStatusEnum | nu
 
 /**
  * Status priority for idempotent updates.
- * Higher number = more advanced state — never go backwards.
+ * Higher number = more advanced state - never go backwards.
  */
 const STATUS_PRIORITY: Record<string, number> = {
   pending: 0,
@@ -120,7 +120,7 @@ async function processWebhookEvent(payload: BrevoWebhookPayload): Promise<void> 
       }
     }
 
-    // Handle unsubscribe events — record in local unsubscribe list
+    // Handle unsubscribe events - record in local unsubscribe list
     if (payload.event === 'unsubscribed' && payload.email) {
       await recordUnsubscribe(
         payload.email,
@@ -131,7 +131,7 @@ async function processWebhookEvent(payload: BrevoWebhookPayload): Promise<void> 
     }
   } catch (err) {
     console.error(`Error processing webhook event ${payload.event} for ${messageId}:`, err);
-    // Don't throw — process remaining events
+    // Don't throw - process remaining events
   }
 }
 

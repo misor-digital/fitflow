@@ -8,7 +8,7 @@
  * Design decisions:
  * - Deterministic shuffle using campaign ID as seed for reproducible splits.
  * - Minimum sample size of 50 delivered per variant for winner determination.
- * - No automatic winner rollout — admin reviews results and applies learnings
+ * - No automatic winner rollout - admin reviews results and applies learnings
  *   to future campaigns.
  */
 
@@ -246,7 +246,7 @@ export async function assignRecipientsToVariants(
     }
   }
 
-  // Handle rounding remainder — assign to last variant
+  // Handle rounding remainder - assign to last variant
   if (offset < shuffled.length) {
     const lastVariant = variants[variants.length - 1];
     const remainder = shuffled.slice(offset);
@@ -279,7 +279,7 @@ export async function getVariantForRecipient(
     .single();
 
   if (error) {
-    // Log but don't fail — fall back to campaign defaults
+    // Log but don't fail - fall back to campaign defaults
     console.warn('Error fetching variant for recipient:', error);
     return null;
   }

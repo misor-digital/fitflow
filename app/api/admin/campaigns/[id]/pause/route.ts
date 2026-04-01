@@ -1,5 +1,5 @@
 /**
- * POST /api/admin/campaigns/:id/pause — Pause a running campaign.
+ * POST /api/admin/campaigns/:id/pause - Pause a running campaign.
  *
  * The campaign engine checks status between batches and will stop
  * when it detects the campaign is no longer 'sending'.

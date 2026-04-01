@@ -1,5 +1,5 @@
 -- ============================================================================
--- Email Campaign System — Enums
+-- Email Campaign System - Enums
 -- ============================================================================
 
 -- Campaign types
@@ -45,7 +45,7 @@ CREATE TYPE email_log_status AS ENUM (
   'bounced',
   'failed'
 );
-COMMENT ON TYPE email_log_status IS 'Status for all email sends — both transactional and campaign';
+COMMENT ON TYPE email_log_status IS 'Status for all email sends - both transactional and campaign';
 
 -- Target audience type
 CREATE TYPE target_list_type AS ENUM (

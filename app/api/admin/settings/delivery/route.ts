@@ -5,7 +5,7 @@ import { updateDeliveryConfig } from '@/lib/data';
 import { revalidateDataTag, TAG_SITE_CONFIG } from '@/lib/data/cache-tags';
 
 // ============================================================================
-// PATCH /api/admin/settings/delivery — Update delivery config
+// PATCH /api/admin/settings/delivery - Update delivery config
 // ============================================================================
 
 export async function PATCH(request: NextRequest): Promise<NextResponse> {

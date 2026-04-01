@@ -37,7 +37,7 @@ export interface SubscriptionConversionEmailData {
 // Subject
 // ============================================================================
 
-export const SUBSCRIPTION_CONVERSION_SUBJECT = 'FitFlow — Абонаментът ви е активен!';
+export const SUBSCRIPTION_CONVERSION_SUBJECT = 'FitFlow - Абонаментът ви е активен!';
 
 // ============================================================================
 // Template
@@ -86,7 +86,7 @@ export function generateSubscriptionConversionEmail(
     infoLines.push(`📅 Следваща доставка: ${escapeHtml(data.nextDeliveryDate)}`);
   }
 
-  // -- Account login block (conditional — new guests) -----------------------
+  // -- Account login block (conditional - new guests) -----------------------
   const accountLoginHtml =
     data.isNewAccount && data.loginUrl
       ? `

@@ -1,5 +1,5 @@
 /**
- * Order-to-Subscription Campaign — Recipient Query
+ * Order-to-Subscription Campaign - Recipient Query
  *
  * Server-only module that queries eligible one-time orders and returns
  * structured recipient data for the subscription conversion email campaign.
@@ -131,7 +131,7 @@ export async function getEligibleOrderConversionRecipients(
 // ---------------------------------------------------------------------------
 
 /**
- * Fetch ALL one-time orders for a cycle — including already-converted ones.
+ * Fetch ALL one-time orders for a cycle - including already-converted ones.
  * Used by the admin campaign page for full visibility and accurate stats.
  */
 export async function getAllCampaignRecipients(

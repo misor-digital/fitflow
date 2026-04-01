@@ -1,7 +1,7 @@
 -- ============================================================================
 -- Email Send Log (Unified)
 -- ============================================================================
--- Logs ALL email sends — both transactional and campaign.
+-- Logs ALL email sends - both transactional and campaign.
 -- Provides a single audit view for the admin dashboard.
 
 CREATE TABLE email_send_log (
@@ -22,7 +22,7 @@ CREATE TABLE email_send_log (
   created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-COMMENT ON TABLE email_send_log IS 'Unified audit log for all email sends (transactional + campaign) — used by admin email dashboard';
+COMMENT ON TABLE email_send_log IS 'Unified audit log for all email sends (transactional + campaign) - used by admin email dashboard';
 COMMENT ON COLUMN email_send_log.email_category IS 'Descriptive category: order-confirmation, sub-created, sub-paused, preorder-conversion, cron-success, etc.';
 COMMENT ON COLUMN email_send_log.related_entity_type IS 'Type of the related business entity (order, subscription, preorder)';
 COMMENT ON COLUMN email_send_log.related_entity_id IS 'UUID of the related business entity';

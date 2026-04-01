@@ -5,7 +5,7 @@ import { revealCycle, getDeliveryCycleById } from '@/lib/data';
 import { revalidateDataTag, TAG_DELIVERY, TAG_SITE_CONFIG } from '@/lib/data/cache-tags';
 
 // ============================================================================
-// POST /api/admin/delivery/:id/reveal — Reveal cycle contents
+// POST /api/admin/delivery/:id/reveal - Reveal cycle contents
 // ============================================================================
 
 export async function POST(

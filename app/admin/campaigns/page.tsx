@@ -114,7 +114,7 @@ export default async function CampaignsPage({ searchParams }: CampaignsPageProps
           href="/admin/preorder-campaign"
           className="hover:text-[var(--color-brand-navy)] hover:underline"
         >
-          Предварителни поръчки — конверсионна кампания (архив)
+          Предварителни поръчки - конверсионна кампания (архив)
         </Link>
       </div>
 

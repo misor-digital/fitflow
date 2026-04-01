@@ -1,5 +1,5 @@
 /**
- * POST /api/admin/campaigns/:id/resume — Resume a paused campaign.
+ * POST /api/admin/campaigns/:id/resume - Resume a paused campaign.
  *
  * Transitions the campaign back to 'sending' and continues processing
  * any remaining pending recipients.

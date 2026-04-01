@@ -7,7 +7,7 @@ import type { OrderStatus } from '@/lib/supabase/types';
 import { isValidTransition, ALLOWED_TRANSITIONS } from '@/lib/order';
 
 // ============================================================================
-// PATCH /api/admin/order/bulk-status — Bulk update order statuses
+// PATCH /api/admin/order/bulk-status - Bulk update order statuses
 // ============================================================================
 
 export async function PATCH(request: NextRequest): Promise<NextResponse> {

@@ -5,7 +5,7 @@ import AdminSidebar from './AdminSidebar';
  * Admin layout with sidebar.
  * 
  * NOTE: requireStaff() here is a CONVENIENCE check for the layout shell only.
- * Each page MUST also call requireStaff() with specific roles — layouts don't
+ * Each page MUST also call requireStaff() with specific roles - layouts don't
  * re-render on client navigation, so this check alone is insufficient.
  */
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {

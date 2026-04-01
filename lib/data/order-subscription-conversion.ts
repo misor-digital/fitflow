@@ -1,8 +1,8 @@
 /**
- * Order-to-Subscription Conversion — Data Access Layer
+ * Order-to-Subscription Conversion - Data Access Layer
  *
  * Server-only functions for the order-to-subscription conversion flow.
- * Uses supabaseAdmin (service_role) — bypasses RLS.
+ * Uses supabaseAdmin (service_role) - bypasses RLS.
  */
 
 import 'server-only';
@@ -109,7 +109,7 @@ export async function getEligibleOrdersForSubscription(
 
   if (!data || data.length === 0) return [];
 
-  // Deduplicate by email — keep most recent (first in DESC-sorted list)
+  // Deduplicate by email - keep most recent (first in DESC-sorted list)
   const seen = new Map<string, EligibleOrder>();
 
   for (const row of data) {
@@ -151,7 +151,7 @@ export async function getEligibleOrdersForSubscription(
 // ============================================================================
 
 /**
- * Query ALL one-time orders for a delivery cycle — including converted ones.
+ * Query ALL one-time orders for a delivery cycle - including converted ones.
  * Used by the admin campaign overview page for full visibility and accurate stats.
  *
  * Unlike `getEligibleOrdersForSubscription`, this does NOT filter out
@@ -179,7 +179,7 @@ export async function getAllCycleOrdersForCampaign(
 
   if (!data || data.length === 0) return [];
 
-  // Deduplicate by email — keep most recent
+  // Deduplicate by email - keep most recent
   const seen = new Map<string, EligibleOrder>();
 
   for (const row of data) {
@@ -266,7 +266,7 @@ export async function generateConversionTokens(
 
 /**
  * Look up an order by its one-time conversion token.
- * Security-sensitive — NOT cached.
+ * Security-sensitive - NOT cached.
  *
  * Returns null if token not found, already converted, or expired.
  */
@@ -338,7 +338,7 @@ export async function markOrderConvertedToSubscription(
 
 /**
  * Find an existing customer account by email, or create one.
- * Email ownership is proven by clicking the conversion link — no email
+ * Email ownership is proven by clicking the conversion link - no email
  * confirmation flow needed.
  *
  * Automatically links any guest orders (user_id IS NULL) with matching email.

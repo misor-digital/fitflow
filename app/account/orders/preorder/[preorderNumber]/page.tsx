@@ -190,7 +190,7 @@ export default async function PreorderDetailPage({
             </p>
           </div>
 
-          {/* Expiry date — only for pending */}
+          {/* Expiry date - only for pending */}
           {statusKey === 'pending' && expiresAt && (
             <div>
               <span className="text-sm text-gray-500">Изтича на</span>
@@ -238,7 +238,7 @@ export default async function PreorderDetailPage({
         </div>
       )}
 
-      {/* Conversion CTA — pending and not expired */}
+      {/* Conversion CTA - pending and not expired */}
       {isPending && preorder.conversion_token && (
         <div className="bg-white rounded-xl shadow-sm border p-5 mb-6 text-center">
           <Link

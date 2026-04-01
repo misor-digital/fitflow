@@ -10,10 +10,10 @@ import { incrementUsage } from '@/lib/data/email-usage';
 import type { SendEmailOptions, SendTemplateEmailOptions, EmailResult } from '../types';
 import type { EmailSendLogInput } from '../types';
 
-/** Callback type for send logging — injected by the DAL layer (Phase E2) */
+/** Callback type for send logging - injected by the DAL layer (Phase E2) */
 export type OnEmailSent = (log: EmailSendLogInput) => Promise<void>;
 
-/** Module-level logging callback — set once during app bootstrap */
+/** Module-level logging callback - set once during app bootstrap */
 let onEmailSentCallback: OnEmailSent | null = null;
 
 export function setOnEmailSentCallback(cb: OnEmailSent): void {
@@ -69,7 +69,7 @@ export async function sendTransactionalEmail(
 export async function sendTransactionalTemplateEmail(
   options: SendTemplateEmailOptions & {
     category: string;
-    subject?: string;           // For logging — Brevo templates have their own subjects
+    subject?: string;           // For logging - Brevo templates have their own subjects
     relatedEntityType?: string;
     relatedEntityId?: string;
   }

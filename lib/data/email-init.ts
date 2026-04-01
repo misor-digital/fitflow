@@ -3,7 +3,7 @@
  *
  * Wires the DAL-backed callbacks into the Brevo wrapper layer.
  * Must be called once during app bootstrap (e.g. in middleware or layout).
- * Idempotent — safe to call multiple times.
+ * Idempotent - safe to call multiple times.
  */
 
 import 'server-only';

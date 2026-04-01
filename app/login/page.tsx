@@ -32,7 +32,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   const { error: errorCode, next } = await searchParams;
 
-  // Only surface known error codes — never reflect arbitrary input
+  // Only surface known error codes - never reflect arbitrary input
   const callbackError = errorCode ? CALLBACK_ERRORS[errorCode] ?? null : null;
 
   return (

@@ -24,12 +24,12 @@ export const maxDuration = 60; // Vercel Pro timeout
 
 const CRON_SECRET = process.env.CRON_SECRET;
 const SYSTEM_USER_ID = 'system-cron';
-const MAX_PROCESSING_TIME_MS = 50_000; // 50s — leave 10s buffer for Vercel 60s timeout
+const MAX_PROCESSING_TIME_MS = 50_000; // 50s - leave 10s buffer for Vercel 60s timeout
 const CHUNK_SIZE = 200; // Recipients per cron invocation per campaign
 const STALE_THRESHOLD_HOURS = 2;
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
-  // 1. Auth — validate CRON_SECRET
+  // 1. Auth - validate CRON_SECRET
   const authHeader = request.headers.get('authorization');
   const cronSecret = authHeader?.replace('Bearer ', '');
 
@@ -43,7 +43,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   let stalledCount = 0;
 
   try {
-    // 2. Scheduled campaigns — trigger those whose scheduled_at has passed
+    // 2. Scheduled campaigns - trigger those whose scheduled_at has passed
     const scheduledCampaigns = await getScheduledCampaigns();
 
     for (const campaign of scheduledCampaigns) {
@@ -72,7 +72,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       }
     }
 
-    // 3. Sending campaigns — process chunks of pending recipients
+    // 3. Sending campaigns - process chunks of pending recipients
     const sendingCampaigns = await getSendingCampaigns();
 
     // Detect stalled campaigns (updated_at > 2 hours ago)
@@ -99,9 +99,9 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         }).catch(() => {});
       }
 
-      // Time guard — stop processing if approaching timeout
+      // Time guard - stop processing if approaching timeout
       if (Date.now() - startTime > MAX_PROCESSING_TIME_MS) {
-        console.warn('[email-cron] Approaching timeout — deferring remaining campaigns to next invocation.');
+        console.warn('[email-cron] Approaching timeout - deferring remaining campaigns to next invocation.');
         break;
       }
 

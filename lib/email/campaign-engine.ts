@@ -7,7 +7,7 @@
  * Design decisions:
  * - Sequential per-recipient sends (not Brevo batch messageVersions) for
  *   per-recipient error tracking. Batch optimization deferred to Phase E9.
- * - Runs to completion (or pause) within a single request — no background workers.
+ * - Runs to completion (or pause) within a single request - no background workers.
  * - For large campaigns (500+ recipients) the cron processor (Phase E10) will
  *   trigger processing in chunks across multiple invocations.
  */
@@ -74,7 +74,7 @@ async function sendWithRetry(
     if (isRateLimited && attempt < retries) {
       const delay = BASE_DELAY_MS * Math.pow(2, attempt);
       console.warn(
-        `[campaign-engine] Rate limited — retrying in ${delay}ms (attempt ${attempt + 1}/${retries})`,
+        `[campaign-engine] Rate limited - retrying in ${delay}ms (attempt ${attempt + 1}/${retries})`,
       );
       await new Promise((resolve) => setTimeout(resolve, delay));
       continue;
@@ -147,7 +147,7 @@ async function processRecipient(
       incrementVariantSentCount(variant.id).catch(() => {});
     }
 
-    // Fire-and-forget logging — never block the engine
+    // Fire-and-forget logging - never block the engine
     logEmailSent({
       email_type: 'campaign',
       email_category: campaign.campaign_type,
@@ -214,7 +214,7 @@ export async function processCampaign(
   }
   if (campaign.status !== 'sending') {
     throw new Error(
-      `Campaign ${campaignId} is in '${campaign.status}' status — expected 'sending'.`,
+      `Campaign ${campaignId} is in '${campaign.status}' status - expected 'sending'.`,
     );
   }
 
@@ -270,7 +270,7 @@ export async function processCampaign(
       const stillActive = await isCampaignStillActive(campaignId);
       if (!stillActive) {
         console.log(
-          `[campaign-engine] Campaign ${campaignId} is no longer 'sending' — stopping.`,
+          `[campaign-engine] Campaign ${campaignId} is no longer 'sending' - stopping.`,
         );
         stopped = true;
         break;
@@ -303,7 +303,7 @@ export async function processCampaign(
       });
     }
   } catch (err) {
-    // Unrecoverable error — mark campaign as failed
+    // Unrecoverable error - mark campaign as failed
     const errorMessage = err instanceof Error ? err.message : 'Unknown engine error';
     console.error(`[campaign-engine] Fatal error processing campaign ${campaignId}:`, err);
 
@@ -345,7 +345,7 @@ export interface ProcessCampaignChunkResult {
  * - Campaign must already be in `'sending'` status.
  * - Recipients must already be populated.
  *
- * @returns `{ processed, remaining, completed }` — completed is true when
+ * @returns `{ processed, remaining, completed }` - completed is true when
  *   all recipients have been processed and the campaign is marked 'sent'.
  */
 export async function processCampaignChunk(
@@ -360,7 +360,7 @@ export async function processCampaignChunk(
   }
   if (campaign.status !== 'sending') {
     throw new Error(
-      `Campaign ${campaignId} is in '${campaign.status}' status — expected 'sending'.`,
+      `Campaign ${campaignId} is in '${campaign.status}' status - expected 'sending'.`,
     );
   }
 

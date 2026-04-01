@@ -1,5 +1,5 @@
 /**
- * Order-to-Subscription Campaign — Template Renderer
+ * Order-to-Subscription Campaign - Template Renderer
  *
  * Server-only module that reads the HTML template and renders it
  * with recipient-specific data via Mustache.
@@ -148,7 +148,7 @@ export function renderOrderConversionEmail(
     has_promo: !!campaignPromoCode,
     promo_code: campaignPromoCode ?? '',
     promo_discount: campaignPromoCode ? 'допълнителна' : '',
-    // Used as {{{custom_link}}} in template — unescaped, validated above
+    // Used as {{{custom_link}}} in template - unescaped, validated above
     custom_link: recipient.conversionUrl,
   });
 }

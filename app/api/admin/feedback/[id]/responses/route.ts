@@ -1,5 +1,5 @@
 /**
- * GET /api/admin/feedback/[id]/responses — Paginated responses for a form
+ * GET /api/admin/feedback/[id]/responses - Paginated responses for a form
  */
 
 import { type NextRequest, NextResponse } from 'next/server';

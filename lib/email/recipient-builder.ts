@@ -2,7 +2,7 @@
  * Recipient Builder
  *
  * Populates email_campaign_recipients from various audience sources.
- * Recipients are snapshotted at campaign creation time — late changes
+ * Recipients are snapshotted at campaign creation time - late changes
  * to the source data do not affect a running campaign.
  *
  * GDPR: Only consenting preorder holders are included (email_consent = true).
@@ -42,7 +42,7 @@ export async function buildSubscriberRecipients(
   campaignId: string,
   filter?: { status?: SubscriptionStatus; boxType?: BoxType },
 ): Promise<number> {
-  // Subscriptions don't store email directly — we need to join via user_id.
+  // Subscriptions don't store email directly - we need to join via user_id.
   // Supabase JS doesn't support cross-schema joins to auth.users, so we
   // fetch subscriptions first, then batch-fetch user info.
 
@@ -82,11 +82,11 @@ export async function buildSubscriberRecipients(
   );
 
   // Fetch emails from auth.users via admin API
-  // Supabase admin listUsers can fetch by IDs — but for simplicity
+  // Supabase admin listUsers can fetch by IDs - but for simplicity
   // we fetch from the auth schema through the admin client's rpc or
   // by using the .auth.admin API.
   const emailMap = new Map<string, string>();
-  // Batch fetch — Supabase admin API returns pages of 1000
+  // Batch fetch - Supabase admin API returns pages of 1000
   for (let i = 0; i < userIds.length; i += 50) {
     const batch = userIds.slice(i, i + 50);
     // Use auth admin to get user objects
@@ -134,7 +134,7 @@ export async function buildSubscriberRecipients(
 // ---------------------------------------------------------------------------
 
 /**
- * Build recipients from customers — either users who have placed orders or
+ * Build recipients from customers - either users who have placed orders or
  * all registered users depending on the filter.
  *
  * @returns The number of recipients inserted.

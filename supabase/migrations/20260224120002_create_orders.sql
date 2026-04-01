@@ -82,7 +82,7 @@ GRANT ALL ON orders TO service_role;
 -- ============================================================================
 
 COMMENT ON TABLE orders IS 'Customer orders for FitFlow subscription boxes';
-COMMENT ON COLUMN orders.shipping_address IS 'Frozen address snapshot at order time — immutable source of truth';
-COMMENT ON COLUMN orders.address_id IS 'Optional back-reference to saved address — SET NULL on delete';
-COMMENT ON COLUMN orders.customer_email IS 'Customer email frozen at order time — used for guest tracking';
+COMMENT ON COLUMN orders.shipping_address IS 'Frozen address snapshot at order time - immutable source of truth';
+COMMENT ON COLUMN orders.address_id IS 'Optional back-reference to saved address - SET NULL on delete';
+COMMENT ON COLUMN orders.customer_email IS 'Customer email frozen at order time - used for guest tracking';
 COMMENT ON COLUMN orders.converted_from_preorder_id IS 'Links to the preorder this order was converted from (if any)';

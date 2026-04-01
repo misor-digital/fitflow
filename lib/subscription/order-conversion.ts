@@ -47,7 +47,7 @@ interface ConversionOverrides {
 /**
  * Extract subscription-relevant fields from an order, with optional overrides.
  *
- * Note: `frequency`, `default_address_id`, and pricing fields are NOT included —
+ * Note: `frequency`, `default_address_id`, and pricing fields are NOT included -
  * they come from user input and server-side calculation.
  */
 export function buildSubscriptionFromOrder(
@@ -85,7 +85,7 @@ interface ConversionEligibility {
  * 3. Not linked to a subscription
  * 4. Box type must be mappable
  *
- * Does NOT check `user_id` — guest orders are valid conversion candidates.
+ * Does NOT check `user_id` - guest orders are valid conversion candidates.
  */
 export function validateOrderForConversion(
   order: OrderRow,

@@ -1,7 +1,7 @@
 /**
- * GET  /api/admin/campaigns/:id/ab-test — Get A/B test variants and results.
- * POST /api/admin/campaigns/:id/ab-test — Create / update A/B test variants.
- * DELETE /api/admin/campaigns/:id/ab-test — Remove A/B test from campaign.
+ * GET  /api/admin/campaigns/:id/ab-test - Get A/B test variants and results.
+ * POST /api/admin/campaigns/:id/ab-test - Create / update A/B test variants.
+ * DELETE /api/admin/campaigns/:id/ab-test - Remove A/B test from campaign.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
