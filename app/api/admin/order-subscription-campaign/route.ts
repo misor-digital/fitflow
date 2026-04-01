@@ -11,6 +11,7 @@ import {
   getEligibleOrderConversionRecipients,
   sendOrderConversionEmails,
 } from '@/lib/email/order-subscription-campaign';
+import { getDeliveredCycles } from '@/lib/data/delivery-cycles';
 import { validatePromoCode } from '@/lib/data/promo';
 
 // ---------------------------------------------------------------------------
@@ -35,12 +36,15 @@ export async function GET(request: Request): Promise<NextResponse> {
 
     const recipients = await getEligibleOrderConversionRecipients(cycleId);
 
+    const cycles = await getDeliveredCycles();
+
     const masked = recipients.map((r) => ({
       orderId: r.orderId,
       orderNumber: r.orderNumber,
       email: maskEmail(r.email),
       fullEmail: r.email,
       fullName: r.fullName,
+      hasAccount: r.hasAccount,
       boxType: r.boxType,
       boxName: r.boxName,
       conversionUrl: r.conversionUrl,
@@ -50,9 +54,14 @@ export async function GET(request: Request): Promise<NextResponse> {
       finalPriceEur: r.finalPriceEur,
       originalPriceBgn: r.originalPriceBgn,
       finalPriceBgn: r.finalPriceBgn,
+      conversionStatus: r.subscriptionConversionToken ? 'sent' : 'none',
     }));
 
-    return NextResponse.json({ recipients: masked, count: recipients.length });
+    return NextResponse.json({
+      recipients: masked,
+      count: recipients.length,
+      cycles: cycles.map((c) => ({ id: c.id, deliveryDate: c.delivery_date, title: c.title })),
+    });
   } catch (err) {
     if (err instanceof AdminApiError) {
       return NextResponse.json(
