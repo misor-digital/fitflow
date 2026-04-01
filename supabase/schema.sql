@@ -721,6 +721,12 @@ CREATE TABLE orders (
   order_type TEXT NOT NULL DEFAULT 'direct',
   subscription_id UUID REFERENCES subscriptions(id) ON DELETE SET NULL,
   converted_from_preorder_id UUID UNIQUE REFERENCES preorders(id) ON DELETE SET NULL,
+  subscription_conversion_token UUID UNIQUE,                    -- one-time token for order-to-subscription conversion emails
+  subscription_conversion_token_expires_at TIMESTAMPTZ,         -- token expiry (default 90 days)
+  subscription_conversion_status TEXT DEFAULT NULL               -- NULL | pending | converted | expired
+    CHECK (subscription_conversion_status IN ('pending', 'converted', 'expired')),
+  converted_to_subscription_id UUID UNIQUE                      -- FK to subscription created from this order
+    REFERENCES subscriptions(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
@@ -760,6 +766,10 @@ COMMENT ON COLUMN orders.delivery_cycle_id IS 'FK to delivery cycle — set for 
 COMMENT ON COLUMN orders.order_type IS 'Order origin: subscription (auto-generated), onetime-mystery (ships with cycle batch), onetime-revealed (ships ASAP, past cycle contents), direct (legacy/standard)';
 COMMENT ON COLUMN orders.subscription_id IS 'FK to parent subscription — set for auto-generated subscription cycle orders';
 COMMENT ON COLUMN orders.converted_from_preorder_id IS 'Links to the preorder this order was converted from (if any)';
+COMMENT ON COLUMN orders.subscription_conversion_token IS 'One-time UUID token for order-to-subscription conversion emails. Cleared after conversion.';
+COMMENT ON COLUMN orders.subscription_conversion_token_expires_at IS 'Token expiry (default 90 days from generation).';
+COMMENT ON COLUMN orders.subscription_conversion_status IS 'NULL = not targeted, pending = email sent, converted = subscription created, expired = token expired.';
+COMMENT ON COLUMN orders.converted_to_subscription_id IS 'FK to the subscription created from this order. UNIQUE enforces one-to-one.';
 
 CREATE INDEX idx_orders_user_id ON orders(user_id);
 CREATE INDEX idx_orders_order_number ON orders(order_number);
@@ -771,6 +781,7 @@ CREATE INDEX idx_orders_delivery_cycle ON orders(delivery_cycle_id) WHERE delive
 CREATE INDEX idx_orders_order_type ON orders(order_type);
 CREATE INDEX idx_orders_delivery_method ON orders(delivery_method);
 CREATE INDEX idx_orders_subscription ON orders(subscription_id) WHERE subscription_id IS NOT NULL;
+CREATE INDEX idx_orders_sub_conversion_token ON orders(subscription_conversion_token) WHERE subscription_conversion_token IS NOT NULL;
 
 CREATE TRIGGER trigger_orders_updated_at
   BEFORE UPDATE ON orders FOR EACH ROW
@@ -1069,6 +1080,7 @@ CREATE TABLE email_campaign_recipients (
   email           TEXT NOT NULL,
   full_name       TEXT,
   preorder_id     UUID REFERENCES preorders(id) ON DELETE SET NULL,
+  order_id        UUID REFERENCES orders(id) ON DELETE CASCADE,
   variant_id      UUID REFERENCES email_ab_variants(id) ON DELETE SET NULL,
   params          JSONB DEFAULT '{}'::jsonb,
   status          email_recipient_status NOT NULL DEFAULT 'pending',
