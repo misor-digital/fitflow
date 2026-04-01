@@ -141,7 +141,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
                     <StatusBadge {...statusInfo} />
                   </div>
                   <div className="text-sm text-gray-500 space-y-0.5">
-                    <p>Честота: {sub.frequency === 'monthly' ? 'Месечен' : sub.frequency === 'seasonal' ? 'Сезонен' : sub.frequency}</p>
+                    <p>Честота: {sub.frequency === 'monthly' ? 'Месечна' : sub.frequency === 'seasonal' ? 'Сезонна' : sub.frequency}</p>
                     <p>Цена: {formatPrice(sub.current_price_eur)}</p>
                     <p>Начало: {formatDate(sub.started_at)}</p>
                     {sub.default_address_id && (
