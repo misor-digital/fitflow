@@ -3,7 +3,7 @@ import OrderSubscriptionCampaignPage from '@/components/admin/OrderSubscriptionC
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Конверсия поръчка → абонамент | FitFlow Admin',
+  title: 'Конвертиране → Абонамент | FitFlow Admin',
 };
 
 export default async function Page() {
