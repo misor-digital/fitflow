@@ -27,8 +27,8 @@ export async function resolveEmailLabels(): Promise<EmailLabelMaps> {
 
 /** Static display labels for subscription frequency values */
 export const FREQUENCY_LABELS: Record<string, string> = {
-  monthly: 'Месечен',
-  seasonal: 'Сезонен',
+  monthly: 'Месечна',
+  seasonal: 'Сезонна',
 };
 
 /** Static display labels for subscription status values */
