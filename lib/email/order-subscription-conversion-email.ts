@@ -37,7 +37,7 @@ export interface SubscriptionConversionEmailData {
 // Subject
 // ============================================================================
 
-export const SUBSCRIPTION_CONVERSION_SUBJECT = 'FitFlow - Абонаментът ви е активен!';
+export const SUBSCRIPTION_CONVERSION_SUBJECT = 'FitFlow - Абонаментът ти е активен!';
 
 // ============================================================================
 // Template

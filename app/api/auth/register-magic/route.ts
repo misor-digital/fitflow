@@ -144,7 +144,7 @@ export async function POST(request: Request): Promise<NextResponse> {
     if (setupUrl) {
       await sendEmail({
         to: { email: normalizedEmail, name: sanitizedName },
-        subject: 'Активирайте акаунта си във FitFlow',
+        subject: 'Активирай акаунта си във FitFlow',
         htmlContent: generateMagicRegistrationEmail(sanitizedName, setupUrl),
         tags: ['magic-registration'],
       });

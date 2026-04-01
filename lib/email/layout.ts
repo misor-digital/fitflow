@@ -67,14 +67,14 @@ export function emailCtaButton(href: string, label: string): string {
 }
 
 /**
- * Returns the standard "Ако имате въпроси" contact paragraph
+ * Returns the standard "Ако имаш въпроси" contact paragraph
  * used across all email templates.
  *
  * @returns An HTML string with a mailto link to the brand contact email.
  */
 export function emailContactLine(): string {
   return `<p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
-  Ако имате въпроси, свържете се с нас на
+  Ако имаш въпроси, свържи се с нас на
   <a href="mailto:${EMAIL.brand.contactEmail}" style="color: ${EMAIL.colors.linkColor}; font-weight: 600;">
     ${EMAIL.brand.contactEmail}
   </a>

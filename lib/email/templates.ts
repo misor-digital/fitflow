@@ -329,25 +329,25 @@ export function generateOrderConfirmationEmail(
 export function generateCustomerInviteEmail(name: string, setupUrl: string): string {
   const bodyHtml = `
             <h2 style="color: ${EMAIL.colors.textHeading}; margin-top: 0; font-size: 24px;">
-              Здравейте, ${escapeHtml(name)}!
+              Здравей, ${escapeHtml(name)}!
             </h2>
 
             <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
-              Създадохме акаунт за вас във FitFlow, за да можете да управлявате поръчките и абонамента си.
+              Създадохме акаунт за теб във FitFlow, за да можеш да управляваш поръчките и абонамента си.
             </p>
 
             <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
-              Кликнете бутона по-долу, за да активирате акаунта си. След това можете по желание да зададете парола или да продължите да влизате с магически линк.
+              Кликни бутона по-долу, за да активираш акаунта си. След това можеш по желание да зададеш парола или да продължиш да влизаш с магически линк.
             </p>
 
-            ${emailCtaButton(setupUrl, 'Активирайте акаунта си')}
+            ${emailCtaButton(setupUrl, 'Активирай акаунта си')}
 
             <p style="color: ${EMAIL.colors.textMuted}; font-size: 14px; line-height: 1.6;">
-              Можете да зададете парола по всяко време от настройките на акаунта си.
+              Можеш да зададеш парола по всяко време от настройките на акаунта си.
             </p>
 
             <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
-              Ако не сте поискали създаване на акаунт, моля игнорирайте този имейл.
+              Ако не си поискала създаване на акаунт, моля игнорирай този имейл.
             </p>
 
             ${emailContactLine()}
@@ -408,21 +408,21 @@ export function generateStaffInviteEmail(name: string, role: string, setupUrl: s
 export function generateMagicRegistrationEmail(name: string, setupUrl: string): string {
   const bodyHtml = `
             <h2 style="color: ${EMAIL.colors.textHeading}; margin-top: 0; font-size: 24px;">
-              Здравейте, ${escapeHtml(name)}!
+              Здравей, ${escapeHtml(name)}!
             </h2>
 
             <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
-              Благодарим ви за регистрацията във FitFlow!
+              Благодарим ти за регистрацията във FitFlow!
             </p>
 
             <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
-              Кликнете бутона по-долу, за да активирате акаунта си. След това можете по желание да зададете парола или да продължите да влизате с магически линк.
+              Кликни бутона по-долу, за да активираш акаунта си. След това можеш по желание да зададеш парола или да продължиш да влизаш с магически линк.
             </p>
 
-            ${emailCtaButton(setupUrl, 'Активирайте акаунта си')}
+            ${emailCtaButton(setupUrl, 'Активирай акаунта си')}
 
             <p style="color: ${EMAIL.colors.textMuted}; font-size: 14px; line-height: 1.6;">
-              Ако не сте заявили тази регистрация, моля игнорирайте този имейл.
+              Ако не си заявила тази регистрация, моля игнорирай този имейл.
             </p>
 
             ${emailContactLine()}
@@ -442,21 +442,21 @@ export function generateMagicRegistrationEmail(name: string, setupUrl: string): 
 export function generateMagicLinkLoginEmail(loginUrl: string): string {
   const bodyHtml = `
             <h2 style="color: ${EMAIL.colors.textHeading}; margin-top: 0; font-size: 24px;">
-              Здравейте,
+              Здравей,
             </h2>
 
             <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
-              Получихме заявка за вход във вашия FitFlow акаунт.
+              Получихме заявка за вход в твоя FitFlow акаунт.
             </p>
 
             <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
-              Кликнете бутона по-долу, за да влезете.
+              Кликни бутона по-долу, за да влезеш.
             </p>
 
-            ${emailCtaButton(loginUrl, 'Влезте в акаунта')}
+            ${emailCtaButton(loginUrl, 'Влез в акаунта')}
 
             <p style="color: ${EMAIL.colors.textMuted}; font-size: 14px; line-height: 1.6;">
-              Линкът е валиден за ограничено време. Ако не сте заявили този линк, можете спокойно да игнорирате този имейл.
+              Линкът е валиден за ограничено време. Ако не си заявила този линк, можеш спокойно да игнорираш този имейл.
             </p>
 
             ${emailContactLine()}
@@ -480,14 +480,14 @@ export function generateMagicLinkLoginEmail(loginUrl: string): string {
 export function generateEmailConfirmationEmail(name: string, confirmUrl: string): string {
   const bodyHtml = `
   <h2 style="color: ${EMAIL.colors.textHeading}; margin-top: 0; font-size: 24px;">
-    Потвърдете имейла си, ${escapeHtml(name)}!
+    Потвърди имейла си, ${escapeHtml(name)}!
   </h2>
   <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
-    Благодарим ви за регистрацията във FitFlow! Кликнете бутона по-долу, за да потвърдите имейл адреса си.
+    Благодарим ти за регистрацията във FitFlow! Кликни бутона по-долу, за да потвърдиш имейл адреса си.
   </p>
-  ${emailCtaButton(confirmUrl, 'Потвърдете имейла')}
+  ${emailCtaButton(confirmUrl, 'Потвърди имейла')}
   <p style="color: ${EMAIL.colors.textMuted}; font-size: 14px; line-height: 1.6;">
-    Линкът е валиден за ограничено време. Ако не сте заявили тази регистрация, моля игнорирайте този имейл.
+    Линкът е валиден за ограничено време. Ако не си заявила тази регистрация, моля игнорирай този имейл.
   </p>
   ${emailContactLine()}
 `;
@@ -508,14 +508,14 @@ export function generatePasswordResetEmail(name: string, resetUrl: string): stri
     Нулиране на парола
   </h2>
   <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
-    Здравейте, ${escapeHtml(name)}! Получихме заявка за нулиране на паролата на вашия FitFlow акаунт.
+    Здравей, ${escapeHtml(name)}! Получихме заявка за нулиране на паролата на твоя FitFlow акаунт.
   </p>
   <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
-    Кликнете бутона по-долу, за да зададете нова парола.
+    Кликни бутона по-долу, за да зададеш нова парола.
   </p>
-  ${emailCtaButton(resetUrl, 'Задайте нова парола')}
+  ${emailCtaButton(resetUrl, 'Задай нова парола')}
   <p style="color: ${EMAIL.colors.textMuted}; font-size: 14px; line-height: 1.6;">
-    Линкът е валиден за ограничено време. Ако не сте заявили тази промяна, можете спокойно да игнорирате този имейл.
+    Линкът е валиден за ограничено време. Ако не си заявила тази промяна, можеш спокойно да игнорираш този имейл.
   </p>
   ${emailContactLine()}
 `;
@@ -584,17 +584,17 @@ export function generateDeliveryReminderEmail(data: DeliveryReminderEmailData): 
     Получихте ли поръчката си?
   </h2>
   <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
-    Здравейте, ${safeName}! Поръчка ${safeOrder} беше изпратена на ${shippedFormatted}. Ако вече сте я получили, моля потвърдете доставката.
+    Здравей, ${safeName}! Поръчка ${safeOrder} беше изпратена на ${shippedFormatted}. Ако вече си я получила, моля потвърди доставката.
   </p>
   ${emailCtaButton(confirmUrl, 'Потвърди доставка')}
   <div style="background-color: ${EMAIL.sections.delivery}; border-left: 4px solid ${EMAIL.colors.ctaButton}; padding: 16px 20px; margin: 30px 0; border-radius: 4px;">
     <p style="color: ${EMAIL.colors.textPrimary}; font-size: 14px; line-height: 1.6; margin: 0;">
-      Ако не потвърдите, поръчката ще бъде автоматично маркирана като доставена на ${safeAutoDate}.
+      Ако не потвърдиш, поръчката ще бъде автоматично маркирана като доставена на ${safeAutoDate}.
     </p>
   </div>
   ${escalationHtml}
   <p style="color: ${EMAIL.colors.textMuted}; font-size: 14px; line-height: 1.6;">
-    Не сте получили поръчката? <a href="${reportProblemUrl}" style="color: ${EMAIL.colors.linkColor}; font-weight: 600;">Свържете се с нас</a>
+    Не си получила поръчката? <a href="${reportProblemUrl}" style="color: ${EMAIL.colors.linkColor}; font-weight: 600;">Свържи се с нас</a>
   </p>
   ${emailContactLine()}
 `;
@@ -617,14 +617,14 @@ export function generateDeliveryAutoConfirmedEmail(data: DeliveryAutoConfirmedEm
 
   const bodyHtml = `
   <h2 style="color: ${EMAIL.colors.textHeading}; margin-top: 0; font-size: 24px;">
-    Поръчката ви е маркирана като доставена
+    Поръчката ти е маркирана като доставена
   </h2>
   <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
-    Здравейте, ${safeName}! Поръчка ${safeOrder} беше автоматично маркирана като доставена на ${confirmedFormatted}.
+    Здравей, ${safeName}! Поръчка ${safeOrder} беше автоматично маркирана като доставена на ${confirmedFormatted}.
   </p>
   <div style="background-color: ${EMAIL.sections.delivery}; border-left: 4px solid ${EMAIL.colors.ctaButton}; padding: 16px 20px; margin: 30px 0; border-radius: 4px;">
     <p style="color: ${EMAIL.colors.textPrimary}; font-size: 14px; line-height: 1.6; margin: 0;">
-      Ако не сте получили поръчката или имате проблем, моля свържете се с нас възможно най-скоро.
+      Ако не си получила поръчката или имаш проблем, моля свържи се с нас възможно най-скоро.
     </p>
   </div>
   ${emailCtaButton(reportProblemUrl, 'Имам проблем с доставката')}

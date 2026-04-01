@@ -44,7 +44,7 @@ export async function sendSubscriptionCreatedEmail(
 
     await sendTransactionalEmail({
       to: { email },
-      subject: 'FitFlow - Абонаментът ви е активиран!',
+      subject: 'FitFlow - Абонаментът ти е активиран!',
       htmlContent,
       tags: ['subscription', 'created'],
       category: 'sub-created',
@@ -74,7 +74,7 @@ export async function sendSubscriptionPausedEmail(
 
     await sendTransactionalEmail({
       to: { email },
-      subject: 'FitFlow - Абонаментът ви е на пауза',
+      subject: 'FitFlow - Абонаментът ти е на пауза',
       htmlContent,
       tags: ['subscription', 'paused'],
       category: 'sub-paused',
@@ -106,7 +106,7 @@ export async function sendSubscriptionResumedEmail(
 
     await sendTransactionalEmail({
       to: { email },
-      subject: 'FitFlow - Абонаментът ви е възобновен',
+      subject: 'FitFlow - Абонаментът ти е възобновен',
       htmlContent,
       tags: ['subscription', 'resumed'],
       category: 'sub-resumed',
@@ -136,7 +136,7 @@ export async function sendSubscriptionCancelledEmail(
 
     await sendTransactionalEmail({
       to: { email },
-      subject: 'FitFlow - Абонаментът ви е отменен',
+      subject: 'FitFlow - Абонаментът ти е отменен',
       htmlContent,
       tags: ['subscription', 'cancelled'],
       category: 'sub-cancelled',
@@ -169,7 +169,7 @@ export async function sendDeliveryUpcomingEmail(
 
     await sendTransactionalEmail({
       to: { email },
-      subject: 'FitFlow - Доставката ви наближава!',
+      subject: 'FitFlow - Доставката ти наближава!',
       htmlContent,
       tags: ['subscription', 'delivery-upcoming'],
       category: 'delivery-upcoming',

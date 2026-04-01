@@ -60,7 +60,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     await sendTransactionalEmail({
       to: { email: normalizedEmail, name: fullName.trim() },
-      subject: 'FitFlow - Потвърдете имейла си',
+      subject: 'FitFlow - Потвърди имейла си',
       htmlContent,
       tags: ['auth', 'email-confirmation'],
       category: 'email-confirmation',

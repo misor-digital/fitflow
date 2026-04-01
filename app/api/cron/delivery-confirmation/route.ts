@@ -138,7 +138,7 @@ async function handleReminder(
   // 2. Send email
   const emailResult = await sendTransactionalEmail({
     to: { email: order.customer_email, name: order.customer_full_name },
-    subject: `Потвърдете доставката на поръчка ${order.order_number}`,
+    subject: `Потвърди доставката на поръчка ${order.order_number}`,
     htmlContent: html,
     category: 'delivery-reminder',
     relatedEntityType: 'order',

@@ -125,7 +125,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       try {
         await sendEmail({
           to: { email: normalizedEmail, name: fullName.trim() },
-          subject: 'Активирайте акаунта си във FitFlow',
+          subject: 'Активирай акаунта си във FitFlow',
           htmlContent: generateCustomerInviteEmail(fullName.trim(), setupUrl),
           tags: ['customer-invite'],
         });

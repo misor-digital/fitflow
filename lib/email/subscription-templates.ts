@@ -62,9 +62,9 @@ export function generateSubscriptionCreatedEmail(params: SubscriptionCreatedPara
   const nextDeliveryDate = escapeHtml(params.nextDeliveryDate);
 
   const body = `
-    <h2 style="color: ${EMAIL.colors.textHeading}; margin: 0 0 20px 0;">Абонаментът ви е активиран! 🎉</h2>
+    <h2 style="color: ${EMAIL.colors.textHeading}; margin: 0 0 20px 0;">Абонаментът ти е активиран! 🎉</h2>
     <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
-      Благодарим ви, че се абонирахте за <strong>${boxTypeName}</strong> кутия с <strong>${frequency}</strong> доставка.
+      Благодарим ти, че се абонира за <strong>${boxTypeName}</strong> кутия с <strong>${frequency}</strong> доставка.
     </p>
     ${infoBox([
       `📦 Кутия: ${boxTypeName}`,
@@ -81,11 +81,11 @@ export function generateSubscriptionPausedEmail(params: SubscriptionPausedParams
   const boxTypeName = escapeHtml(params.boxTypeName);
 
   const body = `
-    <h2 style="color: ${EMAIL.colors.textHeading}; margin: 0 0 20px 0;">Абонаментът ви е на пауза ⏸️</h2>
+    <h2 style="color: ${EMAIL.colors.textHeading}; margin: 0 0 20px 0;">Абонаментът ти е на пауза ⏸️</h2>
     <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
-      Вашият абонамент за <strong>${boxTypeName}</strong> кутия е временно спрян. Можете да го възобновите по всяко време.
+      Твоят абонамент за <strong>${boxTypeName}</strong> кутия е временно спрян. Можеш да го възобновиш по всяко време.
     </p>
-    ${emailCtaButton(params.resumeUrl, 'Възобновете абонамента')}
+    ${emailCtaButton(params.resumeUrl, 'Възобнови абонамента')}
     ${emailContactLine()}`;
 
   return wrapInEmailLayout(body);
@@ -96,9 +96,9 @@ export function generateSubscriptionResumedEmail(params: SubscriptionResumedPara
   const nextDeliveryDate = escapeHtml(params.nextDeliveryDate);
 
   const body = `
-    <h2 style="color: ${EMAIL.colors.textHeading}; margin: 0 0 20px 0;">Абонаментът ви е възобновен! ▶️</h2>
+    <h2 style="color: ${EMAIL.colors.textHeading}; margin: 0 0 20px 0;">Абонаментът ти е възобновен! ▶️</h2>
     <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
-      Вашият абонамент за <strong>${boxTypeName}</strong> кутия отново е активен.
+      Твоят абонамент за <strong>${boxTypeName}</strong> кутия отново е активен.
     </p>
     ${infoBox([`📅 Следваща доставка: ${nextDeliveryDate}`])}
     ${emailCtaButton(params.manageUrl, 'Управление на абонамента')}
@@ -111,14 +111,14 @@ export function generateSubscriptionCancelledEmail(params: SubscriptionCancelled
   const boxTypeName = escapeHtml(params.boxTypeName);
 
   const body = `
-    <h2 style="color: ${EMAIL.colors.textHeading}; margin: 0 0 20px 0;">Абонаментът ви е отменен</h2>
+    <h2 style="color: ${EMAIL.colors.textHeading}; margin: 0 0 20px 0;">Абонаментът ти е отменен</h2>
     <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
-      Вашият абонамент за <strong>${boxTypeName}</strong> кутия е отменен. Ще ни липсвате! 💔
+      Твоят абонамент за <strong>${boxTypeName}</strong> кутия е отменен. Ще ни липсваш! 💔
     </p>
     <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
-      Можете да се абонирате отново по всяко време.
+      Можеш да се абонираш отново по всяко време.
     </p>
-    ${emailCtaButton(params.resubscribeUrl, 'Абонирайте се отново')}
+    ${emailCtaButton(params.resubscribeUrl, 'Абонирай се отново')}
     ${emailContactLine()}`;
 
   return wrapInEmailLayout(body);
@@ -129,12 +129,12 @@ export function generateDeliveryUpcomingEmail(params: DeliveryUpcomingParams): s
   const deliveryDate = escapeHtml(params.deliveryDate);
 
   const body = `
-    <h2 style="color: ${EMAIL.colors.textHeading}; margin: 0 0 20px 0;">Доставката ви наближава! 🚚</h2>
+    <h2 style="color: ${EMAIL.colors.textHeading}; margin: 0 0 20px 0;">Доставката ти наближава! 🚚</h2>
     <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
-      Вашата <strong>${boxTypeName}</strong> кутия е на път!
+      Твоята <strong>${boxTypeName}</strong> кутия е на път!
     </p>
     ${infoBox([`📅 Очаквана доставка: ${deliveryDate}`])}
-    ${emailCtaButton(params.trackUrl, 'Проследете доставката')}
+    ${emailCtaButton(params.trackUrl, 'Проследи доставката')}
     ${emailContactLine()}`;
 
   return wrapInEmailLayout(body);

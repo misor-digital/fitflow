@@ -712,7 +712,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       // Send via Brevo wrapper (auto-logs to email_send_log)
       const result = await sendTransactionalEmail({
         to: { email: email.trim().toLowerCase(), name: fullName.trim() },
-        subject: 'FitFlow - Поръчката ви е потвърдена!',
+        subject: 'FitFlow - Поръчката ти е потвърдена!',
         htmlContent,
         tags: ['order', preorder ? 'preorder-conversion' : 'confirmation'],
         category: 'order-confirmation',
