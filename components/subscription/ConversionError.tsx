@@ -1,14 +1,9 @@
-'use client';
-
 import Link from 'next/link';
 
 interface ConversionErrorProps {
   message: string;
 }
 
-/**
- * Error display for invalid, expired, or already-used subscription conversion tokens.
- */
 export default function ConversionError({ message }: ConversionErrorProps) {
   return (
     <div className="min-h-[60vh] flex items-center justify-center px-4">
@@ -29,20 +24,22 @@ export default function ConversionError({ message }: ConversionErrorProps) {
           </svg>
         </div>
 
-        <h1 className="text-2xl font-bold text-gray-900 mb-3">{message}</h1>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          Невалиден линк
+        </h1>
 
-        <p className="text-gray-600 mb-8">
+        <p className="text-gray-600 mb-4">{message}</p>
+
+        <p className="text-sm text-gray-500 mb-8">
           Ако смятате, че това е грешка, моля свържете се с нас.
         </p>
 
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Link
-            href="/"
-            className="inline-flex items-center justify-center px-6 py-3 bg-[var(--color-brand-orange)] text-white rounded-lg font-semibold hover:opacity-90 transition-opacity"
-          >
-            Начална страница
-          </Link>
-        </div>
+        <Link
+          href="/"
+          className="inline-flex items-center justify-center px-6 py-3 bg-[var(--color-brand-orange)] text-white rounded-lg font-semibold hover:opacity-90 transition-opacity"
+        >
+          Към началната страница
+        </Link>
       </div>
     </div>
   );
