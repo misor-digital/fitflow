@@ -128,6 +128,19 @@ export async function PUT(
     }
 
     const body = await request.json();
+
+    // Handle "set default only" — no full validation needed
+    const isDefaultOnly =
+      typeof body.isDefault === 'boolean' &&
+      Object.keys(body).length === 1;
+
+    if (isDefaultOnly) {
+      const address = await updateAddressAdmin(id, {
+        is_default: body.isDefault,
+      });
+      return NextResponse.json({ address });
+    }
+
     const sanitized = sanitizeAddressBody(body);
 
     // Length validation
