@@ -68,7 +68,7 @@ export type EligibleOrder = Pick<
 
 export interface FindOrCreateResult {
   userId: string;
-  setupUrl: string | null;
+  loginUrl: string | null;
   isNew: boolean;
 }
 
@@ -147,6 +147,76 @@ export async function getEligibleOrdersForSubscription(
 }
 
 // ============================================================================
+// Function 1b: getAllCycleOrdersForCampaign
+// ============================================================================
+
+/**
+ * Query ALL one-time orders for a delivery cycle — including converted ones.
+ * Used by the admin campaign overview page for full visibility and accurate stats.
+ *
+ * Unlike `getEligibleOrdersForSubscription`, this does NOT filter out
+ * `converted_to_subscription_id` or `subscription_conversion_status = 'converted'`.
+ */
+export async function getAllCycleOrdersForCampaign(
+  cycleId?: string,
+): Promise<EligibleOrder[]> {
+  const resolvedCycleId = cycleId ?? (await getPreviousDeliveredCycle())?.id;
+  if (!resolvedCycleId) return [];
+
+  const { data, error } = await supabaseAdmin
+    .from('orders')
+    .select(ELIGIBLE_ORDER_SELECT)
+    .in('order_type', ['onetime-mystery', 'onetime-revealed', 'direct'])
+    .eq('status', 'delivered')
+    .eq('delivery_cycle_id', resolvedCycleId)
+    .order('created_at', { ascending: false })
+    .limit(10_000);
+
+  if (error) {
+    console.error('Error fetching all cycle orders for campaign:', error);
+    throw new Error('Failed to load cycle orders.');
+  }
+
+  if (!data || data.length === 0) return [];
+
+  // Deduplicate by email — keep most recent
+  const seen = new Map<string, EligibleOrder>();
+
+  for (const row of data) {
+    const order = row as unknown as Pick<
+      OrderRow,
+      | 'id'
+      | 'order_number'
+      | 'customer_email'
+      | 'customer_full_name'
+      | 'customer_phone'
+      | 'user_id'
+      | 'box_type'
+      | 'wants_personalization'
+      | 'sports'
+      | 'colors'
+      | 'flavors'
+      | 'dietary'
+      | 'size_upper'
+      | 'size_lower'
+      | 'promo_code'
+      | 'discount_percent'
+      | 'original_price_eur'
+      | 'final_price_eur'
+      | 'subscription_conversion_status'
+      | 'subscription_conversion_token'
+      | 'created_at'
+    >;
+    const key = order.customer_email.toLowerCase();
+    if (!seen.has(key)) {
+      seen.set(key, { ...order, hasAccount: order.user_id !== null });
+    }
+  }
+
+  return Array.from(seen.values());
+}
+
+// ============================================================================
 // Function 2: generateConversionTokens
 // ============================================================================
 
@@ -174,9 +244,6 @@ export async function generateConversionTokens(
         subscription_conversion_status: 'pending',
       })
       .eq('id', id)
-      .or(
-        'subscription_conversion_status.is.null,subscription_conversion_status.eq.pending',
-      )
       .is('converted_to_subscription_id', null)
       .select('id');
 
@@ -286,7 +353,7 @@ export async function findOrCreateCustomerAccount(
   // 1. Check for existing user
   const existing = await getUserByEmail(normalizedEmail);
   if (existing) {
-    return { userId: existing.id, setupUrl: null, isNew: false };
+    return { userId: existing.id, loginUrl: null, isNew: false };
   }
 
   // 2. Create new user
@@ -305,15 +372,15 @@ export async function findOrCreateCustomerAccount(
     if (createError.message?.includes('already registered')) {
       const retryUser = await getUserByEmail(normalizedEmail);
       if (retryUser) {
-        return { userId: retryUser.id, setupUrl: null, isNew: false };
+        return { userId: retryUser.id, loginUrl: null, isNew: false };
       }
     }
     console.error('[findOrCreateCustomerAccount] createUser failed:', createError);
     throw new Error('Failed to create customer account.');
   }
 
-  // 3. Generate setup-password link
-  let setupUrl: string | null = null;
+  // 3. Generate magic-link login URL (redirects to subscription page)
+  let loginUrl: string | null = null;
   try {
     const { data: linkData, error: linkError } =
       await supabaseAdmin.auth.admin.generateLink({
@@ -335,8 +402,8 @@ export async function findOrCreateCustomerAccount(
         linkData.properties.hashed_token,
       );
       callbackUrl.searchParams.set('type', 'magiclink');
-      callbackUrl.searchParams.set('next', '/setup-password');
-      setupUrl = callbackUrl.toString();
+      callbackUrl.searchParams.set('next', '/account/subscriptions');
+      loginUrl = callbackUrl.toString();
     }
   } catch (linkErr) {
     console.warn(
@@ -352,5 +419,5 @@ export async function findOrCreateCustomerAccount(
     .eq('customer_email', normalizedEmail)
     .is('user_id', null);
 
-  return { userId: userData.user.id, setupUrl, isNew: true };
+  return { userId: userData.user.id, loginUrl, isNew: true };
 }

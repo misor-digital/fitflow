@@ -30,7 +30,7 @@ export interface SubscriptionConversionEmailData {
   nextDeliveryDate: string | null;
   orderNumber: string;
   isNewAccount: boolean;
-  setupUrl: string | null;
+  loginUrl: string | null;
 }
 
 // ============================================================================
@@ -86,9 +86,9 @@ export function generateSubscriptionConversionEmail(
     infoLines.push(`📅 Следваща доставка: ${escapeHtml(data.nextDeliveryDate)}`);
   }
 
-  // -- Account setup block (conditional) ------------------------------------
-  const accountSetupHtml =
-    data.isNewAccount && data.setupUrl
+  // -- Account login block (conditional — new guests) -----------------------
+  const accountLoginHtml =
+    data.isNewAccount && data.loginUrl
       ? `
     <div style="background-color: ${EMAIL.sections.personalization}; padding: 20px; border-radius: 8px; margin: 30px 0;">
       <h3 style="color: ${EMAIL.colors.textHeading}; margin: 0 0 12px 0;">🔑 Твоят акаунт</h3>
@@ -96,11 +96,11 @@ export function generateSubscriptionConversionEmail(
         Създадохме акаунт за теб с имейл <strong>${escapeHtml(data.email)}</strong>.
       </p>
       <p style="color: ${EMAIL.colors.textPrimary}; font-size: 15px; line-height: 1.6; margin: 0 0 16px 0;">
-        С акаунта си можеш да управляваш абонамента, да сменяш предпочитанията си и да следиш доставките.
+        От акаунта си можеш да управляваш абонамента, да сменяш предпочитанията си и да следиш доставките.
       </p>
-      ${emailCtaButton(data.setupUrl, 'Настрой парола')}
+      ${emailCtaButton(data.loginUrl, 'Виж абонамента си')}
       <p style="color: ${EMAIL.colors.textMuted}; font-size: 13px; line-height: 1.5; margin: 0; text-align: center;">
-        Можеш и да пропуснеш тази стъпка — ще можеш да зadadеш парола по-късно от профила си.
+        В бъдеще можеш да влезеш с магически линк от <a href="https://fitflow.bg/login" style="color: ${EMAIL.colors.linkColor};">страницата за вход</a>.
       </p>
     </div>`
       : '';
@@ -124,7 +124,7 @@ export function generateSubscriptionConversionEmail(
       Конвертирано от поръчка <strong>#${orderNumber}</strong>
     </p>
 
-    ${accountSetupHtml}
+    ${accountLoginHtml}
 
     <div style="background-color: ${EMAIL.sections.personalization}; padding: 20px; border-radius: 8px; margin: 30px 0;">
       <h3 style="color: ${EMAIL.colors.textHeading}; margin: 0 0 12px 0;">📋 Какво следва?</h3>
