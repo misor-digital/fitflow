@@ -225,12 +225,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // ------------------------------------------------------------------
-    // Step 4: Rate limit (5 per hour, keyed by user or token for guests)
+    // Step 4: Rate limit (5/hour regular, 50/hour staff, keyed by user or token)
     // ------------------------------------------------------------------
+    const isStaff = session?.profile?.user_type === 'staff' && !!session.profile.staff_role;
     const rateLimitKey = session
       ? `subscription_create:${userId}`
       : `subscription_create:token:${conversionToken}`;
-    const withinLimit = await checkRateLimit(rateLimitKey, 5, 3600);
+    const withinLimit = await checkRateLimit(rateLimitKey, isStaff ? 50 : 5, 3600);
     if (!withinLimit) {
       return NextResponse.json(
         { error: 'Твърде много заявки. Моля, опитайте по-късно.' },

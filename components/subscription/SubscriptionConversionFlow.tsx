@@ -19,6 +19,7 @@ import { useOrderStore } from '@/store/orderStore';
 import DeliveryMethodToggle from '@/components/order/DeliveryMethodToggle';
 import SpeedyOfficeSelector from '@/components/order/SpeedyOfficeSelector';
 import AdminCustomerPanel from '@/components/order/AdminCustomerPanel';
+import { trackOrderToSubscriptionConversion } from '@/lib/analytics/subscription';
 import type { SubscriptionConversionFlowProps } from './conversion-types';
 
 // ============================================================================
@@ -347,6 +348,14 @@ export default function SubscriptionConversionFlow({
       if (!res.ok) {
         throw new Error(data.error ?? 'Възникна грешка.');
       }
+
+      trackOrderToSubscriptionConversion({
+        orderNumber: source.orderNumber,
+        boxType: source.boxType,
+        frequency: frequency!,
+        value: priceInfo.finalPriceEur,
+        wasGuest: !isAuthenticated,
+      });
 
       if (isAuthenticated && !isAdmin) {
         router.push('/account/subscriptions');
