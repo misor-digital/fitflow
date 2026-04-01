@@ -47,3 +47,18 @@ export {
   validateFrequencyChange,
   validateCancellationReason,
 } from './validation';
+
+// ============================================================================
+// Order-to-Subscription Conversion
+// ============================================================================
+
+export {
+  mapOrderBoxToSubscriptionBox,
+  buildSubscriptionFromOrder,
+  validateOrderForConversion,
+} from './order-conversion';
+
+export {
+  validateConversionInput,
+  type ConversionInput,
+} from './order-conversion-validation';
