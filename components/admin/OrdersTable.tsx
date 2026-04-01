@@ -87,7 +87,24 @@ function formatDateTime(iso: string) {
   });
 }
 
+// ============================================================================
+// Delivery helper
+// ============================================================================
 
+function formatShortDelivery(order: OrderRow): { text: string; tooltip: string; isSpeedy: boolean } {
+  const addr = order.shipping_address;
+  if (order.delivery_method === 'speedy_office' || addr.delivery_method === 'speedy_office') {
+    const name = addr.speedy_office_name ?? 'Speedy офис';
+    return {
+      text: name,
+      tooltip: addr.speedy_office_address ? `📦 ${name} — ${addr.speedy_office_address}` : `📦 ${name}`,
+      isSpeedy: true,
+    };
+  }
+  const short = [addr.city, addr.postal_code].filter(Boolean).join(' ');
+  const full = [addr.street_address, addr.city, addr.postal_code].filter(Boolean).join(', ');
+  return { text: short, tooltip: full, isSpeedy: false };
+}
 
 // ============================================================================
 // Component
@@ -317,6 +334,7 @@ export function OrdersTable({
               <th className="py-3 px-4 text-sm font-medium text-gray-500">Клиент</th>
               <th className="py-3 px-4 text-sm font-medium text-gray-500">Кутия</th>
               <th className="py-3 px-4 text-sm font-medium text-gray-500">Статус</th>
+              <th className="py-3 px-4 text-sm font-medium text-gray-500 hidden lg:table-cell">Доставка</th>
               <th className="py-3 px-4 text-sm font-medium text-gray-500">Цена</th>
               <th className="py-3 px-4 text-sm font-medium text-gray-500">Дата</th>
               <th className="py-3 px-4 text-sm font-medium text-gray-500">Действия</th>
@@ -396,6 +414,31 @@ export function OrdersTable({
                       })()}
                     </td>
 
+                    {/* Delivery */}
+                    <td className="py-3 px-4 hidden lg:table-cell">
+                      {(() => {
+                        const d = formatShortDelivery(order);
+                        if (d.isSpeedy) {
+                          return (
+                            <div className="text-xs" title={d.tooltip}>
+                              <span className="inline-flex items-center gap-1">
+                                <span className="text-orange-600">📦</span>
+                                <span className="font-medium text-gray-700 truncate max-w-[150px]">
+                                  {d.text}
+                                </span>
+                              </span>
+                            </div>
+                          );
+                        }
+                        return (
+                          <div className="text-xs truncate max-w-[200px]" title={d.tooltip}>
+                            <span className="font-medium text-gray-700">{order.shipping_address.city}</span>
+                            <span className="text-gray-400 ml-1">{order.shipping_address.postal_code}</span>
+                          </div>
+                        );
+                      })()}
+                    </td>
+
                     {/* Price */}
                     <td className="py-3 px-4 text-sm">
                       {order.final_price_eur != null
@@ -423,7 +466,7 @@ export function OrdersTable({
                   {/* Expanded details */}
                   {isExpanded && (
                     <tr>
-                      <td colSpan={8} className="bg-gray-50 px-4 py-4">
+                      <td colSpan={9} className="bg-gray-50 px-4 py-4">
                         <OrderRowDetail
                           order={order}
                           boxTypeName={boxTypeNames[order.box_type] ?? order.box_type}
