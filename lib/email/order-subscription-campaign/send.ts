@@ -20,6 +20,7 @@ import { renderOrderConversionEmail } from './template';
 import { generateConversionTokens, getEligibleOrdersForSubscription } from '@/lib/data/order-subscription-conversion';
 import { sendTransactionalEmail } from '@/lib/email/brevo/transactional';
 import { logEmailSent } from '@/lib/data/email-log';
+import { getOptionLabels, getColorNames } from '@/lib/data/catalog';
 import type { EmailSendLogInsert } from '@/lib/supabase/types';
 
 // ---------------------------------------------------------------------------
@@ -87,6 +88,16 @@ export async function sendOrderConversionEmails(
 ): Promise<OrderConversionSendResult> {
   const { dryRun, includeIds, campaignPromoCode } = options;
 
+  // Step 0: Preload catalog labels for Bulgarian display
+  const [sportLabels, flavorLabels, dietaryLabels, sizeLabels, colorNames] = await Promise.all([
+    getOptionLabels('sports'),
+    getOptionLabels('flavors'),
+    getOptionLabels('dietary'),
+    getOptionLabels('sizes'),
+    getColorNames(),
+  ]);
+  const labelMaps = { sportLabels, flavorLabels, dietaryLabels, sizeLabels, colorNames };
+
   // Step 1: Fetch eligible recipients
   const allRecipients = await getEligibleOrderConversionRecipients();
   const recipients = includeIds
@@ -141,7 +152,7 @@ export async function sendOrderConversionEmails(
     try {
       if (dryRun) {
         // Render the template to validate it works
-        renderOrderConversionEmail(recipient, campaignPromoCode ?? undefined);
+        renderOrderConversionEmail(recipient, labelMaps, campaignPromoCode ?? undefined);
 
         // Log to email_send_log with dry-run category
         const logEntry: EmailSendLogInsert = {
@@ -168,7 +179,7 @@ export async function sendOrderConversionEmails(
         results.push({ orderId: recipient.orderId, email: recipient.email, status: 'skipped' });
       } else {
         // Render the final HTML
-        const html = renderOrderConversionEmail(recipient, campaignPromoCode ?? undefined);
+        const html = renderOrderConversionEmail(recipient, labelMaps, campaignPromoCode ?? undefined);
 
         // Send via Brevo — the callback already logs to email_send_log
         const result = await sendTransactionalEmail({

@@ -17,6 +17,18 @@ import Mustache from 'mustache';
 import type { PreorderRecipient } from './recipients';
 
 // ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+export interface PreorderLabelMaps {
+  sportLabels: Record<string, string>;
+  flavorLabels: Record<string, string>;
+  dietaryLabels: Record<string, string>;
+  sizeLabels: Record<string, string>;
+  colorNames: Record<string, string>;
+}
+
+// ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
@@ -81,33 +93,41 @@ function splitName(fullName: string): { firstName: string; lastName: string } {
 }
 
 /** Build a display string for sports, appending sportOther if provided */
-function formatSports(sports: string[] | null, sportOther: string | null): string {
+function formatSports(sports: string[] | null, sportOther: string | null, labels: Record<string, string>): string {
   if (!sports?.length) return '—';
-  let result = sports.join(', ');
+  let result = sports.map((v) => labels[v] ?? v).join(', ');
   if (sportOther) result += ` (${sportOther})`;
   return result;
 }
 
 /** Build a display string for flavors, appending flavorOther if provided */
-function formatFlavors(flavors: string[] | null, flavorOther: string | null): string {
+function formatFlavors(flavors: string[] | null, flavorOther: string | null, labels: Record<string, string>): string {
   if (!flavors?.length) return '—';
-  let result = flavors.join(', ');
+  let result = flavors.map((v) => labels[v] ?? v).join(', ');
   if (flavorOther) result += ` (${flavorOther})`;
   return result;
 }
 
 /** Build a display string for sizes */
-function formatSize(upper: string | null, lower: string | null): string {
-  if (!upper && !lower) return '—';
-  return [upper, lower].filter(Boolean).join(' / ');
+function formatSize(upper: string | null, lower: string | null, labels: Record<string, string>): string {
+  const mappedUpper = upper ? (labels[upper] ?? upper) : null;
+  const mappedLower = lower ? (labels[lower] ?? lower) : null;
+  if (!mappedUpper && !mappedLower) return '—';
+  return [mappedUpper, mappedLower].filter(Boolean).join(' / ');
 }
 
 /** Build a display string for dietary restrictions, appending dietaryOther */
-function formatDietary(dietary: string[] | null, dietaryOther: string | null): string {
+function formatDietary(dietary: string[] | null, dietaryOther: string | null, labels: Record<string, string>): string {
   if (!dietary?.length) return 'Няма';
-  let result = dietary.join(', ');
+  let result = dietary.map((v) => labels[v] ?? v).join(', ');
   if (dietaryOther) result += ` (${dietaryOther})`;
   return result;
+}
+
+/** Map raw color values to Bulgarian labels */
+function formatColors(colors: string[] | null, labels: Record<string, string>): string {
+  if (!colors?.length) return '—';
+  return colors.map((v) => labels[v] ?? v).join(', ');
 }
 
 // ---------------------------------------------------------------------------
@@ -123,10 +143,12 @@ function formatDietary(dietary: string[] | null, dietaryOther: string | null): s
  * - `{{#wantsPersonalization}}...{{/wantsPersonalization}}` sections are
  *   conditionally rendered by Mustache.
  */
-export function renderPreorderEmail(recipient: PreorderRecipient): string {
+export function renderPreorderEmail(recipient: PreorderRecipient, labelMaps?: PreorderLabelMaps): string {
   const template = getTemplate();
 
   const { firstName, lastName } = splitName(recipient.fullName);
+
+  const labels = labelMaps ?? { sportLabels: {}, flavorLabels: {}, dietaryLabels: {}, sizeLabels: {}, colorNames: {} };
 
   // Validate conversion URL starts with SITE_URL
   if (!recipient.conversionUrl.startsWith(SITE_URL)) {
@@ -143,11 +165,11 @@ export function renderPreorderEmail(recipient: PreorderRecipient): string {
     box_price: formatPrice(recipient.finalPriceEur, recipient.originalPriceEur, recipient.finalPriceBgn, recipient.originalPriceBgn),
     personalization: recipient.wantsPersonalization ? 'да' : 'не',
     wantsPersonalization: recipient.wantsPersonalization,
-    sport: formatSports(recipient.sports, recipient.sportOther),
-    colors: recipient.colors?.join(', ') || '—',
-    flavors: formatFlavors(recipient.flavors, recipient.flavorOther),
-    size: formatSize(recipient.sizeUpper, recipient.sizeLower),
-    dietary_restrictions: formatDietary(recipient.dietary, recipient.dietaryOther),
+    sport: formatSports(recipient.sports, recipient.sportOther, labels.sportLabels),
+    colors: formatColors(recipient.colors, labels.colorNames),
+    flavors: formatFlavors(recipient.flavors, recipient.flavorOther, labels.flavorLabels),
+    size: formatSize(recipient.sizeUpper, recipient.sizeLower, labels.sizeLabels),
+    dietary_restrictions: formatDietary(recipient.dietary, recipient.dietaryOther, labels.dietaryLabels),
     // Used as {{{custom_link}}} in template — unescaped, validated above
     custom_link: recipient.conversionUrl,
   });

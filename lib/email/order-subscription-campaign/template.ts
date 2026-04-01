@@ -17,6 +17,18 @@ import Mustache from 'mustache';
 import type { OrderConversionRecipient } from './recipients';
 
 // ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+export interface LabelMaps {
+  sportLabels: Record<string, string>;
+  flavorLabels: Record<string, string>;
+  dietaryLabels: Record<string, string>;
+  sizeLabels: Record<string, string>;
+  colorNames: Record<string, string>;
+}
+
+// ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
@@ -90,8 +102,15 @@ function formatSize(upper: string | null, lower: string | null): string {
  *   and is validated to start with SITE_URL before rendering.
  * - `{{#has_promo}}...{{/has_promo}}` sections are conditionally rendered.
  */
+/** Map raw values to Bulgarian labels using catalog label maps */
+function mapLabels(values: string[] | null, labels: Record<string, string>): string {
+  if (!values || values.length === 0) return '—';
+  return values.map((v) => labels[v] ?? v).join(', ');
+}
+
 export function renderOrderConversionEmail(
   recipient: OrderConversionRecipient,
+  labelMaps: LabelMaps,
   campaignPromoCode?: string,
 ): string {
   const template = getTemplate();
@@ -118,11 +137,14 @@ export function renderOrderConversionEmail(
     ),
     personalization: recipient.wantsPersonalization ? 'да' : 'не',
     wantsPersonalization: recipient.wantsPersonalization,
-    sport: recipient.sports?.join(', ') || '—',
-    colors: recipient.colors?.join(', ') || '—',
-    flavors: recipient.flavors?.join(', ') || '—',
-    size: formatSize(recipient.sizeUpper, recipient.sizeLower),
-    dietary_restrictions: recipient.dietary?.join(', ') || 'Няма',
+    sport: mapLabels(recipient.sports, labelMaps.sportLabels),
+    colors: mapLabels(recipient.colors, labelMaps.colorNames),
+    flavors: mapLabels(recipient.flavors, labelMaps.flavorLabels),
+    size: formatSize(
+      recipient.sizeUpper ? (labelMaps.sizeLabels[recipient.sizeUpper] ?? recipient.sizeUpper) : null,
+      recipient.sizeLower ? (labelMaps.sizeLabels[recipient.sizeLower] ?? recipient.sizeLower) : null,
+    ),
+    dietary_restrictions: mapLabels(recipient.dietary, labelMaps.dietaryLabels) || 'Няма',
     has_promo: !!campaignPromoCode,
     promo_code: campaignPromoCode ?? '',
     promo_discount: campaignPromoCode ? 'допълнителна' : '',

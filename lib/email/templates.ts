@@ -59,6 +59,7 @@ export interface EmailLabelMaps {
   dietary: LabelMap;
   colors: LabelMap;
   contents: LabelMap;
+  sizes: LabelMap;
 }
 
 // ============================================================================
@@ -236,8 +237,8 @@ export function generateConfirmationEmail(
         ${sportsDisplay.length ? `<p><strong>Спортове:</strong> ${sportsDisplay.join(', ')}  ${printOtherOption(data.sports, data.sportOther)}</p>` : ''}
         ${data.colors?.length ? generateColorSwatchesHtml(data.colors, colorLabels) : ''}
         ${flavorsDisplay.length ? `<p><strong>Вкусове:</strong> ${flavorsDisplay.join(', ')}  ${printOtherOption(data.flavors, data.flavorOther)}</p>` : ''}
-        ${data.sizeUpper ? `<p><strong>Размер (горна част):</strong> ${data.sizeUpper}</p>` : ''}
-        ${data.sizeLower ? `<p><strong>Размер (долна част):</strong> ${data.sizeLower}</p>` : ''}
+        ${data.sizeUpper ? `<p><strong>Размер (горна част):</strong> ${labels?.sizes?.[data.sizeUpper] ?? data.sizeUpper}</p>` : ''}
+        ${data.sizeLower ? `<p><strong>Размер (долна част):</strong> ${labels?.sizes?.[data.sizeLower] ?? data.sizeLower}</p>` : ''}
         ${dietaryDisplay.length ? `<p><strong>Диетични предпочитания:</strong> ${dietaryDisplay.join(', ')}  ${printOtherOption(data.dietary, data.dietaryOther)}</p>` : ''}
         ${data.additionalNotes ? `<p><strong>Допълнителни бележки:</strong> ${escapeHtml(data.additionalNotes)}</p>` : ''}
       </div>
