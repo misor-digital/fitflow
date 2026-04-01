@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import type { CustomerWithStats } from '@/lib/supabase/types';
 
 /** Mask a full name: show first character + '***' */
@@ -85,12 +86,17 @@ export function CustomersTable({
                 >
                   {/* Name — masked with tooltip */}
                   <td className="px-4 py-3">
-                    <span className="relative group cursor-default">
-                      <span>{maskName(customer.full_name)}</span>
-                      <span className="absolute left-0 bottom-full mb-1 hidden group-hover:block bg-gray-900 text-white text-xs rounded px-2 py-1 whitespace-nowrap z-10 shadow-lg">
-                        {customer.full_name}
+                    <Link
+                      href={`/admin/customers/${customer.id}`}
+                      className="text-[var(--color-brand-navy)] hover:underline font-medium"
+                    >
+                      <span className="relative group cursor-default">
+                        <span>{maskName(customer.full_name)}</span>
+                        <span className="absolute left-0 bottom-full mb-1 hidden group-hover:block bg-gray-900 text-white text-xs rounded px-2 py-1 whitespace-nowrap z-10 shadow-lg">
+                          {customer.full_name}
+                        </span>
                       </span>
-                    </span>
+                    </Link>
                   </td>
 
                   {/* Email — masked with tooltip */}
