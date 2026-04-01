@@ -204,10 +204,19 @@ export default function OrderFlow({
         // inline address (selectedAddressId is null), persist it first via the
         // address API and use the returned ID for the subscription request.
         if (!currentInput.selectedAddressId) {
+          const addressPayload: Record<string, unknown> = {
+            ...currentInput.address,
+            deliveryMethod: currentInput.deliveryMethod,
+          };
+          if (currentInput.deliveryMethod === 'speedy_office' && currentInput.speedyOffice) {
+            addressPayload.speedyOfficeId = currentInput.speedyOffice.id;
+            addressPayload.speedyOfficeName = currentInput.speedyOffice.name;
+            addressPayload.speedyOfficeAddress = currentInput.speedyOffice.address;
+          }
           const addrRes = await fetch('/api/address', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(currentInput.address),
+            body: JSON.stringify(addressPayload),
           });
           const addrData = await addrRes.json();
           if (!addrRes.ok || !addrData.address?.id) {
