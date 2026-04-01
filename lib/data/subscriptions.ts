@@ -77,6 +77,7 @@ function addressToSnapshot(address: AddressRow): ShippingAddressSnapshot {
 export async function createSubscription(
   data: SubscriptionInsert,
   performedBy: string,
+  options?: { convertedFromOrderId?: string },
 ): Promise<SubscriptionRow> {
   const { data: subscription, error } = await supabaseAdmin
     .from('subscriptions')
@@ -90,9 +91,21 @@ export async function createSubscription(
   }
 
   // Record history
+  const historyDetails: Record<string, unknown> = {
+    box_type: data.box_type,
+    frequency: data.frequency,
+    base_price_eur: data.base_price_eur,
+    current_price_eur: data.current_price_eur,
+  };
+
+  if (options?.convertedFromOrderId) {
+    historyDetails.converted_from_order_id = options.convertedFromOrderId;
+  }
+
   await insertHistory({
     subscription_id: subscription.id,
     action: 'created',
+    details: historyDetails,
     performed_by: performedBy,
   });
 
