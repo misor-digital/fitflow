@@ -9,7 +9,6 @@ import SubscriptionCard from './SubscriptionCard';
 
 export interface SubscriptionDashboardProps {
   subscriptions: SubscriptionWithDelivery[];
-  upcomingCycle: { id: string; deliveryDate: string; title: string | null } | null;
   boxTypeNames: Record<string, string>;
   addresses: AddressRow[];
   prices: PricesMap;
@@ -19,7 +18,6 @@ export interface SubscriptionDashboardProps {
 
 export function SubscriptionDashboard({
   subscriptions: initialSubscriptions,
-  upcomingCycle,
   boxTypeNames,
   addresses,
   prices,
@@ -39,8 +37,8 @@ export function SubscriptionDashboard({
           sub.id === id
             ? {
                 ...data.subscription,
-                nextDeliveryDate: upcomingCycle?.deliveryDate ?? null,
-                nextCycleId: upcomingCycle?.id ?? null,
+                nextDeliveryDate: data.subscription.nextDeliveryDate ?? sub.nextDeliveryDate,
+                nextCycleId: data.subscription.nextCycleId ?? sub.nextCycleId,
               }
             : sub,
         ),
@@ -104,7 +102,6 @@ export function SubscriptionDashboard({
           key={sub.id}
           subscription={sub}
           boxTypeName={boxTypeNames[sub.box_type] ?? sub.box_type}
-          upcomingCycle={upcomingCycle}
           addresses={addresses}
           prices={prices}
           catalogOptions={catalogOptions}

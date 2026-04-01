@@ -398,6 +398,11 @@ export default function SubscriptionConversionFlow({
     speedyOffice,
     address,
     router,
+    additionalNotes,
+    dietaryOther,
+    flavorOther,
+    priceInfo.finalPriceEur,
+    sportOther,
   ]);
 
   // ── Render helpers ──────────────────────────────────────────────────────

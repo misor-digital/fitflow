@@ -57,7 +57,7 @@ export default function PreorderCampaignPage() {
   const [recipients, setRecipients] = useState<Recipient[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [sending, setSending] = useState(false);
+  const [_sending, setSending] = useState(false);
   const [result, setResult] = useState<SendResultResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -168,7 +168,7 @@ export default function PreorderCampaignPage() {
   }, []);
 
   /* ---- Send / Dry-run handler ---- */
-  const handleSend = useCallback(
+  const _handleSend = useCallback(
     async (dryRun: boolean) => {
       const count = selectedFilteredRecipients.length;
       if (dryRun) {
