@@ -15,6 +15,7 @@ export default function CookieConsentBanner() {
     showBanner,
     showPreferences,
     preferences,
+    requiresRefresh,
     initialize,
     acceptAll,
     rejectNonEssential,
@@ -49,8 +50,8 @@ export default function CookieConsentBanner() {
   // Don't render until loaded (prevents hydration mismatch)
   if (!isLoaded) return null;
 
-  // Don't show if banner is hidden and preferences modal is closed
-  if (!showBanner && !showPreferences) return null;
+  // Don't show if banner is hidden, preferences modal is closed, and no refresh needed
+  if (!showBanner && !showPreferences && !requiresRefresh) return null;
 
   const handleSavePreferences = () => {
     savePreferences({
@@ -212,6 +213,21 @@ export default function CookieConsentBanner() {
               </p>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Refresh prompt after consent downgrade */}
+      {requiresRefresh && !showBanner && !showPreferences && (
+        <div className="fixed bottom-4 right-4 z-50 max-w-sm bg-white rounded-xl shadow-lg border border-gray-200 p-4">
+          <p className="text-sm text-gray-700 mb-3">
+            Настройките са запазени. Моля, презаредете страницата за пълно прилагане.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="w-full px-4 py-2 text-sm font-medium text-white bg-[#023047] hover:bg-[#034a6e] rounded-lg transition-colors"
+          >
+            Презареди страницата
+          </button>
         </div>
       )}
     </>

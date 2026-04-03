@@ -17,7 +17,7 @@ import {
 import { validateAddress, addressInputToSnapshot } from '@/lib/order';
 import { isSubscriptionBox, EMAIL_REGEX, isValidPhone } from '@/lib/catalog';
 import { checkRateLimit } from '@/lib/utils/rateLimit';
-import { trackLeadCapi, hashForMeta, generateEventId } from '@/lib/analytics';
+import { trackPurchaseCapi, buildCapiUserData, generateEventId } from '@/lib/analytics';
 import type { OrderInsert, ShippingAddressSnapshot, Preorder, BoxType, OrderType } from '@/lib/supabase/types';
 import type { AddressInput } from '@/lib/order';
 import { sendTransactionalEmail, syncOrderToContact } from '@/lib/email/brevo';
@@ -747,43 +747,25 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       emailSent = false;
     }
 
-    // 8d. Server-side Meta CAPI event tracking
+    // 8d. Server-side Meta CAPI event tracking (Purchase = primary conversion)
+    let capiEventId: string | undefined;
     try {
-      const clientIp =
-        headersList.get('x-forwarded-for')?.split(',')[0] ||
-        headersList.get('x-real-ip') ||
-        '';
-      const userAgent = headersList.get('user-agent') || '';
-      const referer = headersList.get('referer') || '';
+      const { userData, referer } = await buildCapiUserData({
+        headersObj: headersList,
+        email,
+        phone: phone || undefined,
+        fullName,
+        fbc: (data as Record<string, unknown>).fbc as string | undefined,
+        fbp: (data as Record<string, unknown>).fbp as string | undefined,
+      });
 
-      // Parse name into first and last name
-      const nameParts = fullName.trim().split(' ');
-      const firstName = nameParts[0] || '';
-      const lastName = nameParts.slice(1).join(' ') || '';
-
-      // Hash user data for Meta CAPI
-      const [hashedEmail, hashedPhone, hashedFirstName, hashedLastName] = await Promise.all([
-        hashForMeta(email),
-        phone ? hashForMeta(phone) : Promise.resolve(undefined),
-        firstName ? hashForMeta(firstName) : Promise.resolve(undefined),
-        lastName ? hashForMeta(lastName) : Promise.resolve(undefined),
-      ]);
-
-      const capiResult = await trackLeadCapi({
-        eventId: generateEventId(),
+      capiEventId = generateEventId();
+      const capiResult = await trackPurchaseCapi({
+        eventId: capiEventId,
         sourceUrl:
           referer ||
           `${process.env.NEXT_PUBLIC_SITE_URL || 'https://fitflow.bg'}/thank-you/order`,
-        userData: {
-          em: hashedEmail,
-          ph: hashedPhone,
-          fn: hashedFirstName,
-          ln: hashedLastName,
-          client_ip_address: clientIp,
-          client_user_agent: userAgent,
-          fbc: (data as Record<string, unknown>).fbc as string | undefined,
-          fbp: (data as Record<string, unknown>).fbp as string | undefined,
-        },
+        userData,
         customData: {
           currency: 'EUR',
           value: priceInfo.finalPriceEur,
@@ -810,6 +792,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         orderId: order.id,
         orderNumber: order.order_number,
         finalPriceEur: priceInfo.finalPriceEur ?? null,
+        capiEventId: capiEventId ?? null,
         _meta: {
           emailSent,
           conversionCompleted,

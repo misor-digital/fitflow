@@ -121,10 +121,12 @@ The consent banner provides three actions:
    - Pros: Simpler, no server-side handling needed
    - Cons: Not shared across subdomains
 
-2. **Script Unloading**
-   - Once scripts are loaded, they cannot be unloaded without page refresh
-   - If user revokes consent, scripts won't load on next visit
-   - Consider adding a page refresh prompt on consent change
+2. **Script Unloading & Consent Revocation**
+   - Once scripts are loaded, they cannot be fully removed without page refresh
+   - On consent revocation: `fbq('consent', 'revoke')` stops Meta Pixel immediately
+   - Tracking cookies (`_fbp`, `_fbc`, `_ga`, `_gid`) are proactively cleared
+   - A refresh prompt is shown to the user for full script cleanup
+   - On next page load, revoked scripts won't load at all
 
 3. **Third-Party Cookies**
    - We control when scripts load, but not what cookies they set

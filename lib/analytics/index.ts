@@ -4,6 +4,7 @@ export {
   trackViewContent,
   trackInitiateCheckout,
   trackLead,
+  trackPurchase,
 } from './metaPixel';
 
 // Meta CAPI exports (server-side)
@@ -13,10 +14,13 @@ export {
   sendMetaEvents,
   hashForMeta,
   generateEventId,
+  buildCapiUserData,
   // Helper functions
   trackLeadCapi,
   trackViewContentCapi,
   trackInitiateCheckoutCapi,
+  trackPurchaseCapi,
+  trackSubscribeCapi,
   // Types
   type MetaEventName,
   type MetaUserData,

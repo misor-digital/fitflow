@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useOrderStore } from '@/store/orderStore';
-import { trackFunnelStep, trackBoxSelection } from '@/lib/analytics';
+import { trackFunnelStep, trackBoxSelection, trackInitiateCheckout } from '@/lib/analytics';
 import PriceDisplay from '@/components/PriceDisplay';
 import type { PricesMap, BoxTypeId, PriceInfo } from '@/lib/catalog';
 import { getDisplayBoxType, getPremiumFrequency, buildBoxTypeId } from '@/lib/catalog';
@@ -18,10 +18,11 @@ export default function OrderStepBox({ prices, boxTypeNames, onNext }: OrderStep
   const { boxType, setBoxType, setFrequency, promoCode } = useOrderStore();
   const hasTrackedStep = useRef(false);
 
-  // Track funnel step on mount
+  // Track funnel step + InitiateCheckout on mount
   useEffect(() => {
     if (!hasTrackedStep.current) {
       trackFunnelStep('box_selection', 1);
+      trackInitiateCheckout();
       hasTrackedStep.current = true;
     }
   }, []);

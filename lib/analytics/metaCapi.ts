@@ -15,14 +15,15 @@
  */
 
 // Meta CAPI endpoint
-const META_CAPI_ENDPOINT = 'https://graph.facebook.com/v18.0';
+const META_CAPI_ENDPOINT = 'https://graph.facebook.com/v21.0';
 
 // Event names matching browser pixel events
 export type MetaEventName = 
   | 'PageView'
   | 'ViewContent'
   | 'InitiateCheckout'
-  | 'Lead';
+  | 'Lead'
+  | 'Purchase';
 
 // User data for matching (hashed on client, sent as-is here)
 export interface MetaUserData {
@@ -55,11 +56,12 @@ export interface MetaCustomData {
 
 // Server event structure
 export interface MetaServerEvent {
-  event_name: MetaEventName;
+  event_name: MetaEventName | string; // string allows custom events like 'Subscribe'
   event_time: number;
   event_id: string;           // For deduplication with browser pixel
   event_source_url: string;
   action_source: 'website';
+  data_processing_options: string[]; // GDPR: empty array = no restrictions (consent gated)
   user_data: MetaUserData;
   custom_data?: MetaCustomData;
 }
@@ -73,6 +75,52 @@ interface MetaApiResponse {
     message: string;
     type: string;
     code: number;
+  };
+}
+
+/**
+ * Build hashed MetaUserData from request headers and customer info.
+ * Extracts IP, user-agent, referer and hashes PII fields.
+ * Reusable across any API route that sends CAPI events.
+ */
+export async function buildCapiUserData(opts: {
+  headersObj: Headers;
+  email?: string;
+  phone?: string;
+  fullName?: string;
+  fbc?: string;
+  fbp?: string;
+}): Promise<{ userData: MetaUserData; referer: string }> {
+  const clientIp =
+    opts.headersObj.get('x-forwarded-for')?.split(',')[0] ||
+    opts.headersObj.get('x-real-ip') ||
+    '';
+  const userAgent = opts.headersObj.get('user-agent') || '';
+  const referer = opts.headersObj.get('referer') || '';
+
+  const nameParts = (opts.fullName ?? '').trim().split(' ');
+  const firstName = nameParts[0] || '';
+  const lastName = nameParts.slice(1).join(' ') || '';
+
+  const [hashedEmail, hashedPhone, hashedFirstName, hashedLastName] = await Promise.all([
+    opts.email ? hashForMeta(opts.email) : Promise.resolve(undefined),
+    opts.phone ? hashForMeta(opts.phone) : Promise.resolve(undefined),
+    firstName ? hashForMeta(firstName) : Promise.resolve(undefined),
+    lastName ? hashForMeta(lastName) : Promise.resolve(undefined),
+  ]);
+
+  return {
+    userData: {
+      em: hashedEmail,
+      ph: hashedPhone,
+      fn: hashedFirstName,
+      ln: hashedLastName,
+      client_ip_address: clientIp,
+      client_user_agent: userAgent,
+      fbc: opts.fbc,
+      fbp: opts.fbp,
+    },
+    referer,
   };
 }
 
@@ -100,6 +148,10 @@ export function generateEventId(): string {
  * Send event to Meta Conversions API
  */
 export async function sendMetaEvent(event: MetaServerEvent): Promise<{ success: boolean; error?: string }> {
+  if (process.env.NODE_ENV !== 'production') {
+    return { success: true }; // Silently skip in non-production
+  }
+
   const pixelId = process.env.META_PIXEL_ID;
   const accessToken = process.env.META_CAPI_ACCESS_TOKEN;
 
@@ -140,6 +192,10 @@ export async function sendMetaEvent(event: MetaServerEvent): Promise<{ success: 
  * Send multiple events to Meta Conversions API (batch)
  */
 export async function sendMetaEvents(events: MetaServerEvent[]): Promise<{ success: boolean; error?: string }> {
+  if (process.env.NODE_ENV !== 'production') {
+    return { success: true }; // Silently skip in non-production
+  }
+
   const pixelId = process.env.META_PIXEL_ID;
   const accessToken = process.env.META_CAPI_ACCESS_TOKEN;
 
@@ -200,6 +256,7 @@ export async function trackLeadCapi(params: {
     event_id: params.eventId,
     event_source_url: params.sourceUrl,
     action_source: 'website',
+    data_processing_options: [],
     user_data: params.userData,
     custom_data: params.customData,
   };
@@ -222,6 +279,7 @@ export async function trackViewContentCapi(params: {
     event_id: params.eventId,
     event_source_url: params.sourceUrl,
     action_source: 'website',
+    data_processing_options: [],
     user_data: params.userData,
     custom_data: params.customData,
   };
@@ -244,6 +302,55 @@ export async function trackInitiateCheckoutCapi(params: {
     event_id: params.eventId,
     event_source_url: params.sourceUrl,
     action_source: 'website',
+    data_processing_options: [],
+    user_data: params.userData,
+    custom_data: params.customData,
+  };
+
+  return sendMetaEvent(event);
+}
+
+/**
+ * Track Purchase event via CAPI (primary conversion)
+ * Call this from your API route after successful order creation
+ */
+export async function trackPurchaseCapi(params: {
+  eventId: string;
+  sourceUrl: string;
+  userData: MetaUserData;
+  customData?: MetaCustomData;
+}): Promise<{ success: boolean; error?: string }> {
+  const event: MetaServerEvent = {
+    event_name: 'Purchase',
+    event_time: Math.floor(Date.now() / 1000),
+    event_id: params.eventId,
+    event_source_url: params.sourceUrl,
+    action_source: 'website',
+    data_processing_options: [],
+    user_data: params.userData,
+    custom_data: params.customData,
+  };
+
+  return sendMetaEvent(event);
+}
+
+/**
+ * Track Subscribe custom event via CAPI
+ * Call this from your subscription API route after successful creation
+ */
+export async function trackSubscribeCapi(params: {
+  eventId: string;
+  sourceUrl: string;
+  userData: MetaUserData;
+  customData?: MetaCustomData;
+}): Promise<{ success: boolean; error?: string }> {
+  const event: MetaServerEvent = {
+    event_name: 'Subscribe',
+    event_time: Math.floor(Date.now() / 1000),
+    event_id: params.eventId,
+    event_source_url: params.sourceUrl,
+    action_source: 'website',
+    data_processing_options: [],
     user_data: params.userData,
     custom_data: params.customData,
   };

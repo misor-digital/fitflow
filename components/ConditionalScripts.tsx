@@ -30,6 +30,9 @@ export default function ConditionalScripts({
 }: ConditionalScriptsProps) {
   const { isLoaded, preferences } = useConsentStore();
 
+  // Only load analytics/marketing scripts in production
+  if (process.env.NODE_ENV !== 'production') return null;
+
   // Don't render anything until consent state is loaded
   if (!isLoaded) return null;
 

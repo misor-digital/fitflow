@@ -19,6 +19,7 @@ export function trackSubscriptionCreated(
   boxType: string,
   frequency: string,
   price: number,
+  eventId?: string,
 ): void {
   if (isGA4Available()) {
     window.gtag!('event', 'subscribe', {
@@ -34,7 +35,7 @@ export function trackSubscriptionCreated(
       frequency,
       value: price,
       currency: 'EUR',
-    });
+    }, eventId ? { eventID: eventId } : undefined);
   }
 }
 

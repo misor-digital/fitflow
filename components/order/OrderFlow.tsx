@@ -253,6 +253,7 @@ export default function OrderFlow({
             isSubscription: true,
             boxType: currentInput.boxType,
             finalPriceEur: sub.current_price_eur ?? null,
+            capiEventId: responseData.capiEventId ?? null,
           }),
         );
       } else {
@@ -281,6 +282,8 @@ export default function OrderFlow({
             isGuest: currentInput.isGuest,
             isSubscription: false,
             finalPriceEur: responseData.finalPriceEur ?? null,
+            boxType: currentInput.boxType,
+            capiEventId: responseData.capiEventId ?? null,
           }),
         );
       }
