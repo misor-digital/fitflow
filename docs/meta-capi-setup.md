@@ -37,7 +37,10 @@ Currently, the following events are sent via CAPI:
 
 | Event | Trigger | Location |
 |-------|---------|----------|
-| `Lead` | Successful order submission | `/api/order` |
+| `Purchase` | Successful order creation | `/api/order` |
+| `Subscribe` | Successful subscription creation | `/api/subscription` |
+
+The `data_processing_options` field is included in all CAPI events (empty array = no restrictions, since events only fire when user has given marketing consent).
 
 ## Event Deduplication
 
@@ -112,7 +115,8 @@ const response = await fetch(
 
 1. Submit a test order
 2. Check Events Manager > Test Events
-3. Verify the Lead event appears with correct data
+3. Verify the Purchase event appears with correct data
+4. Create a test subscription and verify Subscribe custom event appears
 
 ## Troubleshooting
 
@@ -157,6 +161,9 @@ Improve match rate by including more user data:
 
 ## Files
 
-- `lib/analytics/metaCapi.ts` - CAPI utility functions
+- `lib/analytics/metaCapi.ts` - CAPI utility functions (v21.0)
+- `lib/analytics/metaPixel.ts` - Browser pixel event functions
+- `lib/analytics/subscription.ts` - Subscription analytics (client-side)
 - `lib/analytics/index.ts` - Exports
-- `app/api/order/route.ts` - Lead event integration
+- `app/api/order/route.ts` - Purchase event integration
+- `app/api/subscription/route.ts` - Subscribe event integration

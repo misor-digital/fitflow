@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useOrderStore } from '@/store/orderStore';
 import { useAuthStore } from '@/store/authStore';
-import { trackFunnelStep, trackFormInteraction } from '@/lib/analytics';
+import { trackFunnelStep, trackFormInteraction, trackLead } from '@/lib/analytics';
 import { isValidEmail, isValidPhone, getEmailError, getPhoneError } from '@/lib/catalog';
 import { isSubscriptionBox } from '@/lib/catalog';
 import { getAddressFieldError, validateAddress, validateSpeedyOffice } from '@/lib/order';
@@ -41,6 +41,7 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
   const onBehalfOfUserId = useOrderStore((s) => s.onBehalfOfUserId);
   const conversionToken = useOrderStore((s) => s.conversionToken);
   const hasTrackedStep = useRef(false);
+  const hasTrackedLead = useRef(false);
 
   // Track funnel step on mount
   useEffect(() => {
@@ -265,6 +266,15 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
       return [fullName.trim(), email.trim(), phone.trim()];
     };
 
+    // Fire Lead event once when user completes Step 3 (mid-funnel intent signal)
+    const advanceToNext = () => {
+      if (!hasTrackedLead.current) {
+        trackLead();
+        hasTrackedLead.current = true;
+      }
+      onNext();
+    };
+
     // --- SPEEDY OFFICE DELIVERY ---
     if (deliveryMethod === 'speedy_office') {
       // Validate office selection + required fields (fullName, phone)
@@ -304,7 +314,7 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
         fullName: address.fullName,
         phone: address.phone,
       });
-      onNext();
+      advanceToNext();
       return;
     }
 
@@ -321,7 +331,7 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
       store.setDeliveryMethod('address');
       store.setSpeedyOffice(null);
       store.setAddress(address);
-      onNext();
+      advanceToNext();
     } else if (isAdminGuestConversion) {
       // Admin converting without account → guest order with customer's info
       const addressValid = validateAddressForm();
@@ -333,7 +343,7 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
       store.setDeliveryMethod('address');
       store.setSpeedyOffice(null);
       store.setAddress(address);
-      onNext();
+      advanceToNext();
     } else if (isAuthenticated) {
       // Branch C: Authenticated
       if (selectedAddressId && !showNewAddressForm) {
@@ -342,7 +352,7 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
         store.setSelectedAddressId(selectedAddressId);
         store.setDeliveryMethod('address');
         store.setSpeedyOffice(null);
-        onNext();
+        advanceToNext();
       } else {
         const addressValid = validateAddressForm();
         if (!addressValid) return;
@@ -353,7 +363,7 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
         store.setDeliveryMethod('address');
         store.setSpeedyOffice(null);
         store.setAddress(address);
-        onNext();
+        advanceToNext();
       }
     }
   };

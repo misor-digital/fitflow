@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server';
+import { headers } from 'next/headers';
 import { verifySession } from '@/lib/auth';
 import {
   getSubscriptionsByUser,
@@ -15,6 +16,7 @@ import {
 } from '@/lib/data';
 import { validatePreferenceUpdate, findNextCycleForSubscription } from '@/lib/subscription';
 import { checkRateLimit } from '@/lib/utils/rateLimit';
+import { trackSubscribeCapi, buildCapiUserData, generateEventId } from '@/lib/analytics';
 import { determineFirstCycle } from '@/lib/delivery/assignment';
 import { generateSingleOrderForSubscription } from '@/lib/delivery/generate';
 import { sendSubscriptionCreatedEmail } from '@/lib/subscription/notifications';
@@ -491,6 +493,43 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       }
     }
 
+    // 9a-bis. Server-side Meta CAPI event tracking (Subscribe custom event)
+    let subscribeCapiEventId: string | undefined;
+    try {
+      const headersList = await headers();
+      const customerEmail = sourceOrder?.customer_email ?? session?.email ?? '';
+      const customerFullName = sourceOrder?.customer_full_name ?? '';
+
+      const { userData, referer } = await buildCapiUserData({
+        headersObj: headersList,
+        email: customerEmail || undefined,
+        fullName: customerFullName || undefined,
+        fbc: (data as Record<string, unknown>).fbc as string | undefined,
+        fbp: (data as Record<string, unknown>).fbp as string | undefined,
+      });
+
+      subscribeCapiEventId = generateEventId();
+      const capiResult = await trackSubscribeCapi({
+        eventId: subscribeCapiEventId,
+        sourceUrl:
+          referer ||
+          `${process.env.NEXT_PUBLIC_SITE_URL || 'https://fitflow.bg'}/subscription`,
+        userData,
+        customData: {
+          currency: 'EUR',
+          value: priceInfo.finalPriceEur,
+          content_name: effectiveBoxType,
+          content_category: 'subscription',
+        },
+      });
+
+      if (!capiResult.success) {
+        console.warn('Meta CAPI Subscribe event failed:', capiResult.error);
+      }
+    } catch (capiError) {
+      console.error('Error sending Meta CAPI Subscribe event:', capiError);
+    }
+
     // ------------------------------------------------------------------
     // Step 9b: If subscribing into a cycle that's already processing,
     //          generate their order now (late addition)
@@ -589,6 +628,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const responsePayload: Record<string, unknown> = {
       success: true,
       subscription,
+      capiEventId: subscribeCapiEventId ?? null,
     };
 
     if (accountLoginUrl) {

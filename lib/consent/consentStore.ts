@@ -18,6 +18,8 @@ interface ConsentState {
   preferences: ConsentPreferences;
   /** Consent record with timestamp and version */
   record: ConsentRecord | null;
+  /** Whether a page refresh is needed after consent downgrade */
+  requiresRefresh: boolean;
 }
 
 interface ConsentActions {
@@ -69,6 +71,41 @@ const clearStorage = (): void => {
   }
 };
 
+/**
+ * Revoke tracking scripts and clear their cookies when consent is downgraded.
+ * Uses Meta's official consent mode and GA4's disable flag.
+ */
+const handleConsentDowngrade = (
+  prevPreferences: ConsentPreferences,
+  newPreferences: ConsentPreferences,
+): boolean => {
+  if (typeof window === 'undefined') return false;
+
+  let downgraded = false;
+
+  // Marketing consent revoked
+  if (prevPreferences.marketing && !newPreferences.marketing) {
+    downgraded = true;
+    // Meta Pixel: official consent revocation - stops new events immediately
+    if (typeof (window as unknown as Record<string, unknown>).fbq === 'function') {
+      (window as unknown as { fbq: (cmd: string, val: string) => void }).fbq('consent', 'revoke');
+    }
+    // Clear Meta tracking cookies (must match domain attribute set by the pixel)
+    document.cookie = '_fbp=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.fitflow.bg;';
+    document.cookie = '_fbc=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.fitflow.bg;';
+  }
+
+  // Analytics consent revoked
+  if (prevPreferences.analytics && !newPreferences.analytics) {
+    downgraded = true;
+    // Clear GA4 tracking cookies (must match domain attribute set by GA)
+    document.cookie = '_ga=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.fitflow.bg;';
+    document.cookie = '_gid=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=.fitflow.bg;';
+  }
+
+  return downgraded;
+};
+
 export const useConsentStore = create<ConsentStore>((set, get) => ({
   // Initial state
   isLoaded: false,
@@ -76,6 +113,7 @@ export const useConsentStore = create<ConsentStore>((set, get) => ({
   showPreferences: false,
   preferences: DEFAULT_PREFERENCES,
   record: null,
+  requiresRefresh: false,
 
   initialize: () => {
     const stored = loadFromStorage();
@@ -129,10 +167,12 @@ export const useConsentStore = create<ConsentStore>((set, get) => ({
       showPreferences: false,
       preferences,
       record,
+      requiresRefresh: false,
     });
   },
 
   rejectNonEssential: () => {
+    const prevPreferences = get().preferences;
     const preferences: ConsentPreferences = {
       necessary: true,
       analytics: false,
@@ -147,15 +187,19 @@ export const useConsentStore = create<ConsentStore>((set, get) => ({
     
     saveToStorage(record);
     
+    const downgraded = handleConsentDowngrade(prevPreferences, preferences);
+    
     set({
       showBanner: false,
       showPreferences: false,
       preferences,
       record,
+      requiresRefresh: downgraded,
     });
   },
 
   savePreferences: (customPreferences) => {
+    const prevPreferences = get().preferences;
     const preferences: ConsentPreferences = {
       necessary: true, // Always true
       analytics: customPreferences.analytics ?? get().preferences.analytics,
@@ -170,11 +214,14 @@ export const useConsentStore = create<ConsentStore>((set, get) => ({
     
     saveToStorage(record);
     
+    const downgraded = handleConsentDowngrade(prevPreferences, preferences);
+    
     set({
       showBanner: false,
       showPreferences: false,
       preferences,
       record,
+      requiresRefresh: downgraded,
     });
   },
 

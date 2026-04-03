@@ -5,10 +5,11 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useOrderStore } from '@/store/orderStore';
 import {
-  trackLead,
+  trackPurchase,
   trackGenerateLead,
   setUserProperties,
 } from '@/lib/analytics';
+import { trackSubscriptionCreated } from '@/lib/analytics/subscription';
 
 interface LastOrderInfo {
   orderNumber: string | null;
@@ -19,6 +20,7 @@ interface LastOrderInfo {
   isSubscription?: boolean;
   boxType?: string | null;
   finalPriceEur?: number | null;
+  capiEventId?: string | null;
 }
 
 export default function OrderThankYou() {
@@ -52,8 +54,24 @@ export default function OrderThankYou() {
   useEffect(() => {
     if (!orderInfo || hasTracked.current) return;
 
-    // Meta Pixel - Lead event (purchase tracking can be added when payments are live)
-    trackLead();
+    if (orderInfo.isSubscription) {
+      // Meta Pixel - Subscribe custom event (client-side, deduplicated with CAPI)
+      trackSubscriptionCreated(
+        orderInfo.boxType ?? 'unknown',
+        'monthly', // default frequency
+        orderInfo.finalPriceEur ?? 0,
+        orderInfo.capiEventId ?? undefined,
+      );
+    } else {
+      // Meta Pixel - Purchase event (primary conversion, deduplicated with CAPI via event_id)
+      trackPurchase({
+        value: orderInfo.finalPriceEur ?? 0,
+        currency: 'EUR',
+        contentName: orderInfo.boxType ?? undefined,
+        orderId: orderInfo.orderId ?? undefined,
+        eventId: orderInfo.capiEventId ?? undefined,
+      });
+    }
 
     // GA4 - generate_lead event
     trackGenerateLead({
