@@ -57,3 +57,6 @@ export {
 
 // Client cookie helpers
 export { getFbp, getFbc, getSourceUrl, getMetaClientContext } from './cookies';
+
+// Hooks
+export { useScrollDepth } from './useScrollDepth';

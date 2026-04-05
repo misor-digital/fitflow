@@ -10,6 +10,7 @@ import HowItWorks from '@/components/HowItWorks';
 import { useOrderStore } from '@/store/orderStore';
 import { useDeliveryStore } from '@/store/deliveryStore';
 import { trackCTAClick, trackPromoCode } from '@/lib/analytics';
+import { useScrollDepth } from '@/lib/analytics/useScrollDepth';
 import { formatDeliveryDate, formatMonthYear } from '@/lib/delivery';
 import { formatPrice } from '@/lib/catalog';
 import type { PricesMap } from '@/lib/catalog';
@@ -17,6 +18,7 @@ import type { PricesMap } from '@/lib/catalog';
 function HomeContent() {
   const searchParams = useSearchParams();
   const { setPromoCode } = useOrderStore();
+  useScrollDepth([25, 50, 75, 100], 'homepage');
   const {
     revealedBox: rawRevealedBox, fetchRevealedBox,
     upcomingDelivery, fetchUpcomingDelivery,

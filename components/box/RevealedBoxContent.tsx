@@ -6,6 +6,7 @@ import Image from 'next/image';
 import PriceDisplay from '@/components/PriceDisplay';
 import { useOrderStore } from '@/store/orderStore';
 import { trackCTAClick } from '@/lib/analytics';
+import { useScrollDepth } from '@/lib/analytics/useScrollDepth';
 import type { PricesMap, PriceInfo } from '@/lib/catalog';
 
 // ---------------------------------------------------------------------------
@@ -66,6 +67,7 @@ export default function RevealedBoxContent({
 }: RevealedBoxContentProps) {
   const router = useRouter();
   const { promoCode } = useOrderStore();
+  useScrollDepth([50, 100], 'revealed-box');
   const [livePrices, setLivePrices] = useState<PricesMap>(prices);
 
   // Refresh prices when promo code changes
