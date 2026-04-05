@@ -21,6 +21,7 @@ export {
   trackInitiateCheckoutCapi,
   trackPurchaseCapi,
   trackSubscribeCapi,
+  trackPageViewCapi,
   // Types
   type MetaEventName,
   type MetaUserData,
@@ -35,6 +36,7 @@ export {
   trackViewItem,
   trackBeginCheckout,
   trackGenerateLead,
+  trackGAPurchase,
   // Funnel events
   trackFunnelStep,
   trackBoxSelection,
@@ -52,3 +54,9 @@ export {
   // Types
   type FunnelStep,
 } from './ga4';
+
+// Client cookie helpers
+export { getFbp, getFbc, getSourceUrl, getMetaClientContext } from './cookies';
+
+// Hooks
+export { useScrollDepth } from './useScrollDepth';

@@ -385,6 +385,7 @@ export default function SubscriptionCard({
       {activeModal === 'pause' && (
         <PauseModal
           subscriptionId={subscription.id}
+          boxType={subscription.box_type}
           onSuccess={handleActionSuccess}
           onClose={closeModal}
         />
@@ -400,6 +401,7 @@ export default function SubscriptionCard({
       {activeModal === 'cancel' && (
         <CancelModal
           subscriptionId={subscription.id}
+          boxType={subscription.box_type}
           onSuccess={handleActionSuccess}
           onPauseInstead={() => {
             setActiveModal('pause');

@@ -3,13 +3,14 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useRef, useState, Suspense, Fragment, useMemo } from 'react';
+import { useEffect, useState, Suspense, Fragment, useMemo } from 'react';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import HowItWorks from '@/components/HowItWorks';
 import { useOrderStore } from '@/store/orderStore';
 import { useDeliveryStore } from '@/store/deliveryStore';
-import { trackViewContent, trackViewItem, trackCTAClick, trackPromoCode } from '@/lib/analytics';
+import { trackCTAClick, trackPromoCode } from '@/lib/analytics';
+import { useScrollDepth } from '@/lib/analytics/useScrollDepth';
 import { formatDeliveryDate, formatMonthYear } from '@/lib/delivery';
 import { formatPrice } from '@/lib/catalog';
 import type { PricesMap } from '@/lib/catalog';
@@ -17,7 +18,7 @@ import type { PricesMap } from '@/lib/catalog';
 function HomeContent() {
   const searchParams = useSearchParams();
   const { setPromoCode } = useOrderStore();
-  const hasTrackedViewContent = useRef(false);
+  useScrollDepth([25, 50, 75, 100], 'homepage');
   const {
     revealedBox: rawRevealedBox, fetchRevealedBox,
     upcomingDelivery, fetchUpcomingDelivery,
@@ -51,20 +52,6 @@ function HomeContent() {
       monthYear: formatMonthYear(rawRevealedBox.cycle.deliveryDate),
     };
   }, [rawRevealedBox]);
-  
-  // Track ViewContent (Meta) and view_item (GA4) on landing page load (once)
-  useEffect(() => {
-    if (!hasTrackedViewContent.current) {
-      // Meta Pixel
-      trackViewContent();
-      // GA4
-      trackViewItem({
-        item_id: 'fitflow-box',
-        item_name: 'FitFlow Box',
-      });
-      hasTrackedViewContent.current = true;
-    }
-  }, []);
   
   // Extract promo code from URL and validate via API
   // Fix P3: Only validate if URL code differs from stored code

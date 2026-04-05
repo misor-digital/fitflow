@@ -3,7 +3,14 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useOrderStore } from '@/store/orderStore';
 import { useAuthStore } from '@/store/authStore';
-import { trackFunnelStep, trackFormInteraction, trackLead } from '@/lib/analytics';
+import {
+  trackFunnelStep,
+  trackFormInteraction,
+  trackInitiateCheckout,
+  trackBeginCheckout,
+  generateEventId,
+  getMetaClientContext,
+} from '@/lib/analytics';
 import { isValidEmail, isValidPhone, getEmailError, getPhoneError } from '@/lib/catalog';
 import { isSubscriptionBox } from '@/lib/catalog';
 import { getAddressFieldError, validateAddress, validateSpeedyOffice } from '@/lib/order';
@@ -41,12 +48,33 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
   const onBehalfOfUserId = useOrderStore((s) => s.onBehalfOfUserId);
   const conversionToken = useOrderStore((s) => s.conversionToken);
   const hasTrackedStep = useRef(false);
-  const hasTrackedLead = useRef(false);
 
-  // Track funnel step on mount
+  // Track funnel step + InitiateCheckout + BeginCheckout on mount
   useEffect(() => {
     if (!hasTrackedStep.current) {
       trackFunnelStep('contact_info', 3);
+
+      // Meta Pixel — InitiateCheckout (user enters checkout phase)
+      const eventId = generateEventId();
+      trackInitiateCheckout({ contentName: 'checkout_details', eventId });
+
+      // GA4 — begin_checkout
+      trackBeginCheckout();
+
+      // CAPI mirror — fire and forget
+      const { fbp, fbc, sourceUrl } = getMetaClientContext();
+      fetch('/api/analytics/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventName: 'InitiateCheckout',
+          eventId,
+          fbp,
+          fbc,
+          sourceUrl,
+        }),
+      }).catch(() => {});
+
       hasTrackedStep.current = true;
     }
   }, []);
@@ -268,10 +296,6 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
 
     // Fire Lead event once when user completes Step 3 (mid-funnel intent signal)
     const advanceToNext = () => {
-      if (!hasTrackedLead.current) {
-        trackLead();
-        hasTrackedLead.current = true;
-      }
       onNext();
     };
 

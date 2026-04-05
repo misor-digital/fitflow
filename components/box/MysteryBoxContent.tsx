@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import PriceDisplay from '@/components/PriceDisplay';
 import HowItWorks from '@/components/HowItWorks';
 import { useOrderStore } from '@/store/orderStore';
-import { trackViewContent, trackViewItem, trackCTAClick } from '@/lib/analytics';
+import { trackCTAClick } from '@/lib/analytics';
+import { useScrollDepth } from '@/lib/analytics/useScrollDepth';
 import type { PricesMap, PriceInfo } from '@/lib/catalog';
 
 interface UpcomingCycleInfo {
@@ -27,21 +28,9 @@ export default function MysteryBoxContent({
   nextDeliveryDate,
 }: MysteryBoxContentProps) {
   const router = useRouter();
-  const hasTracked = useRef(false);
   const { promoCode } = useOrderStore();
+  useScrollDepth([50, 100], 'mystery-box');
   const [livePrices, setLivePrices] = useState<PricesMap>(prices);
-
-  // Analytics on mount
-  useEffect(() => {
-    if (!hasTracked.current) {
-      trackViewContent();
-      trackViewItem({
-        item_id: 'mystery-box',
-        item_name: 'Mystery Box',
-      });
-      hasTracked.current = true;
-    }
-  }, []);
 
   // Refresh prices when promo code changes
   useEffect(() => {

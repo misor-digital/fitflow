@@ -45,6 +45,7 @@ export const trackViewItem = (params?: {
   item_name?: string;
   currency?: string;
   value?: number;
+  coupon?: string;
 }): void => {
   if (isGA4Available()) {
     window.gtag!('event', 'view_item', {
@@ -52,8 +53,10 @@ export const trackViewItem = (params?: {
       items: [{
         item_id: params?.item_id || 'fitflow-box',
         item_name: params?.item_name || 'FitFlow Box',
+        item_brand: 'FitFlow',
       }],
       value: params?.value,
+      coupon: params?.coupon,
       ...params,
     });
   }
@@ -67,9 +70,11 @@ export const trackViewItem = (params?: {
 export const trackBeginCheckout = (params?: {
   currency?: string;
   value?: number;
+  coupon?: string;
   items?: Array<{
     item_id: string;
     item_name: string;
+    item_brand?: string;
     price?: number;
   }>;
 }): void => {
@@ -77,9 +82,11 @@ export const trackBeginCheckout = (params?: {
     window.gtag!('event', 'begin_checkout', {
       currency: params?.currency || 'EUR',
       value: params?.value,
+      coupon: params?.coupon,
       items: params?.items || [{
         item_id: 'fitflow-box',
         item_name: 'FitFlow Box',
+        item_brand: 'FitFlow',
       }],
     });
   }
@@ -98,6 +105,39 @@ export const trackGenerateLead = (params?: {
     window.gtag!('event', 'generate_lead', {
       currency: params?.currency || 'EUR',
       value: params?.value || 0,
+    });
+  }
+};
+
+/**
+ * Track purchase event (GA4 recommended event)
+ * Fired on successful order completion — PRIMARY CONVERSION for revenue
+ * Maps to Meta's Purchase
+ */
+export const trackGAPurchase = (params: {
+  transaction_id: string;
+  value: number;
+  currency?: string;
+  coupon?: string;
+  items: Array<{
+    item_id: string;
+    item_name: string;
+    item_brand?: string;
+    price?: number;
+    quantity?: number;
+  }>;
+}): void => {
+  if (isGA4Available()) {
+    window.gtag!('event', 'purchase', {
+      transaction_id: params.transaction_id,
+      value: params.value,
+      currency: params.currency || 'EUR',
+      coupon: params.coupon,
+      items: params.items.map(item => ({
+        ...item,
+        item_brand: item.item_brand || 'FitFlow',
+        quantity: item.quantity || 1,
+      })),
     });
   }
 };
@@ -122,7 +162,7 @@ export const trackFunnelStep = (
   params?: Record<string, unknown>
 ): void => {
   if (isGA4Available()) {
-    window.gtag!('event', `funnel_step_${step}`, {
+    window.gtag!('event', 'funnel_step', {
       step_number: stepNumber,
       step_name: step,
       ...params,
@@ -143,9 +183,12 @@ export const trackBoxSelection = (params: {
 }): void => {
   if (isGA4Available()) {
     window.gtag!('event', 'select_item', {
+      item_list_id: 'box_selection',
+      item_list_name: 'Box Selection',
       items: [{
         item_id: params.box_type,
         item_name: params.box_name,
+        item_brand: 'FitFlow',
         price: params.price,
         currency: params.currency || 'EUR',
       }],

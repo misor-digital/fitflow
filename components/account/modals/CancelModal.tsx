@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { trackSubscriptionCancelled } from '@/lib/analytics/subscription';
 
 const CANCELLATION_REASONS = [
   'Твърде скъпо',
@@ -12,6 +13,7 @@ const CANCELLATION_REASONS = [
 
 interface CancelModalProps {
   subscriptionId: string;
+  boxType: string;
   onSuccess: () => void;
   onPauseInstead: () => void;
   onClose: () => void;
@@ -19,6 +21,7 @@ interface CancelModalProps {
 
 export default function CancelModal({
   subscriptionId,
+  boxType,
   onSuccess,
   onPauseInstead,
   onClose,
@@ -53,6 +56,7 @@ export default function CancelModal({
       }
 
       onSuccess();
+      trackSubscriptionCancelled(boxType, finalReason!);
     } catch {
       setError('Възникна грешка. Моля, опитайте отново.');
     } finally {

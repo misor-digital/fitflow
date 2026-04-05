@@ -15,7 +15,8 @@
  */
 
 // Meta CAPI endpoint
-const META_CAPI_ENDPOINT = 'https://graph.facebook.com/v21.0';
+const META_GRAPH_API_VERSION = 'v21.0';
+const META_CAPI_ENDPOINT = `https://graph.facebook.com/${META_GRAPH_API_VERSION}`;
 
 // Event names matching browser pixel events
 export type MetaEventName = 
@@ -23,7 +24,8 @@ export type MetaEventName =
   | 'ViewContent'
   | 'InitiateCheckout'
   | 'Lead'
-  | 'Purchase';
+  | 'Purchase'
+  | 'Subscribe';
 
 // User data for matching (hashed on client, sent as-is here)
 export interface MetaUserData {
@@ -90,6 +92,7 @@ export async function buildCapiUserData(opts: {
   fullName?: string;
   fbc?: string;
   fbp?: string;
+  userId?: string;
 }): Promise<{ userData: MetaUserData; referer: string }> {
   const clientIp =
     opts.headersObj.get('x-forwarded-for')?.split(',')[0] ||
@@ -102,11 +105,12 @@ export async function buildCapiUserData(opts: {
   const firstName = nameParts[0] || '';
   const lastName = nameParts.slice(1).join(' ') || '';
 
-  const [hashedEmail, hashedPhone, hashedFirstName, hashedLastName] = await Promise.all([
+  const [hashedEmail, hashedPhone, hashedFirstName, hashedLastName, hashedUserId] = await Promise.all([
     opts.email ? hashForMeta(opts.email) : Promise.resolve(undefined),
     opts.phone ? hashForMeta(opts.phone) : Promise.resolve(undefined),
     firstName ? hashForMeta(firstName) : Promise.resolve(undefined),
     lastName ? hashForMeta(lastName) : Promise.resolve(undefined),
+    opts.userId ? hashForMeta(opts.userId) : Promise.resolve(undefined),
   ]);
 
   return {
@@ -119,6 +123,7 @@ export async function buildCapiUserData(opts: {
       client_user_agent: userAgent,
       fbc: opts.fbc,
       fbp: opts.fbp,
+      external_id: hashedUserId,
     },
     referer,
   };
@@ -243,6 +248,7 @@ export async function sendMetaEvents(events: MetaServerEvent[]): Promise<{ succe
 /**
  * Track Lead event via CAPI (primary conversion)
  * Call this from your API route after successful form submission
+ * @note For deduplication: pass the same eventId to both the browser pixel call and this CAPI call.
  */
 export async function trackLeadCapi(params: {
   eventId: string;
@@ -266,6 +272,7 @@ export async function trackLeadCapi(params: {
 
 /**
  * Track ViewContent event via CAPI
+ * @note For deduplication: pass the same eventId to both the browser pixel call and this CAPI call.
  */
 export async function trackViewContentCapi(params: {
   eventId: string;
@@ -289,6 +296,7 @@ export async function trackViewContentCapi(params: {
 
 /**
  * Track InitiateCheckout event via CAPI
+ * @note For deduplication: pass the same eventId to both the browser pixel call and this CAPI call.
  */
 export async function trackInitiateCheckoutCapi(params: {
   eventId: string;
@@ -313,6 +321,7 @@ export async function trackInitiateCheckoutCapi(params: {
 /**
  * Track Purchase event via CAPI (primary conversion)
  * Call this from your API route after successful order creation
+ * @note For deduplication: pass the same eventId to both the browser pixel call and this CAPI call.
  */
 export async function trackPurchaseCapi(params: {
   eventId: string;
@@ -337,6 +346,7 @@ export async function trackPurchaseCapi(params: {
 /**
  * Track Subscribe custom event via CAPI
  * Call this from your subscription API route after successful creation
+ * @note For deduplication: pass the same eventId to both the browser pixel call and this CAPI call.
  */
 export async function trackSubscribeCapi(params: {
   eventId: string;
@@ -353,6 +363,29 @@ export async function trackSubscribeCapi(params: {
     data_processing_options: [],
     user_data: params.userData,
     custom_data: params.customData,
+  };
+
+  return sendMetaEvent(event);
+}
+
+/**
+ * Track PageView event via CAPI
+ * Mirror of the automatic browser-side PageView fired by the pixel init.
+ * Requires eventID for deduplication with the browser pixel's PageView.
+ */
+export async function trackPageViewCapi(params: {
+  eventId: string;
+  sourceUrl: string;
+  userData: MetaUserData;
+}): Promise<{ success: boolean; error?: string }> {
+  const event: MetaServerEvent = {
+    event_name: 'PageView',
+    event_time: Math.floor(Date.now() / 1000),
+    event_id: params.eventId,
+    event_source_url: params.sourceUrl,
+    action_source: 'website',
+    data_processing_options: [],
+    user_data: params.userData,
   };
 
   return sendMetaEvent(event);
