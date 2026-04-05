@@ -54,3 +54,6 @@ export {
   // Types
   type FunnelStep,
 } from './ga4';
+
+// Client cookie helpers
+export { getFbp, getFbc, getSourceUrl, getMetaClientContext } from './cookies';
