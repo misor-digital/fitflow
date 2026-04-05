@@ -771,6 +771,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           value: priceInfo.finalPriceEur,
           content_name: effectiveBoxType,
           content_category: 'order',
+          content_type: 'product',
           order_id: order.id,
         },
       });

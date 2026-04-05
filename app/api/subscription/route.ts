@@ -520,6 +520,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           value: priceInfo.finalPriceEur,
           content_name: effectiveBoxType,
           content_category: 'subscription',
+          content_type: 'product',
         },
       });
 
