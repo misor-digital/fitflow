@@ -1,14 +1,16 @@
 'use client';
 
 import { useState } from 'react';
+import { trackSubscriptionPaused } from '@/lib/analytics/subscription';
 
 interface PauseModalProps {
   subscriptionId: string;
+  boxType: string;
   onSuccess: () => void;
   onClose: () => void;
 }
 
-export default function PauseModal({ subscriptionId, onSuccess, onClose }: PauseModalProps) {
+export default function PauseModal({ subscriptionId, boxType, onSuccess, onClose }: PauseModalProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,6 +31,7 @@ export default function PauseModal({ subscriptionId, onSuccess, onClose }: Pause
       }
 
       onSuccess();
+      trackSubscriptionPaused(boxType);
     } catch {
       setError('Възникна грешка. Моля, опитайте отново.');
     } finally {
