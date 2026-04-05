@@ -35,6 +35,7 @@ export {
   trackViewItem,
   trackBeginCheckout,
   trackGenerateLead,
+  trackGAPurchase,
   // Funnel events
   trackFunnelStep,
   trackBoxSelection,
