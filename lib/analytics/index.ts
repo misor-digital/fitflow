@@ -21,6 +21,7 @@ export {
   trackInitiateCheckoutCapi,
   trackPurchaseCapi,
   trackSubscribeCapi,
+  trackPageViewCapi,
   // Types
   type MetaEventName,
   type MetaUserData,
