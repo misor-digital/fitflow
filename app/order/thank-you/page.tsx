@@ -6,7 +6,8 @@ import Link from 'next/link';
 import { useOrderStore } from '@/store/orderStore';
 import {
   trackPurchase,
-  trackGenerateLead,
+  trackGAPurchase,
+  trackFormSubmit,
   setUserProperties,
 } from '@/lib/analytics';
 import { trackSubscriptionCreated } from '@/lib/analytics/subscription';
@@ -73,15 +74,26 @@ export default function OrderThankYou() {
       });
     }
 
-    // GA4 - generate_lead event
-    trackGenerateLead({
-      currency: 'EUR',
+    // GA4 — purchase event (critical for revenue reporting)
+    trackGAPurchase({
+      transaction_id: orderInfo.orderId ?? orderInfo.orderNumber ?? 'unknown',
       value: orderInfo.finalPriceEur ?? 0,
+      currency: 'EUR',
+      items: [{
+        item_id: orderInfo.boxType ?? 'fitflow-box',
+        item_name: orderInfo.boxType ?? 'FitFlow Box',
+        item_brand: 'FitFlow',
+        price: orderInfo.finalPriceEur ?? 0,
+        quantity: 1,
+      }],
     });
 
-    // GA4 - user properties
+    // GA4 — form submission completed
+    trackFormSubmit({ form_name: 'order', success: true });
+
+    // GA4 — user properties
     setUserProperties({
-      promo_code_used: false, // order completed
+      promo_code_used: false,
     });
 
     hasTracked.current = true;
