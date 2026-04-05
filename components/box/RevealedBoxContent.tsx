@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import PriceDisplay from '@/components/PriceDisplay';
 import { useOrderStore } from '@/store/orderStore';
-import { trackViewContent, trackViewItem, trackCTAClick } from '@/lib/analytics';
+import { trackCTAClick } from '@/lib/analytics';
 import type { PricesMap, PriceInfo } from '@/lib/catalog';
 
 // ---------------------------------------------------------------------------
@@ -65,21 +65,8 @@ export default function RevealedBoxContent({
   monthYear,
 }: RevealedBoxContentProps) {
   const router = useRouter();
-  const hasTracked = useRef(false);
   const { promoCode } = useOrderStore();
   const [livePrices, setLivePrices] = useState<PricesMap>(prices);
-
-  // Analytics on mount
-  useEffect(() => {
-    if (!hasTracked.current) {
-      trackViewContent();
-      trackViewItem({
-        item_id: 'revealed-box',
-        item_name: `Revealed Box ${monthYear}`,
-      });
-      hasTracked.current = true;
-    }
-  }, [monthYear]);
 
   // Refresh prices when promo code changes
   useEffect(() => {
