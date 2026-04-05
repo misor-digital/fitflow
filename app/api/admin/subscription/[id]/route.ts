@@ -9,8 +9,9 @@ import {
   resumeSubscription,
   cancelSubscription,
   expireSubscription,
+  adminUpdateSubscriptionFrequency,
 } from '@/lib/data';
-import { canPause, canResume, canCancel, validateCancellationReason } from '@/lib/subscription';
+import { canPause, canResume, canCancel, validateCancellationReason, validateFrequencyChange } from '@/lib/subscription';
 import { checkRateLimit } from '@/lib/utils/rateLimit';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import {
@@ -311,6 +312,41 @@ export async function PATCH(
         return NextResponse.json({
           success: true,
           message: 'Абонаментът е маркиран като изтекъл.',
+        });
+      }
+
+      case 'update_frequency': {
+        const newFrequency = body.frequency as string | undefined;
+        if (!newFrequency || typeof newFrequency !== 'string') {
+          return NextResponse.json(
+            { error: 'Честотата е задължителна.' },
+            { status: 400 },
+          );
+        }
+
+        const freqValidation = validateFrequencyChange(sub.frequency, newFrequency);
+        if (!freqValidation.valid) {
+          return NextResponse.json(
+            { error: freqValidation.error },
+            { status: 400 },
+          );
+        }
+
+        await adminUpdateSubscriptionFrequency(id, performedBy, newFrequency as 'monthly' | 'seasonal');
+
+        // Sync updated frequency to Brevo (fire-and-forget)
+        if (customerEmail) {
+          syncSubscriptionChange({
+            email: customerEmail,
+            status: sub.status,
+            boxType: sub.box_type,
+            frequency: newFrequency,
+          }).catch(console.error);
+        }
+
+        return NextResponse.json({
+          success: true,
+          message: 'Честотата е обновена.',
         });
       }
 
