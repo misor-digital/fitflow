@@ -36,9 +36,26 @@ export const isPixelAvailable = (): boolean => {
  * Should be fired once on landing page load
  * Do NOT fire on thank-you page, privacy policy, or other utility pages
  */
-export const trackViewContent = (): void => {
+export const trackViewContent = (params?: {
+  contentName?: string;
+  contentCategory?: string;
+  value?: number;
+  currency?: string;
+  eventId?: string;
+}): void => {
   if (isPixelAvailable()) {
-    window.fbq!('track', 'ViewContent');
+    const data: Record<string, unknown> = {};
+    if (params?.contentName) data.content_name = params.contentName;
+    if (params?.contentCategory) data.content_category = params.contentCategory;
+    if (params?.value !== undefined) data.value = params.value;
+    if (params?.currency) data.currency = params.currency;
+
+    window.fbq!(
+      'track',
+      'ViewContent',
+      Object.keys(data).length > 0 ? data : undefined,
+      params?.eventId ? { eventID: params.eventId } : undefined,
+    );
   }
 };
 
@@ -47,9 +64,26 @@ export const trackViewContent = (): void => {
  * Should be fired when user enters the order form (Step 1 mount)
  * Must fire BEFORE Lead, not instead of it
  */
-export const trackInitiateCheckout = (): void => {
+export const trackInitiateCheckout = (params?: {
+  value?: number;
+  currency?: string;
+  contentName?: string;
+  numItems?: number;
+  eventId?: string;
+}): void => {
   if (isPixelAvailable()) {
-    window.fbq!('track', 'InitiateCheckout');
+    const data: Record<string, unknown> = {};
+    if (params?.value !== undefined) data.value = params.value;
+    if (params?.currency) data.currency = params.currency;
+    if (params?.contentName) data.content_name = params.contentName;
+    if (params?.numItems !== undefined) data.num_items = params.numItems;
+
+    window.fbq!(
+      'track',
+      'InitiateCheckout',
+      Object.keys(data).length > 0 ? data : undefined,
+      params?.eventId ? { eventID: params.eventId } : undefined,
+    );
   }
 };
 
@@ -58,9 +92,16 @@ export const trackInitiateCheckout = (): void => {
  * Should be fired when user completes contact & delivery details (Step 3 → Step 4)
  * Indicates high-intent user who provided personal data
  */
-export const trackLead = (): void => {
+export const trackLead = (params?: {
+  eventId?: string;
+}): void => {
   if (isPixelAvailable()) {
-    window.fbq!('track', 'Lead');
+    window.fbq!(
+      'track',
+      'Lead',
+      undefined,
+      params?.eventId ? { eventID: params.eventId } : undefined,
+    );
   }
 };
 
@@ -82,6 +123,7 @@ export const trackPurchase = (params: {
       value: params.value,
       currency: params.currency,
       content_name: params.contentName,
+      content_type: 'product',
       order_id: params.orderId,
     }, params.eventId ? { eventID: params.eventId } : undefined);
   }
