@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useOrderStore } from '@/store/orderStore';
-import { trackFunnelStep, trackBoxSelection, trackInitiateCheckout } from '@/lib/analytics';
+import { trackFunnelStep, trackBoxSelection, trackViewContent, generateEventId, getMetaClientContext } from '@/lib/analytics';
 import PriceDisplay from '@/components/PriceDisplay';
 import type { PricesMap, BoxTypeId, PriceInfo } from '@/lib/catalog';
 import { getDisplayBoxType, getPremiumFrequency, buildBoxTypeId } from '@/lib/catalog';
@@ -18,11 +18,30 @@ export default function OrderStepBox({ prices, boxTypeNames, onNext }: OrderStep
   const { boxType, setBoxType, setFrequency, promoCode } = useOrderStore();
   const hasTrackedStep = useRef(false);
 
-  // Track funnel step + InitiateCheckout on mount
+  // Track funnel step + ViewContent on mount
   useEffect(() => {
     if (!hasTrackedStep.current) {
       trackFunnelStep('box_selection', 1);
-      trackInitiateCheckout();
+
+      // Meta Pixel — ViewContent (user sees box selection = product page)
+      const eventId = generateEventId();
+      trackViewContent({ contentName: 'box_selection', eventId });
+
+      // CAPI mirror — fire and forget
+      const { fbp, fbc, sourceUrl } = getMetaClientContext();
+      fetch('/api/analytics/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventName: 'ViewContent',
+          eventId,
+          fbp,
+          fbc,
+          sourceUrl,
+          customData: { content_name: 'box_selection' },
+        }),
+      }).catch(() => {});
+
       hasTrackedStep.current = true;
     }
   }, []);
