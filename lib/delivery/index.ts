@@ -38,6 +38,7 @@ export {
   // Formatting
   formatDeliveryDate,
   formatMonthYear,
+  calculateSendDate,
 
   // Constants
   CYCLE_STATUS_LABELS,

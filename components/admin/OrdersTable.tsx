@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import type { OrderRow, OrderStatus, OrderStatusHistoryRow } from '@/lib/supabase/types';
+import type { OrderRow, OrderStatus, OrderStatusHistoryRow, CycleDropdownOption } from '@/lib/supabase/types';
 import {
   ORDER_STATUS_LABELS,
   ORDER_STATUS_COLORS,
@@ -33,6 +33,9 @@ interface OrdersTableProps {
   currentPage: number;
   perPage: number;
   reminderCounts?: Record<string, { count: number; lastSentAt: string | null }>;
+  cycleOptions?: CycleDropdownOption[];
+  activeCycleId?: string;
+  defaultCycleId?: string | null;
 }
 
 /** Background color classes for status badges */
@@ -129,6 +132,9 @@ export function OrdersTable({
   optionLabels,
   eurToBgnRate,
   reminderCounts,
+  cycleOptions: _cycleOptions,
+  activeCycleId: _activeCycleId,
+  defaultCycleId: _defaultCycleId,
 }: OrdersTableProps) {
   const router = useRouter();
   const [expandedId, setExpandedId] = useState<string | null>(null);

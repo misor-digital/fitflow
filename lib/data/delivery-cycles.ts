@@ -17,6 +17,7 @@ import type {
   DeliveryCycleItemRow,
   DeliveryCycleItemInsert,
   DeliveryCycleItemUpdate,
+  CycleDropdownOption,
 } from '@/lib/supabase/types';
 import { TAG_DELIVERY, TAG_SITE_CONFIG } from './cache-tags';
 
@@ -197,6 +198,57 @@ export const getDeliveredCycles = cache(
     return data ?? [];
   },
 );
+
+/**
+ * Lightweight cycle list for dropdown selectors (admin orders filter).
+ * Returns only the fields needed for display, newest first.
+ */
+export const getDeliveryCyclesForDropdown = cache(
+  unstable_cache(
+    async (): Promise<CycleDropdownOption[]> => {
+      const { data, error } = await supabaseAdmin
+        .from('delivery_cycles')
+        .select('id, delivery_date, status, title')
+        .order('delivery_date', { ascending: false });
+
+      if (error) throw error;
+      return (data ?? []) as CycleDropdownOption[];
+    },
+    ['delivery-cycles-dropdown'],
+    { revalidate: 300, tags: [TAG_DELIVERY] },
+  ),
+);
+
+/**
+ * Determine the "current" cycle ID for default filtering.
+ * Prefers the nearest upcoming cycle; falls back to latest delivered.
+ */
+export async function getCurrentCycleId(): Promise<string | null> {
+  const today = new Date().toISOString().split('T')[0];
+
+  // 1. Nearest upcoming cycle
+  const { data: upcoming } = await supabaseAdmin
+    .from('delivery_cycles')
+    .select('id')
+    .eq('status', 'upcoming')
+    .gte('delivery_date', today)
+    .order('delivery_date', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  if (upcoming) return upcoming.id;
+
+  // 2. Most recent delivered cycle
+  const { data: delivered } = await supabaseAdmin
+    .from('delivery_cycles')
+    .select('id')
+    .eq('status', 'delivered')
+    .order('delivery_date', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  return delivered?.id ?? null;
+}
 
 /**
  * Returns the most recently delivered cycle (newest delivery_date).

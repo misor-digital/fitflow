@@ -5,9 +5,7 @@
 
 import 'server-only';
 import { cache } from 'react';
-import { unstable_cache } from 'next/cache';
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import { TAG_ORDERS } from './cache-tags';
 import type {
   OrderRow,
   OrderInsert,
@@ -418,26 +416,25 @@ export async function getOrderStatusHistoryBatch(
 
 /**
  * Get total order count - for admin dashboard.
- * Cached across requests for 30s (tag: orders).
+ * Optionally scoped to a delivery cycle.
  */
 export const getOrdersCount = cache(
-  unstable_cache(
-    async (): Promise<number> => {
-      const { count, error } = await supabaseAdmin
-        .from('orders')
-        .select('*', { count: 'exact', head: true });
+  async (cycleId?: string): Promise<number> => {
+    let query = supabaseAdmin
+      .from('orders')
+      .select('*', { count: 'exact', head: true });
 
-      if (error) {
-        console.error('Error counting orders:', error);
-        // Return 0 so the cache stores a fallback instead of retrying every request
-        return 0;
-      }
+    if (cycleId) query = query.eq('delivery_cycle_id', cycleId);
 
-      return count ?? 0;
-    },
-    ['orders-count'],
-    { revalidate: 30, tags: [TAG_ORDERS] },
-  ),
+    const { count, error } = await query;
+
+    if (error) {
+      console.error('Error counting orders:', error);
+      return 0;
+    }
+
+    return count ?? 0;
+  },
 );
 
 /**
@@ -448,7 +445,7 @@ export const getOrdersPaginated = cache(
   async (
     page: number,
     perPage: number,
-    filters?: { status?: OrderStatus; boxType?: string; search?: string },
+    filters?: { status?: OrderStatus; boxType?: string; search?: string; cycleId?: string },
   ): Promise<{ orders: OrderRow[]; total: number }> => {
     const from = (page - 1) * perPage;
     const to = from + perPage - 1;
@@ -461,6 +458,9 @@ export const getOrdersPaginated = cache(
     }
     if (filters?.boxType) {
       query = query.eq('box_type', filters.boxType);
+    }
+    if (filters?.cycleId) {
+      query = query.eq('delivery_cycle_id', filters.cycleId);
     }
     if (filters?.search) {
       const search = `%${filters.search}%`;

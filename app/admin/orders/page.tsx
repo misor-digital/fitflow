@@ -1,6 +1,6 @@
 import { requireStaff } from '@/lib/auth';
 import { ORDER_VIEW_ROLES } from '@/lib/auth/permissions';
-import { getOrdersPaginated, getOrdersCount, getBoxTypeNames, getOptionLabels, getEurToBgnRate, getReminderCountsByOrders } from '@/lib/data';
+import { getOrdersPaginated, getOrdersCount, getBoxTypeNames, getOptionLabels, getEurToBgnRate, getReminderCountsByOrders, getDeliveryCyclesForDropdown, getCurrentCycleId } from '@/lib/data';
 import { ORDER_STATUS_LABELS } from '@/lib/order/format';
 import { OrdersTable } from '@/components/admin/OrdersTable';
 import Link from 'next/link';
@@ -19,6 +19,7 @@ interface OrdersPageProps {
     status?: string;
     boxType?: string;
     search?: string;
+    cycleId?: string;
   }>;
 }
 
@@ -31,6 +32,19 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
   const boxType = params.boxType;
   const search = params.search?.trim();
 
+  // Resolve cycle filter: default to current cycle, "all" means no filter
+  let cycleId: string | undefined;
+  let defaultCycleId: string | null = null;
+
+  if (params.cycleId === 'all') {
+    cycleId = undefined;
+  } else if (params.cycleId) {
+    cycleId = params.cycleId;
+  } else {
+    defaultCycleId = await getCurrentCycleId();
+    cycleId = defaultCycleId ?? undefined;
+  }
+
   const [
     { orders, total },
     totalAll,
@@ -41,13 +55,15 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
     dietaryLabels,
     sizesLabels,
     eurToBgnRate,
+    cycleOptions,
   ] = await Promise.all([
     getOrdersPaginated(page, PER_PAGE, {
       status: status || undefined,
       boxType: boxType || undefined,
       search: search || undefined,
+      cycleId,
     }),
-    getOrdersCount(),
+    getOrdersCount(cycleId),
     getBoxTypeNames(),
     getOptionLabels('sports'),
     getOptionLabels('colors'),
@@ -55,6 +71,7 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
     getOptionLabels('dietary'),
     getOptionLabels('sizes'),
     getEurToBgnRate(),
+    getDeliveryCyclesForDropdown(),
   ]);
 
   const optionLabels = { sports: sportsLabels, colors: colorsLabels, flavors: flavorsLabels, dietary: dietaryLabels, sizes: sizesLabels };
@@ -68,10 +85,14 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
   const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
   const statusOptions = Object.entries(ORDER_STATUS_LABELS) as [OrderStatus, string][];
 
+  // The effective cycle ID for the dropdown's selected state
+  const activeCycleId = params.cycleId === 'all' ? 'all' : (cycleId ?? 'all');
+
   // Build URL helper for filters
   function buildUrl(overrides: Record<string, string | undefined>) {
     const p = new URLSearchParams();
     const merged = {
+      cycleId: activeCycleId !== 'all' ? activeCycleId : undefined,
       status: params.status,
       boxType: params.boxType,
       search: params.search,
@@ -107,6 +128,29 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
 
       {/* Filters */}
       <form className="flex flex-wrap gap-3 mb-6">
+        {/* Cycle dropdown */}
+        <select
+          name="cycleId"
+          defaultValue={activeCycleId}
+          className="border rounded-lg px-3 py-2 text-sm bg-white"
+        >
+          <option value="all">Всички цикли</option>
+          {cycleOptions.map((cycle) => {
+            const date = new Date(cycle.delivery_date);
+            const label = cycle.title
+              ?? date.toLocaleDateString('bg-BG', { month: 'long', year: 'numeric' });
+            const isCurrent = cycle.id === defaultCycleId;
+            const statusIcon =
+              cycle.status === 'upcoming' ? '🟢' :
+              cycle.status === 'delivered' ? '📦' : '📁';
+            return (
+              <option key={cycle.id} value={cycle.id}>
+                {statusIcon} {label}{isCurrent ? ' (текущ)' : ''}
+              </option>
+            );
+          })}
+        </select>
+
         {/* Status dropdown */}
         <select
           name="status"
@@ -151,7 +195,7 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
           Търси
         </button>
 
-        {(status || boxType || search) && (
+        {(status || boxType || search || params.cycleId) && (
           <Link
             href="/admin/orders"
             className="text-sm text-gray-500 hover:text-gray-700 self-center underline"
@@ -165,7 +209,7 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
       {orders.length === 0 ? (
         <div className="text-center py-16 text-gray-500">
           <p className="text-lg mb-2">Няма намерени поръчки.</p>
-          {(status || boxType || search) && (
+          {(status || boxType || search || params.cycleId) && (
             <Link href="/admin/orders" className="text-[var(--color-brand-orange)] hover:underline text-sm">
               Нулирай филтрите
             </Link>
@@ -182,6 +226,9 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
             currentPage={page}
             perPage={PER_PAGE}
             reminderCounts={reminderCounts}
+            cycleOptions={cycleOptions}
+            activeCycleId={activeCycleId}
+            defaultCycleId={defaultCycleId}
           />
 
           {/* Pagination */}
