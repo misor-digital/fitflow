@@ -789,6 +789,7 @@ export async function generateOrdersForCycle(
         subscription_id: sub.id,
         delivery_cycle_id: cycleId,
         order_type: 'subscription',
+        delivery_method: address.delivery_method ?? 'address',
       };
 
       const order = await createOrder(orderData);
