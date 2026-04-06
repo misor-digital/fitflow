@@ -125,8 +125,16 @@ export async function generateSingleOrderForSubscription(
   const address = await getAddressById(sub.default_address_id, sub.user_id);
   if (!address) throw new Error('Default address not found.');
 
+  // 4b. Determine if promo should apply this cycle
+  const promoExhausted = sub.promo_code !== null
+    && sub.promo_max_cycles !== null
+    && (sub.promo_cycles_used ?? 0) >= sub.promo_max_cycles;
+
+  const effectivePromoCode = promoExhausted ? null : sub.promo_code;
+  const effectiveDiscountPercent = promoExhausted ? null : sub.discount_percent;
+
   // 5. Calculate price
-  const pricing = await calculatePrice(sub.box_type, sub.promo_code);
+  const pricing = await calculatePrice(sub.box_type, effectivePromoCode);
 
   // 6. Load user info
   const { data: profile } = await supabaseAdmin
@@ -173,8 +181,8 @@ export async function generateSingleOrderForSubscription(
     size_upper: sub.size_upper,
     size_lower: sub.size_lower,
     additional_notes: sub.additional_notes,
-    promo_code: sub.promo_code,
-    discount_percent: sub.discount_percent,
+    promo_code: effectivePromoCode,
+    discount_percent: effectiveDiscountPercent,
     original_price_eur: pricing.originalPriceEur,
     final_price_eur: pricing.finalPriceEur,
     subscription_id: sub.id,
@@ -188,6 +196,29 @@ export async function generateSingleOrderForSubscription(
     .from('subscriptions')
     .update({ last_delivered_cycle_id: cycleId })
     .eq('id', sub.id);
+
+  // 8b. Update promo cycle tracking
+  if (effectivePromoCode && sub.promo_code) {
+    const newCyclesUsed = (sub.promo_cycles_used ?? 0) + 1;
+    const shouldClearPromo = sub.promo_max_cycles !== null && newCyclesUsed >= sub.promo_max_cycles;
+
+    if (shouldClearPromo) {
+      await supabaseAdmin
+        .from('subscriptions')
+        .update({
+          promo_code: null,
+          discount_percent: null,
+          current_price_eur: pricing.originalPriceEur,
+          promo_cycles_used: newCyclesUsed,
+        })
+        .eq('id', sub.id);
+    } else {
+      await supabaseAdmin
+        .from('subscriptions')
+        .update({ promo_cycles_used: newCyclesUsed })
+        .eq('id', sub.id);
+    }
+  }
 
   // 9. Record history
   await supabaseAdmin.from('subscription_history').insert({
