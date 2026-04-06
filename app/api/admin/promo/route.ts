@@ -89,6 +89,18 @@ function validatePromoInput(body: Record<string, unknown>, isCreate: boolean) {
     }
   }
 
+  // Default max cycles
+  if (body.default_max_cycles !== undefined && body.default_max_cycles !== null) {
+    if (
+      !Number.isInteger(body.default_max_cycles) ||
+      (body.default_max_cycles as number) < 1
+    ) {
+      errors.push(
+        'Максималните цикли трябва да е положително цяло число.',
+      );
+    }
+  }
+
   return errors;
 }
 
@@ -257,6 +269,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (body.max_uses !== undefined) payload.max_uses = body.max_uses;
     if (body.max_uses_per_user !== undefined)
       payload.max_uses_per_user = body.max_uses_per_user;
+    if (body.default_max_cycles !== undefined)
+      payload.default_max_cycles = body.default_max_cycles;
 
     const created = await createPromoCode(
       payload as unknown as Parameters<typeof createPromoCode>[0],

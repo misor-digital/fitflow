@@ -199,6 +199,17 @@ export async function PATCH(
       }
     }
 
+    if (body.default_max_cycles !== undefined && body.default_max_cycles !== null) {
+      if (
+        !Number.isInteger(body.default_max_cycles) ||
+        (body.default_max_cycles as number) < 1
+      ) {
+        errors.push(
+          'Максималните цикли трябва да е положително цяло число.',
+        );
+      }
+    }
+
     // Date cross-validation: need to check against existing record if only one
     // date is provided
     if (body.starts_at !== undefined || body.ends_at !== undefined) {
@@ -244,6 +255,8 @@ export async function PATCH(
     if (body.max_uses !== undefined) updates.max_uses = body.max_uses;
     if (body.max_uses_per_user !== undefined)
       updates.max_uses_per_user = body.max_uses_per_user;
+    if (body.default_max_cycles !== undefined)
+      updates.default_max_cycles = body.default_max_cycles;
 
     if (Object.keys(updates).length === 0) {
       return NextResponse.json(

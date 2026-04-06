@@ -52,6 +52,7 @@ export default async function EditPromoPage({ params }: EditPromoPageProps) {
             ends_at: promo.ends_at,
             max_uses: promo.max_uses,
             max_uses_per_user: promo.max_uses_per_user,
+            default_max_cycles: promo.default_max_cycles,
           }}
         />
       </div>
@@ -74,6 +75,12 @@ export default async function EditPromoPage({ params }: EditPromoPageProps) {
             <div className="text-sm text-gray-500">Макс. на потребител</div>
             <div className="text-xl font-bold">
               {promo.max_uses_per_user ?? '∞'}
+            </div>
+          </div>
+          <div>
+            <div className="text-sm text-gray-500">Макс. цикли (абонамент)</div>
+            <div className="text-xl font-bold">
+              {promo.default_max_cycles ?? '∞'}
             </div>
           </div>
         </div>
