@@ -579,6 +579,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             discountPercent: subscription.discount_percent,
             nextDeliveryDate: nextDate,
             orderNumber: sourceOrder.order_number,
+            subscriptionNumber: subscription.subscription_number,
             isNewAccount,
             loginUrl: accountLoginUrl,
           });

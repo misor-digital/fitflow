@@ -29,6 +29,7 @@ export interface SubscriptionConversionEmailData {
   discountPercent: number | null;
   nextDeliveryDate: string | null;
   orderNumber: string;
+  subscriptionNumber: string;
   isNewAccount: boolean;
   loginUrl: string | null;
 }
@@ -77,7 +78,8 @@ export function generateSubscriptionConversionEmail(
 
   // -- Info box lines -------------------------------------------------------
   const infoLines = [
-    `📦 Кутия: ${boxName}`,
+    `� Абонамент: ${escapeHtml(data.subscriptionNumber)}`,
+    `�📦 Кутия: ${boxName}`,
     `🔄 Честота: ${frequencyLabel}`,
     ...priceLines,
   ];

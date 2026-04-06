@@ -36,6 +36,7 @@ export async function sendSubscriptionCreatedEmail(
     const frequency = FREQUENCY_LABELS[subscription.frequency] ?? subscription.frequency;
 
     const htmlContent = generateSubscriptionCreatedEmail({
+      subscriptionNumber: subscription.subscription_number,
       boxTypeName,
       frequency,
       nextDeliveryDate,
@@ -68,6 +69,7 @@ export async function sendSubscriptionPausedEmail(
     const boxTypeName = labels.boxTypes[subscription.box_type] ?? subscription.box_type;
 
     const htmlContent = generateSubscriptionPausedEmail({
+      subscriptionNumber: subscription.subscription_number,
       boxTypeName,
       resumeUrl: 'https://fitflow.bg/account/subscriptions',
     });
@@ -99,6 +101,7 @@ export async function sendSubscriptionResumedEmail(
     const boxTypeName = labels.boxTypes[subscription.box_type] ?? subscription.box_type;
 
     const htmlContent = generateSubscriptionResumedEmail({
+      subscriptionNumber: subscription.subscription_number,
       boxTypeName,
       nextDeliveryDate,
       manageUrl: 'https://fitflow.bg/account/subscriptions',
@@ -130,6 +133,7 @@ export async function sendSubscriptionCancelledEmail(
     const boxTypeName = labels.boxTypes[subscription.box_type] ?? subscription.box_type;
 
     const htmlContent = generateSubscriptionCancelledEmail({
+      subscriptionNumber: subscription.subscription_number,
       boxTypeName,
       resubscribeUrl: 'https://fitflow.bg/order',
     });
@@ -156,13 +160,16 @@ export async function sendDeliveryUpcomingEmail(
   subscription: SubscriptionRow,
   deliveryDate: string,
   orderId: string,
+  orderNumber: string,
 ): Promise<void> {
   try {
     const labels = await resolveEmailLabels();
     const boxTypeName = labels.boxTypes[subscription.box_type] ?? subscription.box_type;
 
     const htmlContent = generateDeliveryUpcomingEmail({
+      subscriptionNumber: subscription.subscription_number,
       boxTypeName,
+      orderNumber,
       deliveryDate,
       trackUrl: `https://fitflow.bg/order/track?orderId=${orderId}`,
     });
