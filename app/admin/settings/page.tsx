@@ -1,4 +1,5 @@
 import { requireStaff } from '@/lib/auth';
+import { AdminHelpLink } from '@/components/admin/AdminHelpLink';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 
@@ -21,9 +22,12 @@ export default async function SettingsPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-[var(--color-brand-navy)] mb-6">
-        Настройки
-      </h1>
+      <div className="flex items-center gap-3 mb-6">
+        <h1 className="text-2xl font-bold text-[var(--color-brand-navy)]">
+          Настройки
+        </h1>
+        <AdminHelpLink section="settings" />
+      </div>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {settingsLinks.map((link) => (
           <Link

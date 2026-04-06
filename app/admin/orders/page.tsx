@@ -3,6 +3,7 @@ import { ORDER_VIEW_ROLES } from '@/lib/auth/permissions';
 import { getOrdersPaginated, getOrdersCount, getBoxTypeNames, getOptionLabels, getEurToBgnRate, getReminderCountsByOrders, getDeliveryCyclesForDropdown, getCurrentCycleId } from '@/lib/data';
 import { ORDER_STATUS_LABELS } from '@/lib/order/format';
 import { OrdersTable } from '@/components/admin/OrdersTable';
+import { AdminHelpLink } from '@/components/admin/AdminHelpLink';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import type { OrderStatus } from '@/lib/supabase/types';
@@ -114,6 +115,7 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
           <h1 className="text-2xl font-bold text-[var(--color-brand-navy)]">
             Поръчки
           </h1>
+          <AdminHelpLink section="orders" />
           <span className="bg-[var(--color-brand-navy)] text-white text-xs font-semibold px-2.5 py-1 rounded-full">
             {totalAll}
           </span>

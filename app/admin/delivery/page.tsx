@@ -7,6 +7,7 @@ import {
   CYCLE_STATUS_LABELS,
   CYCLE_STATUS_COLORS,
 } from '@/lib/delivery';
+import { AdminHelpLink } from '@/components/admin/AdminHelpLink';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import type { DeliveryCycleRow } from '@/lib/delivery';
@@ -50,6 +51,7 @@ export default async function DeliveryPage() {
           <h1 className="text-2xl font-bold text-[var(--color-brand-navy)]">
             Доставки
           </h1>
+          <AdminHelpLink section="delivery-cycles" />
           <span className="bg-[var(--color-brand-navy)] text-white text-xs font-semibold px-2.5 py-1 rounded-full">
             {cycles.length}
           </span>

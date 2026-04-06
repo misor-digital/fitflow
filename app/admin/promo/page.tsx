@@ -3,6 +3,7 @@ import { listPromoCodes, derivePromoStatus } from '@/lib/data';
 import type { PromoCodeFilters, PromoStatus } from '@/lib/data/promo';
 import Link from 'next/link';
 import PromoActions from '@/components/admin/PromoActions';
+import { AdminHelpLink } from '@/components/admin/AdminHelpLink';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -133,6 +134,7 @@ export default async function PromoPage({ searchParams }: PromoPageProps) {
           <h1 className="text-2xl font-bold text-[var(--color-brand-navy)]">
             Промо кодове
           </h1>
+          <AdminHelpLink section="promo-codes" />
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
             {total}
           </span>
