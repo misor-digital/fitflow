@@ -277,3 +277,42 @@ export function formatMonthYear(dateStr: string): string {
   if (!date) return dateStr;
   return `${BULGARIAN_MONTHS[date.getMonth()]} ${date.getFullYear()}`;
 }
+
+const BULGARIAN_DAYS: string[] = [
+  'неделя', 'понеделник', 'вторник', 'сряда', 'четвъртък', 'петък', 'събота',
+];
+
+/**
+ * Calculate the date boxes must be handed to Speedy courier.
+ * Rule: delivery_date - 1 day, unless that falls on Sunday → use Saturday instead.
+ *
+ * @example delivery=Friday  → send=Thursday (day-1)
+ * @example delivery=Monday  → send=Saturday (day-2, skip Sunday)
+ * @example delivery=Sunday  → send=Friday  (day-2, skip Sunday itself)
+ */
+export function calculateSendDate(deliveryDateStr: string): { sendDate: string; sendDayName: string; deliveryDate: string; deliveryDayName: string } | null {
+  const delivery = parseISODate(deliveryDateStr);
+  if (!delivery) return null;
+
+  const send = new Date(delivery);
+  send.setDate(send.getDate() - 1);
+
+  // If send date is Sunday, go back one more day to Saturday
+  if (send.getDay() === 0) {
+    send.setDate(send.getDate() - 1);
+  }
+
+  return {
+    sendDate: formatDeliveryDate(toISODateStr(send)),
+    sendDayName: BULGARIAN_DAYS[send.getDay()],
+    deliveryDate: formatDeliveryDate(deliveryDateStr),
+    deliveryDayName: BULGARIAN_DAYS[delivery.getDay()],
+  };
+}
+
+function toISODateStr(d: Date): string {
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}

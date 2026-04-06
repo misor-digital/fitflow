@@ -1,11 +1,9 @@
 import { requireStaff } from '@/lib/auth';
 import { ORDER_VIEW_ROLES } from '@/lib/auth/permissions';
-import { getDeliveryCycles, getDeliveryConfigMap } from '@/lib/data';
+import { getDeliveryCycles } from '@/lib/data';
 import {
   computeCycleState,
-  getDeliveryConfig,
-  calculateNextNDeliveryDates,
-  formatDeliveryDate,
+  calculateSendDate,
   CYCLE_STATUS_LABELS,
   CYCLE_STATUS_COLORS,
 } from '@/lib/delivery';
@@ -20,13 +18,7 @@ export const metadata: Metadata = {
 export default async function DeliveryPage() {
   await requireStaff([...ORDER_VIEW_ROLES]);
 
-  const [cycles, configMap] = await Promise.all([
-    getDeliveryCycles(),
-    getDeliveryConfigMap(),
-  ]);
-
-  const config = getDeliveryConfig(configMap);
-  const nextDates = calculateNextNDeliveryDates(config, 1);
+  const cycles = await getDeliveryCycles();
 
   // Group cycles by status: upcoming first, then delivered, then archived
   const upcoming: (DeliveryCycleRow & { state: ReturnType<typeof computeCycleState> })[] = [];
@@ -71,11 +63,21 @@ export default async function DeliveryPage() {
       </div>
 
       {/* Next delivery info */}
-      {nextDates.length > 0 && (
-        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
-          Следваща дата на доставка: <strong>{formatDeliveryDate(nextDates[0].toISOString().split('T')[0])}</strong>
-        </div>
-      )}
+      {upcoming.length > 0 && (() => {
+        const nextCycle = upcoming[0];
+        const sendInfo = calculateSendDate(nextCycle.delivery_date);
+        return sendInfo ? (
+          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800 space-y-1">
+            <p>
+              Кутиите трябва да бъдат предадени на Speedy на:{' '}
+              <strong>{sendInfo.sendDate}</strong> ({sendInfo.sendDayName})
+            </p>
+            <p className="text-blue-600">
+              Дата на доставка: {sendInfo.deliveryDate} ({sendInfo.deliveryDayName})
+            </p>
+          </div>
+        ) : null;
+      })()}
 
       {/* Cycles grouped by status */}
       {cycles.length === 0 ? (
