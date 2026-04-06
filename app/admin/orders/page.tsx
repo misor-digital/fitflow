@@ -5,7 +5,7 @@ import { ORDER_STATUS_LABELS } from '@/lib/order/format';
 import { OrdersTable } from '@/components/admin/OrdersTable';
 import Link from 'next/link';
 import type { Metadata } from 'next';
-import type { OrderStatus, CycleDropdownOption } from '@/lib/supabase/types';
+import type { OrderStatus } from '@/lib/supabase/types';
 
 export const metadata: Metadata = {
   title: 'Поръчки | Администрация | FitFlow',
