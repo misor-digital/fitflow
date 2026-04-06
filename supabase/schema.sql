@@ -1342,7 +1342,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 
-CREATE OR REPLACE FUNCTION generate_subscription_id()
+CREATE OR REPLACE FUNCTION generate_subscription_id(ts TIMESTAMPTZ DEFAULT NOW())
 RETURNS TEXT AS $$
 DECLARE
   date_part TEXT;
@@ -1350,7 +1350,7 @@ DECLARE
   new_sub_id TEXT;
   chars TEXT := 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 BEGIN
-  date_part := TO_CHAR(NOW(), 'DDMMYY');
+  date_part := TO_CHAR(ts, 'DDMMYY');
   random_part := '';
   FOR i IN 1..6 LOOP
     random_part := random_part || SUBSTR(chars, FLOOR(RANDOM() * LENGTH(chars) + 1)::INT, 1);
