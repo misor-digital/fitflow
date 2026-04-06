@@ -381,6 +381,14 @@ export async function PATCH(
           );
         }
 
+        const sub = await getSubscriptionById(id, session.userId);
+        if (!sub) {
+          return NextResponse.json(
+            { error: 'Абонаментът не е намерен.' },
+            { status: 404 },
+          );
+        }
+
         // Verify address ownership
         const addressOwned = await getAddressById(newAddressId, session.userId);
         if (!addressOwned) {
