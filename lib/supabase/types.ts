@@ -590,6 +590,14 @@ export interface DeliveryCycleUpdate {
   revealed_at?: string | null;
 }
 
+/** Lightweight cycle data for dropdown selectors */
+export interface CycleDropdownOption {
+  id: string;
+  delivery_date: string;
+  status: DeliveryCycleStatus;
+  title: string | null;
+}
+
 export interface DeliveryCycleItemRow {
   id: string;
   delivery_cycle_id: string;

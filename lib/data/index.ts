@@ -98,6 +98,8 @@ export {
   getEarliestEligibleCycle,
   getCurrentRevealedCycle,
   getDeliveredCycles,
+  getDeliveryCyclesForDropdown,
+  getCurrentCycleId,
   createDeliveryCycle,
   updateDeliveryCycle,
   deleteDeliveryCycle,
