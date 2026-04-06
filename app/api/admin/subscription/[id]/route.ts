@@ -19,6 +19,7 @@ import {
   sendSubscriptionResumedEmail,
   sendSubscriptionCancelledEmail,
   sendSubscriptionAddressChangedEmail,
+  sendSubscriptionFrequencyChangedEmail,
   formatAddressForEmail,
 } from '@/lib/subscription/notifications';
 import { syncSubscriptionChange } from '@/lib/email/contact-sync';
@@ -334,8 +335,10 @@ export async function PATCH(
 
         await adminUpdateSubscriptionFrequency(id, performedBy, newFrequency as 'monthly' | 'seasonal');
 
-        // Sync updated frequency to Brevo (fire-and-forget)
+        // Fire-and-forget customer notification + Brevo sync
         if (customerEmail) {
+          sendSubscriptionFrequencyChangedEmail(customerEmail, sub, sub.frequency, newFrequency)
+            .catch((err) => console.error('Admin frequency change email failed:', err));
           syncSubscriptionChange({
             email: customerEmail,
             status: sub.status,
