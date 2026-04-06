@@ -120,6 +120,7 @@ export default function SubscriptionCard({
             <h3 className="text-lg font-semibold text-[var(--color-brand-navy)]">
               {formatSubscriptionSummary(subscription, { [subscription.box_type]: boxTypeName })}
             </h3>
+            <p className="text-xs text-gray-400 font-mono mt-0.5">{subscription.subscription_number}</p>
             {state.isActive && subscription.nextDeliveryDate && (
               <p className="text-xs text-gray-500 mt-1">
                 Следваща доставка: <span className="font-medium text-gray-700">{formatDeliveryDate(subscription.nextDeliveryDate)}</span>

@@ -14,6 +14,9 @@ import {
   generateSubscriptionResumedEmail,
   generateSubscriptionCancelledEmail,
   generateDeliveryUpcomingEmail,
+  generateFrequencyChangedEmail,
+  generateAddressChangedEmail,
+  generatePreferencesUpdatedEmail,
 } from '@/lib/email/subscription-templates';
 import {
   generateSubscriptionConversionEmail,
@@ -36,6 +39,7 @@ export async function sendSubscriptionCreatedEmail(
     const frequency = FREQUENCY_LABELS[subscription.frequency] ?? subscription.frequency;
 
     const htmlContent = generateSubscriptionCreatedEmail({
+      subscriptionNumber: subscription.subscription_number,
       boxTypeName,
       frequency,
       nextDeliveryDate,
@@ -68,6 +72,7 @@ export async function sendSubscriptionPausedEmail(
     const boxTypeName = labels.boxTypes[subscription.box_type] ?? subscription.box_type;
 
     const htmlContent = generateSubscriptionPausedEmail({
+      subscriptionNumber: subscription.subscription_number,
       boxTypeName,
       resumeUrl: 'https://fitflow.bg/account/subscriptions',
     });
@@ -99,6 +104,7 @@ export async function sendSubscriptionResumedEmail(
     const boxTypeName = labels.boxTypes[subscription.box_type] ?? subscription.box_type;
 
     const htmlContent = generateSubscriptionResumedEmail({
+      subscriptionNumber: subscription.subscription_number,
       boxTypeName,
       nextDeliveryDate,
       manageUrl: 'https://fitflow.bg/account/subscriptions',
@@ -130,6 +136,7 @@ export async function sendSubscriptionCancelledEmail(
     const boxTypeName = labels.boxTypes[subscription.box_type] ?? subscription.box_type;
 
     const htmlContent = generateSubscriptionCancelledEmail({
+      subscriptionNumber: subscription.subscription_number,
       boxTypeName,
       resubscribeUrl: 'https://fitflow.bg/order',
     });
@@ -156,13 +163,16 @@ export async function sendDeliveryUpcomingEmail(
   subscription: SubscriptionRow,
   deliveryDate: string,
   orderId: string,
+  orderNumber: string,
 ): Promise<void> {
   try {
     const labels = await resolveEmailLabels();
     const boxTypeName = labels.boxTypes[subscription.box_type] ?? subscription.box_type;
 
     const htmlContent = generateDeliveryUpcomingEmail({
+      subscriptionNumber: subscription.subscription_number,
       boxTypeName,
+      orderNumber,
       deliveryDate,
       trackUrl: `https://fitflow.bg/order/track?orderId=${orderId}`,
     });
@@ -202,4 +212,160 @@ export async function sendSubscriptionConversionEmail(
   } catch (err) {
     console.error('[EMAIL] subscription-conversion failed:', err);
   }
+}
+
+/**
+ * Send email when subscription frequency changes.
+ */
+export async function sendSubscriptionFrequencyChangedEmail(
+  email: string,
+  subscription: SubscriptionRow,
+  oldFrequency: string,
+  newFrequency: string,
+): Promise<void> {
+  try {
+    const labels = await resolveEmailLabels();
+    const boxTypeName = labels.boxTypes[subscription.box_type] ?? subscription.box_type;
+
+    const htmlContent = generateFrequencyChangedEmail({
+      subscriptionNumber: subscription.subscription_number,
+      boxTypeName,
+      oldFrequency: FREQUENCY_LABELS[oldFrequency] ?? oldFrequency,
+      newFrequency: FREQUENCY_LABELS[newFrequency] ?? newFrequency,
+      manageUrl: 'https://fitflow.bg/account/subscriptions',
+    });
+
+    await sendTransactionalEmail({
+      to: { email },
+      subject: 'FitFlow - Честотата на абонамента ти е променена',
+      htmlContent,
+      tags: ['subscription', 'frequency-changed'],
+      category: 'sub-frequency-changed',
+      relatedEntityType: 'subscription',
+      relatedEntityId: subscription.id,
+    });
+  } catch (err) {
+    console.error('[EMAIL] subscription-frequency-changed failed:', err);
+  }
+}
+
+/**
+ * Send email when subscription delivery address changes.
+ */
+export async function sendSubscriptionAddressChangedEmail(
+  email: string,
+  subscription: SubscriptionRow,
+  oldAddress: string,
+  newAddress: string,
+): Promise<void> {
+  try {
+    const labels = await resolveEmailLabels();
+    const boxTypeName = labels.boxTypes[subscription.box_type] ?? subscription.box_type;
+
+    const htmlContent = generateAddressChangedEmail({
+      subscriptionNumber: subscription.subscription_number,
+      boxTypeName,
+      oldAddress,
+      newAddress,
+      manageUrl: 'https://fitflow.bg/account/subscriptions',
+    });
+
+    await sendTransactionalEmail({
+      to: { email },
+      subject: 'FitFlow - Адресът на абонамента ти е променен',
+      htmlContent,
+      tags: ['subscription', 'address-changed'],
+      category: 'sub-address-changed',
+      relatedEntityType: 'subscription',
+      relatedEntityId: subscription.id,
+    });
+  } catch (err) {
+    console.error('[EMAIL] subscription-address-changed failed:', err);
+  }
+}
+
+/**
+ * Send email when subscription personalization preferences are updated.
+ */
+export async function sendSubscriptionPreferencesUpdatedEmail(
+  email: string,
+  subscription: SubscriptionRow,
+  oldPrefs: Record<string, unknown>,
+  newPrefs: Record<string, unknown>,
+): Promise<void> {
+  try {
+    const labels = await resolveEmailLabels();
+    const boxTypeName = labels.boxTypes[subscription.box_type] ?? subscription.box_type;
+    const summaryLines = formatPreferencesSummary(oldPrefs, newPrefs);
+
+    const htmlContent = generatePreferencesUpdatedEmail({
+      subscriptionNumber: subscription.subscription_number,
+      boxTypeName,
+      summaryLines,
+      manageUrl: 'https://fitflow.bg/account/subscriptions',
+    });
+
+    await sendTransactionalEmail({
+      to: { email },
+      subject: 'FitFlow - Предпочитанията на абонамента ти са обновени',
+      htmlContent,
+      tags: ['subscription', 'preferences-updated'],
+      category: 'sub-preferences-updated',
+      relatedEntityType: 'subscription',
+      relatedEntityId: subscription.id,
+    });
+  } catch (err) {
+    console.error('[EMAIL] subscription-preferences-updated failed:', err);
+  }
+}
+
+/**
+ * Format an address row into a single-line string for emails.
+ */
+export function formatAddressForEmail(addr: {
+  delivery_method: string;
+  speedy_office_name?: string | null;
+  speedy_office_address?: string | null;
+  street_address?: string | null;
+  city?: string | null;
+  postal_code?: string | null;
+} | null): string {
+  if (!addr) return 'Не е зададен';
+  if (addr.delivery_method === 'speedy_office') {
+    const name = addr.speedy_office_name ?? 'Speedy офис';
+    return addr.speedy_office_address ? `${name} - ${addr.speedy_office_address}` : name;
+  }
+  return [addr.street_address, addr.city, addr.postal_code].filter(Boolean).join(', ') || 'Не е зададен';
+}
+
+/**
+ * Produce human-readable summary lines for preference changes.
+ * Only includes fields that actually changed.
+ */
+function formatPreferencesSummary(
+  oldPrefs: Record<string, unknown>,
+  newPrefs: Record<string, unknown>,
+): string[] {
+  const lines: string[] = [];
+  const labelMap: Record<string, string> = {
+    sports: '🏃 Спортове',
+    colors: '🎨 Цветове',
+    flavors: '🍫 Вкусове',
+    dietary: '🥗 Диета',
+    size_upper: '👕 Размер горе',
+    size_lower: '👖 Размер долу',
+    additional_notes: '📝 Бележки',
+  };
+
+  for (const [key, label] of Object.entries(labelMap)) {
+    const oldVal = oldPrefs[key];
+    const newVal = newPrefs[key];
+    const oldStr = Array.isArray(oldVal) ? oldVal.join(', ') : String(oldVal ?? '—');
+    const newStr = Array.isArray(newVal) ? newVal.join(', ') : String(newVal ?? '—');
+    if (oldStr !== newStr) {
+      lines.push(`${label}: ${oldStr} → ${newStr}`);
+    }
+  }
+
+  return lines.length > 0 ? lines : ['Предпочитанията са обновени'];
 }

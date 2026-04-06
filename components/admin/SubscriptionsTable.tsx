@@ -42,6 +42,7 @@ export function SubscriptionsTable({
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200">
+                <th className="text-left px-4 py-3 font-semibold text-gray-600">Номер</th>
                 <th className="text-left px-4 py-3 font-semibold text-gray-600">Клиент</th>
                 <th className="text-left px-4 py-3 font-semibold text-gray-600">Кутия</th>
                 <th className="text-left px-4 py-3 font-semibold text-gray-600">Честота</th>
@@ -57,6 +58,16 @@ export function SubscriptionsTable({
                   key={sub.id}
                   className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
                 >
+                  {/* Subscription Number */}
+                  <td className="px-4 py-3">
+                    <Link
+                      href={`/admin/subscriptions/${sub.id}`}
+                      className="text-[var(--color-brand-navy)] hover:text-[var(--color-brand-orange)] font-mono text-xs font-medium transition-colors"
+                    >
+                      {sub.subscription_number}
+                    </Link>
+                  </td>
+
                   {/* Client */}
                   <td className="px-4 py-3">
                     <div className="font-medium text-gray-900">{sub.user_full_name}</div>

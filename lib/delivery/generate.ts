@@ -180,6 +180,7 @@ export async function generateSingleOrderForSubscription(
     subscription_id: sub.id,
     delivery_cycle_id: cycleId,
     order_type: 'subscription',
+    delivery_method: address.delivery_method ?? 'address',
   });
 
   // 8. Update last_delivered_cycle_id

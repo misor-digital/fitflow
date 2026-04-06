@@ -624,6 +624,7 @@ export type SubscriptionStatus = 'active' | 'paused' | 'cancelled' | 'expired';
 
 export interface SubscriptionRow {
   id: string;
+  subscription_number: string;
   user_id: string;
   box_type: string;
   status: SubscriptionStatus;

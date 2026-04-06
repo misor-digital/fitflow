@@ -140,6 +140,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
                     <span className="font-medium text-sm text-gray-800">{boxName}</span>
                     <StatusBadge {...statusInfo} />
                   </div>
+                  <p className="text-xs text-gray-400 font-mono mb-1">{sub.subscription_number}</p>
                   <div className="text-sm text-gray-500 space-y-0.5">
                     <p>Честота: {sub.frequency === 'monthly' ? 'Месечна' : sub.frequency === 'seasonal' ? 'Сезонна' : sub.frequency}</p>
                     <p>Цена: {formatPrice(sub.current_price_eur)}</p>

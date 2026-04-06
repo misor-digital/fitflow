@@ -789,6 +789,7 @@ export async function generateOrdersForCycle(
         subscription_id: sub.id,
         delivery_cycle_id: cycleId,
         order_type: 'subscription',
+        delivery_method: address.delivery_method ?? 'address',
       };
 
       const order = await createOrder(orderData);
@@ -817,6 +818,7 @@ export async function generateOrdersForCycle(
         sub,
         cycle.delivery_date,
         order.id,
+        order.order_number,
       ).catch(() => {});
 
       result.generated++;
@@ -899,8 +901,9 @@ export const getSubscriptionsPaginated = cache(
     const from = (page - 1) * perPage;
     const to = from + perPage - 1;
 
-    // If search is provided, we need to find matching user IDs first
+    // If search is provided, match user name OR subscription_number
     let userIds: string[] | undefined;
+    let subscriptionNumberSearch: string | undefined;
     if (filters?.search) {
       const search = `%${filters.search}%`;
 
@@ -912,11 +915,7 @@ export const getSubscriptionsPaginated = cache(
 
       const profileIds = (profileMatches ?? []).map((p) => p.id);
       userIds = profileIds;
-
-      // If no matching users found, return empty
-      if (userIds.length === 0) {
-        return { subscriptions: [], total: 0 };
-      }
+      subscriptionNumberSearch = search;
     }
 
     let query = supabaseAdmin
@@ -932,8 +931,19 @@ export const getSubscriptionsPaginated = cache(
     if (filters?.frequency) {
       query = query.eq('frequency', filters.frequency);
     }
-    if (userIds) {
-      query = query.in('user_id', userIds);
+    if (userIds !== undefined || subscriptionNumberSearch) {
+      const orParts: string[] = [];
+      if (userIds && userIds.length > 0) {
+        orParts.push(`user_id.in.(${userIds.join(',')})`);
+      }
+      if (subscriptionNumberSearch) {
+        orParts.push(`subscription_number.ilike.${subscriptionNumberSearch}`);
+      }
+      if (orParts.length > 0) {
+        query = query.or(orParts.join(','));
+      } else {
+        return { subscriptions: [], total: 0 };
+      }
     }
 
     const { data, error, count } = await query

@@ -17,6 +17,8 @@ import {
   sendSubscriptionPausedEmail,
   sendSubscriptionResumedEmail,
   sendSubscriptionCancelledEmail,
+  sendSubscriptionAddressChangedEmail,
+  formatAddressForEmail,
 } from '@/lib/subscription/notifications';
 import { syncSubscriptionChange } from '@/lib/email/contact-sync';
 
@@ -266,6 +268,20 @@ export async function PATCH(
         });
 
         revalidateDataTag(TAG_SUBSCRIPTIONS);
+
+        // Fire-and-forget customer notification
+        if (customerEmail) {
+          const { getAddressById } = await import('@/lib/data');
+          const [oldAddr, newAddr] = await Promise.all([
+            sub.default_address_id ? getAddressById(sub.default_address_id, sub.user_id) : null,
+            addressId ? getAddressById(addressId, sub.user_id) : null,
+          ]);
+          sendSubscriptionAddressChangedEmail(
+            customerEmail, sub,
+            formatAddressForEmail(oldAddr),
+            formatAddressForEmail(newAddr),
+          ).catch((err) => console.error('Admin address change email failed:', err));
+        }
 
         return NextResponse.json({
           success: true,
