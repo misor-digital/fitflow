@@ -290,11 +290,13 @@ export async function sendSubscriptionAddressChangedEmail(
 export async function sendSubscriptionPreferencesUpdatedEmail(
   email: string,
   subscription: SubscriptionRow,
-  summaryLines: string[],
+  oldPrefs: Record<string, unknown>,
+  newPrefs: Record<string, unknown>,
 ): Promise<void> {
   try {
     const labels = await resolveEmailLabels();
     const boxTypeName = labels.boxTypes[subscription.box_type] ?? subscription.box_type;
+    const summaryLines = formatPreferencesSummary(oldPrefs, newPrefs);
 
     const htmlContent = generatePreferencesUpdatedEmail({
       subscriptionNumber: subscription.subscription_number,
@@ -318,10 +320,29 @@ export async function sendSubscriptionPreferencesUpdatedEmail(
 }
 
 /**
+ * Format an address row into a single-line string for emails.
+ */
+export function formatAddressForEmail(addr: {
+  delivery_method: string;
+  speedy_office_name?: string | null;
+  speedy_office_address?: string | null;
+  street_address?: string | null;
+  city?: string | null;
+  postal_code?: string | null;
+} | null): string {
+  if (!addr) return 'Не е зададен';
+  if (addr.delivery_method === 'speedy_office') {
+    const name = addr.speedy_office_name ?? 'Speedy офис';
+    return addr.speedy_office_address ? `${name} - ${addr.speedy_office_address}` : name;
+  }
+  return [addr.street_address, addr.city, addr.postal_code].filter(Boolean).join(', ') || 'Не е зададен';
+}
+
+/**
  * Produce human-readable summary lines for preference changes.
  * Only includes fields that actually changed.
  */
-export function formatPreferencesSummary(
+function formatPreferencesSummary(
   oldPrefs: Record<string, unknown>,
   newPrefs: Record<string, unknown>,
 ): string[] {

@@ -29,6 +29,10 @@ import {
   sendSubscriptionPausedEmail,
   sendSubscriptionResumedEmail,
   sendSubscriptionCancelledEmail,
+  sendSubscriptionFrequencyChangedEmail,
+  sendSubscriptionAddressChangedEmail,
+  sendSubscriptionPreferencesUpdatedEmail,
+  formatAddressForEmail,
 } from '@/lib/subscription/notifications';
 import { syncSubscriptionChange } from '@/lib/email/contact-sync';
 import type { SubscriptionPreferencesUpdate } from '@/lib/subscription';
@@ -347,6 +351,18 @@ export async function PATCH(
         }
 
         await updateSubscriptionPreferences(id, session.userId, prefsUpdate);
+
+        // Fire-and-forget email
+        if (session.email) {
+          const oldPrefs = {
+            sports: sub.sports, colors: sub.colors, flavors: sub.flavors,
+            dietary: sub.dietary, size_upper: sub.size_upper, size_lower: sub.size_lower,
+            additional_notes: sub.additional_notes,
+          };
+          sendSubscriptionPreferencesUpdatedEmail(session.email, sub, oldPrefs, prefsUpdate as Record<string, unknown>)
+            .catch(() => {});
+        }
+
         return NextResponse.json({
           success: true,
           message: 'Предпочитанията са обновени.',
@@ -375,6 +391,19 @@ export async function PATCH(
         }
 
         await updateSubscriptionAddress(id, session.userId, newAddressId);
+
+        // Fire-and-forget email
+        if (session.email) {
+          const oldAddr = sub.default_address_id
+            ? await getAddressById(sub.default_address_id, session.userId)
+            : null;
+          sendSubscriptionAddressChangedEmail(
+            session.email, sub,
+            formatAddressForEmail(oldAddr),
+            formatAddressForEmail(addressOwned),
+          ).catch(() => {});
+        }
+
         return NextResponse.json({
           success: true,
           message: 'Адресът е обновен.',
@@ -410,6 +439,13 @@ export async function PATCH(
         }
 
         await updateSubscriptionFrequency(id, session.userId, newFrequency as 'monthly' | 'seasonal');
+
+        // Fire-and-forget email
+        if (session.email) {
+          sendSubscriptionFrequencyChangedEmail(session.email, sub, sub.frequency, newFrequency)
+            .catch(() => {});
+        }
+
         return NextResponse.json({
           success: true,
           message: 'Честотата е обновена.',
