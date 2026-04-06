@@ -9,8 +9,9 @@ import {
   resumeSubscription,
   cancelSubscription,
   expireSubscription,
+  adminUpdateSubscriptionFrequency,
 } from '@/lib/data';
-import { canPause, canResume, canCancel, validateCancellationReason } from '@/lib/subscription';
+import { canPause, canResume, canCancel, validateCancellationReason, validateFrequencyChange } from '@/lib/subscription';
 import { checkRateLimit } from '@/lib/utils/rateLimit';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import {
@@ -18,6 +19,7 @@ import {
   sendSubscriptionResumedEmail,
   sendSubscriptionCancelledEmail,
   sendSubscriptionAddressChangedEmail,
+  sendSubscriptionFrequencyChangedEmail,
   formatAddressForEmail,
 } from '@/lib/subscription/notifications';
 import { syncSubscriptionChange } from '@/lib/email/contact-sync';
@@ -311,6 +313,43 @@ export async function PATCH(
         return NextResponse.json({
           success: true,
           message: 'Абонаментът е маркиран като изтекъл.',
+        });
+      }
+
+      case 'update_frequency': {
+        const newFrequency = body.frequency as string | undefined;
+        if (!newFrequency || typeof newFrequency !== 'string') {
+          return NextResponse.json(
+            { error: 'Честотата е задължителна.' },
+            { status: 400 },
+          );
+        }
+
+        const freqValidation = validateFrequencyChange(sub.frequency, newFrequency);
+        if (!freqValidation.valid) {
+          return NextResponse.json(
+            { error: freqValidation.error },
+            { status: 400 },
+          );
+        }
+
+        await adminUpdateSubscriptionFrequency(id, performedBy, newFrequency as 'monthly' | 'seasonal');
+
+        // Fire-and-forget customer notification + Brevo sync
+        if (customerEmail) {
+          sendSubscriptionFrequencyChangedEmail(customerEmail, sub, sub.frequency, newFrequency)
+            .catch((err) => console.error('Admin frequency change email failed:', err));
+          syncSubscriptionChange({
+            email: customerEmail,
+            status: sub.status,
+            boxType: sub.box_type,
+            frequency: newFrequency,
+          }).catch(console.error);
+        }
+
+        return NextResponse.json({
+          success: true,
+          message: 'Честотата е обновена.',
         });
       }
 

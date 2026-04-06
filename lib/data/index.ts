@@ -129,6 +129,7 @@ export {
   updateSubscriptionPreferences,
   updateSubscriptionAddress,
   updateSubscriptionFrequency,
+  adminUpdateSubscriptionFrequency,
   generateOrdersForCycle,
   getSubscriptionHistory,
   getSubscriptionsPaginated,

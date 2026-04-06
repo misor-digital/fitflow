@@ -110,6 +110,8 @@ export function SubscriptionDetailView({
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(
     subscription.default_address_id ?? null,
   );
+  const [showFrequencyPicker, setShowFrequencyPicker] = useState(false);
+  const [selectedFrequency, setSelectedFrequency] = useState<string>(subscription.frequency);
 
   // ============================================================================
   // Admin Actions
@@ -446,6 +448,18 @@ export function SubscriptionDetailView({
                   📍 Промени адрес
                 </button>
               )}
+              {derivedState.canChangeFrequency && canManage && (
+                <button
+                  onClick={() => {
+                    setSelectedFrequency(subscription.frequency);
+                    setShowFrequencyPicker(true);
+                  }}
+                  disabled={isPending}
+                  className="bg-teal-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-teal-700 transition-colors disabled:opacity-50"
+                >
+                  ⏱ Промени честота
+                </button>
+              )}
               {derivedState.isCancelled && (
                 <p className="text-sm text-gray-400 self-center">Няма налични действия за отказан абонамент.</p>
               )}
@@ -656,6 +670,83 @@ export function SubscriptionDetailView({
                 onClick={handleSaveAddress}
                 disabled={isPending}
                 className="px-4 py-2 text-sm bg-[var(--color-brand-navy)] text-white rounded-lg font-semibold hover:opacity-90 disabled:opacity-50"
+              >
+                {isPending ? 'Запазва се...' : 'Запази'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ================================================================ */}
+      {/* Frequency Picker Modal */}
+      {/* ================================================================ */}
+      {showFrequencyPicker && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/50" onClick={() => setShowFrequencyPicker(false)} />
+          <div className="relative bg-white rounded-xl shadow-xl p-6 max-w-sm w-full mx-4">
+            <h3 className="text-lg font-bold text-[var(--color-brand-navy)] mb-4">
+              Промяна на честотата
+            </h3>
+
+            <div className="space-y-2 mb-4">
+              {(['monthly', 'seasonal'] as const).map((freq) => (
+                <label
+                  key={freq}
+                  className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                    selectedFrequency === freq
+                      ? 'border-teal-500 bg-teal-50'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="admin-frequency"
+                    value={freq}
+                    checked={selectedFrequency === freq}
+                    onChange={() => setSelectedFrequency(freq)}
+                    className="text-teal-600 focus:ring-teal-500"
+                  />
+                  <div>
+                    <span className="text-sm font-medium text-gray-900">
+                      {FREQUENCY_LABELS[freq]}
+                    </span>
+                    {freq === subscription.frequency && (
+                      <span className="ml-2 text-[10px] text-gray-500">(текущо)</span>
+                    )}
+                  </div>
+                </label>
+              ))}
+            </div>
+
+            {selectedFrequency !== subscription.frequency && (
+              <div className="bg-blue-50 rounded-lg px-3 py-2 mb-4">
+                <p className="text-sm text-blue-800">
+                  {selectedFrequency === 'seasonal'
+                    ? 'Абонаментът ще получава кутия на всеки 3 месеца.'
+                    : 'Абонаментът ще получава кутия всеки месец.'}
+                </p>
+              </div>
+            )}
+
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowFrequencyPicker(false)}
+                className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50"
+                disabled={isPending}
+              >
+                Отказ
+              </button>
+              <button
+                onClick={() => {
+                  executeAction('update_frequency', {
+                    action: 'update_frequency',
+                    frequency: selectedFrequency,
+                  });
+                  setShowFrequencyPicker(false);
+                }}
+                disabled={isPending || selectedFrequency === subscription.frequency}
+                className="px-4 py-2 text-sm bg-teal-600 text-white rounded-lg font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isPending ? 'Запазва се...' : 'Запази'}
               </button>

@@ -659,6 +659,39 @@ export async function updateSubscriptionFrequency(
   });
 }
 
+/** Admin: change subscription frequency. Only active subscriptions allowed. */
+export async function adminUpdateSubscriptionFrequency(
+  id: string,
+  performedBy: string,
+  newFrequency: 'monthly' | 'seasonal',
+): Promise<void> {
+  const sub = await getSubscriptionById(id);
+  if (!sub) throw new Error('Subscription not found.');
+  if (sub.status !== 'active') {
+    throw new Error('Frequency can only be changed on active subscriptions.');
+  }
+  if (sub.frequency === newFrequency) return;
+
+  const oldFrequency = sub.frequency;
+
+  const { error } = await supabaseAdmin
+    .from('subscriptions')
+    .update({ frequency: newFrequency } satisfies SubscriptionUpdate)
+    .eq('id', id);
+
+  if (error) {
+    console.error('Error updating subscription frequency (admin):', error);
+    throw new Error('Failed to update frequency.');
+  }
+
+  await insertHistory({
+    subscription_id: id,
+    action: 'frequency_changed',
+    details: { old: oldFrequency, new: newFrequency, changed_by: 'admin' },
+    performed_by: performedBy,
+  });
+}
+
 // ============================================================================
 // Batch Order Generation
 // ============================================================================
