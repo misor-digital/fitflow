@@ -1,5 +1,6 @@
 import { requireStaff } from '@/lib/auth';
 import { getFeedbackFormsPaginated, getResponseCountByForm } from '@/lib/data/feedback-forms';
+import { AdminHelpLink } from '@/components/admin/AdminHelpLink';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 
@@ -47,9 +48,12 @@ export default async function FeedbackFormsPage({ searchParams }: FeedbackPagePr
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-[var(--color-brand-navy)]">
-            Формуляри за обратна връзка
-          </h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-2xl font-bold text-[var(--color-brand-navy)]">
+              Формуляри за обратна връзка
+            </h1>
+            <AdminHelpLink section="feedback-forms" />
+          </div>
           <p className="text-sm text-gray-500 mt-1">
             {total} формуляр{total !== 1 ? 'а' : ''}
           </p>

@@ -2,6 +2,7 @@ import { requireStaff } from '@/lib/auth';
 import { CUSTOMER_VIEW_ROLES } from '@/lib/auth/permissions';
 import { getCustomersPaginated, getCustomersStats } from '@/lib/data';
 import { CustomersTable } from '@/components/admin/CustomersTable';
+import { AdminHelpLink } from '@/components/admin/AdminHelpLink';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 
@@ -62,6 +63,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
           <h1 className="text-2xl font-bold text-[var(--color-brand-navy)]">
             Клиенти
           </h1>
+          <AdminHelpLink section="customers" />
           <span className="bg-[var(--color-brand-navy)] text-white text-xs font-semibold px-2.5 py-1 rounded-full">
             {stats.total}
           </span>

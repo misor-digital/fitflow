@@ -3,6 +3,7 @@ import { ORDER_VIEW_ROLES } from '@/lib/auth/permissions';
 import { getSubscriptionsPaginated, getSubscriptionsCount, getSubscriptionMRR, getBoxTypeNames, getEurToBgnRate } from '@/lib/data';
 import { SUBSCRIPTION_STATUS_LABELS, FREQUENCY_LABELS } from '@/lib/subscription';
 import { SubscriptionsTable } from '@/components/admin/SubscriptionsTable';
+import { AdminHelpLink } from '@/components/admin/AdminHelpLink';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import type { SubscriptionStatus } from '@/lib/supabase/types';
@@ -75,6 +76,7 @@ export default async function SubscriptionsPage({ searchParams }: SubscriptionsP
           <h1 className="text-2xl font-bold text-[var(--color-brand-navy)]">
             Абонаменти
           </h1>
+          <AdminHelpLink section="subscriptions" />
           <span className="bg-[var(--color-brand-navy)] text-white text-xs font-semibold px-2.5 py-1 rounded-full">
             {counts.total}
           </span>

@@ -4,6 +4,7 @@ import { getOrCreateMonthUsage, getUsageHistory } from '@/lib/data/email-usage';
 import EmailUsageCard from '@/components/admin/EmailUsageCard';
 import EmailStatsCards from '@/components/admin/EmailStatsCards';
 import EmailLogTable from '@/components/admin/EmailLogTable';
+import { AdminHelpLink } from '@/components/admin/AdminHelpLink';
 import EmailHealthCard from '@/components/admin/EmailHealthCard';
 import type { Metadata } from 'next';
 
@@ -43,6 +44,7 @@ export default async function EmailDashboardPage() {
           <h1 className="text-2xl font-bold text-[var(--color-brand-navy)]">
             Имейл Табло
           </h1>
+          <AdminHelpLink section="emails-and-campaigns" />
           <span className="bg-[var(--color-brand-navy)] text-white text-xs font-semibold px-2.5 py-1 rounded-full">
             {currentMonth}
           </span>

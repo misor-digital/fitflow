@@ -2,6 +2,7 @@ import { requireStaff } from '@/lib/auth';
 import { getCampaignsPaginated } from '@/lib/data';
 import CampaignStatusBadge from '@/components/admin/CampaignStatusBadge';
 import CampaignTypeBadge from '@/components/admin/CampaignTypeBadge';
+import { AdminHelpLink } from '@/components/admin/AdminHelpLink';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import type { EmailCampaignStatusEnum, EmailCampaignTypeEnum } from '@/lib/supabase/types';
@@ -95,6 +96,7 @@ export default async function CampaignsPage({ searchParams }: CampaignsPageProps
           <h1 className="text-2xl font-bold text-[var(--color-brand-navy)]">
             Имейл Кампании
           </h1>
+          <AdminHelpLink section="emails-and-campaigns" />
           <span className="bg-[var(--color-brand-navy)] text-white text-xs font-semibold px-2.5 py-1 rounded-full">
             {total}
           </span>

@@ -47,6 +47,8 @@ const NAV_ITEMS: Array<{
     allowedRoles: ['super_admin', 'admin', 'marketing', 'content', 'support'] },
   { href: '/admin/settings', label: 'Настройки', icon: '⚙️',
     allowedRoles: ['super_admin', 'admin'] },
+  { href: '/admin/docs', label: 'Документация', icon: '📖',
+    allowedRoles: 'all' },
 ];
 
 export default function AdminSidebar({ userName, userRole }: Props) {

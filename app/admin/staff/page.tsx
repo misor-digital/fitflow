@@ -1,6 +1,7 @@
 import { requireStaff } from '@/lib/auth';
 import { STAFF_MANAGEMENT_ROLES } from '@/lib/auth/permissions';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { AdminHelpLink } from '@/components/admin/AdminHelpLink';
 import Link from 'next/link';
 
 export const metadata = {
@@ -23,7 +24,10 @@ export default async function StaffListPage() {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-[var(--color-brand-navy)]">Служители</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold text-[var(--color-brand-navy)]">Служители</h1>
+          <AdminHelpLink section="staff-management" />
+        </div>
         <Link
           href="/admin/staff/invite"
           className="bg-[var(--color-brand-orange)] text-white px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity"
