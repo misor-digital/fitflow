@@ -1,5 +1,91 @@
 # fitflow
 
+## 1.5.0
+
+### Minor Changes
+
+- 144d8d2: Admin back office documentation with in-app viewer and contextual help links
+
+  - Add 11 Bulgarian markdown guides in `content/admin-docs/` covering all admin operations
+  - Add `/admin/docs` page with sidebar navigation and styled markdown rendering
+  - Add `remark-gfm` for proper table/GFM support in markdown pipelines
+  - Add contextual `?` help links on all admin page headers linking to relevant docs section
+  - Add "Документация" sidebar link visible to all staff roles
+  - Include manual order generation timing guidance (3–5 days before send date)
+  - Document placeholder pages (Analytics, Content) with planned scope
+
+- 656ab9d: Add subscription frequency change to admin subscription detail page
+
+  - Add `adminUpdateSubscriptionFrequency` data-layer function (skips ownership check, logs history with `changed_by: admin`)
+  - Add `update_frequency` action to `PATCH /api/admin/subscription/[id]` with validation and Brevo contact sync
+  - Add teal "⏱ Промени честота" button and frequency picker modal to `SubscriptionDetailView` (active subscriptions only)
+
+- c687802: Admin orders: default to current delivery cycle with cycle selector dropdown
+
+  - Add delivery cycle dropdown filter to admin orders page, defaulting to the current/upcoming cycle
+  - Extend orders data layer with `cycleId` filter for `getOrdersPaginated` and `getOrdersCount`
+  - Add `getDeliveryCyclesForDropdown` and `getCurrentCycleId` helpers with `CycleDropdownOption` type
+  - Replace config-based delivery date banner with actual Speedy send date calculated from cycle delivery date
+  - Show total vs eligible subscription breakdown in order generation preview
+
+- e446ea4: Fix analytics event placement, add GA4 purchase event, and improve Meta CAPI coverage
+
+  - Add GA4 `purchase` event (`trackGAPurchase`) — enables revenue reporting in Google Analytics
+  - Move `ViewContent` from page-load on 3 pages to order funnel Step 1 with CAPI mirror
+  - Move `InitiateCheckout` from Step 1 to Step 3 (checkout details) with `begin_checkout` + CAPI mirror
+  - Remove stale `trackLead` and `trackGenerateLead` calls from the order flow
+  - Add `trackFormSubmit` on thank-you page for GA4 form completion tracking
+  - Create `POST /api/analytics/track` route for client-side CAPI event forwarding (PageView, ViewContent, InitiateCheckout)
+  - Add CAPI PageView mirror alongside Facebook Pixel init in ConditionalScripts
+  - Add `content_type: 'product'` to all Meta Purchase/Subscribe events (Pixel + CAPI)
+  - Add `coupon` param, `item_brand: 'FitFlow'`, `item_list_id`/`item_list_name` to GA4 ecommerce events
+  - Consolidate `funnel_step_${name}` into single `funnel_step` event with `step_name` parameter
+  - Add `userId` → hashed `external_id` support and `Subscribe` type to CAPI infrastructure
+  - Create `useScrollDepth` hook and wire to homepage, mystery box, and revealed box pages
+  - Wire `trackSubscriptionPaused` and `trackSubscriptionCancelled` in account modals
+  - Create `lib/analytics/cookies.ts` for `_fbp`/`_fbc` extraction
+
+- 75bc9c6: Refactor Meta Pixel event hierarchy and add server-side CAPI for Purchase and Subscribe
+
+  - Promote `Purchase` to primary conversion event on order completion; demote `Lead` to mid-funnel intent signal at Step 3
+  - Fire `InitiateCheckout` when the order form mounts (Step 1)
+  - Add server-side `Purchase` CAPI event in `/api/order` and custom `Subscribe` CAPI event in `/api/subscription` (Graph API v21.0)
+  - Extract reusable `buildCapiUserData` helper for PII hashing across API routes
+  - Deduplicate browser ↔ CAPI events via `capiEventId` passed through the order store to the thank-you page
+  - Include `data_processing_options` on all CAPI events for GDPR compliance
+  - Handle consent downgrade at runtime: revoke Meta Pixel consent, clear tracking cookies, and prompt page refresh
+  - Skip analytics script rendering and CAPI calls in non-production environments
+  - Update `meta-capi-setup.md` and `gdpr-cookie-consent.md` documentation
+
+- 755cd52: Add cycle-based promo code tracking for subscriptions
+
+  - Add `default_max_cycles` column to `promo_codes` table (1 = first order only, NULL = unlimited)
+  - Add `promo_max_cycles` and `promo_cycles_used` columns to `subscriptions` table with CHECK constraints
+  - Backfill existing subscriptions: count promo-applied orders and clear exhausted promos
+  - Add `default_max_cycles` field to promo code create/edit form and API with validation
+  - Copy `default_max_cycles` from promo code to subscription at creation time
+  - Check promo cycle eligibility during order generation (batch and single-subscription paths)
+  - Automatically clear promo and reset price to base when cycles are exhausted
+  - Add admin subscription promo management UI: apply new promo, update max cycles, or clear promo
+  - Add `update_promo` action to admin subscription PATCH API with `apply`, `update_cycles`, and `clear` sub-actions
+  - Display active subscription count on promo code edit/stats page
+
+- 3e7a773: Add human-readable subscription numbers and subscription change email notifications
+
+  - Add `subscription_number` column (`FF-SUB-DDMMYY-XXXXXX`) with DB migration, generator function, and backfill for existing rows
+  - Display subscription number in customer subscription card, admin detail view, admin table, and admin customer page
+  - Add subscription number to all existing email templates (created, paused, resumed, cancelled, delivery upcoming, conversion)
+  - Add new email templates and notification senders for frequency change, address change, and preferences update
+  - Wire change notification emails into user and admin subscription API routes (fire-and-forget)
+  - Add subscription number search support in admin subscriptions table
+  - Pass `delivery_method` from address to order insert during subscription order generation
+  - Update `SubscriptionRow` type with `subscription_number` field
+  - Update `schema.sql` with column definition, unique constraint, index, and generator function
+
+### Patch Changes
+
+- 9f1eb24: Add Meta domain verification meta tag for Facebook Business Manager domain ownership verification
+
 ## 1.4.0
 
 ### Minor Changes
