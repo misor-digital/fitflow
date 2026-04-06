@@ -48,6 +48,29 @@ export interface DeliveryUpcomingParams {
   trackUrl: string;
 }
 
+export interface FrequencyChangedParams {
+  subscriptionNumber: string;
+  boxTypeName: string;
+  oldFrequency: string;
+  newFrequency: string;
+  manageUrl: string;
+}
+
+export interface AddressChangedParams {
+  subscriptionNumber: string;
+  boxTypeName: string;
+  oldAddress: string;
+  newAddress: string;
+  manageUrl: string;
+}
+
+export interface PreferencesUpdatedParams {
+  subscriptionNumber: string;
+  boxTypeName: string;
+  summaryLines: string[];
+  manageUrl: string;
+}
+
 // ============================================================================
 // Shared Helpers
 // ============================================================================
@@ -153,6 +176,72 @@ export function generateDeliveryUpcomingEmail(params: DeliveryUpcomingParams): s
       `📅 Очаквана доставка: ${deliveryDate}`,
     ])}
     ${emailCtaButton(params.trackUrl, 'Проследи доставката')}
+    ${emailContactLine()}`;
+
+  return wrapInEmailLayout(body);
+}
+
+export function generateFrequencyChangedEmail(params: FrequencyChangedParams): string {
+  const subscriptionNumber = escapeHtml(params.subscriptionNumber);
+  const boxTypeName = escapeHtml(params.boxTypeName);
+  const oldFrequency = escapeHtml(params.oldFrequency);
+  const newFrequency = escapeHtml(params.newFrequency);
+
+  const body = `
+    <h2 style="color: ${EMAIL.colors.textHeading}; margin: 0 0 20px 0;">Честотата на абонамента ти е променена 🔄</h2>
+    <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
+      Честотата на абонамент <strong>${subscriptionNumber}</strong> е успешно променена.
+    </p>
+    ${infoBox([
+      `📋 Абонамент: ${subscriptionNumber}`,
+      `📦 Кутия: ${boxTypeName}`,
+      `❌ Предишна честота: ${oldFrequency}`,
+      `✅ Нова честота: ${newFrequency}`,
+    ])}
+    ${emailCtaButton(params.manageUrl, 'Управление на абонамента')}
+    ${emailContactLine()}`;
+
+  return wrapInEmailLayout(body);
+}
+
+export function generateAddressChangedEmail(params: AddressChangedParams): string {
+  const subscriptionNumber = escapeHtml(params.subscriptionNumber);
+  const boxTypeName = escapeHtml(params.boxTypeName);
+  const oldAddress = escapeHtml(params.oldAddress);
+  const newAddress = escapeHtml(params.newAddress);
+
+  const body = `
+    <h2 style="color: ${EMAIL.colors.textHeading}; margin: 0 0 20px 0;">Адресът на абонамента ти е променен 📍</h2>
+    <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
+      Адресът за доставка на абонамент <strong>${subscriptionNumber}</strong> е успешно променен.
+    </p>
+    ${infoBox([
+      `📋 Абонамент: ${subscriptionNumber}`,
+      `📦 Кутия: ${boxTypeName}`,
+      `❌ Предишен адрес: ${oldAddress}`,
+      `✅ Нов адрес: ${newAddress}`,
+    ])}
+    ${emailCtaButton(params.manageUrl, 'Управление на абонамента')}
+    ${emailContactLine()}`;
+
+  return wrapInEmailLayout(body);
+}
+
+export function generatePreferencesUpdatedEmail(params: PreferencesUpdatedParams): string {
+  const subscriptionNumber = escapeHtml(params.subscriptionNumber);
+  const boxTypeName = escapeHtml(params.boxTypeName);
+
+  const body = `
+    <h2 style="color: ${EMAIL.colors.textHeading}; margin: 0 0 20px 0;">Предпочитанията на абонамента ти са обновени ✏️</h2>
+    <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
+      Персонализацията на абонамент <strong>${subscriptionNumber}</strong> е успешно обновена.
+    </p>
+    ${infoBox([
+      `📋 Абонамент: ${subscriptionNumber}`,
+      `📦 Кутия: ${boxTypeName}`,
+      ...params.summaryLines.map((l) => escapeHtml(l)),
+    ])}
+    ${emailCtaButton(params.manageUrl, 'Управление на абонамента')}
     ${emailContactLine()}`;
 
   return wrapInEmailLayout(body);
