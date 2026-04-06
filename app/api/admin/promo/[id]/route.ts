@@ -77,10 +77,7 @@ export async function GET(
       );
     }
 
-    const [promo, stats] = await Promise.all([
-      getPromoCodeById(id),
-      getPromoCodeStats(id),
-    ]);
+    const promo = await getPromoCodeById(id);
 
     if (!promo) {
       return NextResponse.json(
@@ -88,6 +85,8 @@ export async function GET(
         { status: 404 },
       );
     }
+
+    const stats = await getPromoCodeStats(id, promo.code);
 
     return NextResponse.json({ promo, stats });
   } catch (err) {
