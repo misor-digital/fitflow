@@ -299,8 +299,11 @@ CREATE TABLE promo_codes (
   min_order_value_eur NUMERIC(10,2),
   applicable_box_types TEXT[],
   max_uses_per_user INTEGER DEFAULT NULL,
+  default_max_cycles INTEGER DEFAULT 1,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+  CONSTRAINT promo_codes_default_max_cycles_positive CHECK (default_max_cycles IS NULL OR default_max_cycles >= 1)
 );
 
 COMMENT ON TABLE promo_codes IS 'Promotional discount codes for checkout';
@@ -313,6 +316,7 @@ COMMENT ON COLUMN promo_codes.max_uses IS 'Optional: maximum number of times cod
 COMMENT ON COLUMN promo_codes.current_uses IS 'Counter for how many times code has been used';
 COMMENT ON COLUMN promo_codes.applicable_box_types IS 'Optional: array of box_type IDs this code applies to';
 COMMENT ON COLUMN promo_codes.max_uses_per_user IS 'Maximum times each user can use this code (NULL = unlimited)';
+COMMENT ON COLUMN promo_codes.default_max_cycles IS 'Default number of subscription delivery cycles this promo applies to (1 = first order only, NULL = unlimited)';
 
 CREATE UNIQUE INDEX idx_promo_codes_code_unique ON promo_codes(UPPER(code));
 CREATE INDEX idx_promo_codes_active ON promo_codes(is_enabled, starts_at, ends_at) WHERE is_enabled = true;
@@ -857,6 +861,10 @@ CREATE TABLE subscriptions (
   base_price_eur NUMERIC(10,2) NOT NULL,
   current_price_eur NUMERIC(10,2) NOT NULL,
 
+  -- Promo cycle tracking
+  promo_max_cycles INTEGER DEFAULT 1,
+  promo_cycles_used INTEGER NOT NULL DEFAULT 0,
+
   -- Address
   default_address_id UUID REFERENCES addresses(id) ON DELETE SET NULL,
 
@@ -876,7 +884,9 @@ CREATE TABLE subscriptions (
 
   -- Constraints
   CONSTRAINT valid_frequency CHECK (frequency IN ('monthly', 'seasonal')),
-  CONSTRAINT valid_sub_box_type CHECK (box_type IN ('monthly-standard', 'monthly-premium'))
+  CONSTRAINT valid_sub_box_type CHECK (box_type IN ('monthly-standard', 'monthly-premium')),
+  CONSTRAINT subscriptions_promo_max_cycles_positive CHECK (promo_max_cycles IS NULL OR promo_max_cycles >= 1),
+  CONSTRAINT subscriptions_promo_cycles_used_non_negative CHECK (promo_cycles_used >= 0)
 );
 
 COMMENT ON TABLE subscriptions IS 'Active and historical subscriptions - one row per subscriber per box type';
@@ -887,6 +897,8 @@ COMMENT ON COLUMN subscriptions.frequency IS 'Delivery frequency: monthly (every
 COMMENT ON COLUMN subscriptions.wants_personalization IS 'Whether subscriber opted for personalized boxes';
 COMMENT ON COLUMN subscriptions.base_price_eur IS 'Original price per cycle in EUR';
 COMMENT ON COLUMN subscriptions.current_price_eur IS 'Current price per cycle in EUR (after any discounts)';
+COMMENT ON COLUMN subscriptions.promo_max_cycles IS 'Max delivery cycles this promo applies to (copied from promo_codes.default_max_cycles at creation, NULL = unlimited)';
+COMMENT ON COLUMN subscriptions.promo_cycles_used IS 'Number of delivery cycles the promo has been applied to so far';
 COMMENT ON COLUMN subscriptions.default_address_id IS 'Default shipping address for auto-generated orders';
 COMMENT ON COLUMN subscriptions.first_cycle_id IS 'The first delivery cycle this subscription participates in';
 COMMENT ON COLUMN subscriptions.last_delivered_cycle_id IS 'Most recent cycle with an order generated for this subscription';

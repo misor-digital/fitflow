@@ -427,9 +427,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // ------------------------------------------------------------------
     const effectivePromoInput = promoCode || campaignPromoCode || null;
     let validatedPromoCode: string | undefined;
+    let validatedPromoRow: Awaited<ReturnType<typeof validatePromoCode>> = null;
     if (effectivePromoInput) {
-      const promoValid = await validatePromoCode(effectivePromoInput, userId);
-      if (promoValid) {
+      validatedPromoRow = await validatePromoCode(effectivePromoInput, userId);
+      if (validatedPromoRow) {
         validatedPromoCode = effectivePromoInput;
       }
     }
@@ -474,6 +475,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       discount_percent: priceInfo.discountPercent ?? null,
       base_price_eur: priceInfo.originalPriceEur ?? priceInfo.finalPriceEur,
       current_price_eur: priceInfo.finalPriceEur,
+      promo_max_cycles: validatedPromoRow?.default_max_cycles ?? null,
+      promo_cycles_used: 0,
       default_address_id: resolvedAddressId,
       first_cycle_id: cycleId,
     };

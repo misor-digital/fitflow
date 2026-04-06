@@ -1,5 +1,6 @@
 import { requireStaff } from '@/lib/auth';
 import { getPromoCodeById } from '@/lib/data';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 import PromoCodeForm from '@/components/admin/PromoCodeForm';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -24,6 +25,12 @@ export default async function EditPromoPage({ params }: EditPromoPageProps) {
   if (!promo) {
     notFound();
   }
+
+  const { count: activeSubCount } = await supabaseAdmin
+    .from('subscriptions')
+    .select('id', { count: 'exact', head: true })
+    .ilike('promo_code', promo.code)
+    .eq('status', 'active');
 
   return (
     <div>
@@ -52,6 +59,7 @@ export default async function EditPromoPage({ params }: EditPromoPageProps) {
             ends_at: promo.ends_at,
             max_uses: promo.max_uses,
             max_uses_per_user: promo.max_uses_per_user,
+            default_max_cycles: promo.default_max_cycles,
           }}
         />
       </div>
@@ -61,7 +69,7 @@ export default async function EditPromoPage({ params }: EditPromoPageProps) {
         <h2 className="text-lg font-semibold text-[var(--color-brand-navy)] mb-4">
           Статистики
         </h2>
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
             <div className="text-sm text-gray-500">Общо използвания</div>
             <div className="text-xl font-bold">{promo.current_uses}</div>
@@ -76,7 +84,24 @@ export default async function EditPromoPage({ params }: EditPromoPageProps) {
               {promo.max_uses_per_user ?? '∞'}
             </div>
           </div>
+          <div>
+            <div className="text-sm text-gray-500">Макс. цикли (абонамент)</div>
+            <div className="text-xl font-bold">
+              {promo.default_max_cycles ?? '∞'}
+            </div>
+          </div>
+          <div>
+            <div className="text-sm text-gray-500">Активни абонаменти</div>
+            <div className="text-xl font-bold">{activeSubCount ?? 0}</div>
+          </div>
         </div>
+
+        {(activeSubCount ?? 0) > 0 && (
+          <p className="mt-4 text-xs text-purple-600 bg-purple-50 px-3 py-2 rounded-lg">
+            🏷️ {activeSubCount} активни абонамент{(activeSubCount ?? 0) === 1 ? '' : 'а'} използва{(activeSubCount ?? 0) === 1 ? '' : 't'} този промо код.
+            Промяната на отстъпката няма да засегне текущите абонаменти.
+          </p>
+        )}
 
         {promo.current_uses > 0 && (
           <p className="mt-4 text-xs text-amber-600 bg-amber-50 px-3 py-2 rounded-lg">

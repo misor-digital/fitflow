@@ -381,19 +381,34 @@ export interface PromoCodeStats {
   totalUses: number;
   uniqueUsers: number;
   recentUsages: PromoCodeUsageRow[];
+  activeSubscriptions: number;
 }
 
-export async function getPromoCodeStats(promoCodeId: string): Promise<PromoCodeStats> {
-  const { data: usages, error } = await supabaseAdmin
-    .from('promo_code_usages')
-    .select('*')
-    .eq('promo_code_id', promoCodeId)
-    .order('used_at', { ascending: false })
-    .limit(50);
+export async function getPromoCodeStats(
+  promoCodeId: string,
+  promoCodeString?: string,
+): Promise<PromoCodeStats> {
+  const [usagesResult, subsResult] = await Promise.all([
+    supabaseAdmin
+      .from('promo_code_usages')
+      .select('*')
+      .eq('promo_code_id', promoCodeId)
+      .order('used_at', { ascending: false })
+      .limit(50),
+    promoCodeString
+      ? supabaseAdmin
+          .from('subscriptions')
+          .select('id', { count: 'exact', head: true })
+          .ilike('promo_code', promoCodeString)
+          .eq('status', 'active')
+      : Promise.resolve({ count: 0, error: null }),
+  ]);
+
+  const { data: usages, error } = usagesResult;
 
   if (error) {
     console.error('Error fetching promo code stats:', error);
-    return { totalUses: 0, uniqueUsers: 0, recentUsages: [] };
+    return { totalUses: 0, uniqueUsers: 0, recentUsages: [], activeSubscriptions: 0 };
   }
 
   const rows = usages ?? [];
@@ -403,5 +418,6 @@ export async function getPromoCodeStats(promoCodeId: string): Promise<PromoCodeS
     totalUses: rows.length,
     uniqueUsers,
     recentUsages: rows.slice(0, 10),
+    activeSubscriptions: subsResult.count ?? 0,
   };
 }

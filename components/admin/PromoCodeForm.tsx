@@ -15,6 +15,7 @@ interface PromoCodeFormProps {
     ends_at: string | null;
     max_uses: number | null;
     max_uses_per_user: number | null;
+    default_max_cycles: number | null;
   };
 }
 
@@ -27,6 +28,7 @@ interface PromoFormState {
   endsAt: string;
   maxUses: string;
   maxUsesPerUser: string;
+  defaultMaxCycles: string;
 }
 
 function toDatetimeLocal(iso: string | null): string {
@@ -65,6 +67,10 @@ export default function PromoCodeForm({ initialData }: PromoCodeFormProps) {
     maxUsesPerUser:
       initialData?.max_uses_per_user != null
         ? String(initialData.max_uses_per_user)
+        : '',
+    defaultMaxCycles:
+      initialData?.default_max_cycles != null
+        ? String(initialData.default_max_cycles)
         : '',
   });
 
@@ -120,6 +126,16 @@ export default function PromoCodeForm({ initialData }: PromoCodeFormProps) {
       );
     }
 
+    if (
+      formState.defaultMaxCycles &&
+      (!Number.isInteger(Number(formState.defaultMaxCycles)) ||
+        Number(formState.defaultMaxCycles) < 1)
+    ) {
+      errors.push(
+        'Максималните цикли трябва да е положително цяло число.',
+      );
+    }
+
     return errors;
   }
 
@@ -148,6 +164,9 @@ export default function PromoCodeForm({ initialData }: PromoCodeFormProps) {
       max_uses: formState.maxUses ? parseInt(formState.maxUses, 10) : null,
       max_uses_per_user: formState.maxUsesPerUser
         ? parseInt(formState.maxUsesPerUser, 10)
+        : null,
+      default_max_cycles: formState.defaultMaxCycles
+        ? parseInt(formState.defaultMaxCycles, 10)
         : null,
     };
 
@@ -335,6 +354,26 @@ export default function PromoCodeForm({ initialData }: PromoCodeFormProps) {
             className={INPUT_CLASS}
           />
         </div>
+      </div>
+
+      {/* Row 6: Subscription cycle limit */}
+      <div>
+        <label htmlFor="promo-default-max-cycles" className={LABEL_CLASS}>
+          Макс. цикли за абонамент
+        </label>
+        <input
+          id="promo-default-max-cycles"
+          type="number"
+          value={formState.defaultMaxCycles}
+          onChange={(e) => update('defaultMaxCycles', e.target.value)}
+          placeholder="1 (по подразбиране)"
+          min="1"
+          step="1"
+          className={INPUT_CLASS}
+        />
+        <p className={HELPER_CLASS}>
+          Колко цикъла на доставка важи промо кодът за абонаменти. Празно = неограничено (постоянна отстъпка).
+        </p>
       </div>
 
       {/* Error message */}

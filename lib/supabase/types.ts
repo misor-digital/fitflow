@@ -118,6 +118,7 @@ export interface PromoCodeRow {
   min_order_value_eur: number | null;
   applicable_box_types: string[] | null;
   max_uses_per_user: number | null;
+  default_max_cycles: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -134,6 +135,7 @@ export interface PromoCodeInsert {
   min_order_value_eur?: number | null;
   applicable_box_types?: string[] | null;
   max_uses_per_user?: number | null;
+  default_max_cycles?: number | null;
 }
 
 export interface PromoCodeUpdate {
@@ -148,6 +150,7 @@ export interface PromoCodeUpdate {
   min_order_value_eur?: number | null;
   applicable_box_types?: string[] | null;
   max_uses_per_user?: number | null;
+  default_max_cycles?: number | null;
 }
 
 export interface PromoCodeUsageRow {
@@ -644,6 +647,8 @@ export interface SubscriptionRow {
   discount_percent: number | null;
   base_price_eur: number;
   current_price_eur: number;
+  promo_max_cycles: number | null;
+  promo_cycles_used: number;
   default_address_id: string | null;
   started_at: string;
   first_cycle_id: string | null;
@@ -675,6 +680,8 @@ export interface SubscriptionInsert {
   discount_percent?: number | null;
   base_price_eur: number;
   current_price_eur: number;
+  promo_max_cycles?: number | null;
+  promo_cycles_used?: number;
   default_address_id?: string | null;
   first_cycle_id?: string | null;
 }
@@ -699,6 +706,12 @@ export interface SubscriptionUpdate {
   paused_at?: string | null;
   cancelled_at?: string | null;
   cancellation_reason?: string | null;
+  promo_code?: string | null;
+  discount_percent?: number | null;
+  base_price_eur?: number;
+  current_price_eur?: number;
+  promo_max_cycles?: number | null;
+  promo_cycles_used?: number;
 }
 
 export interface SubscriptionHistoryRow {

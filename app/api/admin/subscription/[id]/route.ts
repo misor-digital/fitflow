@@ -10,6 +10,8 @@ import {
   cancelSubscription,
   expireSubscription,
   adminUpdateSubscriptionFrequency,
+  validatePromoCode,
+  calculatePrice,
 } from '@/lib/data';
 import { canPause, canResume, canCancel, validateCancellationReason, validateFrequencyChange } from '@/lib/subscription';
 import { checkRateLimit } from '@/lib/utils/rateLimit';
@@ -351,6 +353,168 @@ export async function PATCH(
           success: true,
           message: 'Честотата е обновена.',
         });
+      }
+
+      case 'update_promo': {
+        const newPromoCode = body.promoCode as string | null | undefined;
+        const newMaxCycles = body.maxCycles as number | null | undefined;
+        const actionType = body.type as string;
+
+        if (actionType === 'clear') {
+          const { error: updateError } = await supabaseAdmin
+            .from('subscriptions')
+            .update({
+              promo_code: null,
+              discount_percent: null,
+              current_price_eur: sub.base_price_eur,
+              promo_max_cycles: null,
+              promo_cycles_used: sub.promo_cycles_used ?? 0,
+            })
+            .eq('id', id);
+
+          if (updateError) {
+            console.error('Failed to clear subscription promo:', updateError);
+            return NextResponse.json(
+              { error: 'Грешка при премахване на промо кода.' },
+              { status: 500 },
+            );
+          }
+
+          await supabaseAdmin.from('subscription_history').insert({
+            subscription_id: id,
+            action: 'promo_cleared',
+            details: {
+              previous_promo_code: sub.promo_code,
+              previous_discount_percent: sub.discount_percent,
+              changed_by: 'admin',
+            },
+            performed_by: performedBy,
+          });
+
+          revalidateDataTag(TAG_SUBSCRIPTIONS);
+
+          return NextResponse.json({
+            success: true,
+            message: 'Промо кодът е премахнат от абонамента.',
+          });
+        }
+
+        if (actionType === 'update_cycles') {
+          if (!sub.promo_code) {
+            return NextResponse.json(
+              { error: 'Абонаментът няма активен промо код.' },
+              { status: 400 },
+            );
+          }
+
+          if (newMaxCycles !== null && newMaxCycles !== undefined) {
+            if (!Number.isInteger(newMaxCycles) || newMaxCycles < 1) {
+              return NextResponse.json(
+                { error: 'Максималните цикли трябва да е положително цяло число.' },
+                { status: 400 },
+              );
+            }
+          }
+
+          const { error: updateError } = await supabaseAdmin
+            .from('subscriptions')
+            .update({ promo_max_cycles: newMaxCycles ?? null })
+            .eq('id', id);
+
+          if (updateError) {
+            console.error('Failed to update promo max cycles:', updateError);
+            return NextResponse.json(
+              { error: 'Грешка при обновяване на промо цикли.' },
+              { status: 500 },
+            );
+          }
+
+          await supabaseAdmin.from('subscription_history').insert({
+            subscription_id: id,
+            action: 'promo_cycles_updated',
+            details: {
+              previous_max_cycles: sub.promo_max_cycles,
+              new_max_cycles: newMaxCycles ?? null,
+              changed_by: 'admin',
+            },
+            performed_by: performedBy,
+          });
+
+          revalidateDataTag(TAG_SUBSCRIPTIONS);
+
+          return NextResponse.json({
+            success: true,
+            message: 'Промо циклите са обновени.',
+          });
+        }
+
+        if (actionType === 'apply') {
+          if (!newPromoCode || typeof newPromoCode !== 'string') {
+            return NextResponse.json(
+              { error: 'Промо кодът е задължителен.' },
+              { status: 400 },
+            );
+          }
+
+          const promoRow = await validatePromoCode(newPromoCode);
+          if (!promoRow) {
+            return NextResponse.json(
+              { error: 'Промо кодът е невалиден или изтекъл.' },
+              { status: 400 },
+            );
+          }
+
+          const priceInfo = await calculatePrice(sub.box_type, newPromoCode);
+
+          const effectiveMaxCycles = newMaxCycles !== undefined
+            ? (newMaxCycles ?? null)
+            : (promoRow.default_max_cycles ?? null);
+
+          const { error: updateError } = await supabaseAdmin
+            .from('subscriptions')
+            .update({
+              promo_code: promoRow.code,
+              discount_percent: promoRow.discount_percent,
+              base_price_eur: priceInfo.originalPriceEur,
+              current_price_eur: priceInfo.finalPriceEur,
+              promo_max_cycles: effectiveMaxCycles,
+              promo_cycles_used: 0,
+            })
+            .eq('id', id);
+
+          if (updateError) {
+            console.error('Failed to apply promo to subscription:', updateError);
+            return NextResponse.json(
+              { error: 'Грешка при прилагане на промо кода.' },
+              { status: 500 },
+            );
+          }
+
+          await supabaseAdmin.from('subscription_history').insert({
+            subscription_id: id,
+            action: 'promo_applied',
+            details: {
+              previous_promo_code: sub.promo_code,
+              new_promo_code: promoRow.code,
+              discount_percent: promoRow.discount_percent,
+              max_cycles: effectiveMaxCycles,
+              changed_by: 'admin',
+            },
+            performed_by: performedBy,
+          });
+
+          revalidateDataTag(TAG_SUBSCRIPTIONS);
+
+          return NextResponse.json({
+            success: true,
+            message: 'Промо кодът е приложен към абонамента.',
+          });
+        }
+
+        return NextResponse.json(
+          { error: 'Невалиден тип на промо действие.' },
+          { status: 400 },
+        );
       }
 
       default:

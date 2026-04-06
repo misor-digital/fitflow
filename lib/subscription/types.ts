@@ -66,7 +66,10 @@ export type SubscriptionAction =
   | 'preferences_updated'
   | 'address_changed'
   | 'frequency_changed'
-  | 'order_generated';
+  | 'order_generated'
+  | 'promo_cleared'
+  | 'promo_cycles_updated'
+  | 'promo_applied';
 
 /** Subscription with its next delivery info */
 export interface SubscriptionWithDelivery extends SubscriptionRow {
