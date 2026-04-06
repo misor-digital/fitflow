@@ -8,12 +8,14 @@ interface GenerateOrdersSectionProps {
   cycleId: string;
   cycleDate: string;
   eligibleCount: number;
+  totalActiveCount: number;
 }
 
 export function GenerateOrdersSection({
   cycleId,
   cycleDate,
   eligibleCount,
+  totalActiveCount,
 }: GenerateOrdersSectionProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -115,8 +117,11 @@ export function GenerateOrdersSection({
       {!result && (
         <div>
           <p className="text-sm text-gray-600 mb-3">
-            Ще бъдат създадени поръчки за <span className="font-bold text-[var(--color-brand-navy)]">{eligibleCount}</span> абонамента
+            Ще бъдат създадени поръчки за <span className="font-bold text-[var(--color-brand-navy)]">{eligibleCount}</span> от <span className="font-bold">{totalActiveCount}</span> абонамента
             за цикъл <span className="font-mono">{cycleDate}</span>.
+            {totalActiveCount > eligibleCount && (
+              <span className="text-gray-400"> ({totalActiveCount - eligibleCount} сезонни изключени)</span>
+            )}
           </p>
 
           {eligibleCount === 0 ? (

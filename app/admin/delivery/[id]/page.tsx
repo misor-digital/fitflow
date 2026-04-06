@@ -1,6 +1,6 @@
 import { requireStaff } from '@/lib/auth';
 import { ORDER_VIEW_ROLES, STAFF_MANAGEMENT_ROLES } from '@/lib/auth/permissions';
-import { getDeliveryCycleById, getCycleItems, getSubscriptionsForCycle } from '@/lib/data';
+import { getDeliveryCycleById, getCycleItems, getSubscriptionsForCycle, getActiveSubscriptions } from '@/lib/data';
 import { computeCycleState } from '@/lib/delivery';
 import { CycleDetailView } from '@/components/admin/CycleDetailView';
 import { GenerateOrdersSection } from '@/components/admin/GenerateOrdersSection';
@@ -52,10 +52,15 @@ export default async function CycleDetailPage({
     canManage && (cycle.status === 'upcoming' || cycle.status === 'delivered');
 
   let eligibleCount = 0;
+  let totalActiveCount = 0;
   if (showGenerateOrders) {
     try {
-      const eligible = await getSubscriptionsForCycle(id);
+      const [eligible, allActive] = await Promise.all([
+        getSubscriptionsForCycle(id),
+        getActiveSubscriptions(),
+      ]);
       eligibleCount = eligible.length;
+      totalActiveCount = allActive.length;
     } catch {
       // Non-fatal - will show 0
     }
@@ -80,6 +85,7 @@ export default async function CycleDetailPage({
             cycleId={cycle.id}
             cycleDate={cycle.delivery_date}
             eligibleCount={eligibleCount}
+            totalActiveCount={totalActiveCount}
           />
         </div>
       )}
