@@ -832,6 +832,7 @@ GRANT ALL ON order_status_history TO service_role;
 
 CREATE TABLE subscriptions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  subscription_number TEXT UNIQUE NOT NULL DEFAULT generate_subscription_id(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   box_type TEXT NOT NULL,
   status subscription_status NOT NULL DEFAULT 'active',
@@ -897,6 +898,7 @@ CREATE INDEX idx_subscriptions_user ON subscriptions(user_id);
 CREATE INDEX idx_subscriptions_status ON subscriptions(status);
 CREATE INDEX idx_subscriptions_active ON subscriptions(status) WHERE status = 'active';
 CREATE INDEX idx_subscriptions_first_cycle ON subscriptions(first_cycle_id) WHERE first_cycle_id IS NOT NULL;
+CREATE INDEX idx_subscriptions_subscription_number ON subscriptions(subscription_number);
 
 CREATE TRIGGER trigger_subscriptions_updated_at
   BEFORE UPDATE ON subscriptions FOR EACH ROW
@@ -1336,6 +1338,25 @@ BEGIN
   END LOOP;
   new_order_id := 'FF-' || date_part || '-' || random_part;
   RETURN new_order_id;
+END;
+$$ LANGUAGE plpgsql;
+
+
+CREATE OR REPLACE FUNCTION generate_subscription_id()
+RETURNS TEXT AS $$
+DECLARE
+  date_part TEXT;
+  random_part TEXT;
+  new_sub_id TEXT;
+  chars TEXT := 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+BEGIN
+  date_part := TO_CHAR(NOW(), 'DDMMYY');
+  random_part := '';
+  FOR i IN 1..6 LOOP
+    random_part := random_part || SUBSTR(chars, FLOOR(RANDOM() * LENGTH(chars) + 1)::INT, 1);
+  END LOOP;
+  new_sub_id := 'FF-SUB-' || date_part || '-' || random_part;
+  RETURN new_sub_id;
 END;
 $$ LANGUAGE plpgsql;
 
