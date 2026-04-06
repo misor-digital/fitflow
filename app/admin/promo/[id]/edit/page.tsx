@@ -1,6 +1,5 @@
 import { requireStaff } from '@/lib/auth';
 import { getPromoCodeById } from '@/lib/data';
-import { getPromoCodeStats } from '@/lib/data/promo';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import PromoCodeForm from '@/components/admin/PromoCodeForm';
 import Link from 'next/link';
