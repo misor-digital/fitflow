@@ -115,12 +115,12 @@ export function GenerateOrdersSection({
       {!result && (
         <div>
           <p className="text-sm text-gray-600 mb-3">
-            Ще бъдат създадени поръчки за <span className="font-bold text-[var(--color-brand-navy)]">{eligibleCount}</span> абонати
+            Ще бъдат създадени поръчки за <span className="font-bold text-[var(--color-brand-navy)]">{eligibleCount}</span> абонамента
             за цикъл <span className="font-mono">{cycleDate}</span>.
           </p>
 
           {eligibleCount === 0 ? (
-            <p className="text-sm text-gray-400">Няма налични абонати за този цикъл.</p>
+            <p className="text-sm text-gray-400">Няма налични абонамента за този цикъл.</p>
           ) : !showConfirm ? (
             <button
               onClick={() => setShowConfirm(true)}
@@ -131,7 +131,7 @@ export function GenerateOrdersSection({
           ) : (
             <div className="p-4 bg-amber-50 border border-amber-200 rounded-lg">
               <p className="text-sm text-amber-800 font-medium mb-3">
-                Сигурни ли сте? Ще бъдат генерирани поръчки за {eligibleCount} абонати.
+                Сигурни ли сте? Ще бъдат генерирани поръчки за {eligibleCount} абонамента.
               </p>
               <div className="flex gap-3">
                 <button
