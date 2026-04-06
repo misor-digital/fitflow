@@ -359,7 +359,7 @@ export async function PATCH(
             dietary: sub.dietary, size_upper: sub.size_upper, size_lower: sub.size_lower,
             additional_notes: sub.additional_notes,
           };
-          sendSubscriptionPreferencesUpdatedEmail(session.email, sub, oldPrefs, prefsUpdate as Record<string, unknown>)
+          sendSubscriptionPreferencesUpdatedEmail(session.email, sub, oldPrefs, prefsUpdate as unknown as Record<string, unknown>)
             .catch(() => {});
         }
 
