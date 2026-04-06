@@ -253,7 +253,7 @@ export function SubscriptionDetailView({
             <h1 className="text-2xl font-bold text-[var(--color-brand-navy)]">
               {boxTypeName} - {FREQUENCY_LABELS[subscription.frequency] ?? subscription.frequency}
             </h1>
-            <p className="text-sm text-gray-500 mt-1">ID: {subscription.id}</p>
+            <p className="text-sm text-gray-500 mt-1 font-mono">{subscription.subscription_number}</p>
           </div>
           <span
             className={`text-sm font-semibold px-4 py-2 rounded-full ${
