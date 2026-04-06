@@ -23,6 +23,9 @@ const ACTION_LABELS: Record<SubscriptionAction, string> = {
   address_changed: 'Адрес променен',
   frequency_changed: 'Честота променена',
   order_generated: 'Поръчка генерирана',
+  promo_cleared: 'Промо премахнат',
+  promo_cycles_updated: 'Промо цикли обновени',
+  promo_applied: 'Промо приложен',
 };
 
 const ACTION_COLORS: Record<string, string> = {
@@ -35,6 +38,9 @@ const ACTION_COLORS: Record<string, string> = {
   address_changed: 'bg-indigo-500',
   frequency_changed: 'bg-teal-500',
   order_generated: 'bg-orange-500',
+  promo_cleared: 'bg-red-500',
+  promo_cycles_updated: 'bg-amber-500',
+  promo_applied: 'bg-green-500',
 };
 
 const ORDER_STATUS_LABELS: Record<string, string> = {
@@ -112,6 +118,12 @@ export function SubscriptionDetailView({
   );
   const [showFrequencyPicker, setShowFrequencyPicker] = useState(false);
   const [selectedFrequency, setSelectedFrequency] = useState<string>(subscription.frequency);
+  const [showPromoEditor, setShowPromoEditor] = useState(false);
+  const [promoAction, setPromoAction] = useState<'update_cycles' | 'apply' | 'clear'>('update_cycles');
+  const [newPromoCode, setNewPromoCode] = useState('');
+  const [newMaxCycles, setNewMaxCycles] = useState(
+    subscription.promo_max_cycles != null ? String(subscription.promo_max_cycles) : ''
+  );
 
   // ============================================================================
   // Admin Actions
@@ -295,10 +307,26 @@ export function SubscriptionDetailView({
             <InfoItem
               label="Промо код"
               value={
-                <span className="bg-purple-100 text-purple-800 text-xs font-semibold px-2 py-0.5 rounded">
-                  {subscription.promo_code}
+                <span className="flex items-center gap-2 flex-wrap">
+                  <span className="bg-purple-100 text-purple-800 text-xs font-semibold px-2 py-0.5 rounded">
+                    {subscription.promo_code}
+                  </span>
+                  {subscription.discount_percent && (
+                    <span className="text-xs text-green-600">
+                      -{subscription.discount_percent}%
+                    </span>
+                  )}
+                  <span className="text-xs text-gray-500">
+                    Цикли: {subscription.promo_cycles_used ?? 0}/{subscription.promo_max_cycles ?? '∞'}
+                  </span>
                 </span>
               }
+            />
+          )}
+          {!subscription.promo_code && (
+            <InfoItem
+              label="Промо код"
+              value={<span className="text-gray-400 text-sm">Няма</span>}
             />
           )}
           <InfoItem label="Стартиран" value={formatDeliveryDate(subscription.started_at)} />
@@ -460,9 +488,131 @@ export function SubscriptionDetailView({
                   ⏱ Промени честота
                 </button>
               )}
+              {canManage && (
+                <button
+                  onClick={() => setShowPromoEditor(!showPromoEditor)}
+                  disabled={isPending}
+                  className="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-purple-700 transition-colors disabled:opacity-50"
+                >
+                  🏷 Промо код
+                </button>
+              )}
               {derivedState.isCancelled && (
                 <p className="text-sm text-gray-400 self-center">Няма налични действия за отказан абонамент.</p>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Promo Editor */}
+        {showPromoEditor && canManage && (
+          <div className="border-t border-gray-100 pt-4 space-y-4">
+            <h3 className="text-sm font-semibold text-gray-600">Управление на промо код</h3>
+
+            <div className="flex gap-2">
+              {subscription.promo_code && (
+                <>
+                  <button
+                    onClick={() => setPromoAction('update_cycles')}
+                    className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-colors ${
+                      promoAction === 'update_cycles'
+                        ? 'bg-amber-100 text-amber-800 border border-amber-300'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    Промени цикли
+                  </button>
+                  <button
+                    onClick={() => setPromoAction('clear')}
+                    className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-colors ${
+                      promoAction === 'clear'
+                        ? 'bg-red-100 text-red-800 border border-red-300'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    Премахни промо
+                  </button>
+                </>
+              )}
+              <button
+                onClick={() => setPromoAction('apply')}
+                className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-colors ${
+                  promoAction === 'apply'
+                    ? 'bg-green-100 text-green-800 border border-green-300'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                {subscription.promo_code ? 'Смени промо' : 'Приложи промо'}
+              </button>
+            </div>
+
+            {promoAction === 'apply' && (
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Промо код</label>
+                <input
+                  type="text"
+                  value={newPromoCode}
+                  onChange={(e) => setNewPromoCode(e.target.value.toUpperCase())}
+                  placeholder="напр. ЛЯТО2026"
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+                />
+              </div>
+            )}
+
+            {(promoAction === 'update_cycles' || promoAction === 'apply') && (
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Макс. цикли</label>
+                <input
+                  type="number"
+                  value={newMaxCycles}
+                  onChange={(e) => setNewMaxCycles(e.target.value)}
+                  placeholder="Празно = неограничено"
+                  min="1"
+                  step="1"
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500/30"
+                />
+                <p className="mt-1 text-xs text-gray-400">
+                  {subscription.promo_code && promoAction === 'update_cycles'
+                    ? `Текущо: ${subscription.promo_cycles_used ?? 0} използвани от ${subscription.promo_max_cycles ?? '∞'}`
+                    : 'Колко цикъла ще важи отстъпката. Празно = неограничено.'
+                  }
+                </p>
+              </div>
+            )}
+
+            {promoAction === 'clear' && (
+              <p className="text-sm text-red-600">
+                Промо кодът ще бъде премахнат и цената ще се върне на базовата ({subscription.base_price_eur} EUR).
+              </p>
+            )}
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  const body: Record<string, unknown> = {
+                    action: 'update_promo',
+                    type: promoAction,
+                  };
+                  if (promoAction === 'apply') {
+                    body.promoCode = newPromoCode.trim().toUpperCase();
+                    body.maxCycles = newMaxCycles ? parseInt(newMaxCycles, 10) : null;
+                  } else if (promoAction === 'update_cycles') {
+                    body.maxCycles = newMaxCycles ? parseInt(newMaxCycles, 10) : null;
+                  }
+                  executeAction('update_promo', body);
+                  setShowPromoEditor(false);
+                }}
+                disabled={isPending || (promoAction === 'apply' && !newPromoCode.trim())}
+                className="bg-purple-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-purple-700 transition-colors disabled:opacity-50"
+              >
+                {isPending ? 'Обработка...' : 'Приложи'}
+              </button>
+              <button
+                onClick={() => setShowPromoEditor(false)}
+                className="px-4 py-2 text-sm text-gray-600 hover:text-gray-800"
+              >
+                Отказ
+              </button>
             </div>
           </div>
         )}
