@@ -34,3 +34,27 @@ export async function withRetry<T>(
   }
   throw lastError;
 }
+
+/**
+ * Like `withRetry`, but returns a fallback value after all retries are
+ * exhausted instead of throwing. Use for queries where null/empty is a
+ * valid application state (e.g. "no upcoming cycle exists").
+ *
+ * This prevents `unstable_cache` from caching an error AND allows
+ * static page generation to succeed when the DB is unreachable (CI).
+ */
+export async function withRetryOrFallback<T>(
+  fn: () => Promise<T>,
+  fallback: T,
+  { attempts = 3, baseDelayMs = 500 } = {},
+): Promise<T> {
+  try {
+    return await withRetry(fn, { attempts, baseDelayMs });
+  } catch (err) {
+    console.warn(
+      '[data] All retries exhausted, returning fallback:',
+      err instanceof Error ? err.message : err,
+    );
+    return fallback;
+  }
+}

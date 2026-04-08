@@ -13,7 +13,7 @@ import { unstable_cache } from 'next/cache';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { getUserEmailsByIds } from '@/lib/auth/get-users-by-ids';
 import { TAG_CUSTOMERS } from './cache-tags';
-import { withRetry } from './retry';
+import { withRetryOrFallback } from './retry';
 import type { CustomerWithStats } from '@/lib/supabase/types';
 
 // ============================================================================
@@ -145,7 +145,7 @@ export const getCustomersStats = cache(
       total: number;
       subscribers: number;
       newThisMonth: number;
-    }> => withRetry(async () => {
+    }> => withRetryOrFallback(async () => {
       const now = new Date();
       const firstOfMonth = new Date(
         now.getFullYear(),
@@ -181,7 +181,7 @@ export const getCustomersStats = cache(
         subscribers: subscriberResult.count ?? 0,
         newThisMonth: newResult.count ?? 0,
       };
-    }),
+    }, { total: 0, subscribers: 0, newThisMonth: 0 }),
     ['customers-stats'],
     { revalidate: 60, tags: [TAG_CUSTOMERS] },
   ),
@@ -193,7 +193,7 @@ export const getCustomersStats = cache(
  */
 export const getStaffCount = cache(
   unstable_cache(
-    async (): Promise<number> => withRetry(async () => {
+    async (): Promise<number> => withRetryOrFallback(async () => {
       const { count, error } = await supabaseAdmin
         .from('user_profiles')
         .select('*', { count: 'exact', head: true })
@@ -205,7 +205,7 @@ export const getStaffCount = cache(
       }
 
       return count ?? 0;
-    }),
+    }, 0),
     ['staff-count'],
     { revalidate: 60, tags: [TAG_CUSTOMERS] },
   ),

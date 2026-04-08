@@ -10,7 +10,7 @@ import 'server-only';
 import { cache } from 'react';
 import { unstable_cache } from 'next/cache';
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import { withRetry } from './retry';
+import { withRetry, withRetryOrFallback } from './retry';
 import type {
   DeliveryCycleRow,
   DeliveryCycleInsert,
@@ -80,7 +80,7 @@ export const getDeliveryCycleById = cache(
  */
 export const getUpcomingCycle = cache(
   unstable_cache(
-    async (): Promise<DeliveryCycleRow | null> => withRetry(async () => {
+    async (): Promise<DeliveryCycleRow | null> => withRetryOrFallback(async () => {
       const { data, error } = await supabaseAdmin
         .from('delivery_cycles')
         .select('*')
@@ -96,7 +96,7 @@ export const getUpcomingCycle = cache(
       }
 
       return data;
-    }),
+    }, null),
     ['upcoming-cycle'],
     { revalidate: 300, tags: [TAG_DELIVERY] },
   ),
@@ -109,7 +109,7 @@ export const getUpcomingCycle = cache(
  */
 export const getUpcomingCycles = cache(
   unstable_cache(
-    async (): Promise<DeliveryCycleRow[]> => withRetry(async () => {
+    async (): Promise<DeliveryCycleRow[]> => withRetryOrFallback(async () => {
       const { data, error } = await supabaseAdmin
         .from('delivery_cycles')
         .select('*')
@@ -123,7 +123,7 @@ export const getUpcomingCycles = cache(
       }
 
       return data ?? [];
-    }),
+    }, []),
     ['upcoming-cycles'],
     { revalidate: 300, tags: [TAG_DELIVERY] },
   ),
@@ -159,7 +159,7 @@ export async function getEarliestEligibleCycle(): Promise<DeliveryCycleRow | nul
  */
 export const getCurrentRevealedCycle = cache(
   unstable_cache(
-    async (): Promise<DeliveryCycleRow | null> => withRetry(async () => {
+    async (): Promise<DeliveryCycleRow | null> => withRetryOrFallback(async () => {
       const { data, error } = await supabaseAdmin
         .from('delivery_cycles')
         .select('*')
@@ -174,7 +174,7 @@ export const getCurrentRevealedCycle = cache(
       }
 
       return data;
-    }),
+    }, null),
     ['revealed-cycle'],
     { revalidate: 300, tags: [TAG_DELIVERY] },
   ),

@@ -12,7 +12,7 @@ import { cache } from 'react';
 import { unstable_cache } from 'next/cache';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { TAG_SUBSCRIPTIONS } from './cache-tags';
-import { withRetry } from './retry';
+import { withRetryOrFallback } from './retry';
 import type {
   SubscriptionRow,
   SubscriptionInsert,
@@ -308,7 +308,7 @@ export async function getActiveSubscriptions(): Promise<SubscriptionRow[]> {
  */
 export const getSubscriptionsCount = cache(
   unstable_cache(
-    async (): Promise<{ total: number; active: number; paused: number; cancelled: number }> => withRetry(async () => {
+    async (): Promise<{ total: number; active: number; paused: number; cancelled: number }> => withRetryOrFallback(async () => {
       const [totalResult, activeResult, pausedResult, cancelledResult] = await Promise.all([
         supabaseAdmin.from('subscriptions').select('*', { count: 'exact', head: true }),
         supabaseAdmin.from('subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'active'),
@@ -328,7 +328,7 @@ export const getSubscriptionsCount = cache(
         paused: pausedResult.count ?? 0,
         cancelled: cancelledResult.count ?? 0,
       };
-    }),
+    }, { total: 0, active: 0, paused: 0, cancelled: 0 }),
     ['subscriptions-count'],
     { revalidate: 60, tags: [TAG_SUBSCRIPTIONS] },
   ),
@@ -339,7 +339,7 @@ export const getSubscriptionsCount = cache(
  */
 export const getSubscriptionMRR = cache(
   unstable_cache(
-    async (): Promise<number> => withRetry(async () => {
+    async (): Promise<number> => withRetryOrFallback(async () => {
       const { data, error } = await supabaseAdmin
         .from('subscriptions')
         .select('current_price_eur')
@@ -353,7 +353,7 @@ export const getSubscriptionMRR = cache(
       if (!data || data.length === 0) return 0;
 
       return data.reduce((sum, row) => sum + Number(row.current_price_eur), 0);
-    }),
+    }, 0),
     ['subscription-mrr'],
     { revalidate: 60, tags: [TAG_SUBSCRIPTIONS] },
   ),

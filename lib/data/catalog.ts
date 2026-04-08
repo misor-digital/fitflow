@@ -16,7 +16,7 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import type { BoxTypeRow, OptionRow, OptionSetId } from '@/lib/supabase';
 import type { PriceInfo } from '@/lib/catalog';
 import { TAG_CATALOG } from './cache-tags';
-import { withRetry } from './retry';
+import { withRetry, withRetryOrFallback } from './retry';
 
 // ============================================================================
 // Box Types
@@ -175,7 +175,7 @@ export const getColorNames = cache(async (): Promise<Record<string, string>> => 
  */
 export const getSiteConfig = cache(
   unstable_cache(
-    async (key: string): Promise<string | null> => withRetry(async () => {
+    async (key: string): Promise<string | null> => withRetryOrFallback(async () => {
       const { data, error } = await supabaseAdmin
         .from('site_config')
         .select('value')
@@ -192,7 +192,7 @@ export const getSiteConfig = cache(
       }
 
       return data ? (data as { value: string }).value : null;
-    }),
+    }, null),
     ['site-config'],
     { revalidate: 300, tags: [TAG_CATALOG] },
   ),
