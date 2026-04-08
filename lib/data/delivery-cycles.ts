@@ -10,6 +10,7 @@ import 'server-only';
 import { cache } from 'react';
 import { unstable_cache } from 'next/cache';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { withRetry, withRetryOrFallback } from './retry';
 import type {
   DeliveryCycleRow,
   DeliveryCycleInsert,
@@ -44,7 +45,7 @@ type DeliveryConfigKey = (typeof DELIVERY_CONFIG_KEYS)[number];
  */
 export const getDeliveryCycles = cache(
   unstable_cache(
-    async (): Promise<DeliveryCycleRow[]> => {
+    async (): Promise<DeliveryCycleRow[]> => withRetry(async () => {
       const { data, error } = await supabaseAdmin
         .from('delivery_cycles')
         .select('*')
@@ -56,7 +57,7 @@ export const getDeliveryCycles = cache(
       }
 
       return data ?? [];
-    },
+    }),
     ['delivery-cycles'],
     { revalidate: 300, tags: [TAG_DELIVERY] },
   ),
@@ -79,7 +80,7 @@ export const getDeliveryCycleById = cache(
  */
 export const getUpcomingCycle = cache(
   unstable_cache(
-    async (): Promise<DeliveryCycleRow | null> => {
+    async (): Promise<DeliveryCycleRow | null> => withRetryOrFallback(async () => {
       const { data, error } = await supabaseAdmin
         .from('delivery_cycles')
         .select('*')
@@ -91,11 +92,11 @@ export const getUpcomingCycle = cache(
 
       if (error) {
         console.error('Error fetching upcoming cycle:', error);
-        return null;
+        throw new Error('Failed to load upcoming cycle.');
       }
 
       return data;
-    },
+    }, null),
     ['upcoming-cycle'],
     { revalidate: 300, tags: [TAG_DELIVERY] },
   ),
@@ -108,7 +109,7 @@ export const getUpcomingCycle = cache(
  */
 export const getUpcomingCycles = cache(
   unstable_cache(
-    async (): Promise<DeliveryCycleRow[]> => {
+    async (): Promise<DeliveryCycleRow[]> => withRetryOrFallback(async () => {
       const { data, error } = await supabaseAdmin
         .from('delivery_cycles')
         .select('*')
@@ -118,11 +119,11 @@ export const getUpcomingCycles = cache(
 
       if (error) {
         console.error('Error fetching upcoming cycles:', error);
-        return [];
+        throw new Error('Failed to load upcoming cycles.');
       }
 
       return data ?? [];
-    },
+    }, []),
     ['upcoming-cycles'],
     { revalidate: 300, tags: [TAG_DELIVERY] },
   ),
@@ -158,7 +159,7 @@ export async function getEarliestEligibleCycle(): Promise<DeliveryCycleRow | nul
  */
 export const getCurrentRevealedCycle = cache(
   unstable_cache(
-    async (): Promise<DeliveryCycleRow | null> => {
+    async (): Promise<DeliveryCycleRow | null> => withRetryOrFallback(async () => {
       const { data, error } = await supabaseAdmin
         .from('delivery_cycles')
         .select('*')
@@ -169,11 +170,11 @@ export const getCurrentRevealedCycle = cache(
 
       if (error) {
         console.error('Error fetching revealed cycle:', error);
-        return null;
+        throw new Error('Failed to load revealed cycle.');
       }
 
       return data;
-    },
+    }, null),
     ['revealed-cycle'],
     { revalidate: 300, tags: [TAG_DELIVERY] },
   ),
@@ -205,15 +206,18 @@ export const getDeliveredCycles = cache(
  */
 export const getDeliveryCyclesForDropdown = cache(
   unstable_cache(
-    async (): Promise<CycleDropdownOption[]> => {
+    async (): Promise<CycleDropdownOption[]> => withRetry(async () => {
       const { data, error } = await supabaseAdmin
         .from('delivery_cycles')
         .select('id, delivery_date, status, title')
         .order('delivery_date', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching cycles dropdown:', error);
+        throw new Error('Failed to load delivery cycles.');
+      }
       return (data ?? []) as CycleDropdownOption[];
-    },
+    }),
     ['delivery-cycles-dropdown'],
     { revalidate: 300, tags: [TAG_DELIVERY] },
   ),

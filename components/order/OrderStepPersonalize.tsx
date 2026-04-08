@@ -94,8 +94,14 @@ export default function OrderStepPersonalize({ catalogData, onNext, onBack }: Or
   };
 
   // Validate current step using shared helper
+  // Allow skipping option steps when no options were loaded (data unavailable)
   const validateStep = () => {
     const step = activeSteps[validCurrentStep] as PersonalizationStep;
+    if (step === 'sport' && sportsOptions.length === 0) return true;
+    if (step === 'flavors' && flavorsOptions.length === 0) return true;
+    if (step === 'dietary' && dietaryOptions.length === 0) return true;
+    if (step === 'size' && sizesOptions.length === 0) return true;
+    if (step === 'colors' && colorsOptions.length === 0) return true;
     return validatePersonalizationStep(step, currentInput);
   };
 
@@ -203,42 +209,51 @@ export default function OrderStepPersonalize({ catalogData, onNext, onBack }: Or
             <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--color-brand-navy)] text-center mb-6 sm:mb-8 md:mb-10">
               Какъв спорт практикуваш?
             </h2>
-            <div className="space-y-2 sm:space-y-3 md:space-y-4">
-              {sportsOptions.map((sport) => (
-                <div
-                  key={sport.id}
-                  onClick={() => toggleItem(sports, sport.id, setSports)}
-                  className={`bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-5 shadow-md cursor-pointer transition-all border-3 ${
-                    sports.includes(sport.id)
-                      ? 'border-[var(--color-brand-orange)] bg-gradient-to-br from-[var(--color-brand-orange)]/5 to-[var(--color-brand-orange)]/2'
-                      : 'border-transparent hover:shadow-lg hover:-translate-y-0.5'
-                  }`}
-                >
-                  <div className="flex items-center gap-3 sm:gap-4">
-                    <div className={`w-5 h-5 sm:w-6 sm:h-6 rounded border-3 flex-shrink-0 flex items-center justify-center ${sports.includes(sport.id) ? 'border-[var(--color-brand-orange)] bg-[var(--color-brand-orange)]' : 'border-gray-300'}`}>
-                      {sports.includes(sport.id) && <div className="text-white text-xs sm:text-sm font-bold">✓</div>}
-                    </div>
-                    <div className="text-base sm:text-lg font-semibold text-[var(--color-brand-navy)]">
-                      {sport.label}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            {sports.includes('other') && (
-              <div className="mt-3 sm:mt-4">
-                <input
-                  type="text"
-                  value={sportOther}
-                  onChange={(e) => setSportOther(e.target.value)}
-                  placeholder="Кой спорт?"
-                  className={`w-full p-3 sm:p-4 border-2 rounded-lg sm:rounded-xl focus:outline-none text-[var(--color-brand-navy)] placeholder:text-gray-400 text-sm sm:text-base ${
-                    sports.includes('other') && !sportOther.trim()
-                      ? 'border-red-500 focus:border-red-500'
-                      : 'border-gray-300 focus:border-[var(--color-brand-orange)]'
-                  }`}
-                />
+            {sportsOptions.length === 0 ? (
+              <div className="text-center text-gray-500 py-8">
+                <p className="text-lg mb-2">Опциите не са налични в момента.</p>
+                <p className="text-sm">Моля, опитайте отново по-късно или продължете напред.</p>
               </div>
+            ) : (
+              <>
+                <div className="space-y-2 sm:space-y-3 md:space-y-4">
+                  {sportsOptions.map((sport) => (
+                    <div
+                      key={sport.id}
+                      onClick={() => toggleItem(sports, sport.id, setSports)}
+                      className={`bg-white rounded-lg sm:rounded-xl p-3 sm:p-4 md:p-5 shadow-md cursor-pointer transition-all border-3 ${
+                        sports.includes(sport.id)
+                          ? 'border-[var(--color-brand-orange)] bg-gradient-to-br from-[var(--color-brand-orange)]/5 to-[var(--color-brand-orange)]/2'
+                          : 'border-transparent hover:shadow-lg hover:-translate-y-0.5'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3 sm:gap-4">
+                        <div className={`w-5 h-5 sm:w-6 sm:h-6 rounded border-3 flex-shrink-0 flex items-center justify-center ${sports.includes(sport.id) ? 'border-[var(--color-brand-orange)] bg-[var(--color-brand-orange)]' : 'border-gray-300'}`}>
+                          {sports.includes(sport.id) && <div className="text-white text-xs sm:text-sm font-bold">✓</div>}
+                        </div>
+                        <div className="text-base sm:text-lg font-semibold text-[var(--color-brand-navy)]">
+                          {sport.label}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {sports.includes('other') && (
+                  <div className="mt-3 sm:mt-4">
+                    <input
+                      type="text"
+                      value={sportOther}
+                      onChange={(e) => setSportOther(e.target.value)}
+                      placeholder="Кой спорт?"
+                      className={`w-full p-3 sm:p-4 border-2 rounded-lg sm:rounded-xl focus:outline-none text-[var(--color-brand-navy)] placeholder:text-gray-400 text-sm sm:text-base ${
+                        sports.includes('other') && !sportOther.trim()
+                          ? 'border-red-500 focus:border-red-500'
+                          : 'border-gray-300 focus:border-[var(--color-brand-orange)]'
+                      }`}
+                    />
+                  </div>
+                )}
+              </>
             )}
           </div>
         );
