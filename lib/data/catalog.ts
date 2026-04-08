@@ -16,6 +16,7 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import type { BoxTypeRow, OptionRow, OptionSetId } from '@/lib/supabase';
 import type { PriceInfo } from '@/lib/catalog';
 import { TAG_CATALOG } from './cache-tags';
+import { withRetry } from './retry';
 
 // ============================================================================
 // Box Types
@@ -28,7 +29,7 @@ import { TAG_CATALOG } from './cache-tags';
  */
 export const getBoxTypes = cache(
   unstable_cache(
-    async (): Promise<BoxTypeRow[]> => {
+    async (): Promise<BoxTypeRow[]> => withRetry(async () => {
       const { data, error } = await supabaseAdmin
         .from('box_types')
         .select('*')
@@ -45,7 +46,7 @@ export const getBoxTypes = cache(
       }
 
       return data;
-    },
+    }),
     ['box-types'],
     { revalidate: 300, tags: [TAG_CATALOG] },
   ),
@@ -96,7 +97,7 @@ export const getBoxTypeNames = cache(async (): Promise<Record<string, string>> =
  */
 export const getAllOptions = cache(
   unstable_cache(
-    async (): Promise<OptionRow[]> => {
+    async (): Promise<OptionRow[]> => withRetry(async () => {
       const { data, error } = await supabaseAdmin
         .from('options')
         .select('*')
@@ -105,11 +106,15 @@ export const getAllOptions = cache(
 
       if (error) {
         console.error('Error fetching all options:', error);
-        return [];
+        throw new Error('Failed to load options. Please try again later.');
       }
 
-      return data || [];
-    },
+      if (!data || data.length === 0) {
+        throw new Error('No options configured. Please contact support.');
+      }
+
+      return data;
+    }),
     ['all-options'],
     { revalidate: 300, tags: [TAG_CATALOG] },
   ),
@@ -170,19 +175,24 @@ export const getColorNames = cache(async (): Promise<Record<string, string>> => 
  */
 export const getSiteConfig = cache(
   unstable_cache(
-    async (key: string): Promise<string | null> => {
+    async (key: string): Promise<string | null> => withRetry(async () => {
       const { data, error } = await supabaseAdmin
         .from('site_config')
         .select('value')
         .eq('key', key)
         .single();
 
-      if (error || !data) {
+      // PGRST116 = row not found → legitimate null (key doesn't exist)
+      if (error && error.code === 'PGRST116') {
         return null;
       }
+      if (error) {
+        console.error(`Error fetching site_config key "${key}":`, error);
+        throw new Error(`Failed to load site config "${key}".`);
+      }
 
-      return (data as { value: string }).value;
-    },
+      return data ? (data as { value: string }).value : null;
+    }),
     ['site-config'],
     { revalidate: 300, tags: [TAG_CATALOG] },
   ),
