@@ -12,6 +12,7 @@ import { cache } from 'react';
 import { unstable_cache } from 'next/cache';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { TAG_SUBSCRIPTIONS } from './cache-tags';
+import { withRetry } from './retry';
 import type {
   SubscriptionRow,
   SubscriptionInsert,
@@ -307,7 +308,7 @@ export async function getActiveSubscriptions(): Promise<SubscriptionRow[]> {
  */
 export const getSubscriptionsCount = cache(
   unstable_cache(
-    async (): Promise<{ total: number; active: number; paused: number; cancelled: number }> => {
+    async (): Promise<{ total: number; active: number; paused: number; cancelled: number }> => withRetry(async () => {
       const [totalResult, activeResult, pausedResult, cancelledResult] = await Promise.all([
         supabaseAdmin.from('subscriptions').select('*', { count: 'exact', head: true }),
         supabaseAdmin.from('subscriptions').select('*', { count: 'exact', head: true }).eq('status', 'active'),
@@ -318,8 +319,7 @@ export const getSubscriptionsCount = cache(
       const firstError = [totalResult, activeResult, pausedResult, cancelledResult].find((r) => r.error);
       if (firstError?.error) {
         console.error('Error counting subscriptions:', firstError.error);
-        // Return zeros so the cache stores a fallback instead of retrying every request
-        return { total: 0, active: 0, paused: 0, cancelled: 0 };
+        throw new Error('Failed to load subscription counts.');
       }
 
       return {
@@ -328,7 +328,7 @@ export const getSubscriptionsCount = cache(
         paused: pausedResult.count ?? 0,
         cancelled: cancelledResult.count ?? 0,
       };
-    },
+    }),
     ['subscriptions-count'],
     { revalidate: 60, tags: [TAG_SUBSCRIPTIONS] },
   ),
@@ -339,7 +339,7 @@ export const getSubscriptionsCount = cache(
  */
 export const getSubscriptionMRR = cache(
   unstable_cache(
-    async (): Promise<number> => {
+    async (): Promise<number> => withRetry(async () => {
       const { data, error } = await supabaseAdmin
         .from('subscriptions')
         .select('current_price_eur')
@@ -347,14 +347,13 @@ export const getSubscriptionMRR = cache(
 
       if (error) {
         console.error('Error calculating MRR:', error);
-        // Return 0 so the cache stores a fallback instead of retrying every request
-        return 0;
+        throw new Error('Failed to load subscription MRR.');
       }
 
       if (!data || data.length === 0) return 0;
 
       return data.reduce((sum, row) => sum + Number(row.current_price_eur), 0);
-    },
+    }),
     ['subscription-mrr'],
     { revalidate: 60, tags: [TAG_SUBSCRIPTIONS] },
   ),

@@ -13,6 +13,7 @@ import { unstable_cache } from 'next/cache';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { getUserEmailsByIds } from '@/lib/auth/get-users-by-ids';
 import { TAG_CUSTOMERS } from './cache-tags';
+import { withRetry } from './retry';
 import type { CustomerWithStats } from '@/lib/supabase/types';
 
 // ============================================================================
@@ -144,7 +145,7 @@ export const getCustomersStats = cache(
       total: number;
       subscribers: number;
       newThisMonth: number;
-    }> => {
+    }> => withRetry(async () => {
       const now = new Date();
       const firstOfMonth = new Date(
         now.getFullYear(),
@@ -169,12 +170,18 @@ export const getCustomersStats = cache(
           .gte('created_at', firstOfMonth),
       ]);
 
+      const firstError = [totalResult, subscriberResult, newResult].find((r) => r.error);
+      if (firstError?.error) {
+        console.error('Error fetching customer stats:', firstError.error);
+        throw new Error('Failed to load customer stats.');
+      }
+
       return {
         total: totalResult.count ?? 0,
         subscribers: subscriberResult.count ?? 0,
         newThisMonth: newResult.count ?? 0,
       };
-    },
+    }),
     ['customers-stats'],
     { revalidate: 60, tags: [TAG_CUSTOMERS] },
   ),
@@ -186,7 +193,7 @@ export const getCustomersStats = cache(
  */
 export const getStaffCount = cache(
   unstable_cache(
-    async (): Promise<number> => {
+    async (): Promise<number> => withRetry(async () => {
       const { count, error } = await supabaseAdmin
         .from('user_profiles')
         .select('*', { count: 'exact', head: true })
@@ -194,11 +201,11 @@ export const getStaffCount = cache(
 
       if (error) {
         console.error('Error counting staff:', error);
-        return 0;
+        throw new Error('Failed to load staff count.');
       }
 
       return count ?? 0;
-    },
+    }),
     ['staff-count'],
     { revalidate: 60, tags: [TAG_CUSTOMERS] },
   ),
