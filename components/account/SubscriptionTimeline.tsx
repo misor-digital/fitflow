@@ -1,5 +1,7 @@
 'use client';
 
+import { formatDateCompact } from '@/lib/utils/date';
+
 interface TimelineEvent {
   key: string;
   label: string;
@@ -18,20 +20,12 @@ interface SubscriptionTimelineProps {
   loadingOrders: boolean;
 }
 
-function shortDate(iso: string): string {
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return iso;
-  const dd = String(d.getDate()).padStart(2, '0');
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  return `${dd}.${mm}`;
-}
-
 function buildEvents(props: SubscriptionTimelineProps): TimelineEvent[] {
   const { createdAt, status, pastOrders, pausedAt, cancelledAt, nextDeliveryDate } = props;
   const events: TimelineEvent[] = [];
 
   // 1 - Created
-  events.push({ key: 'created', label: 'Създ.', date: shortDate(createdAt), type: 'completed' });
+  events.push({ key: 'created', label: 'Създ.', date: formatDateCompact(createdAt), type: 'completed' });
 
   // 2 - Delivered cycles from past orders
   if (pastOrders && pastOrders.length > 0) {
@@ -45,7 +39,7 @@ function buildEvents(props: SubscriptionTimelineProps): TimelineEvent[] {
         events.push({
           key: `order-${o.order_number}`,
           label: `Дост. ${i + 1}`,
-          date: shortDate(o.created_at),
+          date: formatDateCompact(o.created_at),
           type: 'completed',
         });
       });
@@ -62,7 +56,7 @@ function buildEvents(props: SubscriptionTimelineProps): TimelineEvent[] {
         events.push({
           key: `order-${o.order_number}`,
           label: `Дост. ${skipped + i + 1}`,
-          date: shortDate(o.created_at),
+          date: formatDateCompact(o.created_at),
           type: 'completed',
         });
       });
@@ -71,17 +65,17 @@ function buildEvents(props: SubscriptionTimelineProps): TimelineEvent[] {
 
   // 3 - Paused
   if (pausedAt && status === 'paused') {
-    events.push({ key: 'paused', label: 'Пауза', date: shortDate(pausedAt), type: 'paused' });
+    events.push({ key: 'paused', label: 'Пауза', date: formatDateCompact(pausedAt), type: 'paused' });
   }
 
   // 4 - Cancelled
   if (cancelledAt && (status === 'cancelled' || status === 'expired')) {
-    events.push({ key: 'cancelled', label: 'Отказан', date: shortDate(cancelledAt), type: 'cancelled' });
+    events.push({ key: 'cancelled', label: 'Отказан', date: formatDateCompact(cancelledAt), type: 'cancelled' });
   }
 
   // 5 - Next delivery (future)
   if (status === 'active' && nextDeliveryDate) {
-    events.push({ key: 'next', label: 'Следв.', date: shortDate(nextDeliveryDate), type: 'future' });
+    events.push({ key: 'next', label: 'Следв.', date: formatDateCompact(nextDeliveryDate), type: 'future' });
   }
 
   return events;
