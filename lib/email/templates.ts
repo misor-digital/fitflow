@@ -13,6 +13,7 @@ import {
   formatSavings,
 } from '@/lib/catalog';
 import { escapeHtml } from '@/lib/utils/sanitize';
+import { formatDateShort } from '@/lib/utils/date';
 import { EMAIL } from './constants';
 import { wrapInEmailLayout, emailCtaButton, emailContactLine } from './layout';
 
@@ -32,12 +33,6 @@ function safeSavings(eur: number | null | undefined, bgn: number | null | undefi
   if (eur == null || eur <= 0) return '';
   if (bgn != null && bgn > 0) return formatSavings(eur, bgn);
   return `Спестяваш ${formatPriceEur(eur)}`;
-}
-
-/** Format an ISO date string in Bulgarian DD.MM.YYYY format */
-function formatDateBg(isoDate: string): string {
-  const d = new Date(isoDate);
-  return d.toLocaleDateString('bg-BG', { day: '2-digit', month: '2-digit', year: 'numeric' });
 }
 
 // ============================================================================
@@ -563,7 +558,7 @@ export function generateDeliveryReminderEmail(data: DeliveryReminderEmailData): 
 
   const safeName = escapeHtml(customerName);
   const safeOrder = escapeHtml(orderNumber);
-  const shippedFormatted = formatDateBg(shippedAt);
+  const shippedFormatted = formatDateShort(shippedAt);
   const safeAutoDate = escapeHtml(autoConfirmDate);
 
   let escalationHtml = '';
@@ -613,7 +608,7 @@ export function generateDeliveryAutoConfirmedEmail(data: DeliveryAutoConfirmedEm
 
   const safeName = escapeHtml(customerName);
   const safeOrder = escapeHtml(orderNumber);
-  const confirmedFormatted = formatDateBg(confirmedAt);
+  const confirmedFormatted = formatDateShort(confirmedAt);
 
   const bodyHtml = `
   <h2 style="color: ${EMAIL.colors.textHeading}; margin-top: 0; font-size: 24px;">
