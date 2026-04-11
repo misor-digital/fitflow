@@ -1,6 +1,7 @@
 import { requireStaff } from '@/lib/auth';
 import { getOrdersCount, getSubscriptionsCount, getSubscriptionMRR, getSiteConfig, getEurToBgnRate } from '@/lib/data';
 import { getStaffCount } from '@/lib/data/customers';
+import { formatDateTimeShort } from '@/lib/utils/date';
 
 export const metadata = {
   title: 'Табло | FitFlow Admin',
@@ -74,7 +75,7 @@ export default async function AdminDashboard() {
             <p className="text-gray-500">
               Последно изпълнение:{' '}
               <span className="font-medium text-gray-700">
-                {new Date(cronLastRun).toLocaleString('bg-BG', { timeZone: 'Europe/Sofia' })}
+                {formatDateTimeShort(cronLastRun)}
               </span>
             </p>
             {parsedCronResult && !parsedCronResult.error && (

@@ -12,6 +12,7 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import type { SubscriptionRow, OrderRow, OrderStatus, SubscriptionStatus } from '@/lib/supabase/types';
 import AdminAddressManager from '@/components/admin/AdminAddressManager';
+import { formatDateTimeShort } from '@/lib/utils/date';
 
 export const metadata: Metadata = {
   title: 'Клиент | Администрация | FitFlow',
@@ -40,10 +41,6 @@ function StatusBadge({ label, className }: { label: string; className: string })
       {label}
     </span>
   );
-}
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('bg-BG');
 }
 
 function formatPrice(eur: number | null) {
@@ -95,7 +92,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
           <p><span className="font-medium text-gray-700">Имейл:</span> {email}</p>
           <p><span className="font-medium text-gray-700">Телефон:</span> {profile.phone ?? '—'}</p>
           <p><span className="font-medium text-gray-700">Тип:</span> {profile.user_type === 'staff' ? 'Персонал' : 'Клиент'}</p>
-          <p><span className="font-medium text-gray-700">Регистрация:</span> {authCreatedAt ? formatDate(authCreatedAt) : formatDate(profile.created_at)}</p>
+          <p><span className="font-medium text-gray-700">Регистрация:</span> {authCreatedAt ? formatDateTimeShort(authCreatedAt) : formatDateTimeShort(profile.created_at)}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           {hasActiveSub && (
@@ -144,7 +141,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
                   <div className="text-sm text-gray-500 space-y-0.5">
                     <p>Честота: {sub.frequency === 'monthly' ? 'Месечна' : sub.frequency === 'seasonal' ? 'Сезонна' : sub.frequency}</p>
                     <p>Цена: {formatPrice(sub.current_price_eur)}</p>
-                    <p>Начало: {formatDate(sub.started_at)}</p>
+                    <p>Начало: {formatDateTimeShort(sub.started_at)}</p>
                     {sub.default_address_id && (
                       <p className="text-xs text-gray-400">📍 Свързан адрес</p>
                     )}
@@ -196,7 +193,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
                             {formatPrice(order.final_price_eur)}
                           </td>
                           <td className="px-4 py-3 text-gray-500">
-                            {formatDate(order.created_at)}
+                            {formatDateTimeShort(order.created_at)}
                           </td>
                         </tr>
                       );

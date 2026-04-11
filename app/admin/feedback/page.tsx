@@ -1,6 +1,7 @@
 import { requireStaff } from '@/lib/auth';
 import { getFeedbackFormsPaginated, getResponseCountByForm } from '@/lib/data/feedback-forms';
 import { AdminHelpLink } from '@/components/admin/AdminHelpLink';
+import { formatDateShort } from '@/lib/utils/date';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 
@@ -141,7 +142,7 @@ export default async function FeedbackFormsPage({ searchParams }: FeedbackPagePr
                     {responseCounts[i]}
                   </td>
                   <td className="px-4 py-3 text-gray-500">
-                    {new Date(form.created_at).toLocaleDateString('bg-BG')}
+                    {formatDateShort(form.created_at)}
                   </td>
                   <td className="px-4 py-3">
                     <Link

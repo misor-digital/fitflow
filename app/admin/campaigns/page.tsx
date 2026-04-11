@@ -4,6 +4,7 @@ import CampaignStatusBadge from '@/components/admin/CampaignStatusBadge';
 import CampaignTypeBadge from '@/components/admin/CampaignTypeBadge';
 import { AdminHelpLink } from '@/components/admin/AdminHelpLink';
 import Link from 'next/link';
+import { formatDateTimeShort, formatRelative } from '@/lib/utils/date';
 import type { Metadata } from 'next';
 import type { EmailCampaignStatusEnum, EmailCampaignTypeEnum } from '@/lib/supabase/types';
 
@@ -246,8 +247,8 @@ export default async function CampaignsPage({ searchParams }: CampaignsPageProps
                             )}
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-gray-500" title={new Date(c.created_at).toLocaleString('bg-BG')}>
-                          {relativeDate(c.created_at)}
+                        <td className="px-4 py-3 text-gray-500" title={formatDateTimeShort(c.created_at)}>
+                          {formatRelative(c.created_at)}
                         </td>
                         <td className="px-4 py-3">
                           <Link
