@@ -12,6 +12,7 @@ import {
   PREORDER_STATUS_COLORS,
 } from '@/lib/order';
 import { formatPriceDual } from '@/lib/catalog';
+import { formatDateLong } from '@/lib/utils/date';
 import type { Metadata } from 'next';
 
 // ---------------------------------------------------------------------------
@@ -21,18 +22,6 @@ import type { Metadata } from 'next';
 export const metadata: Metadata = {
   title: 'Предварителна поръчка | FitFlow',
 };
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function formatDateBG(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('bg-BG', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
-}
 
 // ---------------------------------------------------------------------------
 // Page
@@ -141,7 +130,7 @@ export default async function PreorderDetailPage({
           {/* Created date */}
           <div>
             <span className="text-sm text-gray-500">Дата на създаване</span>
-            <p className="font-medium">{formatDateBG(preorder.created_at)}</p>
+            <p className="font-medium">{formatDateLong(preorder.created_at)}</p>
           </div>
 
           {/* Box type */}
@@ -195,7 +184,7 @@ export default async function PreorderDetailPage({
             <div>
               <span className="text-sm text-gray-500">Изтича на</span>
               <p className="font-medium">
-                {formatDateBG(preorder.conversion_token_expires_at!)}
+                {formatDateLong(preorder.conversion_token_expires_at!)}
               </p>
             </div>
           )}
@@ -249,7 +238,7 @@ export default async function PreorderDetailPage({
           </Link>
           {expiresAt && (
             <p className="text-sm text-gray-500 mt-2">
-              Валидна до {formatDateBG(preorder.conversion_token_expires_at!)}
+              Валидна до {formatDateLong(preorder.conversion_token_expires_at!)}
             </p>
           )}
         </div>

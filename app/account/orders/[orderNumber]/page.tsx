@@ -20,6 +20,7 @@ import {
   formatDeliveryMethodLabel,
 } from '@/lib/order';
 import { formatPriceDual } from '@/lib/catalog';
+import { formatDateLong } from '@/lib/utils/date';
 import { StatusTimeline } from '@/components/account/StatusTimeline';
 import { CancelRequestButton } from '@/components/account/CancelRequestButton';
 import type { OrderStatus } from '@/lib/supabase/types';
@@ -41,18 +42,6 @@ export async function generateMetadata({
       ? `Поръчка ${formatOrderNumber(order.order_number)} | FitFlow`
       : 'Поръчка | FitFlow',
   };
-}
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function formatDateBG(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('bg-BG', {
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
 }
 
 // ---------------------------------------------------------------------------
@@ -96,14 +85,14 @@ export default async function OrderDetailPage({
   // Derived dates
   const lastUpdateDate =
     statusHistory.length > 0
-      ? formatDateBG(statusHistory[statusHistory.length - 1].created_at)
+      ? formatDateLong(statusHistory[statusHistory.length - 1].created_at)
       : null;
   const expectedDeliveryDate = deliveryCycle?.delivery_date
-    ? formatDateBG(deliveryCycle.delivery_date)
+    ? formatDateLong(deliveryCycle.delivery_date)
     : null;
   const nextRenewalDate =
     order.order_type === 'subscription' && upcomingCycle?.delivery_date
-      ? formatDateBG(upcomingCycle.delivery_date)
+      ? formatDateLong(upcomingCycle.delivery_date)
       : null;
 
   const canCancel = statusKey === 'pending' || statusKey === 'confirmed';
@@ -187,7 +176,7 @@ export default async function OrderDetailPage({
           <div>
             <dt className="text-gray-500 mb-1">Дата на поръчка</dt>
             <dd className="font-semibold text-gray-900">
-              {formatDateBG(order.created_at)}
+              {formatDateLong(order.created_at)}
             </dd>
           </div>
           {lastUpdateDate && (
