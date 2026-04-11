@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import type { SubscriptionRow, SubscriptionDerivedState, SubscriptionHistoryRow, SubscriptionAction } from '@/lib/subscription';
 import { SUBSCRIPTION_STATUS_LABELS, SUBSCRIPTION_STATUS_COLORS, FREQUENCY_LABELS } from '@/lib/subscription';
-import { formatDeliveryDate } from '@/lib/delivery';
+import { formatDateTimeShort } from '@/lib/utils/date';
 import { formatPriceDual, eurToBgnSync } from '@/lib/catalog';
 import type { OrderRow, AddressRow } from '@/lib/supabase/types';
 
@@ -225,17 +225,7 @@ export function SubscriptionDetailView({
   }
 
   function formatDateTime(iso: string): string {
-    try {
-      return new Date(iso).toLocaleString('bg-BG', {
-        day: '2-digit',
-        month: '2-digit',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-      });
-    } catch {
-      return iso;
-    }
+    return formatDateTimeShort(iso);
   }
 
   // ============================================================================
@@ -329,7 +319,7 @@ export function SubscriptionDetailView({
               value={<span className="text-gray-400 text-sm">Няма</span>}
             />
           )}
-          <InfoItem label="Стартиран" value={formatDeliveryDate(subscription.started_at)} />
+          <InfoItem label="Стартиран" value={formatDateTimeShort(subscription.started_at)} />
           <InfoItem
             label="Адрес"
             value={
@@ -732,7 +722,7 @@ export function SubscriptionDetailView({
                       {order.final_price_eur != null ? formatPriceDual(Number(order.final_price_eur), eurToBgnSync(Number(order.final_price_eur), eurToBgnRate)) : '—'}
                     </td>
                     <td className="px-4 py-3 text-gray-500">
-                      {formatDeliveryDate(order.created_at)}
+                      {formatDateTimeShort(order.created_at)}
                     </td>
                   </tr>
                 ))}

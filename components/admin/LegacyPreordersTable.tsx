@@ -2,21 +2,13 @@
 
 import { useState } from 'react';
 import type { Preorder, PreorderConversionStatus } from '@/lib/supabase/types';
+import { formatDateTimeShort } from '@/lib/utils/date';
 
 interface LegacyPreordersTableProps {
   preorders: Array<Preorder & { converted_order_number?: string }>;
   boxTypeNames: Record<string, string>;
   conversionStatusLabels: Record<PreorderConversionStatus, string>;
   conversionStatusColors: Record<PreorderConversionStatus, string>;
-}
-
-function formatDate(iso: string) {
-  const d = new Date(iso);
-  return d.toLocaleDateString('bg-BG', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  });
 }
 
 export function LegacyPreordersTable({
@@ -98,7 +90,7 @@ export function LegacyPreordersTable({
 
               {/* Date */}
               <td className="py-3 px-4 text-sm text-gray-500">
-                {formatDate(preorder.created_at)}
+                {formatDateTimeShort(preorder.created_at)}
               </td>
             </tr>
           ))}

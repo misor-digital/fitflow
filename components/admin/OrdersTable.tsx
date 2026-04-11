@@ -9,6 +9,7 @@ import {
 } from '@/lib/order/format';
 import { formatShippingAddressOneLine, ALLOWED_TRANSITIONS } from '@/lib/order';
 import { formatPriceDual, eurToBgnSync } from '@/lib/catalog';
+import { formatDateTimeShort } from '@/lib/utils/date';
 import OrderPromoAction from './OrderPromoAction';
 
 // ============================================================================
@@ -65,30 +66,6 @@ const FIELD_LABELS: Record<string, string> = {
   dietary_other: 'Друго ограничение',
   additional_notes: 'Допълнителни бележки',
 };
-
-// ============================================================================
-// Date formatting
-// ============================================================================
-
-function formatDate(iso: string) {
-  const d = new Date(iso);
-  return d.toLocaleDateString('bg-BG', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  });
-}
-
-function formatDateTime(iso: string) {
-  const d = new Date(iso);
-  return d.toLocaleString('bg-BG', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
 
 // ============================================================================
 // Delivery helper
@@ -400,7 +377,7 @@ export function OrdersTable({
                         <span
                           className="ml-2 text-xs px-2 py-0.5 rounded-full bg-amber-100 text-amber-700"
                           title={`Последно напомняне: ${reminderCounts[order.id].lastSentAt
-                            ? new Date(reminderCounts[order.id].lastSentAt!).toLocaleDateString('bg-BG')
+                            ? formatDateTimeShort(reminderCounts[order.id].lastSentAt!)
                             : '—'}`}
                         >
                           📧 {reminderCounts[order.id].count}/3 напомняния
@@ -454,7 +431,7 @@ export function OrdersTable({
 
                     {/* Date */}
                     <td className="py-3 px-4 text-sm text-gray-500">
-                      {formatDate(order.created_at)}
+                      {formatDateTimeShort(order.created_at)}
                     </td>
 
                     {/* Actions */}
@@ -832,7 +809,7 @@ function OrderRowDetail({
             {history.map(entry => (
               <li key={entry.id} className="relative">
                 <div className="absolute -left-[21px] top-1 w-2.5 h-2.5 rounded-full bg-[var(--color-brand-navy)]" />
-                <p className="text-xs text-gray-500">{formatDateTime(entry.created_at)}</p>
+                <p className="text-xs text-gray-500">{formatDateTimeShort(entry.created_at)}</p>
                 <p className="text-sm">
                   {entry.from_status ? (
                     <>
@@ -864,7 +841,7 @@ function OrderRowDetail({
             </p>
             {reminderCounts[order.id].lastSentAt && (
               <p className="text-amber-600 text-xs mt-1">
-                Последно: {new Date(reminderCounts[order.id].lastSentAt!).toLocaleString('bg-BG')}
+                Последно: {formatDateTimeShort(reminderCounts[order.id].lastSentAt!)}
               </p>
             )}
             {reminderCounts[order.id].count >= 3 && (
