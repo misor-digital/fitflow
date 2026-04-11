@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import type { CustomerWithStats } from '@/lib/supabase/types';
+import { formatDateShort } from '@/lib/utils/date';
 
 /** Mask a full name: show first character + '***' */
 function maskName(name: string): string {
@@ -159,15 +160,13 @@ export function CustomersTable({
                   {/* Last order date */}
                   <td className="px-4 py-3 text-sm text-gray-500">
                     {customer.last_order_date
-                      ? new Date(
-                          customer.last_order_date,
-                        ).toLocaleDateString('bg-BG')
+                      ? formatDateShort(customer.last_order_date)
                       : '—'}
                   </td>
 
                   {/* Registration date */}
                   <td className="px-4 py-3 text-sm text-gray-500">
-                    {new Date(customer.created_at).toLocaleDateString('bg-BG')}
+                    {formatDateShort(customer.created_at)}
                   </td>
                 </tr>
               ))}

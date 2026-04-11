@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import type { EmailUnsubscribeRow } from '@/lib/supabase/types';
+import { formatDateTimeShort } from '@/lib/utils/date';
 
 interface UnsubscribesTableProps {
   unsubscribes: EmailUnsubscribeRow[];
@@ -155,7 +156,7 @@ export default function UnsubscribesTable({
                         {unsub.reason ?? '—'}
                       </td>
                       <td className="px-4 py-3 text-gray-500 text-xs">
-                        {new Date(unsub.unsubscribed_at).toLocaleString('bg-BG')}
+                        {formatDateTimeShort(unsub.unsubscribed_at)}
                       </td>
                       <td className="px-4 py-3">
                         <button

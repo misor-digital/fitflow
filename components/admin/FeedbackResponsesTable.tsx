@@ -1,6 +1,7 @@
 'use client';
 
 import type { FeedbackResponseRow, FeedbackFieldDefinition } from '@/lib/supabase/types';
+import { formatDateTimeShort } from '@/lib/utils/date';
 
 interface Props {
   responses: FeedbackResponseRow[];
@@ -57,7 +58,7 @@ export default function FeedbackResponsesTable({ responses, fields }: Props) {
                 </td>
               ))}
               <td className="px-3 py-2 text-gray-500 text-xs whitespace-nowrap">
-                {new Date(response.created_at).toLocaleString('bg-BG')}
+                {formatDateTimeShort(response.created_at)}
               </td>
             </tr>
           ))}
