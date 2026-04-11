@@ -6,6 +6,7 @@ import CampaignStatusBadge from './CampaignStatusBadge';
 import CampaignTypeBadge from './CampaignTypeBadge';
 import CampaignHistoryTimeline from './CampaignHistoryTimeline';
 import SendTestEmailModal from './SendTestEmailModal';
+import { formatDateTimeShort } from '@/lib/utils/date';
 import type {
   EmailCampaignRow,
   EmailCampaignHistoryRow,
@@ -600,7 +601,7 @@ export default function CampaignDetailView({
                         </td>
                         <td className="px-4 py-3 text-gray-500 text-xs">
                           {r.sent_at
-                            ? new Date(r.sent_at).toLocaleString('bg-BG')
+                            ? formatDateTimeShort(r.sent_at)
                             : '—'}
                         </td>
                         <td className="px-4 py-3 text-red-500 text-xs max-w-[200px] truncate" title={r.error ?? ''}>
