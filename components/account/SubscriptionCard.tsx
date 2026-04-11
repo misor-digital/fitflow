@@ -11,6 +11,7 @@ import {
   formatSubscriptionSummary,
 } from '@/lib/subscription';
 import { formatDeliveryDate } from '@/lib/delivery';
+import { formatDateShort } from '@/lib/utils/date';
 import { formatPriceDual, eurToBgnSync } from '@/lib/catalog';
 import type { AddressRow } from '@/lib/supabase/types';
 import type { PricesMap, CatalogData, PriceDisplayInfo } from '@/lib/catalog';
@@ -331,7 +332,7 @@ export default function SubscriptionCard({
                 {pastOrders.slice(0, 2).map((order) => (
                   <li key={order.id} className="flex items-center justify-between text-sm">
                     <span className="text-gray-600">
-                      #{order.order_number} · {new Date(order.created_at).toLocaleDateString('bg-BG')} · {order.status}
+                      #{order.order_number} · {formatDateShort(order.created_at)} · {order.status}
                     </span>
                     <Link
                       href={`/account/orders/${encodeURIComponent(order.order_number)}`}
@@ -364,7 +365,7 @@ export default function SubscriptionCard({
                       <div>
                         <span className="font-medium text-gray-900">#{order.order_number}</span>
                         <span className="text-gray-400 ml-2">
-                          {new Date(order.created_at).toLocaleDateString('bg-BG')}
+                          {formatDateShort(order.created_at)}
                         </span>
                       </div>
                       <Link

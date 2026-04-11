@@ -7,7 +7,7 @@ import {
   SUBSCRIPTION_STATUS_COLORS,
   FREQUENCY_LABELS,
 } from '@/lib/subscription';
-import { formatDeliveryDate } from '@/lib/delivery';
+import { formatDateTimeShort } from '@/lib/utils/date';
 import { formatPriceDual, eurToBgnSync } from '@/lib/catalog';
 
 interface SubscriptionsTableProps {
@@ -102,7 +102,7 @@ export function SubscriptionsTable({
 
                   {/* Created */}
                   <td className="px-4 py-3 text-gray-500">
-                    {formatDeliveryDate(sub.created_at)}
+                    {formatDateTimeShort(sub.created_at)}
                   </td>
 
                   {/* Actions */}

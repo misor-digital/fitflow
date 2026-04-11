@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import type { EmailCampaignHistoryRow } from '@/lib/supabase/types';
+import { formatDateTimeShort, formatRelative } from '@/lib/utils/date';
 
 interface CampaignHistoryTimelineProps {
   history: EmailCampaignHistoryRow[];
@@ -19,32 +20,6 @@ const ACTION_CONFIG: Record<string, { icon: string; label: string; color: string
   'send-test': { icon: '🧪', label: 'Тестов имейл', color: 'border-purple-400' },
   deleted: { icon: '🗑️', label: 'Изтрита', color: 'border-red-400' },
 };
-
-function formatTimestamp(dateStr: string): string {
-  const d = new Date(dateStr);
-  return d.toLocaleString('bg-BG', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-}
-
-function relativeTimestamp(dateStr: string): string {
-  const now = Date.now();
-  const date = new Date(dateStr).getTime();
-  const diff = now - date;
-  const minutes = Math.floor(diff / 60_000);
-  const hours = Math.floor(diff / 3_600_000);
-  const days = Math.floor(diff / 86_400_000);
-
-  if (minutes < 1) return 'току-що';
-  if (minutes < 60) return `преди ${minutes} мин`;
-  if (hours < 24) return `преди ${hours} ч`;
-  if (days < 30) return `преди ${days} дни`;
-  return formatTimestamp(dateStr);
-}
 
 export default function CampaignHistoryTimeline({ history }: CampaignHistoryTimelineProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -90,9 +65,9 @@ export default function CampaignHistoryTimeline({ history }: CampaignHistoryTime
                   </span>
                   <span
                     className="text-xs text-gray-400"
-                    title={formatTimestamp(entry.created_at)}
+                    title={formatDateTimeShort(entry.created_at)}
                   >
-                    {relativeTimestamp(entry.created_at)}
+                    {formatRelative(entry.created_at)}
                   </span>
                 </div>
 

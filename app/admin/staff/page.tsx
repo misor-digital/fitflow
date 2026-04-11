@@ -2,6 +2,7 @@ import { requireStaff } from '@/lib/auth';
 import { STAFF_MANAGEMENT_ROLES } from '@/lib/auth/permissions';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { AdminHelpLink } from '@/components/admin/AdminHelpLink';
+import { formatDateShort } from '@/lib/utils/date';
 import Link from 'next/link';
 
 export const metadata = {
@@ -51,7 +52,7 @@ export default async function StaffListPage() {
                 <td className="py-3 px-4">{member.full_name}</td>
                 <td className="py-3 px-4 capitalize">{member.staff_role?.replace('_', ' ')}</td>
                 <td className="py-3 px-4 text-sm text-gray-500">
-                  {new Date(member.created_at).toLocaleDateString('bg-BG')}
+                  {formatDateShort(member.created_at)}
                 </td>
               </tr>
             ))}

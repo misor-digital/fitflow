@@ -8,6 +8,7 @@
  */
 
 import { useEffect, useState } from 'react';
+import { formatDateTimeShort } from '@/lib/utils/date';
 
 interface EmailSystemHealth {
   status: 'healthy' | 'warning' | 'error';
@@ -164,7 +165,7 @@ export default function EmailHealthCard() {
       {/* Webhook warning */}
       {webhookStale && (
         <div className="mt-3 text-xs text-yellow-700 bg-yellow-100 rounded-md px-3 py-2">
-          ⚠️ Последен webhook преди повече от 1 час ({health.lastWebhookAt ? new Date(health.lastWebhookAt).toLocaleString('bg-BG') : '—'}).
+          ⚠️ Последен webhook преди повече от 1 час ({health.lastWebhookAt ? formatDateTimeShort(health.lastWebhookAt) : '—'}).
           Проверете Brevo webhook настройките.
         </div>
       )}

@@ -15,6 +15,7 @@ import {
   getStatusIcon,
 } from '@/lib/order';
 import { formatPriceDual } from '@/lib/catalog';
+import { formatDateShort } from '@/lib/utils/date';
 import type {
   OrderRow,
   Preorder,
@@ -122,14 +123,6 @@ const PAGE_SIZE = 15;
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString('bg-BG', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  });
-}
 
 function dualPrice(eur: number, rate: number): string {
   return formatPriceDual(eur, eur * rate);
@@ -443,7 +436,7 @@ export function OrdersList({
                 {formatOrderNumber(order.order_number)}
               </span>
               <span className="ml-2 text-sm text-gray-400">
-                {formatDate(order.created_at)}
+                {formatDateShort(order.created_at)}
               </span>
             </div>
 
@@ -534,7 +527,7 @@ export function OrdersList({
                         (h) => h.to_status === step,
                       );
                       const tooltipText = historyEntry
-                        ? `${ORDER_STATUS_LABELS[step]} - ${new Date(historyEntry.created_at).toLocaleDateString('bg-BG', { day: '2-digit', month: '2-digit', year: 'numeric' })}`
+                        ? `${ORDER_STATUS_LABELS[step]} - ${formatDateShort(historyEntry.created_at)}`
                         : ORDER_STATUS_LABELS[step];
 
                       return (
@@ -558,11 +551,7 @@ export function OrdersList({
                 {/* Last update date */}
                 {lastEntry && (
                   <span>
-                    {new Date(lastEntry.created_at).toLocaleDateString('bg-BG', {
-                      day: '2-digit',
-                      month: '2-digit',
-                      year: 'numeric',
-                    })}
+                    {formatDateShort(lastEntry.created_at)}
                   </span>
                 )}
               </div>
@@ -624,7 +613,7 @@ export function OrdersList({
               Предварителна поръчка
             </span>
             <span className="ml-2 text-sm text-gray-400">
-              {formatDate(preorder.created_at)}
+                {formatDateShort(preorder.created_at)}
             </span>
           </div>
 

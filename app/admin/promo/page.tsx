@@ -4,6 +4,7 @@ import type { PromoCodeFilters, PromoStatus } from '@/lib/data/promo';
 import Link from 'next/link';
 import PromoActions from '@/components/admin/PromoActions';
 import { AdminHelpLink } from '@/components/admin/AdminHelpLink';
+import { formatDateShort } from '@/lib/utils/date';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -59,11 +60,7 @@ function StatusBadge({ status }: { status: PromoStatus }) {
 
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return '—';
-  return new Date(dateStr).toLocaleDateString('bg-BG', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  });
+  return formatDateShort(dateStr);
 }
 
 export default async function PromoPage({ searchParams }: PromoPageProps) {

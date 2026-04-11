@@ -1,5 +1,6 @@
 import { requireAuth } from '@/lib/auth';
 import { getPreordersByUser } from '@/lib/data';
+import { formatDateShort } from '@/lib/utils/date';
 import PasswordSetupBanner from '@/components/account/PasswordSetupBanner';
 import UnlinkedPreordersBanner from '@/components/account/UnlinkedPreordersBanner';
 import ExpiringPreordersBanner from '@/components/account/ExpiringPreordersBanner';
@@ -60,7 +61,7 @@ export default async function AccountPage() {
         <div>
           <span className="text-sm text-gray-500">Акаунт създаден</span>
           <p className="text-lg font-medium">
-            {new Date(profile.created_at).toLocaleDateString('bg-BG')}
+            {formatDateShort(profile.created_at)}
           </p>
         </div>
       </div>

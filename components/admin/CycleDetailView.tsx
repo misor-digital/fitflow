@@ -8,6 +8,7 @@ import type {
   DeliveryCycleItemRow,
   DeliveryCycleDerivedState,
 } from '@/lib/delivery';
+import { formatDateShort } from '@/lib/utils/date';
 
 // ============================================================================
 // Constants
@@ -428,7 +429,7 @@ export function CycleDetailView({
               Разкрито
               {cycle.revealed_at && (
                 <span className="text-gray-400 font-normal ml-1">
-                  ({new Date(cycle.revealed_at).toLocaleDateString('bg-BG')})
+                  ({formatDateShort(cycle.revealed_at)})
                 </span>
               )}
             </span>

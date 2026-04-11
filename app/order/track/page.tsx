@@ -9,6 +9,7 @@ import Footer from '@/components/Footer';
 import { ORDER_STATUS_COLORS, STATUS_BG_COLORS, formatShippingAddress } from '@/lib/order';
 import type { OrderStatus, ShippingAddressSnapshot } from '@/lib/supabase/types';
 import { formatPriceDual } from '@/lib/catalog';
+import { formatDateLong } from '@/lib/utils/date';
 import { StatusTimeline } from '@/components/account/StatusTimeline';
 import type { StatusHistoryEntry } from '@/components/account/StatusTimeline';
 
@@ -183,11 +184,7 @@ function OrderTrackingContent() {
             <div>
               <dt className="text-gray-500 mb-1">Дата</dt>
               <dd className="font-semibold text-gray-900">
-                {new Date(order.createdAt).toLocaleDateString('bg-BG', {
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric',
-                })}
+                {formatDateLong(order.createdAt)}
               </dd>
             </div>
           </dl>

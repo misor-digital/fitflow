@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import type { DeliveryConfig } from '@/lib/delivery';
+import { formatDateShort } from '@/lib/utils/date';
 
 interface DeliverySettingsFormProps {
   config: DeliveryConfig;
@@ -21,7 +22,7 @@ function calculatePreviewDate(deliveryDay: number, firstDate: string | null): st
     if (y && m && d) {
       const first = new Date(y, m - 1, d);
       if (first >= today) {
-        return formatDate(first);
+        return formatDateShort(toISODate(first));
       }
     }
   }
@@ -35,7 +36,7 @@ function calculatePreviewDate(deliveryDay: number, firstDate: string | null): st
   const thisMonth = new Date(year, month, clampedDay);
 
   if (thisMonth > today) {
-    return formatDate(thisMonth);
+    return formatDateShort(toISODate(thisMonth));
   }
 
   // Next month
@@ -43,14 +44,14 @@ function calculatePreviewDate(deliveryDay: number, firstDate: string | null): st
   const nextYear = month === 11 ? year + 1 : year;
   const nextLastDay = new Date(nextYear, nextMonth + 1, 0).getDate();
   const nextClamped = Math.min(deliveryDay, nextLastDay);
-  return formatDate(new Date(nextYear, nextMonth, nextClamped));
+  return formatDateShort(toISODate(new Date(nextYear, nextMonth, nextClamped)));
 }
 
-function formatDate(d: Date): string {
-  const dd = String(d.getDate()).padStart(2, '0');
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
+function toISODate(d: Date): string {
   const yyyy = d.getFullYear();
-  return `${dd}.${mm}.${yyyy}`;
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
 }
 
 export function DeliverySettingsForm({ config }: DeliverySettingsFormProps) {

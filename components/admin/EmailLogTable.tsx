@@ -9,6 +9,7 @@
 
 import { useState, useEffect, useCallback, useTransition } from 'react';
 import type { EmailSendLogRow, EmailLogStatusEnum } from '@/lib/supabase/types';
+import { formatDateTimeShort } from '@/lib/utils/date';
 
 const PER_PAGE = 50;
 
@@ -27,14 +28,7 @@ function maskEmail(email: string): string {
 /** Format timestamp for display */
 function formatDate(dateStr: string | null): string {
   if (!dateStr) return '—';
-  const d = new Date(dateStr);
-  return d.toLocaleDateString('bg-BG', {
-    day: '2-digit',
-    month: '2-digit',
-    year: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  return formatDateTimeShort(dateStr);
 }
 
 /** Truncate text to N chars */
