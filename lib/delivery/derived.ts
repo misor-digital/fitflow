@@ -247,8 +247,10 @@ export function computeCycleState(
  */
 function parseISODate(dateStr: string): Date | null {
   if (!dateStr) return null;
+  // Strip any time / timezone portion so we only parse the date part
+  const datePart = dateStr.includes('T') ? dateStr.split('T')[0] : dateStr;
   // Split to avoid timezone offset issues with `new Date('YYYY-MM-DD')`
-  const [y, m, d] = dateStr.split('-').map(Number);
+  const [y, m, d] = datePart.split('-').map(Number);
   if (!y || !m || !d) return null;
   return new Date(y, m - 1, d);
 }
