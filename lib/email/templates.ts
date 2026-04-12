@@ -518,6 +518,54 @@ export function generatePasswordResetEmail(name: string, resetUrl: string): stri
 }
 
 // ============================================================================
+// OTP Verification Email Template
+// ============================================================================
+
+/**
+ * Generate a branded OTP verification email HTML.
+ * Sent during inline registration/login in the order flow.
+ *
+ * @param otp - The 6-digit OTP code
+ * @param name - User's display name (optional, omitted for login)
+ * @returns HTML string for the email
+ */
+export function generateOtpVerificationEmail(otp: string, name?: string): string {
+  const greeting = name
+    ? `Здравей, ${escapeHtml(name)}!`
+    : 'Здравей,';
+
+  const digitCells = otp
+    .split('')
+    .map(
+      (d) =>
+        `<td style="width: 44px; height: 52px; text-align: center; font-size: 28px; font-weight: 700; color: ${EMAIL.colors.textHeading}; background-color: #f9fafb; border: 2px solid #e5e7eb; border-radius: 8px; font-family: 'Courier New', Courier, monospace;">${d}</td>`,
+    )
+    .join('\n              ');
+
+  const bodyHtml = `
+  <h2 style="color: ${EMAIL.colors.textHeading}; margin-top: 0; font-size: 24px;">
+    ${greeting}
+  </h2>
+  <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
+    Твоят код за потвърждение е:
+  </p>
+  <table role="presentation" style="margin: 24px auto; border-collapse: separate; border-spacing: 8px;">
+    <tr>
+      ${digitCells}
+    </tr>
+  </table>
+  <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
+    Въведи този код в полето за потвърждение. Кодът е валиден 10 минути.
+  </p>
+  <p style="color: ${EMAIL.colors.textMuted}; font-size: 14px; line-height: 1.6;">
+    Ако не си заявил/а това, можеш спокойно да игнорираш този имейл.
+  </p>
+  ${emailContactLine()}
+`;
+  return wrapInEmailLayout(bodyHtml);
+}
+
+// ============================================================================
 // Delivery Confirmation Email Templates
 // ============================================================================
 

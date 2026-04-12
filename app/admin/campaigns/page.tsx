@@ -25,22 +25,6 @@ interface CampaignsPageProps {
   }>;
 }
 
-/** Relative date formatter in Bulgarian */
-function relativeDate(dateStr: string): string {
-  const now = Date.now();
-  const date = new Date(dateStr).getTime();
-  const diff = now - date;
-  const minutes = Math.floor(diff / 60_000);
-  const hours = Math.floor(diff / 3_600_000);
-  const days = Math.floor(diff / 86_400_000);
-
-  if (minutes < 1) return 'току-що';
-  if (minutes < 60) return `преди ${minutes} мин`;
-  if (hours < 24) return `преди ${hours} ч`;
-  if (days < 30) return `преди ${days} дни`;
-  return new Date(dateStr).toLocaleDateString('bg-BG');
-}
-
 const STATUS_OPTIONS: [EmailCampaignStatusEnum, string][] = [
   ['draft', 'Чернова'],
   ['scheduled', 'Планирана'],
