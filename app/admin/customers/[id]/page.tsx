@@ -74,6 +74,9 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
   const isStaff = profile.user_type === 'staff';
   const recentOrders = orders.slice(0, 10);
 
+  const totalSpent = orders.reduce((sum: number, o: OrderRow) => sum + (o.final_price_eur ?? 0), 0);
+  const lastOrderDate = orders.length > 0 ? orders[0].created_at : null;
+
   return (
     <div>
       {/* Back link */}
@@ -92,19 +95,49 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
           <p><span className="font-medium text-gray-700">Имейл:</span> {email}</p>
           <p><span className="font-medium text-gray-700">Телефон:</span> {profile.phone ?? '—'}</p>
           <p><span className="font-medium text-gray-700">Тип:</span> {profile.user_type === 'staff' ? 'Персонал' : 'Клиент'}</p>
+          {isStaff && profile.staff_role && (
+            <p><span className="font-medium text-gray-700">Роля:</span> {profile.staff_role}</p>
+          )}
           <p><span className="font-medium text-gray-700">Регистрация:</span> {authCreatedAt ? formatDateTimeShort(authCreatedAt) : formatDateTimeShort(profile.created_at)}</p>
+          <p><span className="font-medium text-gray-700">Последна промяна:</span> {formatDateTimeShort(profile.updated_at)}</p>
+          <p className="sm:col-span-2"><span className="font-medium text-gray-700">ID:</span> <span className="font-mono text-xs text-gray-400">{profile.id}</span></p>
         </div>
         <div className="flex flex-wrap gap-2">
           {hasActiveSub && (
             <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
-              Абонат
+              Активен абонамент
+            </span>
+          )}
+          {profile.is_subscriber && (
+            <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-violet-100 text-violet-700">
+              Бюлетин
             </span>
           )}
           {isStaff && (
             <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-              Персонал{profile.staff_role ? ` (${profile.staff_role})` : ''}
+              Персонал
             </span>
           )}
+        </div>
+      </div>
+
+      {/* Summary stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+        <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
+          <p className="text-2xl font-bold text-[var(--color-brand-navy)]">{orders.length}</p>
+          <p className="text-xs text-gray-500 mt-1">Поръчки</p>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
+          <p className="text-2xl font-bold text-[var(--color-brand-navy)]">{subscriptions.length}</p>
+          <p className="text-xs text-gray-500 mt-1">Абонаменти</p>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
+          <p className="text-2xl font-bold text-[var(--color-brand-navy)]">{formatPrice(totalSpent)}</p>
+          <p className="text-xs text-gray-500 mt-1">Общо похарчени</p>
+        </div>
+        <div className="bg-white rounded-xl border border-gray-200 p-4 text-center">
+          <p className="text-2xl font-bold text-[var(--color-brand-navy)]">{lastOrderDate ? formatDateTimeShort(lastOrderDate) : '—'}</p>
+          <p className="text-xs text-gray-500 mt-1">Последна поръчка</p>
         </div>
       </div>
 
@@ -156,7 +189,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
       {/* Section D: Recent Orders */}
       <section>
         <h2 className="text-lg font-semibold text-[var(--color-brand-navy)] mb-3">
-          Последни поръчки
+          Последни поръчки ({orders.length})
         </h2>
         {orders.length === 0 ? (
           <p className="text-sm text-gray-400">Няма поръчки.</p>
@@ -168,14 +201,17 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
                   <thead>
                     <tr className="bg-gray-50 border-b border-gray-200">
                       <th className="text-left px-4 py-3 font-semibold text-gray-600">Номер</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-600">Тип</th>
                       <th className="text-left px-4 py-3 font-semibold text-gray-600">Статус</th>
                       <th className="text-left px-4 py-3 font-semibold text-gray-600">Цена</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-600">Доставка</th>
                       <th className="text-left px-4 py-3 font-semibold text-gray-600">Дата</th>
                     </tr>
                   </thead>
                   <tbody>
                     {recentOrders.map((order: OrderRow) => {
                       const statusInfo = orderStatusMap[order.status];
+                      const boxName = boxTypeNames[order.box_type] ?? order.box_type;
                       return (
                         <tr key={order.id} className="border-b border-gray-100 hover:bg-gray-50 transition-colors">
                           <td className="px-4 py-3">
@@ -186,11 +222,15 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
                               {order.order_number}
                             </Link>
                           </td>
+                          <td className="px-4 py-3 text-gray-700">{boxName}</td>
                           <td className="px-4 py-3">
                             <StatusBadge {...statusInfo} />
                           </td>
                           <td className="px-4 py-3 text-gray-700">
                             {formatPrice(order.final_price_eur)}
+                          </td>
+                          <td className="px-4 py-3 text-gray-500 text-xs">
+                            {order.delivery_method === 'speedy_office' ? 'Офис на Speedy' : 'Адрес'}
                           </td>
                           <td className="px-4 py-3 text-gray-500">
                             {formatDateTimeShort(order.created_at)}
