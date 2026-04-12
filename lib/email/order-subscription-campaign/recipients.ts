@@ -33,7 +33,8 @@ export interface OrderConversionRecipient {
   orderNumber: string;
   email: string;
   maskedEmail: string;
-  fullName: string;
+  firstName: string;
+  lastName: string;
   phone: string | null;
   userId: string | null;
   hasAccount: boolean;
@@ -98,7 +99,8 @@ export async function getEligibleOrderConversionRecipients(
         orderNumber: o.order_number,
         email,
         maskedEmail: maskEmail(email),
-        fullName: o.customer_full_name,
+        firstName: (o.customer_first_name ?? '').trim(),
+        lastName: (o.customer_last_name ?? '').trim(),
         phone: o.customer_phone ?? null,
         userId: o.user_id ?? null,
         hasAccount: o.hasAccount,
@@ -154,7 +156,8 @@ export async function getAllCampaignRecipients(
         orderNumber: o.order_number,
         email,
         maskedEmail: maskEmail(email),
-        fullName: o.customer_full_name,
+        firstName: (o.customer_first_name ?? '').trim(),
+        lastName: (o.customer_last_name ?? '').trim(),
         phone: o.customer_phone ?? null,
         userId: o.user_id ?? null,
         hasAccount: o.hasAccount,

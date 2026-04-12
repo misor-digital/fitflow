@@ -139,18 +139,27 @@ export function validateSubmission(
     });
   }
 
-  // Required: Full name
-  if (!input.fullName.trim()) {
+  // Required: First name
+  if (!input.firstName.trim()) {
     errors.push({
-      field: 'fullName',
+      field: 'firstName',
       message: 'Името е задължително',
       code: 'required',
     });
-  } else if (input.fullName.trim().length < 2) {
+  } else if (input.firstName.trim().length < 2) {
     errors.push({
-      field: 'fullName',
+      field: 'firstName',
       message: 'Името трябва да е поне 2 символа',
       code: 'too_short',
+    });
+  }
+
+  // Required: Last name
+  if (!input.lastName.trim()) {
+    errors.push({
+      field: 'lastName',
+      message: 'Фамилията е задължителна',
+      code: 'required',
     });
   }
 

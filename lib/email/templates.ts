@@ -160,7 +160,7 @@ function generateDeliverySection(data: ConfirmationEmailData): string {
 
   const recipient = data.shippingAddress;
   const recipientHtml = recipient ? `
-    ${recipient.fullName ? `<p style="margin: 5px 0;"><strong>Получател:</strong> ${escapeHtml(recipient.fullName)}</p>` : ''}
+    ${recipient.firstName ? `<p style="margin: 5px 0;"><strong>Получател:</strong> ${escapeHtml(`${recipient.firstName} ${recipient.lastName}`.trim())}</p>` : ''}
     ${recipient.phone ? `<p style="margin: 5px 0;"><strong>Телефон:</strong> ${escapeHtml(recipient.phone)}</p>` : ''}
   ` : '';
 
@@ -259,7 +259,7 @@ export function generateConfirmationEmail(
 
   const bodyHtml = `
             <h2 style="color: ${EMAIL.colors.textHeading}; margin-top: 0; font-size: 24px;">
-              Благодарим ти, ${escapeHtml(data.fullName)}!
+              Благодарим ти, ${escapeHtml(data.firstName)}!
             </h2>
             
             <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">

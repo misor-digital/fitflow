@@ -283,7 +283,7 @@ export default function AddressesManager({ initialAddresses }: AddressesManagerP
                 </div>
 
                 {/* Name & phone */}
-                <p className="text-sm text-gray-800">{addr.full_name}</p>
+                <p className="text-sm text-gray-800">{addr.first_name} {addr.last_name}</p>
                 {addr.phone && (
                   <p className="text-sm text-gray-500">{addr.phone}</p>
                 )}

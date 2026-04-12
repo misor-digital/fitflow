@@ -30,7 +30,8 @@ interface OrderStepDetailsProps {
 interface SavedAddress {
   id: string;
   label: string | null;
-  full_name: string;
+  first_name: string;
+  last_name: string;
   phone: string | null;
   city: string;
   postal_code: string;
@@ -88,7 +89,8 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
   const [isGuest, setIsGuest] = useState(!isAuthenticated ? store.isGuest : false);
 
   // Contact info (for guest)
-  const [fullName, setFullName] = useState(store.fullName);
+  const [firstName, setFirstName] = useState(store.firstName);
+  const [lastName, setLastName] = useState(store.lastName);
   const [email, setEmail] = useState(store.email);
   const [phone, setPhone] = useState(store.phone);
 
@@ -158,7 +160,8 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
   // than onBehalfOfUserId (set asynchronously after a lookup/create call).
   useEffect(() => {
     if (isAuthenticated && user && !conversionToken) {
-      setFullName(user.fullName || '');
+      setFirstName(user.firstName || '');
+      setLastName(user.lastName || '');
       setEmail(user.email || '');
       setPhone(user.phone || '');
 
@@ -166,7 +169,8 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
       // isn't blank. Only overwrite if the user hasn't already typed something.
       setAddressLocal(prev => ({
         ...prev,
-        fullName: prev.fullName || user.fullName || '',
+        firstName: prev.firstName || user.firstName || '',
+        lastName: prev.lastName || user.lastName || '',
         phone: prev.phone || user.phone || '',
       }));
     }
@@ -179,17 +183,20 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
     if (!isAuthenticated && isGuest) {
       setAddressLocal(prev => {
         const next = { ...prev };
-        if (!addressNameTouched.current) next.fullName = fullName;
+        if (!addressNameTouched.current) {
+          next.firstName = firstName;
+          next.lastName = lastName;
+        }
         if (!addressPhoneTouched.current) next.phone = phone;
         return next;
       });
     }
-  }, [isAuthenticated, isGuest, fullName, phone]);
+  }, [isAuthenticated, isGuest, firstName, lastName, phone]);
 
   // Address field change handler
   const handleAddressChange = useCallback((field: keyof AddressInput, value: string) => {
     // Mark address name/phone as directly edited so auto-sync stops
-    if (field === 'fullName') addressNameTouched.current = true;
+    if (field === 'firstName' || field === 'lastName') addressNameTouched.current = true;
     if (field === 'phone') addressPhoneTouched.current = true;
     setAddressLocal(prev => ({ ...prev, [field]: value }));
 
@@ -227,8 +234,11 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
   const validateContactInfo = useCallback((): boolean => {
     const errors: Record<string, string> = {};
 
-    if (!fullName.trim() || fullName.trim().length < 2) {
-      errors.fullName = 'Името трябва да е поне 2 символа';
+    if (!firstName.trim() || firstName.trim().length < 2) {
+      errors.firstName = 'Името трябва да е поне 2 символа';
+    }
+    if (!lastName.trim() || lastName.trim().length < 2) {
+      errors.lastName = 'Фамилията трябва да е поне 2 символа';
     }
     if (!email.trim()) {
       errors.email = 'Имейл адресът е задължителен';
@@ -241,7 +251,7 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
 
     setContactErrors(errors);
     return Object.keys(errors).length === 0;
-  }, [fullName, email, phone]);
+  }, [firstName, lastName, email, phone]);
 
   // Validate address form
   const validateAddressForm = useCallback((): boolean => {
@@ -287,12 +297,12 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
     // address form (the admin on-behalf UI has no separate phone field).
     // For admin guest conversions, use the conversion source's customer data
     // already held in the local state (prefilled from the store).
-    const resolveContact = (): [string, string, string] => {
+    const resolveContact = (): [string, string, string, string] => {
       if (onBehalfOfUserId) {
         const s = useOrderStore.getState();
-        return [s.fullName, s.email, address.phone.trim()];
+        return [s.firstName, s.lastName, s.email, address.phone.trim()];
       }
-      return [fullName.trim(), email.trim(), phone.trim()];
+      return [firstName.trim(), lastName.trim(), email.trim(), phone.trim()];
     };
 
     // Fire Lead event once when user completes Step 3 (mid-funnel intent signal)
@@ -302,7 +312,7 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
 
     // --- SPEEDY OFFICE DELIVERY ---
     if (deliveryMethod === 'speedy_office') {
-      // Validate office selection + required fields (fullName, phone)
+      // Validate office selection + required fields (firstName, lastName, phone)
       const officeResult = validateSpeedyOffice(address, speedyOffice);
       if (!officeResult.valid) {
         const errors: Record<string, string> = {};
@@ -336,7 +346,8 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
       store.setSpeedyOffice(speedyOffice);
       store.setSelectedAddressId(null);
       store.setAddress({
-        fullName: address.fullName,
+        firstName: address.firstName,
+        lastName: address.lastName,
         phone: address.phone,
       });
       advanceToNext();
@@ -448,7 +459,8 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
   const renderOfficeForm = () => (
     <div className="space-y-3 sm:space-y-4">
       {/* Name + Phone (required for Speedy) */}
-      {renderField('Име на получател', 'fullName', address.fullName, (v) => handleAddressChange('fullName', v), true, addressErrors)}
+      {renderField('Име на получател', 'firstName', address.firstName, (v) => handleAddressChange('firstName', v), true, addressErrors)}
+      {renderField('Фамилия на получател', 'lastName', address.lastName, (v) => handleAddressChange('lastName', v), true, addressErrors)}
       {renderField('Телефон', 'phone', address.phone, (v) => handleAddressChange('phone', v), true, addressErrors, 'tel')}
 
       {/* Speedy Office Widget */}
@@ -471,7 +483,8 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
   // Address form fields
   const renderAddressForm = () => (
     <div className="space-y-3 sm:space-y-4">
-      {renderField('Име на получател', 'fullName', address.fullName, (v) => handleAddressChange('fullName', v), true, addressErrors)}
+      {renderField('Име на получател', 'firstName', address.firstName, (v) => handleAddressChange('firstName', v), true, addressErrors)}
+      {renderField('Фамилия на получател', 'lastName', address.lastName, (v) => handleAddressChange('lastName', v), true, addressErrors)}
       {renderField('Телефон', 'phone', address.phone, (v) => handleAddressChange('phone', v), false, addressErrors, 'tel')}
       <div className="grid grid-cols-2 gap-3 sm:gap-4">
         {renderField('Град', 'city', address.city, (v) => handleAddressChange('city', v), true, addressErrors)}
@@ -499,7 +512,8 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
 
         {/* Admin: Create or link customer account */}
         <AdminCustomerPanel
-          defaultFullName={store.fullName}
+          defaultFirstName={store.firstName}
+          defaultLastName={store.lastName}
           defaultEmail={store.email}
         />
 
@@ -571,7 +585,8 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
 
         {/* Admin: Optional account creation */}
         <AdminCustomerPanel
-          defaultFullName={store.fullName}
+          defaultFirstName={store.firstName}
+          defaultLastName={store.lastName}
           defaultEmail={store.email}
           optional
         />
@@ -677,7 +692,8 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
                 Данни за контакт
               </h3>
               <div className="space-y-3 sm:space-y-4">
-                {renderField('Имена', 'fullName', fullName, setFullName, true, contactErrors)}
+                {renderField('Име', 'firstName', firstName, setFirstName, true, contactErrors)}
+                {renderField('Фамилия', 'lastName', lastName, setLastName, true, contactErrors)}
                 {renderField('Имейл', 'email', email, setEmail, true, contactErrors, 'email')}
                 {renderField('Телефон', 'phone', phone, setPhone, false, contactErrors, 'tel')}
               </div>
@@ -734,7 +750,7 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
       {/* Greeting */}
       <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg mb-6">
         <p className="text-base sm:text-lg text-[var(--color-brand-navy)]">
-          Здравейте, <span className="font-bold">{user?.fullName}</span>
+          Здравейте, <span className="font-bold">{user?.firstName}</span>
         </p>
       </div>
 
@@ -784,7 +800,7 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
                         </div>
                       )}
                       <div className="text-sm sm:text-base font-semibold text-[var(--color-brand-navy)]">
-                        {addr.full_name}
+                        {addr.first_name} {addr.last_name}
                       </div>
                       <div className="text-sm text-gray-600 mt-0.5">
                         {addr.street_address}

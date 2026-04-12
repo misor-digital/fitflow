@@ -5,7 +5,8 @@ import { useOrderStore } from '@/store/orderStore';
 
 interface AdminCustomerPanelProps {
   /** Pre-filled from preorder data via order store */
-  defaultFullName: string;
+  defaultFirstName: string;
+  defaultLastName: string;
   defaultEmail: string;
   /** When true, account creation is optional - the admin can skip it */
   optional?: boolean;
@@ -14,11 +15,13 @@ interface AdminCustomerPanelProps {
 type PanelStatus = 'checking' | 'ready' | 'exists' | 'created' | 'error';
 
 export default function AdminCustomerPanel({
-  defaultFullName,
+  defaultFirstName,
+  defaultLastName,
   defaultEmail,
   optional = false,
 }: AdminCustomerPanelProps) {
-  const [fullName, setFullName] = useState(defaultFullName);
+  const [firstName, setFirstName] = useState(defaultFirstName);
+  const [lastName, setLastName] = useState(defaultLastName);
   const [email, setEmail] = useState(defaultEmail);
   const [status, setStatus] = useState<PanelStatus>('checking');
   const [_userId, setUserId] = useState<string | null>(null);
@@ -38,7 +41,8 @@ export default function AdminCustomerPanel({
         useOrderStore.getState().setOnBehalfOfUserId(data.userId);
         // Keep the order store's contact info in sync with the customer
         useOrderStore.getState().setContactInfo(
-          fullName.trim(),
+          firstName.trim(),
+          lastName.trim(),
           emailToCheck.trim().toLowerCase(),
           '',
         );
@@ -48,7 +52,7 @@ export default function AdminCustomerPanel({
     } catch {
       setStatus('ready'); // Lookup failed, allow manual creation
     }
-  }, [fullName]);
+}, [firstName, lastName]);
 
   // On mount - auto-lookup
   useEffect(() => {
@@ -68,7 +72,8 @@ export default function AdminCustomerPanel({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: email.trim().toLowerCase(),
-          fullName: fullName.trim(),
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
         }),
       });
       const data = await res.json();
@@ -82,7 +87,8 @@ export default function AdminCustomerPanel({
       // Sync the (possibly edited) customer name/email back to the order store
       // so the confirmation step displays the customer's identity, not the admin's.
       useOrderStore.getState().setContactInfo(
-        fullName.trim(),
+        firstName.trim(),
+        lastName.trim(),
         email.trim().toLowerCase(),
         '',
       );
@@ -122,29 +128,54 @@ export default function AdminCustomerPanel({
 
       {/* Fields */}
       <div className="space-y-4">
-        {/* Full Name */}
-        <div>
-          <label
-            htmlFor="admin-customer-name"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Име
-          </label>
-          <input
-            id="admin-customer-name"
-            type="text"
-            value={fullName}
-            onChange={(e) => setFullName(e.target.value)}
-            readOnly={isFieldReadOnly}
-            disabled={isFieldDisabled}
-            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:outline-none text-[var(--color-brand-navy)] text-sm sm:text-base ${
-              isFieldReadOnly
-                ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
-                : isFieldDisabled
-                  ? 'bg-gray-50 text-gray-400 cursor-wait'
-                  : 'bg-white'
-            }`}
-          />
+        {/* Name */}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label
+              htmlFor="admin-customer-firstName"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Име
+            </label>
+            <input
+              id="admin-customer-firstName"
+              type="text"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              readOnly={isFieldReadOnly}
+              disabled={isFieldDisabled}
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:outline-none text-[var(--color-brand-navy)] text-sm sm:text-base ${
+                isFieldReadOnly
+                  ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
+                  : isFieldDisabled
+                    ? 'bg-gray-50 text-gray-400 cursor-wait'
+                    : 'bg-white'
+              }`}
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="admin-customer-lastName"
+              className="block text-sm font-medium text-gray-700 mb-1"
+            >
+              Фамилия
+            </label>
+            <input
+              id="admin-customer-lastName"
+              type="text"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              readOnly={isFieldReadOnly}
+              disabled={isFieldDisabled}
+              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:outline-none text-[var(--color-brand-navy)] text-sm sm:text-base ${
+                isFieldReadOnly
+                  ? 'bg-gray-100 text-gray-500 cursor-not-allowed'
+                  : isFieldDisabled
+                    ? 'bg-gray-50 text-gray-400 cursor-wait'
+                    : 'bg-white'
+              }`}
+            />
+          </div>
         </div>
 
         {/* Email */}
@@ -181,7 +212,7 @@ export default function AdminCustomerPanel({
             <button
               type="button"
               onClick={handleCreate}
-              disabled={isCreating || !email.trim() || !fullName.trim()}
+              disabled={isCreating || !email.trim() || !firstName.trim() || !lastName.trim()}
               className="bg-[var(--color-brand-orange)] text-white px-6 py-3 rounded-full font-semibold hover:bg-[#e67100] transition-all disabled:opacity-50"
             >
               {isCreating ? 'Създаване...' : 'Създай акаунт'}

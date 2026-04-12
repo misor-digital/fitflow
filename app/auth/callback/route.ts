@@ -80,8 +80,8 @@ export async function GET(request: NextRequest) {
 
   /* --- Success: sync user & redirect ------------------------------ */
   if (data?.user?.email) {
-    const fullName = data.user.user_metadata?.full_name as string | undefined;
-    const nameParts = (fullName ?? '').trim().split(/\s+/);
+    const fullNameMeta = data.user.user_metadata?.full_name as string | undefined;
+    const nameParts = (fullNameMeta ?? '').trim().split(/\\s+/);
     syncNewUser({
       email: data.user.email,
       firstName: nameParts[0] || '',

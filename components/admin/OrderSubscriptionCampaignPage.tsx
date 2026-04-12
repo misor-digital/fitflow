@@ -11,7 +11,8 @@ interface Recipient {
   orderNumber: string;
   email: string;
   fullEmail: string;
-  fullName: string;
+  firstName: string;
+  lastName: string;
   hasAccount: boolean;
   boxType: string;
   boxName: string;
@@ -103,7 +104,7 @@ export default function OrderSubscriptionCampaignPage() {
       if (accountFilter === 'registered' && !r.hasAccount) return false;
       if (
         q &&
-        !r.fullName.toLowerCase().includes(q) &&
+        !`${r.firstName} ${r.lastName}`.toLowerCase().includes(q) &&
         !r.email.toLowerCase().includes(q) &&
         !r.orderNumber.toLowerCase().includes(q)
       ) {
@@ -611,7 +612,7 @@ export default function OrderSubscriptionCampaignPage() {
                   </td>
                   <td className="px-4 py-3 text-sm font-mono text-gray-900">{r.orderNumber}</td>
                   <td className="px-4 py-3 text-sm text-gray-900" title={r.fullEmail}>{r.email}</td>
-                  <td className="px-4 py-3 text-sm text-gray-900">{r.fullName}</td>
+                  <td className="px-4 py-3 text-sm text-gray-900">{r.firstName} {r.lastName}</td>
                   <td className="px-4 py-3 text-sm text-gray-900">
                     {BOX_TYPE_LABELS[r.boxType] ?? r.boxName}
                   </td>

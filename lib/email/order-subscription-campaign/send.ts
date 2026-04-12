@@ -159,11 +159,12 @@ export async function sendOrderConversionEmails(
           email_type: 'transactional',
           email_category: DRY_RUN_CATEGORY,
           recipient_email: recipient.email,
-          recipient_name: recipient.fullName,
+          recipient_name: `${recipient.firstName} ${recipient.lastName}`.trim(),
           subject: EMAIL_SUBJECT,
           status: 'sent',
           params: {
-            fullName: recipient.fullName,
+            firstName: recipient.firstName,
+            lastName: recipient.lastName,
             boxType: recipient.boxType,
             conversionUrl: recipient.conversionUrl,
             promoCode: campaignPromoCode ?? null,
@@ -183,7 +184,7 @@ export async function sendOrderConversionEmails(
 
         // Send via Brevo - the callback already logs to email_send_log
         const result = await sendTransactionalEmail({
-          to: { email: recipient.email, name: recipient.fullName },
+          to: { email: recipient.email, name: `${recipient.firstName} ${recipient.lastName}`.trim() },
           subject: EMAIL_SUBJECT,
           htmlContent: html,
           tags: ['order-to-sub-conversion'],

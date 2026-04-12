@@ -92,9 +92,9 @@ export function CustomersTable({
                       className="text-[var(--color-brand-navy)] hover:underline font-medium"
                     >
                       <span className="relative group cursor-default">
-                        <span>{maskName(customer.full_name)}</span>
+                        <span>{maskName(`${customer.first_name} ${customer.last_name}`)}</span>
                         <span className="absolute left-0 bottom-full mb-1 hidden group-hover:block bg-gray-900 text-white text-xs rounded px-2 py-1 whitespace-nowrap z-10 shadow-lg">
-                          {customer.full_name}
+                          {customer.first_name} {customer.last_name}
                         </span>
                       </span>
                     </Link>

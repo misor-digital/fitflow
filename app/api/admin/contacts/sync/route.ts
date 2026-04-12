@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
       while (hasMore) {
         const { data: profiles, error: profileError } = await supabaseAdmin
           .from('user_profiles')
-          .select('id, full_name, user_type')
+          .select('id, first_name, last_name, user_type')
           .range(offset, offset + BATCH_SIZE - 1)
           .order('created_at', { ascending: true });
 
@@ -72,9 +72,8 @@ export async function POST(request: NextRequest) {
             const email = authUser?.user?.email;
             if (!email) continue;
 
-            const nameParts = (profile.full_name ?? '').trim().split(/\s+/);
-            const firstName = nameParts[0] || '';
-            const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : undefined;
+            const firstName = profile.first_name || '';
+            const lastName = profile.last_name || undefined;
 
             const listIds = EMAIL_CONFIG.lists.customers
               ? [EMAIL_CONFIG.lists.customers]
@@ -191,7 +190,7 @@ export async function POST(request: NextRequest) {
       while (hasMore) {
         const { data: preorders, error: preorderError } = await supabaseAdmin
           .from('preorders')
-          .select('id, email, full_name, box_type, conversion_status')
+          .select('id, email, first_name, last_name, box_type, conversion_status')
           .range(offset, offset + BATCH_SIZE - 1)
           .order('created_at', { ascending: true });
 
@@ -207,9 +206,8 @@ export async function POST(request: NextRequest) {
 
         for (const preorder of preorders) {
           try {
-            const nameParts = (preorder.full_name ?? '').trim().split(/\s+/);
-            const firstName = nameParts[0] || '';
-            const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : undefined;
+            const firstName = preorder.first_name || '';
+            const lastName = preorder.last_name || undefined;
 
             const isPending = preorder.conversion_status === 'pending';
             const listIds = isPending && EMAIL_CONFIG.lists.preorders

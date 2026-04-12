@@ -49,7 +49,7 @@ export default async function StaffListPage() {
           <tbody>
             {staff?.map(member => (
               <tr key={member.id} className="border-b hover:bg-gray-50">
-                <td className="py-3 px-4">{member.full_name}</td>
+                <td className="py-3 px-4">{member.first_name} {member.last_name}</td>
                 <td className="py-3 px-4 capitalize">{member.staff_role?.replace('_', ' ')}</td>
                 <td className="py-3 px-4 text-sm text-gray-500">
                   {formatDateShort(member.created_at)}

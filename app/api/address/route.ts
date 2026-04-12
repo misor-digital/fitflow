@@ -12,7 +12,8 @@ import { checkRateLimit } from '@/lib/utils/rateLimit';
 import type { AddressInsert } from '@/lib/supabase/types';
 
 // Field length limits
-const MAX_FULL_NAME = 200;
+const MAX_FIRST_NAME = 100;
+const MAX_LAST_NAME = 100;
 const MAX_CITY = 100;
 const MAX_STREET = 500;
 const MAX_LABEL = 50;
@@ -140,7 +141,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       const validationResult = validateSpeedyOffice(
         {
           label: sanitized.label ?? '',
-          fullName: sanitized.fullName ?? '',
+          firstName: sanitized.firstName ?? '',
+          lastName: sanitized.lastName ?? '',
           phone: sanitized.phone ?? '',
           city: '',
           postalCode: '',
@@ -163,7 +165,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     } else {
       const validationResult = validateAddress({
         label: sanitized.label ?? '',
-        fullName: sanitized.fullName ?? '',
+        firstName: sanitized.firstName ?? '',
+        lastName: sanitized.lastName ?? '',
         phone: sanitized.phone ?? '',
         city: sanitized.city ?? '',
         postalCode: sanitized.postalCode ?? '',
@@ -189,7 +192,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         ? {
             user_id: session.userId,
             delivery_method: 'speedy_office',
-            full_name: sanitized.fullName!,
+            first_name: sanitized.firstName!,
+            last_name: sanitized.lastName!,
             phone: sanitized.phone || null,
             speedy_office_id: sanitized.speedyOfficeId!,
             speedy_office_name: sanitized.speedyOfficeName!,
@@ -201,7 +205,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         : {
             user_id: session.userId,
             delivery_method: 'address',
-            full_name: sanitized.fullName!,
+            first_name: sanitized.firstName!,
+            last_name: sanitized.lastName!,
             city: sanitized.city!,
             postal_code: sanitized.postalCode!,
             street_address: sanitized.streetAddress!,
@@ -232,7 +237,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 export interface SanitizedBody {
   deliveryMethod?: DeliveryMethodValue;
   label?: string;
-  fullName?: string;
+  firstName?: string;
+  lastName?: string;
   phone?: string;
   city?: string;
   postalCode?: string;
@@ -263,7 +269,8 @@ export function sanitizeAddressBody(body: Record<string, unknown>): SanitizedBod
   return {
     deliveryMethod,
     label: trimStr(body.label),
-    fullName: trimStr(body.fullName),
+    firstName: trimStr(body.firstName),
+    lastName: trimStr(body.lastName),
     phone: trimStr(body.phone),
     city: trimStr(body.city),
     postalCode: trimStr(body.postalCode),
@@ -287,10 +294,18 @@ export function validateFieldLengths(
 ): Array<{ field: string; message: string; code: string }> {
   const errors: Array<{ field: string; message: string; code: string }> = [];
 
-  if (data.fullName && data.fullName.length > MAX_FULL_NAME) {
+  if (data.firstName && data.firstName.length > MAX_FIRST_NAME) {
     errors.push({
-      field: 'fullName',
-      message: `Името трябва да е най-много ${MAX_FULL_NAME} символа`,
+      field: 'firstName',
+      message: `Името трябва да е най-много ${MAX_FIRST_NAME} символа`,
+      code: 'too_long',
+    });
+  }
+
+  if (data.lastName && data.lastName.length > MAX_LAST_NAME) {
+    errors.push({
+      field: 'lastName',
+      message: `Фамилията трябва да е най-много ${MAX_LAST_NAME} символа`,
       code: 'too_long',
     });
   }

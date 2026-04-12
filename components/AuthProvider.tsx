@@ -40,7 +40,8 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
           const authUser: AuthUser = {
             id: userId,
             email,
-            fullName: profile.full_name ?? '',
+            firstName: profile.first_name ?? '',
+            lastName: profile.last_name ?? '',
             phone: profile.phone ?? null,
             userType: profile.user_type ?? 'customer',
             staffRole: profile.staff_role ?? null,

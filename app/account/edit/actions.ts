@@ -3,14 +3,17 @@
 import { requireAuth } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 
-export async function updateProfile(data: { fullName: string; phone: string }) {
+export async function updateProfile(data: { firstName: string; lastName: string; phone: string }) {
   const session = await requireAuth();
 
   // Validate
-  if (!data.fullName.trim()) {
-    return { error: 'Името е задължително' };
+  if (!data.firstName.trim()) {
+    return { error: 'Първото име е задължително' };
   }
-  if (data.fullName.length > 100) {
+  if (!data.lastName.trim()) {
+    return { error: 'Фамилията е задължителна' };
+  }
+  if (data.firstName.length + data.lastName.length > 100) {
     return { error: 'Името е прекалено дълго' };
   }
   if (data.phone && data.phone.length > 20) {
@@ -20,7 +23,8 @@ export async function updateProfile(data: { fullName: string; phone: string }) {
   const { error } = await supabaseAdmin
     .from('user_profiles')
     .update({
-      full_name: data.fullName.trim(),
+      first_name: data.firstName.trim(),
+      last_name: data.lastName.trim(),
       phone: data.phone.trim() || null,
     })
     .eq('id', session.userId);

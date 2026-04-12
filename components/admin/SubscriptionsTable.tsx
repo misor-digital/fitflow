@@ -70,7 +70,7 @@ export function SubscriptionsTable({
 
                   {/* Client */}
                   <td className="px-4 py-3">
-                    <div className="font-medium text-gray-900">{sub.user_full_name}</div>
+                    <div className="font-medium text-gray-900">{sub.user_first_name} {sub.user_last_name}</div>
                     <div className="text-xs text-gray-500">{sub.user_email}</div>
                   </td>
 

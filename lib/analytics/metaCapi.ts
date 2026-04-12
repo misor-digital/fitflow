@@ -89,7 +89,8 @@ export async function buildCapiUserData(opts: {
   headersObj: Headers;
   email?: string;
   phone?: string;
-  fullName?: string;
+  firstName?: string;
+  lastName?: string;
   fbc?: string;
   fbp?: string;
   userId?: string;
@@ -101,9 +102,9 @@ export async function buildCapiUserData(opts: {
   const userAgent = opts.headersObj.get('user-agent') || '';
   const referer = opts.headersObj.get('referer') || '';
 
-  const nameParts = (opts.fullName ?? '').trim().split(' ');
-  const firstName = nameParts[0] || '';
-  const lastName = nameParts.slice(1).join(' ') || '';
+  const nameParts = [opts.firstName ?? '', opts.lastName ?? ''];
+  const firstName = nameParts[0].trim();
+  const lastName = nameParts[1].trim();
 
   const [hashedEmail, hashedPhone, hashedFirstName, hashedLastName, hashedUserId] = await Promise.all([
     opts.email ? hashForMeta(opts.email) : Promise.resolve(undefined),

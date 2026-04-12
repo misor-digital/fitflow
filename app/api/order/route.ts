@@ -94,7 +94,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     const {
-      fullName,
+      firstName,
+      lastName,
       email,
       phone,
       isGuest,
@@ -112,7 +113,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       deliveryCycleId,
       onBehalfOfUserId,
     } = data as {
-      fullName?: string;
+      firstName?: string;
+      lastName?: string;
       email?: string;
       phone?: string;
       isGuest?: boolean;
@@ -141,14 +143,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     };
 
     // Required fields
-    if (!fullName || !email || !boxType) {
+    if (!firstName || !lastName || !email || !boxType) {
       return NextResponse.json(
         { error: 'Липсват задължителни полета.' },
         { status: 400 },
       );
     }
 
-    if (typeof fullName !== 'string' || typeof email !== 'string' || typeof boxType !== 'string') {
+    if (typeof firstName !== 'string' || typeof lastName !== 'string' || typeof email !== 'string' || typeof boxType !== 'string') {
       return NextResponse.json(
         { error: 'Невалидни типове полета.' },
         { status: 400 },
@@ -182,7 +184,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // Input length limits
-    if (fullName.trim().length < 2 || fullName.length > MAX_NAME) {
+    const nameLen = firstName.trim().length + lastName.trim().length;
+    if (nameLen < 2 || nameLen > MAX_NAME) {
       return NextResponse.json(
         { error: 'Името трябва да е между 2 и 200 символа.' },
         { status: 400 },
@@ -451,8 +454,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         );
       }
 
-      const recipientName = fullName?.trim() || address?.fullName?.trim();
-      if (!recipientName) {
+      const recipientFirstName = firstName?.trim() || address?.firstName?.trim();
+      const recipientLastName = lastName?.trim() || address?.lastName?.trim();
+      if (!recipientFirstName || !recipientLastName) {
         return NextResponse.json(
           { error: 'Името на получателя е задължително.' },
           { status: 400 },
@@ -460,7 +464,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       }
 
       addressSnapshot = {
-        full_name: recipientName,
+        first_name: recipientFirstName,
+        last_name: recipientLastName,
         phone: recipientPhone,
         city: '',
         postal_code: '',
@@ -488,7 +493,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       }
 
       addressSnapshot = {
-        full_name: savedAddress.full_name,
+        first_name: savedAddress.first_name,
+        last_name: savedAddress.last_name,
         phone: savedAddress.phone,
         city: savedAddress.city ?? '',
         postal_code: savedAddress.postal_code ?? '',
@@ -525,7 +531,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           const newAddress = await createAddress({
             user_id: userId,
             label: address.label || null,
-            full_name: address.fullName.trim(),
+            first_name: address.firstName.trim(),
+            last_name: address.lastName.trim(),
             phone: address.phone.trim() || null,
             city: address.city.trim(),
             postal_code: address.postalCode.trim(),
@@ -568,7 +575,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const orderData: OrderInsert = {
       user_id: userId,
       customer_email: email.trim().toLowerCase(),
-      customer_full_name: fullName.trim(),
+      customer_first_name: firstName.trim(),
+      customer_last_name: lastName.trim(),
       customer_phone: phone?.trim() || profilePhone || null,
       shipping_address: addressSnapshot,
       address_id: addressId,
@@ -659,7 +667,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
       // Build ConfirmationEmailData from available order data
       const emailData: ConfirmationEmailData = {
-        fullName: fullName.trim(),
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
         email: email.trim().toLowerCase(),
         boxType: effectiveBoxType,
         boxTypeDisplay,
@@ -688,7 +697,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         speedyOfficeName: addressSnapshot.speedy_office_name ?? null,
         speedyOfficeAddress: addressSnapshot.speedy_office_address ?? null,
         shippingAddress: {
-          fullName: addressSnapshot.full_name,
+          firstName: addressSnapshot.first_name,
+          lastName: addressSnapshot.last_name,
           phone: addressSnapshot.phone,
           city: addressSnapshot.city,
           postalCode: addressSnapshot.postal_code,
@@ -711,7 +721,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
       // Send via Brevo wrapper (auto-logs to email_send_log)
       const result = await sendTransactionalEmail({
-        to: { email: email.trim().toLowerCase(), name: fullName.trim() },
+        to: { email: email.trim().toLowerCase(), name: `${firstName.trim()} ${lastName.trim()}`.trim() },
         subject: 'FitFlow - Поръчката ти е потвърдена!',
         htmlContent,
         tags: ['order', preorder ? 'preorder-conversion' : 'confirmation'],
@@ -754,7 +764,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         headersObj: headersList,
         email,
         phone: phone || undefined,
-        fullName,
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
         fbc: (data as Record<string, unknown>).fbc as string | undefined,
         fbp: (data as Record<string, unknown>).fbp as string | undefined,
       });

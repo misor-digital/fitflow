@@ -35,7 +35,7 @@ export default async function SetupPasswordPage() {
           Начало
         </Link>
         <h1 className="text-3xl font-bold text-center text-[var(--color-brand-navy)] mb-4">
-          Добре дошли, {session.profile.full_name}!
+          Добре дошли, {session.profile.first_name}!
         </h1>
         <p className="text-center text-gray-600 mb-8">
           Задайте парола за вашия акаунт или продължете без нея.

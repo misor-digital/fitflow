@@ -69,7 +69,8 @@ export interface ContactResult {
 
 // Confirmation email data (shared by all confirmation emails)
 export interface ConfirmationEmailData {
-  fullName: string;
+  firstName: string;
+  lastName: string;
   email: string;
   boxType: string;
   boxTypeDisplay: string;
@@ -102,7 +103,8 @@ export interface ConfirmationEmailData {
   speedyOfficeName?: string | null;
   speedyOfficeAddress?: string | null;
   shippingAddress?: {
-    fullName: string;
+    firstName: string;
+    lastName: string;
     phone?: string | null;
     city?: string;
     postalCode?: string;

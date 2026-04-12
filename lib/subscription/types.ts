@@ -53,7 +53,8 @@ export interface BatchGenerationResult {
 /** Subscription with joined user info for admin tables */
 export interface SubscriptionWithUserInfo extends SubscriptionRow {
   user_email: string;
-  user_full_name: string;
+  user_first_name: string;
+  user_last_name: string;
 }
 
 /** History action types for type safety */

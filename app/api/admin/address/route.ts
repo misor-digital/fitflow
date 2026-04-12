@@ -185,7 +185,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       const validationResult = validateSpeedyOffice(
         {
           label: sanitized.label ?? '',
-          fullName: sanitized.fullName ?? '',
+          firstName: sanitized.firstName ?? '',
+          lastName: sanitized.lastName ?? '',
           phone: sanitized.phone ?? '',
           city: '',
           postalCode: '',
@@ -208,7 +209,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     } else {
       const validationResult = validateAddress({
         label: sanitized.label ?? '',
-        fullName: sanitized.fullName ?? '',
+        firstName: sanitized.firstName ?? '',
+        lastName: sanitized.lastName ?? '',
         phone: sanitized.phone ?? '',
         city: sanitized.city ?? '',
         postalCode: sanitized.postalCode ?? '',
@@ -234,7 +236,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         ? {
             user_id: userId,
             delivery_method: 'speedy_office',
-            full_name: sanitized.fullName!,
+            first_name: sanitized.firstName!,
+            last_name: sanitized.lastName!,
             phone: sanitized.phone || null,
             speedy_office_id: sanitized.speedyOfficeId!,
             speedy_office_name: sanitized.speedyOfficeName!,
@@ -246,7 +249,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         : {
             user_id: userId,
             delivery_method: 'address',
-            full_name: sanitized.fullName!,
+            first_name: sanitized.firstName!,
+            last_name: sanitized.lastName!,
             city: sanitized.city!,
             postal_code: sanitized.postalCode!,
             street_address: sanitized.streetAddress!,

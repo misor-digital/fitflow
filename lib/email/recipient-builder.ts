@@ -72,13 +72,16 @@ export async function buildSubscriberRecipients(
   // Fetch user profiles for names
   const { data: profiles, error: profErr } = await supabaseAdmin
     .from('user_profiles')
-    .select('id, full_name')
+    .select('id, first_name, last_name')
     .in('id', userIds);
 
   if (profErr) throw new Error(`Failed to fetch user profiles: ${profErr.message}`);
 
-  const profileMap = new Map(
-    (profiles ?? []).map((p) => [p.id, p.full_name]),
+  const profileFirstNameMap = new Map(
+    (profiles ?? []).map((p) => [p.id, p.first_name]),
+  );
+  const profileLastNameMap = new Map(
+    (profiles ?? []).map((p) => [p.id, p.last_name]),
   );
 
   // Fetch emails from auth.users via admin API
@@ -115,9 +118,10 @@ export async function buildSubscriberRecipients(
     recipients.push({
       campaign_id: campaignId,
       email: email.trim().toLowerCase(),
-      full_name: profileMap.get(sub.user_id) ?? null,
+      first_name: profileFirstNameMap.get(sub.user_id) ?? null,
+      last_name: profileLastNameMap.get(sub.user_id) ?? null,
       params: {
-        firstName: (profileMap.get(sub.user_id) ?? '').split(' ')[0] || null,
+        firstName: profileFirstNameMap.get(sub.user_id) ?? null,
         boxType: sub.box_type,
         frequency: sub.frequency,
         manageUrl,
@@ -147,7 +151,7 @@ export async function buildCustomerRecipients(
     // Customers who have placed at least one order
     let query = supabaseAdmin
       .from('orders')
-      .select('customer_email, customer_full_name')
+      .select('customer_email, customer_first_name, customer_last_name')
       .limit(MAX_RECIPIENTS);
 
     if (filter.lastOrderBefore) {
@@ -159,22 +163,23 @@ export async function buildCustomerRecipients(
     if (!orders?.length) return 0;
 
     // De-duplicate by email (lowercase)
-    const seen = new Map<string, string>(); // email → full_name
+    const seen = new Map<string, { firstName: string; lastName: string }>(); // email → names
     for (const o of orders) {
       const email = o.customer_email.trim().toLowerCase();
       if (!seen.has(email)) {
-        seen.set(email, o.customer_full_name);
+        seen.set(email, { firstName: o.customer_first_name, lastName: o.customer_last_name });
       }
     }
 
     const recipients: EmailCampaignRecipientInsert[] = Array.from(
       seen.entries(),
-    ).map(([email, fullName]) => ({
+    ).map(([email, names]) => ({
       campaign_id: campaignId,
       email,
-      full_name: fullName,
+      first_name: names.firstName,
+      last_name: names.lastName,
       params: {
-        firstName: fullName.split(' ')[0] || null,
+        firstName: names.firstName || null,
       },
     }));
 
@@ -184,7 +189,7 @@ export async function buildCustomerRecipients(
   // All registered customers (user_profiles)
   const { data: profiles, error } = await supabaseAdmin
     .from('user_profiles')
-    .select('id, full_name')
+    .select('id, first_name, last_name')
     .limit(MAX_RECIPIENTS);
 
   if (error) throw new Error(`Failed to fetch user profiles: ${error.message}`);
@@ -218,9 +223,10 @@ export async function buildCustomerRecipients(
     recipients.push({
       campaign_id: campaignId,
       email: email.trim().toLowerCase(),
-      full_name: profile.full_name,
+      first_name: profile.first_name,
+      last_name: profile.last_name,
       params: {
-        firstName: profile.full_name.split(' ')[0] || null,
+        firstName: profile.first_name || null,
       },
     });
   }

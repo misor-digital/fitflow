@@ -86,7 +86,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
       {/* Section A: Customer Info Card */}
       <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
         <h1 className="text-2xl font-bold text-[var(--color-brand-navy)] mb-3">
-          {profile.full_name}
+          {profile.first_name} {profile.last_name}
         </h1>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-600 mb-4">
           <p><span className="font-medium text-gray-700">Имейл:</span> {email}</p>

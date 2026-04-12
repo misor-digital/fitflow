@@ -37,7 +37,8 @@ export function transformToPersistedFormat(
 
   return {
     // Contact info
-    full_name: input.fullName.trim(),
+    first_name: input.firstName.trim(),
+    last_name: input.lastName.trim(),
     email: input.email.trim().toLowerCase(),
     phone: input.phone.trim() || null,
 
@@ -76,7 +77,8 @@ export function transformToPersistedFormat(
  * This matches what the API route expects
  */
 export interface ApiRequest {
-  fullName: string;
+  firstName: string;
+  lastName: string;
   email: string;
   phone?: string;
   boxType: BoxTypeId;
@@ -110,7 +112,8 @@ export function transformToApiRequest(input: UserInput): ApiRequest {
   }
 
   const request: ApiRequest = {
-    fullName: input.fullName.trim(),
+    firstName: input.firstName.trim(),
+    lastName: input.lastName.trim(),
     email: input.email.trim().toLowerCase(),
     boxType: input.boxType,
     wantsPersonalization: input.wantsPersonalization ?? false,
@@ -172,7 +175,8 @@ export const INITIAL_USER_INPUT: UserInput = {
   dietary: [],
   dietaryOther: '',
   additionalNotes: '',
-  fullName: '',
+  firstName: '',
+  lastName: '',
   email: '',
   phone: '',
   promoCode: null,
@@ -200,7 +204,8 @@ export function extractUserInput(store: Record<string, unknown>): UserInput {
     dietary: (store.dietary as string[]) ?? [],
     dietaryOther: (store.dietaryOther as string) ?? '',
     additionalNotes: (store.additionalNotes as string) ?? '',
-    fullName: (store.fullName as string) ?? '',
+    firstName: (store.firstName as string) ?? '',
+    lastName: (store.lastName as string) ?? '',
     email: (store.email as string) ?? '',
     phone: (store.phone as string) ?? '',
     promoCode: (store.promoCode as string | null) ?? null,

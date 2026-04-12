@@ -3,7 +3,7 @@
  * Sends a FitFlow-branded email confirmation using Brevo.
  * Bypasses Supabase's built-in confirmation email.
  *
- * Body: { email: string, fullName: string }
+ * Body: { email: string, firstName: string, lastName: string }
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
@@ -15,11 +15,11 @@ import { isValidEmail } from '@/lib/catalog';
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const body = await request.json();
-    const { email, fullName } = body as { email?: string; fullName?: string };
+    const { email, firstName, lastName } = body as { email?: string; firstName?: string; lastName?: string };
 
-    if (!email || typeof email !== 'string' || !fullName || typeof fullName !== 'string') {
+    if (!email || typeof email !== 'string' || !firstName || typeof firstName !== 'string' || !lastName || typeof lastName !== 'string') {
       return NextResponse.json(
-        { error: 'Полетата email и fullName са задължителни.' },
+        { error: 'Полетата email, firstName и lastName са задължителни.' },
         { status: 400 },
       );
     }
@@ -53,13 +53,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     callbackUrl.searchParams.set('token_hash', linkData.properties.hashed_token);
     callbackUrl.searchParams.set('type', 'magiclink');
 
+    const displayName = `${firstName.trim()} ${lastName.trim()}`;
+
     const htmlContent = generateEmailConfirmationEmail(
-      fullName.trim(),
+      displayName,
       callbackUrl.toString(),
     );
 
     await sendTransactionalEmail({
-      to: { email: normalizedEmail, name: fullName.trim() },
+      to: { email: normalizedEmail, name: displayName },
       subject: 'FitFlow - Потвърди имейла си',
       htmlContent,
       tags: ['auth', 'email-confirmation'],

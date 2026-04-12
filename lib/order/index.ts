@@ -111,6 +111,9 @@ export {
 
   // Delivery method formatting
   formatDeliveryMethodLabel,
+
+  // Name display helper
+  displayName,
 } from './format';
 
 // ============================================================================

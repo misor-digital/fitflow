@@ -286,7 +286,7 @@ export default function AdminAddressManager({
                 </div>
 
                 {/* Details */}
-                <p className="text-sm text-gray-700">{addr.full_name}</p>
+                <p className="text-sm text-gray-700">{addr.first_name} {addr.last_name}</p>
                 {addr.phone && <p className="text-sm text-gray-500">{addr.phone}</p>}
                 <p className="text-sm text-gray-600 mt-1">{display.primary}</p>
                 {display.secondary && (

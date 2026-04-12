@@ -37,9 +37,10 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     // ---- Parse & validate body -------------------------------------------
     const body = await request.json();
-    const { email, fullName, wantsPromos } = body as {
+    const { email, firstName, lastName, wantsPromos } = body as {
       email?: string;
-      fullName?: string;
+      firstName?: string;
+      lastName?: string;
       wantsPromos?: boolean;
     };
 
@@ -59,16 +60,18 @@ export async function POST(request: Request): Promise<NextResponse> {
       );
     }
 
-    if (!fullName || typeof fullName !== 'string' || !fullName.trim()) {
+    if (!firstName || typeof firstName !== 'string' || !firstName.trim() ||
+        !lastName || typeof lastName !== 'string' || !lastName.trim()) {
       return NextResponse.json(
         { error: 'Полето за име е задължително.' },
         { status: 400 },
       );
     }
 
-    const sanitizedName = sanitizeInput(fullName, 100);
+    const sanitizedFirst = sanitizeInput(firstName, 50);
+    const sanitizedLast = sanitizeInput(lastName, 50);
 
-    if (!sanitizedName) {
+    if (!sanitizedFirst || !sanitizedLast) {
       return NextResponse.json(
         { error: 'Полето за име е задължително.' },
         { status: 400 },
@@ -94,7 +97,7 @@ export async function POST(request: Request): Promise<NextResponse> {
         email: normalizedEmail,
         email_confirm: false,
         user_metadata: {
-          full_name: sanitizedName,
+          full_name: `${sanitizedFirst} ${sanitizedLast}`,
           is_subscriber: isSubscriber,
           has_password: false,
         },
@@ -140,22 +143,20 @@ export async function POST(request: Request): Promise<NextResponse> {
     callbackUrl.searchParams.set('next', '/setup-password');
     const setupUrl: string | null = callbackUrl.toString();
 
+    const sanitizedDisplayName = `${sanitizedFirst} ${sanitizedLast}`;
+
     // ---- Send email ------------------------------------------------------
     if (setupUrl) {
       await sendEmail({
-        to: { email: normalizedEmail, name: sanitizedName },
+        to: { email: normalizedEmail, name: sanitizedDisplayName },
         subject: 'Активирай акаунта си във FitFlow',
-        htmlContent: generateMagicRegistrationEmail(sanitizedName, setupUrl),
+        htmlContent: generateMagicRegistrationEmail(sanitizedDisplayName, setupUrl),
         tags: ['magic-registration'],
       });
     }
 
     // ---- Brevo contact sync (fire-and-forget) ----------------------------
-    const nameParts = sanitizedName.split(/\s+/);
-    const firstName = nameParts[0] ?? '';
-    const lastName = nameParts.slice(1).join(' ') || '';
-
-    syncNewUser({ email: normalizedEmail, firstName, lastName }).catch(
+    syncNewUser({ email: normalizedEmail, firstName: sanitizedFirst, lastName: sanitizedLast }).catch(
       (err) => {
         console.warn('[register-magic] syncNewUser failed:', err);
       },

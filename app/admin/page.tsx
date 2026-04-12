@@ -28,7 +28,7 @@ export default async function AdminDashboard() {
   return (
     <div>
       <h1 className="text-2xl font-bold text-[var(--color-brand-navy)] mb-6">
-        Добре дошли, {session.profile.full_name}
+        Добре дошли, {session.profile.first_name} {session.profile.last_name}
       </h1>
 
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6">

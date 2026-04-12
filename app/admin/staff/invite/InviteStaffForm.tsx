@@ -22,7 +22,8 @@ interface Props {
 
 export default function InviteStaffForm({ actorRole }: Props) {
   const [email, setEmail] = useState('');
-  const [fullName, setFullName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [role, setRole] = useState<StaffRole>('support');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,14 +43,15 @@ export default function InviteStaffForm({ actorRole }: Props) {
     setError(null);
     setSuccess(false);
 
-    const result = await inviteStaff({ email, fullName, role });
+    const result = await inviteStaff({ email, firstName, lastName, role });
 
     if (result.error) {
       setError(result.error);
     } else {
       setSuccess(true);
       setEmail('');
-      setFullName('');
+      setFirstName('');
+      setLastName('');
     }
     setLoading(false);
   }
@@ -72,13 +74,23 @@ export default function InviteStaffForm({ actorRole }: Props) {
         />
       </div>
 
-      <div>
-        <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">Пълно име</label>
-        <input
-          id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)}
-          required maxLength={100}
-          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:outline-none"
-        />
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">Име</label>
+          <input
+            id="firstName" value={firstName} onChange={(e) => setFirstName(e.target.value)}
+            required maxLength={50}
+            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:outline-none"
+          />
+        </div>
+        <div>
+          <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">Фамилия</label>
+          <input
+            id="lastName" value={lastName} onChange={(e) => setLastName(e.target.value)}
+            required maxLength={50}
+            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:outline-none"
+          />
+        </div>
       </div>
 
       <div>

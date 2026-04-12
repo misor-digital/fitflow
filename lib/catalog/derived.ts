@@ -233,7 +233,10 @@ function validateStep2(input: UserInput, isPremium: boolean): boolean {
  * Validate Step 3: Contact Info
  */
 function validateStep3(input: UserInput): boolean {
-  if (!input.fullName.trim()) {
+  if (!input.firstName.trim()) {
+    return false;
+  }
+  if (!input.lastName.trim()) {
     return false;
   }
   if (!input.email.trim()) {

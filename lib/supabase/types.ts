@@ -19,7 +19,8 @@ export type BoxType =
 export type PreorderConversionStatus = 'pending' | 'converted' | 'expired';
 
 export interface PreorderInsert {
-  full_name: string;
+  first_name: string;
+  last_name: string;
   email: string;
   phone?: string | null;
   box_type: BoxType;
@@ -242,7 +243,8 @@ export type StaffRole =
 
 export interface UserProfileRow {
   id: string;
-  full_name: string;
+  first_name: string;
+  last_name: string;
   phone: string | null;
   avatar_url: string | null;
   user_type: UserType;
@@ -254,7 +256,8 @@ export interface UserProfileRow {
 
 export interface UserProfileInsert {
   id: string;
-  full_name: string;
+  first_name: string;
+  last_name: string;
   phone?: string | null;
   avatar_url?: string | null;
   user_type?: UserType;
@@ -263,7 +266,8 @@ export interface UserProfileInsert {
 }
 
 export interface UserProfileUpdate {
-  full_name?: string;
+  first_name?: string;
+  last_name?: string;
   phone?: string | null;
   avatar_url?: string | null;
   user_type?: UserType;
@@ -278,11 +282,12 @@ export interface UserProfileUpdate {
 /**
  * Customer profile enriched with aggregated stats and email.
  * Used exclusively by the admin customer listing page.
- * Personal fields (full_name, email, phone) are masked in the UI.
+ * Personal fields (first_name, last_name, email, phone) are masked in the UI.
  */
 export interface CustomerWithStats {
   id: string;
-  full_name: string;
+  first_name: string;
+  last_name: string;
   email: string;
   phone: string | null;
   avatar_url: string | null;
@@ -304,7 +309,8 @@ export interface CustomerWithStats {
 export type OrderStatus = 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled' | 'refunded';
 
 export interface ShippingAddressSnapshot {
-  full_name: string;
+  first_name: string;
+  last_name: string;
   phone: string | null;
   city: string;
   postal_code: string;
@@ -324,7 +330,8 @@ export interface AddressRow {
   id: string;
   user_id: string;
   label: string | null;
-  full_name: string;
+  first_name: string;
+  last_name: string;
   phone: string | null;
   city: string | null;
   postal_code: string | null;
@@ -345,7 +352,8 @@ export interface AddressRow {
 export interface AddressInsert {
   user_id: string;
   label?: string | null;
-  full_name: string;
+  first_name: string;
+  last_name: string;
   phone?: string | null;
   city?: string | null;
   postal_code?: string | null;
@@ -363,7 +371,8 @@ export interface AddressInsert {
 
 export interface AddressUpdate {
   label?: string | null;
-  full_name?: string;
+  first_name?: string;
+  last_name?: string;
   phone?: string | null;
   city?: string | null;
   postal_code?: string | null;
@@ -391,7 +400,8 @@ export interface OrderRow {
   order_number: string;
   user_id: string | null;
   customer_email: string;
-  customer_full_name: string;
+  customer_first_name: string;
+  customer_last_name: string;
   customer_phone: string | null;
   shipping_address: ShippingAddressSnapshot;
   address_id: string | null;
@@ -429,7 +439,8 @@ export interface OrderRow {
 export interface OrderInsert {
   user_id?: string | null;
   customer_email: string;
-  customer_full_name: string;
+  customer_first_name: string;
+  customer_last_name: string;
   customer_phone?: string | null;
   shipping_address: ShippingAddressSnapshot;
   address_id?: string | null;
@@ -808,7 +819,8 @@ export interface EmailCampaignRecipientRow {
   id: string;
   campaign_id: string;
   email: string;
-  full_name: string | null;
+  first_name: string | null;
+  last_name: string | null;
   preorder_id: string | null;
   params: Record<string, unknown>;
   status: EmailRecipientStatusEnum;
@@ -823,7 +835,8 @@ export interface EmailCampaignRecipientRow {
 export interface EmailCampaignRecipientInsert {
   campaign_id: string;
   email: string;
-  full_name?: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
   preorder_id?: string | null;
   params?: Record<string, unknown>;
   variant_id?: string | null;

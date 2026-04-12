@@ -93,7 +93,7 @@ export default function AddressModal({
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-medium text-gray-900">
-                      {addr.label || addr.full_name}
+                      {addr.label || `${addr.first_name} ${addr.last_name}`}
                     </span>
                     {addr.is_default && (
                       <span className="text-[10px] font-medium bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded">

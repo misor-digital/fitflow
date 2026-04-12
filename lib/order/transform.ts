@@ -30,7 +30,8 @@ export function addressInputToSnapshot(
   options?: { deliveryMethod?: DeliveryMethod; speedyOffice?: SpeedyOfficeSelection | null }
 ): ShippingAddressSnapshot {
   const base: ShippingAddressSnapshot = {
-    full_name: address.fullName.trim(),
+    first_name: address.firstName.trim(),
+    last_name: address.lastName.trim(),
     phone: address.phone.trim() || null,
     city: address.city.trim(),
     postal_code: address.postalCode.trim(),
@@ -43,7 +44,8 @@ export function addressInputToSnapshot(
 
   if (options?.deliveryMethod === 'speedy_office' && options.speedyOffice) {
     return {
-      full_name: address.fullName.trim(),
+      first_name: address.firstName.trim(),
+      last_name: address.lastName.trim(),
       phone: address.phone.trim() || null,
       city: '',
       postal_code: '',
@@ -92,7 +94,8 @@ export function transformOrderToPersistedFormat(
     // Auth / Identity
     user_id: userId,
     customer_email: input.email.trim().toLowerCase(),
-    customer_full_name: input.fullName.trim(),
+    customer_first_name: input.firstName.trim(),
+    customer_last_name: input.lastName.trim(),
     customer_phone: input.phone.trim() || null,
 
     // Address
@@ -146,7 +149,8 @@ export function transformOrderToApiRequest(input: OrderUserInput): OrderApiReque
   }
 
   const request: OrderApiRequest = {
-    fullName: input.fullName.trim(),
+    firstName: input.firstName.trim(),
+    lastName: input.lastName.trim(),
     email: input.email.trim().toLowerCase(),
     isGuest: input.isGuest,
     boxType: input.boxType,
@@ -302,7 +306,8 @@ export function transformOrderToSubscriptionRequest(
 /** Empty address input for form initialization */
 const INITIAL_ADDRESS_INPUT: AddressInput = {
   label: '',
-  fullName: '',
+  firstName: '',
+  lastName: '',
   phone: '',
   city: '',
   postalCode: '',
@@ -338,7 +343,8 @@ export const INITIAL_ORDER_INPUT: OrderUserInput = {
 
   // Step 3: Identity & Address
   isGuest: true,
-  fullName: '',
+  firstName: '',
+  lastName: '',
   email: '',
   phone: '',
   selectedAddressId: null,

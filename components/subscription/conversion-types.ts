@@ -9,7 +9,8 @@ export interface SubscriptionConversionSource {
   orderId: string;
   orderNumber: string;
   customerEmail: string;
-  customerFullName: string;
+  customerFirstName: string;
+  customerLastName: string;
   customerPhone: string | null;
   userId: string | null;
   boxType: string;

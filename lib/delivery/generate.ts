@@ -139,7 +139,7 @@ export async function generateSingleOrderForSubscription(
   // 6. Load user info
   const { data: profile } = await supabaseAdmin
     .from('user_profiles')
-    .select('full_name, phone')
+    .select('first_name, last_name, phone')
     .eq('id', sub.user_id)
     .single();
 
@@ -151,10 +151,12 @@ export async function generateSingleOrderForSubscription(
   await createOrder({
     user_id: sub.user_id,
     customer_email: authUser.user.email ?? '',
-    customer_full_name: profile.full_name,
+    customer_first_name: profile.first_name,
+    customer_last_name: profile.last_name,
     customer_phone: profile.phone ?? address.phone,
     shipping_address: {
-      full_name: address.full_name,
+      first_name: address.first_name,
+      last_name: address.last_name,
       phone: address.phone,
       city: address.city ?? '',
       postal_code: address.postal_code ?? '',

@@ -26,7 +26,8 @@ function buildInitialAddress(initialData?: AddressRow): AddressInput {
   if (!initialData) {
     return {
       label: '',
-      fullName: '',
+      firstName: '',
+      lastName: '',
       phone: '',
       city: '',
       postalCode: '',
@@ -40,7 +41,8 @@ function buildInitialAddress(initialData?: AddressRow): AddressInput {
   }
   return {
     label: initialData.label ?? '',
-    fullName: initialData.full_name,
+    firstName: initialData.first_name,
+    lastName: initialData.last_name,
     phone: initialData.phone ?? '',
     city: initialData.city ?? '',
     postalCode: initialData.postal_code ?? '',
@@ -162,7 +164,8 @@ export default function AdminAddressForm({
             ...(mode === 'create' && { userId }),
             deliveryMethod: 'address' as const,
             label: address.label,
-            fullName: address.fullName,
+            firstName: address.firstName,
+            lastName: address.lastName,
             phone: address.phone,
             city: address.city,
             postalCode: address.postalCode,
@@ -177,7 +180,8 @@ export default function AdminAddressForm({
             ...(mode === 'create' && { userId }),
             deliveryMethod: 'speedy_office' as const,
             label: address.label,
-            fullName: address.fullName,
+            firstName: address.firstName,
+            lastName: address.lastName,
             phone: address.phone,
             speedyOfficeId: speedyOffice!.id,
             speedyOfficeName: speedyOffice!.name,
@@ -271,21 +275,41 @@ export default function AdminAddressForm({
         </div>
 
         <div>
-          <label htmlFor={`${uid}-fullName`} className="block text-sm font-medium text-gray-700 mb-1">
-            Имена <span className="text-red-500">*</span>
+          <label htmlFor={`${uid}-firstName`} className="block text-sm font-medium text-gray-700 mb-1">
+            Име <span className="text-red-500">*</span>
           </label>
           <input
-            id={`${uid}-fullName`}
+            id={`${uid}-firstName`}
             type="text"
-            value={address.fullName}
-            onChange={(e) => handleFieldChange('fullName', e.target.value)}
-            aria-invalid={!!errorFor('fullName')}
-            aria-describedby={errorFor('fullName') ? errorId('fullName') : undefined}
-            className={inputClass('fullName')}
+            value={address.firstName}
+            onChange={(e) => handleFieldChange('firstName', e.target.value)}
+            aria-invalid={!!errorFor('firstName')}
+            aria-describedby={errorFor('firstName') ? errorId('firstName') : undefined}
+            className={inputClass('firstName')}
           />
-          {errorFor('fullName') && (
-            <p id={errorId('fullName')} className="text-xs text-red-600 mt-1">
-              {errorFor('fullName')}
+          {errorFor('firstName') && (
+            <p id={errorId('firstName')} className="text-xs text-red-600 mt-1">
+              {errorFor('firstName')}
+            </p>
+          )}
+        </div>
+
+        <div>
+          <label htmlFor={`${uid}-lastName`} className="block text-sm font-medium text-gray-700 mb-1">
+            Фамилия <span className="text-red-500">*</span>
+          </label>
+          <input
+            id={`${uid}-lastName`}
+            type="text"
+            value={address.lastName}
+            onChange={(e) => handleFieldChange('lastName', e.target.value)}
+            aria-invalid={!!errorFor('lastName')}
+            aria-describedby={errorFor('lastName') ? errorId('lastName') : undefined}
+            className={inputClass('lastName')}
+          />
+          {errorFor('lastName') && (
+            <p id={errorId('lastName')} className="text-xs text-red-600 mt-1">
+              {errorFor('lastName')}
             </p>
           )}
         </div>

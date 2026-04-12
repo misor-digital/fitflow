@@ -587,7 +587,7 @@ export default function CampaignDetailView({
                           </button>
                         </td>
                         <td className="px-4 py-3 text-gray-600">
-                          {r.full_name ?? '—'}
+                          {r.first_name || r.last_name ? `${r.first_name ?? ''} ${r.last_name ?? ''}`.trim() : '—'}
                         </td>
                         <td className="px-4 py-3">
                           <span className={`font-medium ${statusInfo.className}`}>

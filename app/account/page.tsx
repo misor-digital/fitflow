@@ -36,7 +36,7 @@ export default async function AccountPage() {
       <div className="space-y-4">
         <div>
           <span className="text-sm text-gray-500">Име</span>
-          <p className="text-lg font-medium">{profile.full_name}</p>
+          <p className="text-lg font-medium">{profile.first_name} {profile.last_name}</p>
         </div>
 
         <div>

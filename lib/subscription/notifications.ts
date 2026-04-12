@@ -201,7 +201,7 @@ export async function sendSubscriptionConversionEmail(
     const htmlContent = generateSubscriptionConversionEmail(data);
 
     await sendTransactionalEmail({
-      to: { email: data.email, name: data.fullName },
+      to: { email: data.email, name: `${data.firstName} ${data.lastName}`.trim() },
       subject: SUBSCRIPTION_CONVERSION_SUBJECT,
       htmlContent,
       tags: ['subscription', 'order-conversion'],
