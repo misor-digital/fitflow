@@ -18,6 +18,7 @@ import type { AddressInput, DeliveryMethod, SpeedyOfficeSelection } from '@/lib/
 import DeliveryMethodToggle from './DeliveryMethodToggle';
 import SpeedyOfficeSelector from './SpeedyOfficeSelector';
 import AdminCustomerPanel from './AdminCustomerPanel';
+import InlineAuth from './InlineAuth';
 import Link from 'next/link';
 
 interface OrderStepDetailsProps {
@@ -614,7 +615,7 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
   }
 
   // =========================================================================
-  // Branch A: Subscription + not authenticated
+  // Branch A: Subscription + not authenticated → inline OTP auth
   // =========================================================================
   if (isSubscription && !isAuthenticated) {
     return (
@@ -623,39 +624,13 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
           Данни за доставка
         </h2>
 
-        <div className="bg-white rounded-xl sm:rounded-2xl p-6 sm:p-8 shadow-lg text-center">
-          <div className="text-5xl mb-4">🔒</div>
-          <h3 className="text-xl sm:text-2xl font-bold text-[var(--color-brand-navy)] mb-3">
-            Абонаментните кутии изискват акаунт.
-          </h3>
-          <p className="text-sm sm:text-base text-gray-600 mb-6">
-            Влез в акаунта си или създай нов, за да продължиш с абонамента.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link
-              href="/login?redirect=/order"
-              className="bg-[var(--color-brand-orange)] text-white px-6 py-3 rounded-full font-semibold text-sm sm:text-base hover:bg-[#e67100] transition-all text-center"
-            >
-              Вход
-            </Link>
-            <Link
-              href="/register?redirect=/order"
-              className="bg-[var(--color-brand-navy)] text-white px-6 py-3 rounded-full font-semibold text-sm sm:text-base hover:bg-[#012a3f] transition-all text-center"
-            >
-              Регистрация
-            </Link>
-          </div>
-        </div>
-
-        {/* Back button */}
-        <div className="flex justify-center mt-6">
-          <button
-            onClick={onBack}
-            className="bg-gray-300 text-[var(--color-brand-navy)] px-6 sm:px-8 md:px-10 py-3 sm:py-4 rounded-full text-sm sm:text-base md:text-lg font-semibold uppercase tracking-wide hover:bg-gray-400 transition-all"
-          >
-            Назад
-          </button>
-        </div>
+        <InlineAuth
+          onAuthenticated={() => {
+            // Auth store updates via AuthProvider → isAuthenticated becomes true
+            // → Branch C renders on next re-render (address form)
+          }}
+          onBack={onBack}
+        />
       </div>
     );
   }

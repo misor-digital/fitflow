@@ -1174,6 +1174,30 @@ export interface Database {
         Update: ToRecord<SiteConfigUpdate>;
         Relationships: [];
       };
+      email_otp_verifications: {
+        Row: {
+          email: string;
+          otp_hash: string;
+          attempts: number;
+          created_at: string;
+          expires_at: string;
+        };
+        Insert: {
+          email: string;
+          otp_hash: string;
+          attempts?: number;
+          created_at?: string;
+          expires_at: string;
+        };
+        Update: {
+          email?: string;
+          otp_hash?: string;
+          attempts?: number;
+          created_at?: string;
+          expires_at?: string;
+        };
+        Relationships: [];
+      };
       user_profiles: {
         Row: ToRecord<UserProfileRow>;
         Insert: ToRecord<UserProfileInsert>;
