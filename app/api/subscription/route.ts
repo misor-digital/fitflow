@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { verifySession } from '@/lib/auth';
+import { isValidPhone } from '@/lib/catalog';
 import {
   getSubscriptionsByUser,
   getUpcomingCycle,
@@ -166,6 +167,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       lastName?: string;
       phone?: string;
     };
+
+    // Validate phone (required)
+    const bodyPhone = (data as Record<string, unknown>).phone as string | undefined;
+    const addrPhone = ((data as Record<string, unknown>).address as Record<string, string> | undefined)?.phone;
+    const resolvedPhone = addrPhone?.trim() || (bodyPhone as string)?.trim() || '';
+    if (resolvedPhone && !isValidPhone(resolvedPhone)) {
+      return NextResponse.json({ error: 'Невалиден телефонен номер.' }, { status: 400 });
+    }
 
     // ------------------------------------------------------------------
     // Step 2: Conversion Token Handling (BEFORE auth check)

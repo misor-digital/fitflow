@@ -316,14 +316,12 @@ export default function AdminAddressForm({
 
         <div>
           <label htmlFor={`${uid}-phone`} className="block text-sm font-medium text-gray-700 mb-1">
-            Телефон
-            {deliveryMethod === 'speedy_office' && (
-              <span className="text-xs text-gray-500 ml-1">(задължителен за Speedy доставка)</span>
-            )}
+            Телефон <span className="text-red-500">*</span>
           </label>
           <input
             id={`${uid}-phone`}
             type="tel"
+            inputMode="tel"
             value={address.phone}
             onChange={(e) => handleFieldChange('phone', e.target.value)}
             aria-invalid={!!errorFor('phone')}

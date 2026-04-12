@@ -80,12 +80,15 @@ export default function EditProfileForm({ initialFirstName, initialLastName, ini
       </div>
 
       <div>
-        <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">Телефон</label>
+        <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">Телефон <span className="text-red-500">*</span></label>
         <input
           id="phone"
+          type="tel"
+          inputMode="tel"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
-          maxLength={20}
+          required
+          maxLength={30}
           className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:outline-none"
         />
       </div>

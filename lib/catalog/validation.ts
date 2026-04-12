@@ -53,19 +53,47 @@ export function getEmailError(email: string): string | null {
  */
 export const PHONE_REGEX = /^[0-9+\-() ]*$/;
 
+/** Minimum phone length (digits + formatting chars) */
+export const MIN_PHONE_LENGTH = 7;
+
+/** Maximum phone length */
+export const MAX_PHONE_LENGTH = 30;
+
 /**
- * Validate phone format (optional field)
+ * Validate phone format (non-empty phone only).
+ * Returns true if the format is valid. Does NOT check if phone is present.
+ */
+export function isPhoneFormatValid(phone: string): boolean {
+  const trimmed = phone.trim();
+  if (!trimmed) return true; // emptiness is checked by callers
+  if (trimmed.length < MIN_PHONE_LENGTH) return false;
+  if (trimmed.length > MAX_PHONE_LENGTH) return false;
+  return PHONE_REGEX.test(trimmed);
+}
+
+/**
+ * Validate phone format (optional field — legacy alias).
+ * @deprecated Use isPhoneFormatValid + explicit presence check instead.
  */
 export function isValidPhone(phone: string): boolean {
-  if (!phone.trim()) return true; // Phone is optional
-  return PHONE_REGEX.test(phone);
+  return isPhoneFormatValid(phone);
 }
 
 /**
  * Get phone validation error message
  */
 export function getPhoneError(phone: string): string | null {
-  if (phone && !isValidPhone(phone)) {
+  const trimmed = phone.trim();
+  if (!trimmed) {
+    return 'Телефонният номер е задължителен';
+  }
+  if (trimmed.length < MIN_PHONE_LENGTH) {
+    return 'Телефонният номер трябва да е поне 7 символа';
+  }
+  if (trimmed.length > MAX_PHONE_LENGTH) {
+    return 'Телефонният номер е прекалено дълъг';
+  }
+  if (!PHONE_REGEX.test(trimmed)) {
     return 'Моля, въведете само цифри и символи за форматиране (+, -, (, ), интервал)';
   }
   return null;
@@ -178,12 +206,13 @@ export function validateSubmission(
     });
   }
 
-  // Optional: Phone (but validate format if provided)
-  if (input.phone && !isValidPhone(input.phone)) {
+  // Required: Phone
+  const phoneError = getPhoneError(input.phone);
+  if (phoneError) {
     errors.push({
       field: 'phone',
-      message: 'Невалиден телефонен номер',
-      code: 'invalid_format',
+      message: phoneError,
+      code: !input.phone.trim() ? 'required' : 'invalid_format',
     });
   }
 

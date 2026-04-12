@@ -464,7 +464,7 @@ export default function SubscriptionConversionFlow({
     <div className="space-y-3 sm:space-y-4">
       {renderField('Име на получател', 'firstName', address.firstName, (v) => handleAddressChange('firstName', v), true, addressErrors)}
       {renderField('Фамилия на получател', 'lastName', address.lastName, (v) => handleAddressChange('lastName', v), true, addressErrors)}
-      {renderField('Телефон', 'phone', address.phone, (v) => handleAddressChange('phone', v), false, addressErrors, { type: 'tel' })}
+      {renderField('Телефон', 'phone', address.phone, (v) => handleAddressChange('phone', v), true, addressErrors, { type: 'tel' })}
       <div className="grid grid-cols-2 gap-3 sm:gap-4">
         {renderField('Град', 'city', address.city, (v) => handleAddressChange('city', v), true, addressErrors)}
         {renderField('Пощенски код', 'postalCode', address.postalCode, (v) => handleAddressChange('postalCode', v), true, addressErrors)}

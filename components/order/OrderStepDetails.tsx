@@ -247,6 +247,8 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
     }
     if (phone.trim() && !isValidPhone(phone)) {
       errors.phone = getPhoneError(phone) || 'Невалиден телефонен номер';
+    } else if (!phone.trim()) {
+      errors.phone = 'Телефонният номер е задължителен';
     }
 
     setContactErrors(errors);
@@ -485,7 +487,7 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
     <div className="space-y-3 sm:space-y-4">
       {renderField('Име на получател', 'firstName', address.firstName, (v) => handleAddressChange('firstName', v), true, addressErrors)}
       {renderField('Фамилия на получател', 'lastName', address.lastName, (v) => handleAddressChange('lastName', v), true, addressErrors)}
-      {renderField('Телефон', 'phone', address.phone, (v) => handleAddressChange('phone', v), false, addressErrors, 'tel')}
+      {renderField('Телефон', 'phone', address.phone, (v) => handleAddressChange('phone', v), true, addressErrors, 'tel')}
       <div className="grid grid-cols-2 gap-3 sm:gap-4">
         {renderField('Град', 'city', address.city, (v) => handleAddressChange('city', v), true, addressErrors)}
         {renderField('Пощенски код', 'postalCode', address.postalCode, (v) => handleAddressChange('postalCode', v), true, addressErrors, 'text', '1000')}
@@ -695,7 +697,7 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
                 {renderField('Име', 'firstName', firstName, setFirstName, true, contactErrors)}
                 {renderField('Фамилия', 'lastName', lastName, setLastName, true, contactErrors)}
                 {renderField('Имейл', 'email', email, setEmail, true, contactErrors, 'email')}
-                {renderField('Телефон', 'phone', phone, setPhone, false, contactErrors, 'tel')}
+                {renderField('Телефон', 'phone', phone, setPhone, true, contactErrors, 'tel')}
               </div>
             </div>
 

@@ -175,8 +175,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // Validate phone format (if provided)
-    if (phone && typeof phone === 'string' && !isValidPhone(phone)) {
+    // Validate phone format (required)
+    if (!phone || typeof phone !== 'string' || !phone.trim()) {
+      return NextResponse.json(
+        { error: 'Телефонният номер е задължителен.' },
+        { status: 400 },
+      );
+    }
+    if (!isValidPhone(phone)) {
       return NextResponse.json(
         { error: 'Невалиден телефонен номер.' },
         { status: 400 },

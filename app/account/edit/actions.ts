@@ -2,6 +2,7 @@
 
 import { requireAuth } from '@/lib/auth';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { isPhoneFormatValid, MAX_PHONE_LENGTH } from '@/lib/catalog';
 
 export async function updateProfile(data: { firstName: string; lastName: string; phone: string }) {
   const session = await requireAuth();
@@ -16,8 +17,14 @@ export async function updateProfile(data: { firstName: string; lastName: string;
   if (data.firstName.length + data.lastName.length > 100) {
     return { error: 'Името е прекалено дълго' };
   }
-  if (data.phone && data.phone.length > 20) {
+  if (!data.phone.trim()) {
+    return { error: 'Телефонният номер е задължителен' };
+  }
+  if (data.phone.trim().length > MAX_PHONE_LENGTH) {
     return { error: 'Телефонът е прекалено дълъг' };
+  }
+  if (!isPhoneFormatValid(data.phone)) {
+    return { error: 'Невалиден телефонен номер' };
   }
 
   const { error } = await supabaseAdmin

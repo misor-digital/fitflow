@@ -100,8 +100,17 @@ export async function PUT(
       );
     }
 
-    // Phone format validation (optional for address, required for speedy - enforced below)
-    if (sanitized.phone && !isValidPhone(sanitized.phone)) {
+    // Phone validation (required for all delivery methods)
+    if (!sanitized.phone?.trim()) {
+      return NextResponse.json(
+        {
+          error: 'Невалидни данни',
+          details: [{ field: 'phone', message: 'Телефонният номер е задължителен', code: 'required' }],
+        },
+        { status: 400 },
+      );
+    }
+    if (!isValidPhone(sanitized.phone)) {
       return NextResponse.json(
         {
           error: 'Невалидни данни',
