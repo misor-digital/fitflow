@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import type { AddressRow } from '@/lib/supabase/types';
 import AdminAddressForm from './AdminAddressForm';
 
@@ -8,10 +9,17 @@ import AdminAddressForm from './AdminAddressForm';
 // Types
 // ============================================================================
 
+interface CustomerDefaults {
+  firstName: string;
+  lastName: string;
+  phone: string;
+}
+
 interface AdminAddressManagerProps {
   userId: string;
   initialAddresses: AddressRow[];
   canManage: boolean;
+  customerDefaults?: CustomerDefaults;
 }
 
 type FormMode = 'hidden' | 'create' | 'edit';
@@ -51,7 +59,9 @@ export default function AdminAddressManager({
   userId,
   initialAddresses,
   canManage,
+  customerDefaults,
 }: AdminAddressManagerProps) {
+  const router = useRouter();
   const [addresses, setAddresses] = useState<AddressRow[]>(initialAddresses);
   const [formMode, setFormMode] = useState<FormMode>('hidden');
   const [editingAddress, setEditingAddress] = useState<AddressRow | null>(null);
@@ -99,7 +109,7 @@ export default function AdminAddressManager({
   // ---- CRUD handlers ----
 
   const handleCreate = useCallback(
-    (address: AddressRow) => {
+    (address: AddressRow, phoneSynced?: boolean) => {
       setAddresses((prev) => {
         if (address.is_default) {
           return [address, ...prev.map((a) => ({ ...a, is_default: false }))];
@@ -107,8 +117,9 @@ export default function AdminAddressManager({
         return [address, ...prev];
       });
       closeForm();
+      if (phoneSynced) router.refresh();
     },
-    [closeForm],
+    [closeForm, router],
   );
 
   const handleUpdate = useCallback(
@@ -220,6 +231,7 @@ export default function AdminAddressManager({
             mode={formMode === 'create' ? 'create' : 'edit'}
             userId={userId}
             initialData={editingAddress ?? undefined}
+            customerDefaults={formMode === 'create' ? customerDefaults : undefined}
             onSuccess={formMode === 'create' ? handleCreate : handleUpdate}
             onCancel={closeForm}
           />
@@ -286,7 +298,7 @@ export default function AdminAddressManager({
                 </div>
 
                 {/* Details */}
-                <p className="text-sm text-gray-700">{addr.full_name}</p>
+                <p className="text-sm text-gray-700">{addr.first_name} {addr.last_name}</p>
                 {addr.phone && <p className="text-sm text-gray-500">{addr.phone}</p>}
                 <p className="text-sm text-gray-600 mt-1">{display.primary}</p>
                 {display.secondary && (

@@ -22,7 +22,7 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     // ---- Input validation ------------------------------------------------
     const body = await request.json();
-    const { email, fullName } = body as { email?: string; fullName?: string };
+    const { email, firstName, lastName } = body as { email?: string; firstName?: string; lastName?: string };
 
     if (!email || typeof email !== 'string') {
       return NextResponse.json(
@@ -40,14 +40,15 @@ export async function POST(request: Request): Promise<NextResponse> {
       );
     }
 
-    if (!fullName || typeof fullName !== 'string' || !fullName.trim()) {
+    if (!firstName || typeof firstName !== 'string' || !firstName.trim() ||
+        !lastName || typeof lastName !== 'string' || !lastName.trim()) {
       return NextResponse.json(
-        { error: 'Полето fullName е задължително.' },
+        { error: 'Полетата firstName и lastName са задължителни.' },
         { status: 400 },
       );
     }
 
-    if (fullName.trim().length > 100) {
+    if (firstName.trim().length + lastName.trim().length > 100) {
       return NextResponse.json(
         { error: 'Името не може да надвишава 100 символа.' },
         { status: 400 },
@@ -70,7 +71,7 @@ export async function POST(request: Request): Promise<NextResponse> {
         email: normalizedEmail,
         email_confirm: true,
         user_metadata: {
-          full_name: fullName.trim(),
+          full_name: `${firstName.trim()} ${lastName.trim()}`,
           created_by_admin: true,
           created_by: session.userId,
           has_password: false,
@@ -120,13 +121,15 @@ export async function POST(request: Request): Promise<NextResponse> {
       setupUrl = callbackUrl.toString();
     }
 
+    const displayName = `${firstName.trim()} ${lastName.trim()}`;
+
     // ---- Send customer invite email via Brevo ----------------------------
     if (setupUrl) {
       try {
         await sendEmail({
-          to: { email: normalizedEmail, name: fullName.trim() },
+          to: { email: normalizedEmail, name: displayName },
           subject: 'Активирай акаунта си във FitFlow',
-          htmlContent: generateCustomerInviteEmail(fullName.trim(), setupUrl),
+          htmlContent: generateCustomerInviteEmail(displayName, setupUrl),
           tags: ['customer-invite'],
         });
       } catch (emailErr) {
@@ -138,11 +141,10 @@ export async function POST(request: Request): Promise<NextResponse> {
     }
 
     // ---- Sync to Brevo contacts (fire-and-forget) ------------------------
-    const nameParts = fullName.trim().split(/\s+/);
     syncNewUser({
       email: normalizedEmail,
-      firstName: nameParts[0] ?? '',
-      lastName: nameParts.slice(1).join(' ') || undefined,
+      firstName: firstName.trim(),
+      lastName: lastName.trim() || undefined,
     }).catch(() => {}); // fire-and-forget
 
     // ---- Auto-link preorders ---------------------------------------------

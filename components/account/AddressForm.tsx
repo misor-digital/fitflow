@@ -14,7 +14,7 @@ import { useAuthStore } from '@/store/authStore';
 interface AddressFormProps {
   mode: 'create' | 'edit';
   initialData?: AddressRow;
-  onSuccess: (address: AddressRow) => void;
+  onSuccess: (address: AddressRow, phoneSynced?: boolean) => void;
   onCancel: () => void;
 }
 
@@ -24,12 +24,13 @@ interface AddressFormProps {
 
 function buildInitialAddress(
   initialData?: AddressRow,
-  profileDefaults?: { fullName?: string; phone?: string | null },
+  profileDefaults?: { firstName?: string; lastName?: string; phone?: string | null },
 ): AddressInput {
   if (!initialData) {
     return {
       label: '',
-      fullName: profileDefaults?.fullName ?? '',
+      firstName: profileDefaults?.firstName ?? '',
+      lastName: profileDefaults?.lastName ?? '',
       phone: profileDefaults?.phone ?? '',
       city: '',
       postalCode: '',
@@ -43,7 +44,8 @@ function buildInitialAddress(
   }
   return {
     label: initialData.label ?? '',
-    fullName: initialData.full_name,
+    firstName: initialData.first_name,
+    lastName: initialData.last_name,
     phone: initialData.phone ?? '',
     city: initialData.city ?? '',
     postalCode: initialData.postal_code ?? '',
@@ -82,7 +84,7 @@ export default function AddressForm({ mode, initialData, onSuccess, onCancel }: 
     initialData?.delivery_method ?? 'address',
   );
   const [address, setAddress] = useState<AddressInput>(() =>
-    buildInitialAddress(initialData, { fullName: user?.fullName, phone: user?.phone }),
+    buildInitialAddress(initialData, { firstName: user?.firstName, lastName: user?.lastName, phone: user?.phone }),
   );
   const [selectedOffice, setSelectedOffice] = useState<SpeedyOfficeSelection | null>(() =>
     buildInitialOffice(initialData),
@@ -169,7 +171,8 @@ export default function AddressForm({ mode, initialData, onSuccess, onCancel }: 
         ? {
             deliveryMethod: 'address' as const,
             label: address.label,
-            fullName: address.fullName,
+            firstName: address.firstName,
+            lastName: address.lastName,
             phone: address.phone,
             city: address.city,
             postalCode: address.postalCode,
@@ -183,7 +186,8 @@ export default function AddressForm({ mode, initialData, onSuccess, onCancel }: 
         : {
             deliveryMethod: 'speedy_office' as const,
             label: address.label,
-            fullName: address.fullName,
+            firstName: address.firstName,
+            lastName: address.lastName,
             phone: address.phone,
             speedyOfficeId: selectedOffice!.id,
             speedyOfficeName: selectedOffice!.name,
@@ -208,7 +212,7 @@ export default function AddressForm({ mode, initialData, onSuccess, onCancel }: 
       }
 
       const data = await res.json();
-      onSuccess(data.address ?? data);
+      onSuccess(data.address ?? data, data.phoneSynced ?? false);
     } catch (err) {
       setApiError(err instanceof Error ? err.message : 'Възникна неочаквана грешка');
     } finally {
@@ -275,25 +279,51 @@ export default function AddressForm({ mode, initialData, onSuccess, onCancel }: 
         {/* Full Name */}
         <div>
           <label
-            htmlFor={`${uid}-fullName`}
+            htmlFor={`${uid}-firstName`}
             className="block text-sm font-medium text-gray-700 mb-1"
           >
-            Имена <span className="text-red-500">*</span>
+            Име <span className="text-red-500">*</span>
           </label>
           <input
-            id={`${uid}-fullName`}
+            id={`${uid}-firstName`}
             type="text"
-            value={address.fullName}
-            onChange={(e) => handleFieldChange('fullName', e.target.value)}
-            aria-invalid={!!errorFor('fullName')}
-            aria-describedby={errorFor('fullName') ? errorId('fullName') : undefined}
+            value={address.firstName}
+            onChange={(e) => handleFieldChange('firstName', e.target.value)}
+            aria-invalid={!!errorFor('firstName')}
+            aria-describedby={errorFor('firstName') ? errorId('firstName') : undefined}
             className={`w-full border rounded-lg px-3 py-2 text-sm focus:ring-[var(--color-brand-orange)] focus:border-[var(--color-brand-orange)] outline-none ${
-              errorFor('fullName') ? 'border-red-500' : ''
+              errorFor('firstName') ? 'border-red-500' : ''
             }`}
           />
-          {errorFor('fullName') && (
-            <p id={errorId('fullName')} className="text-xs text-red-600 mt-1">
-              {errorFor('fullName')}
+          {errorFor('firstName') && (
+            <p id={errorId('firstName')} className="text-xs text-red-600 mt-1">
+              {errorFor('firstName')}
+            </p>
+          )}
+        </div>
+
+        {/* Last Name */}
+        <div>
+          <label
+            htmlFor={`${uid}-lastName`}
+            className="block text-sm font-medium text-gray-700 mb-1"
+          >
+            Фамилия <span className="text-red-500">*</span>
+          </label>
+          <input
+            id={`${uid}-lastName`}
+            type="text"
+            value={address.lastName}
+            onChange={(e) => handleFieldChange('lastName', e.target.value)}
+            aria-invalid={!!errorFor('lastName')}
+            aria-describedby={errorFor('lastName') ? errorId('lastName') : undefined}
+            className={`w-full border rounded-lg px-3 py-2 text-sm focus:ring-[var(--color-brand-orange)] focus:border-[var(--color-brand-orange)] outline-none ${
+              errorFor('lastName') ? 'border-red-500' : ''
+            }`}
+          />
+          {errorFor('lastName') && (
+            <p id={errorId('lastName')} className="text-xs text-red-600 mt-1">
+              {errorFor('lastName')}
             </p>
           )}
         </div>
@@ -304,14 +334,12 @@ export default function AddressForm({ mode, initialData, onSuccess, onCancel }: 
             htmlFor={`${uid}-phone`}
             className="block text-sm font-medium text-gray-700 mb-1"
           >
-            Телефон
-            {deliveryMethod === 'speedy_office' && (
-              <span className="text-xs text-gray-500 ml-1">(задължителен за Speedy доставка)</span>
-            )}
+            Телефон <span className="text-red-500">*</span>
           </label>
           <input
             id={`${uid}-phone`}
             type="tel"
+            inputMode="tel"
             value={address.phone}
             onChange={(e) => handleFieldChange('phone', e.target.value)}
             aria-invalid={!!errorFor('phone')}

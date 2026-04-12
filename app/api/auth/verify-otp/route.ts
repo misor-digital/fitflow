@@ -43,10 +43,11 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     // ---- Parse & validate body -------------------------------------------
     const body = await request.json();
-    const { email, otp, fullName, intent } = body as {
+    const { email, otp, firstName, lastName, intent } = body as {
       email?: string;
       otp?: string;
-      fullName?: string;
+      firstName?: string;
+      lastName?: string;
       intent?: 'register' | 'login';
     };
 
@@ -121,15 +122,17 @@ export async function POST(request: Request): Promise<NextResponse> {
 
     // ---- Branch: register or login ---------------------------------------
     if (intent === 'register') {
-      // Validate fullName for registration
-      if (!fullName || typeof fullName !== 'string' || !fullName.trim()) {
+      // Validate firstName for registration
+      if (!firstName || typeof firstName !== 'string' || !firstName.trim()) {
         return NextResponse.json({ error: 'Полето за име е задължително.' }, { status: 400 });
       }
 
-      const sanitizedName = sanitizeInput(fullName.trim(), 100);
-      if (!sanitizedName) {
+      const sanitizedFirst = sanitizeInput(firstName.trim(), 50);
+      const sanitizedLast = sanitizeInput((lastName ?? '').trim(), 50);
+      if (!sanitizedFirst) {
         return NextResponse.json({ error: 'Полето за име е задължително.' }, { status: 400 });
       }
+      const sanitizedName = `${sanitizedFirst} ${sanitizedLast}`.trim();
 
       // Check user doesn't already exist
       const existingUser = await getUserByEmail(normalizedEmail);

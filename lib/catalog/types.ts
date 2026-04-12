@@ -103,7 +103,8 @@ export interface UserInput {
   additionalNotes: string;
   
   // Step 3: Contact Info
-  fullName: string;
+  firstName: string;
+  lastName: string;
   email: string;
   phone: string;
   
@@ -163,7 +164,8 @@ export interface DerivedState {
  */
 export interface PersistData {
   // Contact
-  full_name: string;
+  first_name: string;
+  last_name: string;
   email: string;
   phone: string | null;
   

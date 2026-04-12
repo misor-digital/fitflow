@@ -38,11 +38,11 @@ export async function GET(
     if (userIds.length > 0) {
       const { data: profiles } = await supabaseAdmin
         .from('user_profiles')
-        .select('id, full_name')
+        .select('id, first_name, last_name')
         .in('id', userIds);
 
       for (const p of profiles ?? []) {
-        nameMap.set(p.id, p.full_name);
+        nameMap.set(p.id, `${p.first_name} ${p.last_name}`.trim());
       }
     }
 

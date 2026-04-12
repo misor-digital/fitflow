@@ -143,9 +143,12 @@ CREATE TABLE preorders (
   order_id TEXT UNIQUE DEFAULT generate_order_id() NOT NULL,
 
   -- Contact Information
-  full_name TEXT NOT NULL,
+  first_name TEXT NOT NULL,
+  last_name TEXT NOT NULL,
   email TEXT NOT NULL,
   phone TEXT,
+  CONSTRAINT preorders_first_name_not_empty CHECK (char_length(trim(first_name)) >= 1),
+  CONSTRAINT preorders_last_name_not_empty CHECK (char_length(trim(last_name)) >= 1),
 
   -- Box Selection
   box_type box_type NOT NULL,
@@ -457,8 +460,11 @@ GRANT ALL ON site_config TO service_role;
 
 CREATE TABLE user_profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  full_name TEXT NOT NULL,
+  first_name TEXT NOT NULL,
+  last_name TEXT NOT NULL,
   phone TEXT,
+  CONSTRAINT user_profiles_first_name_not_empty CHECK (char_length(trim(first_name)) >= 1),
+  CONSTRAINT user_profiles_last_name_not_empty CHECK (char_length(trim(last_name)) >= 1),
   avatar_url TEXT,
   user_type user_type NOT NULL DEFAULT 'customer',
   staff_role staff_role,
@@ -654,8 +660,11 @@ CREATE TABLE addresses (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   label TEXT,
-  full_name TEXT NOT NULL,
+  first_name TEXT NOT NULL,
+  last_name TEXT NOT NULL,
   phone TEXT,
+  CONSTRAINT addresses_first_name_not_empty CHECK (char_length(trim(first_name)) >= 1),
+  CONSTRAINT addresses_last_name_not_empty CHECK (char_length(trim(last_name)) >= 1),
   city TEXT NOT NULL,
   postal_code TEXT NOT NULL CONSTRAINT valid_postal_code CHECK (postal_code ~ '^\d{4}$'),
   street_address TEXT NOT NULL,
@@ -699,8 +708,11 @@ CREATE TABLE orders (
   order_number TEXT UNIQUE NOT NULL DEFAULT generate_order_id(),
   user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
   customer_email TEXT NOT NULL,
-  customer_full_name TEXT NOT NULL,
+  customer_first_name TEXT NOT NULL,
+  customer_last_name TEXT NOT NULL,
   customer_phone TEXT,
+  CONSTRAINT orders_first_name_not_empty CHECK (char_length(trim(customer_first_name)) >= 1),
+  CONSTRAINT orders_last_name_not_empty CHECK (char_length(trim(customer_last_name)) >= 1),
   shipping_address JSONB NOT NULL,
   address_id UUID REFERENCES addresses(id) ON DELETE SET NULL,
   delivery_method TEXT NOT NULL DEFAULT 'address',
@@ -745,7 +757,8 @@ CREATE TABLE orders (
   CONSTRAINT valid_shipping_address CHECK (
     CASE
       WHEN delivery_method = 'speedy_office' THEN
-        shipping_address ? 'full_name'
+        shipping_address ? 'first_name'
+        AND shipping_address ? 'last_name'
         AND shipping_address ? 'phone'
         AND (shipping_address->>'phone') IS NOT NULL
         AND length(shipping_address->>'phone') > 0
@@ -755,7 +768,8 @@ CREATE TABLE orders (
         shipping_address ? 'city'
         AND shipping_address ? 'postal_code'
         AND shipping_address ? 'street_address'
-        AND shipping_address ? 'full_name'
+        AND shipping_address ? 'first_name'
+        AND shipping_address ? 'last_name'
         AND (shipping_address->>'postal_code') ~ '^\d{4}$'
     END
   )
@@ -1092,7 +1106,8 @@ CREATE TABLE email_campaign_recipients (
   id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   campaign_id     UUID NOT NULL REFERENCES email_campaigns(id) ON DELETE CASCADE,
   email           TEXT NOT NULL,
-  full_name       TEXT,
+  first_name      TEXT,
+  last_name       TEXT,
   preorder_id     UUID REFERENCES preorders(id) ON DELETE SET NULL,
   order_id        UUID REFERENCES orders(id) ON DELETE CASCADE,
   variant_id      UUID REFERENCES email_ab_variants(id) ON DELETE SET NULL,
@@ -1556,11 +1571,20 @@ CREATE TRIGGER trigger_ensure_default_on_delete
 -- Auto-create user profile on signup
 CREATE OR REPLACE FUNCTION handle_new_user()
 RETURNS TRIGGER AS $$
+DECLARE
+  raw_name TEXT;
+  space_pos INTEGER;
 BEGIN
-  INSERT INTO public.user_profiles (id, full_name)
+  raw_name := trim(COALESCE(NEW.raw_user_meta_data->>'full_name', ''));
+  space_pos := position(' ' IN raw_name);
+
+  INSERT INTO public.user_profiles (id, first_name, last_name)
   VALUES (
     NEW.id,
-    COALESCE(NEW.raw_user_meta_data->>'full_name', '')
+    CASE WHEN char_length(raw_name) > 0 THEN
+      CASE WHEN space_pos > 0 THEN left(raw_name, space_pos - 1) ELSE raw_name END
+    ELSE '-' END,
+    CASE WHEN space_pos > 0 THEN substring(raw_name FROM space_pos + 1) ELSE '-' END
   );
   RETURN NEW;
 END;

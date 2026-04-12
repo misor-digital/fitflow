@@ -439,7 +439,7 @@ export const getOrdersCount = cache(
 
 /**
  * Get paginated orders with optional filters - for admin order management.
- * `search` matches against order_number, customer_email, and customer_full_name.
+ * `search` matches against order_number, customer_email, customer_first_name, and customer_last_name.
  */
 export const getOrdersPaginated = cache(
   async (
@@ -465,7 +465,7 @@ export const getOrdersPaginated = cache(
     if (filters?.search) {
       const search = `%${filters.search}%`;
       query = query.or(
-        `order_number.ilike.${search},customer_email.ilike.${search},customer_full_name.ilike.${search}`,
+        `order_number.ilike.${search},customer_email.ilike.${search},customer_first_name.ilike.${search},customer_last_name.ilike.${search}`,
       );
     }
 

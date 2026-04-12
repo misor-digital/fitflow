@@ -100,8 +100,17 @@ export async function PUT(
       );
     }
 
-    // Phone format validation (optional for address, required for speedy - enforced below)
-    if (sanitized.phone && !isValidPhone(sanitized.phone)) {
+    // Phone validation (required for all delivery methods)
+    if (!sanitized.phone?.trim()) {
+      return NextResponse.json(
+        {
+          error: 'Невалидни данни',
+          details: [{ field: 'phone', message: 'Телефонният номер е задължителен', code: 'required' }],
+        },
+        { status: 400 },
+      );
+    }
+    if (!isValidPhone(sanitized.phone)) {
       return NextResponse.json(
         {
           error: 'Невалидни данни',
@@ -134,7 +143,8 @@ export async function PUT(
       const validationResult = validateSpeedyOffice(
         {
           label: sanitized.label ?? '',
-          fullName: sanitized.fullName ?? '',
+          firstName: sanitized.firstName ?? '',
+          lastName: sanitized.lastName ?? '',
           phone: sanitized.phone ?? '',
           city: '',
           postalCode: '',
@@ -157,7 +167,8 @@ export async function PUT(
     } else {
       const validationResult = validateAddress({
         label: sanitized.label ?? '',
-        fullName: sanitized.fullName ?? '',
+        firstName: sanitized.firstName ?? '',
+        lastName: sanitized.lastName ?? '',
         phone: sanitized.phone ?? '',
         city: sanitized.city ?? '',
         postalCode: sanitized.postalCode ?? '',
@@ -183,7 +194,8 @@ export async function PUT(
       deliveryMethod === 'speedy_office'
         ? {
             delivery_method: 'speedy_office',
-            full_name: sanitized.fullName!,
+            first_name: sanitized.firstName!,
+            last_name: sanitized.lastName!,
             phone: sanitized.phone || null,
             speedy_office_id: sanitized.speedyOfficeId!,
             speedy_office_name: sanitized.speedyOfficeName!,
@@ -201,7 +213,8 @@ export async function PUT(
           }
         : {
             delivery_method: 'address',
-            full_name: sanitized.fullName!,
+            first_name: sanitized.firstName!,
+            last_name: sanitized.lastName!,
             city: sanitized.city!,
             postal_code: sanitized.postalCode!,
             street_address: sanitized.streetAddress!,

@@ -15,7 +15,8 @@ import { wrapInEmailLayout, emailCtaButton, emailContactLine } from './layout';
 // ============================================================================
 
 export interface SubscriptionConversionEmailData {
-  fullName: string;
+  firstName: string;
+  lastName: string;
   email: string;
   boxType: string;
   boxName: string;
@@ -47,7 +48,7 @@ export const SUBSCRIPTION_CONVERSION_SUBJECT = 'FitFlow - Абонаментът
 export function generateSubscriptionConversionEmail(
   data: SubscriptionConversionEmailData,
 ): string {
-  const firstName = escapeHtml(data.fullName.split(' ')[0]);
+  const firstName = escapeHtml(data.firstName);
   const boxName = escapeHtml(data.boxName);
   const frequencyLabel = escapeHtml(data.frequencyLabel);
   const orderNumber = escapeHtml(data.orderNumber);

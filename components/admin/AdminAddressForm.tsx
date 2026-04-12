@@ -10,11 +10,18 @@ import SpeedyOfficeSelector from '@/components/order/SpeedyOfficeSelector';
 // Types
 // ============================================================================
 
+interface CustomerDefaults {
+  firstName: string;
+  lastName: string;
+  phone: string;
+}
+
 interface AdminAddressFormProps {
   mode: 'create' | 'edit';
   userId: string;
   initialData?: AddressRow;
-  onSuccess: (address: AddressRow) => void;
+  customerDefaults?: CustomerDefaults;
+  onSuccess: (address: AddressRow, phoneSynced?: boolean) => void;
   onCancel: () => void;
 }
 
@@ -22,12 +29,13 @@ interface AdminAddressFormProps {
 // Helpers
 // ============================================================================
 
-function buildInitialAddress(initialData?: AddressRow): AddressInput {
+function buildInitialAddress(initialData?: AddressRow, defaults?: CustomerDefaults): AddressInput {
   if (!initialData) {
     return {
       label: '',
-      fullName: '',
-      phone: '',
+      firstName: defaults?.firstName ?? '',
+      lastName: defaults?.lastName ?? '',
+      phone: defaults?.phone ?? '',
       city: '',
       postalCode: '',
       streetAddress: '',
@@ -40,7 +48,8 @@ function buildInitialAddress(initialData?: AddressRow): AddressInput {
   }
   return {
     label: initialData.label ?? '',
-    fullName: initialData.full_name,
+    firstName: initialData.first_name,
+    lastName: initialData.last_name,
     phone: initialData.phone ?? '',
     city: initialData.city ?? '',
     postalCode: initialData.postal_code ?? '',
@@ -76,6 +85,7 @@ export default function AdminAddressForm({
   mode,
   userId,
   initialData,
+  customerDefaults,
   onSuccess,
   onCancel,
 }: AdminAddressFormProps) {
@@ -83,7 +93,7 @@ export default function AdminAddressForm({
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>(
     initialData?.delivery_method ?? 'address',
   );
-  const [address, setAddress] = useState<AddressInput>(() => buildInitialAddress(initialData));
+  const [address, setAddress] = useState<AddressInput>(() => buildInitialAddress(initialData, customerDefaults));
   const [speedyOffice, setSpeedyOffice] = useState<SpeedyOfficeSelection | null>(() =>
     buildInitialOffice(initialData),
   );
@@ -162,7 +172,8 @@ export default function AdminAddressForm({
             ...(mode === 'create' && { userId }),
             deliveryMethod: 'address' as const,
             label: address.label,
-            fullName: address.fullName,
+            firstName: address.firstName,
+            lastName: address.lastName,
             phone: address.phone,
             city: address.city,
             postalCode: address.postalCode,
@@ -177,7 +188,8 @@ export default function AdminAddressForm({
             ...(mode === 'create' && { userId }),
             deliveryMethod: 'speedy_office' as const,
             label: address.label,
-            fullName: address.fullName,
+            firstName: address.firstName,
+            lastName: address.lastName,
             phone: address.phone,
             speedyOfficeId: speedyOffice!.id,
             speedyOfficeName: speedyOffice!.name,
@@ -204,7 +216,7 @@ export default function AdminAddressForm({
       }
 
       const data = await res.json();
-      onSuccess(data.address ?? data);
+      onSuccess(data.address ?? data, data.phoneSynced ?? false);
     } catch (err) {
       setApiError(err instanceof Error ? err.message : 'Възникна неочаквана грешка');
     } finally {
@@ -271,35 +283,53 @@ export default function AdminAddressForm({
         </div>
 
         <div>
-          <label htmlFor={`${uid}-fullName`} className="block text-sm font-medium text-gray-700 mb-1">
-            Имена <span className="text-red-500">*</span>
+          <label htmlFor={`${uid}-firstName`} className="block text-sm font-medium text-gray-700 mb-1">
+            Име <span className="text-red-500">*</span>
           </label>
           <input
-            id={`${uid}-fullName`}
+            id={`${uid}-firstName`}
             type="text"
-            value={address.fullName}
-            onChange={(e) => handleFieldChange('fullName', e.target.value)}
-            aria-invalid={!!errorFor('fullName')}
-            aria-describedby={errorFor('fullName') ? errorId('fullName') : undefined}
-            className={inputClass('fullName')}
+            value={address.firstName}
+            onChange={(e) => handleFieldChange('firstName', e.target.value)}
+            aria-invalid={!!errorFor('firstName')}
+            aria-describedby={errorFor('firstName') ? errorId('firstName') : undefined}
+            className={inputClass('firstName')}
           />
-          {errorFor('fullName') && (
-            <p id={errorId('fullName')} className="text-xs text-red-600 mt-1">
-              {errorFor('fullName')}
+          {errorFor('firstName') && (
+            <p id={errorId('firstName')} className="text-xs text-red-600 mt-1">
+              {errorFor('firstName')}
+            </p>
+          )}
+        </div>
+
+        <div>
+          <label htmlFor={`${uid}-lastName`} className="block text-sm font-medium text-gray-700 mb-1">
+            Фамилия <span className="text-red-500">*</span>
+          </label>
+          <input
+            id={`${uid}-lastName`}
+            type="text"
+            value={address.lastName}
+            onChange={(e) => handleFieldChange('lastName', e.target.value)}
+            aria-invalid={!!errorFor('lastName')}
+            aria-describedby={errorFor('lastName') ? errorId('lastName') : undefined}
+            className={inputClass('lastName')}
+          />
+          {errorFor('lastName') && (
+            <p id={errorId('lastName')} className="text-xs text-red-600 mt-1">
+              {errorFor('lastName')}
             </p>
           )}
         </div>
 
         <div>
           <label htmlFor={`${uid}-phone`} className="block text-sm font-medium text-gray-700 mb-1">
-            Телефон
-            {deliveryMethod === 'speedy_office' && (
-              <span className="text-xs text-gray-500 ml-1">(задължителен за Speedy доставка)</span>
-            )}
+            Телефон <span className="text-red-500">*</span>
           </label>
           <input
             id={`${uid}-phone`}
             type="tel"
+            inputMode="tel"
             value={address.phone}
             onChange={(e) => handleFieldChange('phone', e.target.value)}
             aria-invalid={!!errorFor('phone')}

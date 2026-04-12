@@ -50,7 +50,7 @@ export const getCustomersPaginated = cache(
 
     // Apply filters
     if (filters?.search) {
-      query = query.ilike('full_name', `%${filters.search}%`);
+      query = query.or(`first_name.ilike.%${filters.search}%,last_name.ilike.%${filters.search}%`);
     }
     if (filters?.isSubscriber !== undefined) {
       query = query.eq('is_subscriber', filters.isSubscriber);
@@ -118,7 +118,8 @@ export const getCustomersPaginated = cache(
     // Assemble CustomerWithStats array
     const customers: CustomerWithStats[] = rows.map((profile) => ({
       id: profile.id,
-      full_name: profile.full_name,
+      first_name: profile.first_name,
+      last_name: profile.last_name,
       email: emailMap.get(profile.id) ?? '',
       phone: profile.phone,
       avatar_url: profile.avatar_url,

@@ -14,7 +14,8 @@ export default async function EditProfilePage() {
         Редактиране на профил
       </h1>
       <EditProfileForm
-        initialName={profile.full_name}
+        initialFirstName={profile.first_name}
+        initialLastName={profile.last_name}
         initialPhone={profile.phone ?? ''}
         email={email}
       />

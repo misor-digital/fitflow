@@ -45,7 +45,8 @@ export interface SendResult {
   skipped: number;
   recipients: Array<{
     email: string;
-    fullName: string;
+    firstName: string;
+    lastName: string;
     status: 'sent' | 'failed' | 'skipped';
     error?: string;
   }>;
@@ -125,11 +126,12 @@ export async function sendPreorderConversionEmails(options: {
           email_type: 'transactional',
           email_category: DRY_RUN_CATEGORY,
           recipient_email: recipient.email,
-          recipient_name: recipient.fullName,
+          recipient_name: `${recipient.firstName} ${recipient.lastName}`.trim(),
           subject: EMAIL_SUBJECT,
           status: 'sent',
           params: {
-            fullName: recipient.fullName,
+            firstName: recipient.firstName,
+            lastName: recipient.lastName,
             boxType: recipient.boxType,
             conversionUrl: recipient.conversionUrl,
             promoCode: recipient.promoCode,
@@ -144,7 +146,8 @@ export async function sendPreorderConversionEmails(options: {
         skipped++;
         results.push({
           email: recipient.email,
-          fullName: recipient.fullName,
+          firstName: recipient.firstName,
+          lastName: recipient.lastName,
           status: 'skipped',
         });
       } else {
@@ -153,7 +156,7 @@ export async function sendPreorderConversionEmails(options: {
 
         // Send via Brevo - the callback already logs to email_send_log
         const result = await sendTransactionalEmail({
-          to: { email: recipient.email, name: recipient.fullName },
+          to: { email: recipient.email, name: `${recipient.firstName} ${recipient.lastName}`.trim() },
           subject: EMAIL_SUBJECT,
           htmlContent: html,
           tags: ['preorder-conversion'],
@@ -166,14 +169,16 @@ export async function sendPreorderConversionEmails(options: {
           sent++;
           results.push({
             email: recipient.email,
-            fullName: recipient.fullName,
+            firstName: recipient.firstName,
+            lastName: recipient.lastName,
             status: 'sent',
           });
         } else {
           failed++;
           results.push({
             email: recipient.email,
-            fullName: recipient.fullName,
+            firstName: recipient.firstName,
+            lastName: recipient.lastName,
             status: 'failed',
             error: result.error,
           });
@@ -188,7 +193,8 @@ export async function sendPreorderConversionEmails(options: {
       failed++;
       results.push({
         email: recipient.email,
-        fullName: recipient.fullName,
+        firstName: recipient.firstName,
+        lastName: recipient.lastName,
         status: 'failed',
         error: err instanceof Error ? err.message : String(err),
       });

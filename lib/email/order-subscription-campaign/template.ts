@@ -75,15 +75,6 @@ function formatPrice(
   return `${eur.toFixed(2)} €`;
 }
 
-/** Split full name into first and last name parts */
-function splitName(fullName: string): { firstName: string; lastName: string } {
-  const parts = fullName.trim().split(/\s+/);
-  return {
-    firstName: parts[0] ?? '',
-    lastName: parts.slice(1).join(' '),
-  };
-}
-
 /** Build a display string for sizes */
 function formatSize(upper: string | null, lower: string | null): string {
   if (!upper && !lower) return '—';
@@ -115,7 +106,7 @@ export function renderOrderConversionEmail(
 ): string {
   const template = getTemplate();
 
-  const { firstName, lastName } = splitName(recipient.fullName);
+  const { firstName, lastName } = recipient;
 
   // Validate conversion URL starts with SITE_URL
   if (!recipient.conversionUrl.startsWith(SITE_URL)) {

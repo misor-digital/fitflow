@@ -122,7 +122,7 @@ async function processRecipient(
   const result = await sendWithRetry(() => {
     if (effectiveTemplateId) {
       return sendTemplateEmail({
-        to: { email: recipient.email, name: recipient.full_name ?? undefined },
+        to: { email: recipient.email, name: `${recipient.first_name ?? ''} ${recipient.last_name ?? ''}`.trim() || undefined },
         templateId: effectiveTemplateId,
         params: effectiveParams as Record<string, string | number | boolean | string[]>,
         tags: ['campaign', campaign.campaign_type],
@@ -131,7 +131,7 @@ async function processRecipient(
 
     // Fallback to HTML content
     return sendEmail({
-      to: { email: recipient.email, name: recipient.full_name ?? undefined },
+      to: { email: recipient.email, name: `${recipient.first_name ?? ''} ${recipient.last_name ?? ''}`.trim() || undefined },
       subject: effectiveSubject,
       htmlContent: campaign.html_content ?? undefined,
       params: effectiveParams as Record<string, string | number | boolean>,
@@ -152,7 +152,7 @@ async function processRecipient(
       email_type: 'campaign',
       email_category: campaign.campaign_type,
       recipient_email: recipient.email,
-      recipient_name: recipient.full_name,
+      recipient_name: `${recipient.first_name ?? ''} ${recipient.last_name ?? ''}`.trim() || null,
       subject: effectiveSubject,
       template_id: effectiveTemplateId,
       brevo_message_id: result.messageId ?? null,
@@ -171,7 +171,7 @@ async function processRecipient(
     email_type: 'campaign',
     email_category: campaign.campaign_type,
     recipient_email: recipient.email,
-    recipient_name: recipient.full_name,
+    recipient_name: `${recipient.first_name ?? ''} ${recipient.last_name ?? ''}`.trim() || null,
     subject: effectiveSubject,
     template_id: effectiveTemplateId,
     campaign_id: campaign.id,

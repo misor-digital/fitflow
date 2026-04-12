@@ -51,7 +51,7 @@ export function LegacyPreordersTable({
 
               {/* Customer */}
               <td className="py-3 px-4">
-                <div className="text-sm font-medium">{preorder.full_name}</div>
+                <div className="text-sm font-medium">{preorder.first_name} {preorder.last_name}</div>
                 <div className="text-xs text-gray-500">{preorder.email}</div>
               </td>
 

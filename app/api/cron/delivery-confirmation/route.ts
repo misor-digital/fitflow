@@ -126,7 +126,7 @@ async function handleReminder(
 
   // 1. Generate email
   const html = generateDeliveryReminderEmail({
-    customerName: order.customer_full_name,
+    customerName: `${order.customer_first_name} ${order.customer_last_name}`.trim(),
     orderNumber: order.order_number,
     shippedAt: order.shipped_at!,
     confirmUrl,
@@ -137,7 +137,7 @@ async function handleReminder(
 
   // 2. Send email
   const emailResult = await sendTransactionalEmail({
-    to: { email: order.customer_email, name: order.customer_full_name },
+    to: { email: order.customer_email, name: `${order.customer_first_name} ${order.customer_last_name}`.trim() },
     subject: `Потвърди доставката на поръчка ${order.order_number}`,
     htmlContent: html,
     category: 'delivery-reminder',
@@ -175,14 +175,14 @@ async function handleAutoConfirm(item: OrderNeedingAction): Promise<void> {
 
   // 2. Send notification email
   const html = generateDeliveryAutoConfirmedEmail({
-    customerName: order.customer_full_name,
+    customerName: `${order.customer_first_name} ${order.customer_last_name}`.trim(),
     orderNumber: order.order_number,
     confirmedAt: new Date().toISOString(),
     reportProblemUrl: CONTACT_URL,
   });
 
   const emailResult = await sendTransactionalEmail({
-    to: { email: order.customer_email, name: order.customer_full_name },
+    to: { email: order.customer_email, name: `${order.customer_first_name} ${order.customer_last_name}`.trim() },
     subject: `Поръчка ${order.order_number} е маркирана като доставена`,
     htmlContent: html,
     category: 'delivery-auto-confirmed',

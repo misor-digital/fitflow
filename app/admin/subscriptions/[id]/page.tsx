@@ -56,13 +56,15 @@ export default async function SubscriptionDetailPage({ params }: { params: Promi
   const [profileResult, authResult] = await Promise.all([
     supabaseAdmin
       .from('user_profiles')
-      .select('full_name')
+      .select('first_name, last_name')
       .eq('id', subscription.user_id)
       .single(),
     supabaseAdmin.auth.admin.getUserById(subscription.user_id),
   ]);
 
-  const userName = profileResult.data?.full_name ?? 'Неизвестен';
+  const userName = profileResult.data
+    ? `${profileResult.data.first_name} ${profileResult.data.last_name}`.trim()
+    : 'Неизвестен';
   const userEmail = authResult.data?.user?.email ?? '';
 
   return (

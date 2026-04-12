@@ -8,7 +8,8 @@ import PasswordInput from '@/components/PasswordInput';
 
 export default function RegisterForm() {
   const [mode, setMode] = useState<'password' | 'magic'>('password');
-  const [fullName, setFullName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -31,8 +32,8 @@ export default function RegisterForm() {
     setError(null);
 
     // Client-side validation
-    if (!fullName.trim()) {
-      setError('Моля, въведете вашето име');
+    if (!firstName.trim() || !lastName.trim()) {
+      setError('Моля, въведете вашето име и фамилия');
       return;
     }
 
@@ -54,7 +55,7 @@ export default function RegisterForm() {
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/auth/callback`,
-        data: { full_name: fullName.trim(), is_subscriber: wantsPromos },
+        data: { full_name: `${firstName.trim()} ${lastName.trim()}`, is_subscriber: wantsPromos },
       },
     });
 
@@ -70,7 +71,7 @@ export default function RegisterForm() {
     fetch('/api/auth/send-confirmation', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, fullName: fullName.trim() }),
+      body: JSON.stringify({ email, firstName: firstName.trim(), lastName: lastName.trim() }),
     }).catch(() => {
       // Non-blocking - Supabase's built-in email serves as fallback
       console.warn('Failed to send branded confirmation email');
@@ -84,8 +85,8 @@ export default function RegisterForm() {
     e.preventDefault();
     setError(null);
 
-    if (!fullName.trim()) {
-      setError('Моля, въведете вашето име');
+    if (!firstName.trim() || !lastName.trim()) {
+      setError('Моля, въведете вашето име и фамилия');
       return;
     }
 
@@ -97,7 +98,8 @@ export default function RegisterForm() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email,
-          fullName: fullName.trim(),
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
           wantsPromos,
         }),
       });
@@ -179,19 +181,35 @@ export default function RegisterForm() {
         </button>
       </div>
 
-      <div>
-        <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
-          Име и фамилия
-        </label>
-        <input
-          id="fullName"
-          type="text"
-          value={fullName}
-          onChange={(e) => setFullName(e.target.value)}
-          required
-          maxLength={100}
-          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:outline-none"
-        />
+      <div className="grid grid-cols-2 gap-4">
+        <div>
+          <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
+            Име
+          </label>
+          <input
+            id="firstName"
+            type="text"
+            value={firstName}
+            onChange={(e) => setFirstName(e.target.value)}
+            required
+            maxLength={50}
+            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:outline-none"
+          />
+        </div>
+        <div>
+          <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
+            Фамилия
+          </label>
+          <input
+            id="lastName"
+            type="text"
+            value={lastName}
+            onChange={(e) => setLastName(e.target.value)}
+            required
+            maxLength={50}
+            className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:outline-none"
+          />
+        </div>
       </div>
 
       <div>

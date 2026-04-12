@@ -6,13 +6,15 @@ import { updateProfile } from './actions';
 import { useAuthStore } from '@/store/authStore';
 
 interface Props {
-  initialName: string;
+  initialFirstName: string;
+  initialLastName: string;
   initialPhone: string;
   email: string;
 }
 
-export default function EditProfileForm({ initialName, initialPhone, email }: Props) {
-  const [fullName, setFullName] = useState(initialName);
+export default function EditProfileForm({ initialFirstName, initialLastName, initialPhone, email }: Props) {
+  const [firstName, setFirstName] = useState(initialFirstName);
+  const [lastName, setLastName] = useState(initialLastName);
   const [phone, setPhone] = useState(initialPhone);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +27,7 @@ export default function EditProfileForm({ initialName, initialPhone, email }: Pr
     setError(null);
     setSuccess(false);
 
-    const result = await updateProfile({ fullName, phone });
+    const result = await updateProfile({ firstName, lastName, phone });
 
     if (result.error) {
       setError(result.error);
@@ -34,7 +36,7 @@ export default function EditProfileForm({ initialName, initialPhone, email }: Pr
       // Update nav menu name immediately
       const currentUser = useAuthStore.getState().user;
       if (currentUser) {
-        useAuthStore.getState().setUser({ ...currentUser, fullName });
+        useAuthStore.getState().setUser({ ...currentUser, firstName, lastName });
       }
       router.refresh(); // Refresh server data
     }
@@ -54,24 +56,39 @@ export default function EditProfileForm({ initialName, initialPhone, email }: Pr
       </div>
 
       <div>
-        <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">Име</label>
+        <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">Име</label>
         <input
-          id="fullName"
-          value={fullName}
-          onChange={(e) => setFullName(e.target.value)}
+          id="firstName"
+          value={firstName}
+          onChange={(e) => setFirstName(e.target.value)}
           required
-          maxLength={100}
+          maxLength={50}
           className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:outline-none"
         />
       </div>
 
       <div>
-        <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">Телефон</label>
+        <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">Фамилия</label>
+        <input
+          id="lastName"
+          value={lastName}
+          onChange={(e) => setLastName(e.target.value)}
+          required
+          maxLength={50}
+          className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:outline-none"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">Телефон <span className="text-red-500">*</span></label>
         <input
           id="phone"
+          type="tel"
+          inputMode="tel"
           value={phone}
           onChange={(e) => setPhone(e.target.value)}
-          maxLength={20}
+          required
+          maxLength={30}
           className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-[var(--color-brand-orange)] focus:outline-none"
         />
       </div>

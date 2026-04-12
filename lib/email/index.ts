@@ -24,6 +24,8 @@ export {
   generateEmailConfirmationEmail,
   generatePasswordResetEmail,
   formatOptionsWithOther,
+  generateProfileUpdatedEmail,
+  generateAccountDeletedEmail,
 } from './templates';
 
 // Shared email layout and constants

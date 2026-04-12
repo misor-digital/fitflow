@@ -33,7 +33,8 @@ export interface SpeedyOfficeSelection {
 /** Raw address input from the form */
 export interface AddressInput {
   label: string;
-  fullName: string;
+  firstName: string;
+  lastName: string;
   phone: string;
   city: string;
   postalCode: string;
@@ -73,7 +74,8 @@ export interface OrderUserInput {
 
   // Step 3: Identity & Address
   isGuest: boolean;
-  fullName: string;
+  firstName: string;
+  lastName: string;
   email: string;
   phone: string;
   selectedAddressId: string | null;  // for authenticated users with saved addresses
@@ -130,7 +132,8 @@ export interface OrderDerivedState {
 export interface OrderPersistData {
   user_id: string | null;
   customer_email: string;
-  customer_full_name: string;
+  customer_first_name: string;
+  customer_last_name: string;
   customer_phone: string | null;
   shipping_address: ShippingAddressSnapshot;
   address_id: string | null;
@@ -160,7 +163,8 @@ export interface OrderPersistData {
 
 export interface OrderApiRequest {
   // Identity
-  fullName: string;
+  firstName: string;
+  lastName: string;
   email: string;
   phone?: string;
   isGuest: boolean;
@@ -245,7 +249,8 @@ export interface SubscriptionApiRequest {
 export interface OrderTrackingData {
   orderNumber: string;
   status: OrderStatus;
-  customerFullName: string;
+  customerFirstName: string;
+  customerLastName: string;
   boxType: string;
   boxTypeName: string;
   shippingAddress: ShippingAddressSnapshot;

@@ -253,7 +253,7 @@ export default function OrderStepConfirm({
           <div className="space-y-2 sm:space-y-3">
             <div className="text-sm sm:text-base">
               <span className="font-semibold text-[var(--color-brand-navy)]">Име:</span>
-              <span className="ml-1.5 sm:ml-2 text-gray-600">{store.fullName || store.address.fullName}</span>
+              <span className="ml-1.5 sm:ml-2 text-gray-600">{`${store.firstName} ${store.lastName}`.trim() || `${store.address.firstName} ${store.address.lastName}`.trim()}</span>
             </div>
             <div className="text-sm sm:text-base">
               <span className="font-semibold text-[var(--color-brand-navy)]">Имейл:</span>

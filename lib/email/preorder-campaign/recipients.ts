@@ -30,7 +30,8 @@ export interface PreorderRecipient {
   preorderId: string;
   orderId: string;
   email: string;
-  fullName: string;
+  firstName: string;
+  lastName: string;
   boxType: string;
   conversionUrl: string;
   wantsPersonalization: boolean;
@@ -69,7 +70,7 @@ export async function getEligiblePreorderRecipients(): Promise<PreorderRecipient
   const { data: preorders, error } = await supabaseAdmin
     .from('preorders')
     .select(
-      'id, order_id, full_name, email, box_type, conversion_token, wants_personalization, sports, sport_other, colors, flavors, flavor_other, size_upper, size_lower, dietary, dietary_other, promo_code, original_price_eur, final_price_eur',
+      'id, order_id, first_name, last_name, email, box_type, conversion_token, wants_personalization, sports, sport_other, colors, flavors, flavor_other, size_upper, size_lower, dietary, dietary_other, promo_code, original_price_eur, final_price_eur',
     )
     .eq('conversion_status', 'pending')
     .not('conversion_token', 'is', null)
@@ -95,7 +96,8 @@ export async function getEligiblePreorderRecipients(): Promise<PreorderRecipient
         preorderId: p.id,
         orderId: p.order_id,
         email: p.email.trim().toLowerCase(),
-        fullName: p.full_name,
+        firstName: (p.first_name ?? '').trim(),
+        lastName: (p.last_name ?? '').trim(),
         boxType: p.box_type,
         conversionUrl: `${SITE_URL}/order/convert?token=${p.conversion_token}`,
         wantsPersonalization: p.wants_personalization ?? false,

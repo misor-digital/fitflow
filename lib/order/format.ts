@@ -6,6 +6,11 @@
 
 import type { OrderStatus, ShippingAddressSnapshot } from '@/lib/supabase/types';
 
+/** Compose a display name from first + last name parts. */
+export function displayName(firstName: string, lastName: string): string {
+  return `${firstName} ${lastName}`.trim();
+}
+
 // ============================================================================
 // Order Status Labels (Bulgarian)
 // ============================================================================
@@ -67,7 +72,7 @@ export function formatShippingAddress(address: ShippingAddressSnapshot): string 
   // Speedy office delivery
   if (address.delivery_method === 'speedy_office' && address.speedy_office_name) {
     const lines: string[] = [];
-    lines.push(address.full_name);
+    lines.push(`${address.first_name} ${address.last_name}`.trim());
     lines.push(`Офис на Speedy: ${address.speedy_office_name}`);
     if (address.speedy_office_address) {
       lines.push(address.speedy_office_address);
@@ -82,7 +87,7 @@ export function formatShippingAddress(address: ShippingAddressSnapshot): string 
   const lines: string[] = [];
 
   // Line 1: Full name
-  lines.push(address.full_name);
+  lines.push(`${address.first_name} ${address.last_name}`.trim());
 
   // Line 2: Street + optional building details
   const streetParts: string[] = [address.street_address];

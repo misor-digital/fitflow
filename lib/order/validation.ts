@@ -7,7 +7,7 @@
 
 import type { OrderUserInput, AddressInput, SpeedyOfficeSelection } from './types';
 import type { ValidationResult, ValidationError } from '@/lib/catalog';
-import { isPremiumBox, isSubscriptionBox, isValidEmail, isValidPhone } from '@/lib/catalog';
+import { isPremiumBox, isSubscriptionBox, isValidEmail, isPhoneFormatValid, getPhoneError } from '@/lib/catalog';
 
 // ============================================================================
 // Bulgarian Address Validation
@@ -29,17 +29,32 @@ export function isValidPostalCode(code: string): boolean {
 export function validateAddress(address: AddressInput): ValidationResult {
   const errors: ValidationError[] = [];
 
-  // Full name
-  if (!address.fullName.trim()) {
+  // First name
+  if (!address.firstName.trim()) {
     errors.push({
-      field: 'fullName',
+      field: 'firstName',
       message: 'Името е задължително',
       code: 'required',
     });
-  } else if (address.fullName.trim().length < 2) {
+  } else if (address.firstName.trim().length < 2) {
     errors.push({
-      field: 'fullName',
+      field: 'firstName',
       message: 'Името трябва да е поне 2 символа',
+      code: 'too_short',
+    });
+  }
+
+  // Last name
+  if (!address.lastName.trim()) {
+    errors.push({
+      field: 'lastName',
+      message: 'Фамилията е задължителна',
+      code: 'required',
+    });
+  } else if (address.lastName.trim().length < 2) {
+    errors.push({
+      field: 'lastName',
+      message: 'Фамилията трябва да е поне 2 символа',
       code: 'too_short',
     });
   }
@@ -89,6 +104,16 @@ export function validateAddress(address: AddressInput): ValidationResult {
     });
   }
 
+  // Phone (required for all deliveries)
+  const phoneErr = getPhoneError(address.phone);
+  if (phoneErr) {
+    errors.push({
+      field: 'phone',
+      message: phoneErr,
+      code: !address.phone.trim() ? 'required' : 'invalid_format',
+    });
+  }
+
   return {
     valid: errors.length === 0,
     errors,
@@ -97,7 +122,7 @@ export function validateAddress(address: AddressInput): ValidationResult {
 
 /**
  * Validate Speedy office delivery selection.
- * Requires: fullName, phone (mandatory for Speedy), and a selected office.
+ * Requires: firstName, lastName, phone (mandatory for Speedy), and a selected office.
  */
 export function validateSpeedyOffice(
   address: AddressInput,
@@ -105,17 +130,32 @@ export function validateSpeedyOffice(
 ): ValidationResult {
   const errors: ValidationError[] = [];
 
-  // Full name still required
-  if (!address.fullName.trim()) {
+  // First name still required
+  if (!address.firstName.trim()) {
     errors.push({
-      field: 'fullName',
+      field: 'firstName',
       message: 'Името е задължително',
       code: 'required',
     });
-  } else if (address.fullName.trim().length < 2) {
+  } else if (address.firstName.trim().length < 2) {
     errors.push({
-      field: 'fullName',
+      field: 'firstName',
       message: 'Името трябва да е поне 2 символа',
+      code: 'too_short',
+    });
+  }
+
+  // Last name still required
+  if (!address.lastName.trim()) {
+    errors.push({
+      field: 'lastName',
+      message: 'Фамилията е задължителна',
+      code: 'required',
+    });
+  } else if (address.lastName.trim().length < 2) {
+    errors.push({
+      field: 'lastName',
+      message: 'Фамилията трябва да е поне 2 символа',
       code: 'too_short',
     });
   }
@@ -127,7 +167,7 @@ export function validateSpeedyOffice(
       message: 'Телефонът е задължителен за доставка до офис на Speedy',
       code: 'required',
     });
-  } else if (!isValidPhone(address.phone)) {
+  } else if (!isPhoneFormatValid(address.phone)) {
     errors.push({
       field: 'phone',
       message: 'Невалиден телефонен номер',
@@ -238,20 +278,20 @@ export function validateOrderStep3(input: OrderUserInput): boolean {
 
     // Guest must also have valid contact info
     if (input.isGuest) {
-      if (!input.fullName.trim() || input.fullName.trim().length < 2) return false;
+      if (!input.firstName.trim() || input.firstName.trim().length < 2) return false;
+      if (!input.lastName.trim() || input.lastName.trim().length < 2) return false;
       if (!input.email.trim() || !isValidEmail(input.email)) return false;
-      // Phone is optional - only reject if provided but invalid
-      if (input.phone.trim() && !isValidPhone(input.phone)) return false;
+      if (!input.phone.trim() || !isPhoneFormatValid(input.phone)) return false;
     }
     return true;
   }
 
   // --- Address delivery branch ---
   if (input.isGuest) {
-    if (!input.fullName.trim() || input.fullName.trim().length < 2) return false;
+    if (!input.firstName.trim() || input.firstName.trim().length < 2) return false;
+    if (!input.lastName.trim() || input.lastName.trim().length < 2) return false;
     if (!input.email.trim() || !isValidEmail(input.email)) return false;
-    // Phone is optional - only reject if provided but invalid
-    if (input.phone.trim() && !isValidPhone(input.phone)) return false;
+    if (!input.phone.trim() || !isPhoneFormatValid(input.phone)) return false;
     const addressResult = validateAddress(input.address);
     return addressResult.valid;
   }
@@ -371,16 +411,30 @@ export function validateOrderSubmission(input: OrderUserInput): ValidationResult
   }
 
   // Contact info
-  if (!input.fullName.trim()) {
+  if (!input.firstName.trim()) {
     errors.push({
-      field: 'fullName',
+      field: 'firstName',
       message: 'Името е задължително',
       code: 'required',
     });
-  } else if (input.fullName.trim().length < 2) {
+  } else if (input.firstName.trim().length < 2) {
     errors.push({
-      field: 'fullName',
+      field: 'firstName',
       message: 'Името трябва да е поне 2 символа',
+      code: 'too_short',
+    });
+  }
+
+  if (!input.lastName.trim()) {
+    errors.push({
+      field: 'lastName',
+      message: 'Фамилията е задължителна',
+      code: 'required',
+    });
+  } else if (input.lastName.trim().length < 2) {
+    errors.push({
+      field: 'lastName',
+      message: 'Фамилията трябва да е поне 2 символа',
       code: 'too_short',
     });
   }
@@ -399,11 +453,17 @@ export function validateOrderSubmission(input: OrderUserInput): ValidationResult
     });
   }
 
-  if (input.phone && !isValidPhone(input.phone)) {
+  if (input.phone && !isPhoneFormatValid(input.phone)) {
     errors.push({
       field: 'phone',
       message: 'Невалиден телефонен номер',
       code: 'invalid_format',
+    });
+  } else if (!input.phone?.trim()) {
+    errors.push({
+      field: 'phone',
+      message: 'Телефонният номер е задължителен',
+      code: 'required',
     });
   }
 
@@ -447,9 +507,13 @@ export function validateOrderSubmission(input: OrderUserInput): ValidationResult
  */
 export function getAddressFieldError(field: string, address: AddressInput): string | null {
   switch (field) {
-    case 'fullName':
-      if (!address.fullName.trim()) return 'Името е задължително';
-      if (address.fullName.trim().length < 2) return 'Името трябва да е поне 2 символа';
+    case 'firstName':
+      if (!address.firstName.trim()) return 'Името е задължително';
+      if (address.firstName.trim().length < 2) return 'Името трябва да е поне 2 символа';
+      return null;
+
+    case 'lastName':
+      if (!address.lastName.trim()) return 'Фамилията е задължителна';
       return null;
 
     case 'city':
@@ -467,10 +531,10 @@ export function getAddressFieldError(field: string, address: AddressInput): stri
       if (address.streetAddress.trim().length < 3) return 'Адресът трябва да е поне 3 символа';
       return null;
 
-    case 'phone':
-      // Phone validation is context-dependent (required for office delivery)
-      // Return null here - office-specific validation is in validateSpeedyOffice
-      return null;
+    case 'phone': {
+      const phoneErr = getPhoneError(address.phone);
+      return phoneErr;
+    }
 
     default:
       return null;

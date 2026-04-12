@@ -87,6 +87,11 @@ export {
   // Validation functions
   isValidEmail,
   isValidPhone,
+  isPhoneFormatValid,
+  
+  // Constants
+  MIN_PHONE_LENGTH,
+  MAX_PHONE_LENGTH,
   
   // Error messages
   getEmailError,

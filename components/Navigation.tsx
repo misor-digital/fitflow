@@ -192,11 +192,11 @@ export default function Navigation() {
                       className="flex items-center gap-2 text-sm text-[var(--color-brand-navy)] hover:text-[var(--color-brand-orange)] transition-colors"
                     >
                       <span className="hidden sm:inline font-medium">
-                        {user.fullName || user.email}
+                        {user.firstName ? `${user.firstName} ${user.lastName}`.trim() : user.email}
                       </span>
                       {/* User avatar or initials circle */}
                       <div className="w-8 h-8 rounded-full bg-[var(--color-brand-navy)] text-white flex items-center justify-center text-xs font-bold">
-                        {(user.fullName?.[0] ?? user.email[0]).toUpperCase()}
+                        {(user.firstName?.[0] ?? user.email[0]).toUpperCase()}
                       </div>
                     </button>
 

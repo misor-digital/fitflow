@@ -83,15 +83,6 @@ function formatPrice(
   return `${eur.toFixed(2)} €`;
 }
 
-/** Split full name into first and last name parts */
-function splitName(fullName: string): { firstName: string; lastName: string } {
-  const parts = fullName.trim().split(/\s+/);
-  return {
-    firstName: parts[0] ?? '',
-    lastName: parts.slice(1).join(' '),
-  };
-}
-
 /** Build a display string for sports, appending sportOther if provided */
 function formatSports(sports: string[] | null, sportOther: string | null, labels: Record<string, string>): string {
   if (!sports?.length) return '—';
@@ -146,7 +137,7 @@ function formatColors(colors: string[] | null, labels: Record<string, string>): 
 export function renderPreorderEmail(recipient: PreorderRecipient, labelMaps?: PreorderLabelMaps): string {
   const template = getTemplate();
 
-  const { firstName, lastName } = splitName(recipient.fullName);
+  const { firstName, lastName } = recipient;
 
   const labels = labelMaps ?? { sportLabels: {}, flavorLabels: {}, dietaryLabels: {}, sizeLabels: {}, colorNames: {} };
 

@@ -22,7 +22,8 @@ These parameters are populated per-recipient by `buildPreorderConversionRecipien
 
 | Parameter | Brevo Syntax | Type | Example |
 |-----------|-------------|------|---------|
-| Full Name | `{{ params.FULL_NAME }}` | string | "Иван Петров" |
+| First Name | `{{ params.FIRST_NAME }}` | string | "Иван" |
+| Last Name | `{{ params.LAST_NAME }}` | string | "Петров" |
 | Box Type | `{{ params.BOX_TYPE }}` | string | "Класик" |
 | Conversion URL | `{{ params.CONVERSION_URL }}` | string | `https://fitflow.bg/order/convert?token=abc123` |
 | Promo Code | `{{ params.PROMO_CODE }}` | string or null | "EARLY20" |
@@ -38,7 +39,8 @@ access them via `{{ params.PARAM_NAME }}` (uppercase).
 To bridge camelCase → UPPER_SNAKE, configure the Brevo template to use the
 camelCase keys directly:
 
-- `{{ params.fullName }}` → Recipient's full name
+- `{{ params.firstName }}` → Recipient's first name
+- `{{ params.lastName }}` → Recipient's last name
 - `{{ params.boxType }}` → Box type display name
 - `{{ params.conversionUrl }}` → Personalised conversion link
 - `{{ params.promoCode }}` → Promo code (may be null)
@@ -64,7 +66,7 @@ camelCase keys directly:
 
 1. **Personalised greeting**:
    ```
-   Здравейте, {{ params.fullName }}!
+   Здравейте, {{ params.firstName }}!
    ```
 
 2. **Box type mention**:

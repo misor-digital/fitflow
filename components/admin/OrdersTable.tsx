@@ -348,7 +348,7 @@ export function OrdersTable({
 
                     {/* Customer */}
                     <td className="py-3 px-4">
-                      <div className="text-sm font-medium">{order.customer_full_name}</div>
+                      <div className="text-sm font-medium">{order.customer_first_name} {order.customer_last_name}</div>
                       <div className="text-xs text-gray-500">{order.customer_email}</div>
                     </td>
 

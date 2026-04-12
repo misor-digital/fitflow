@@ -32,7 +32,8 @@ type Frequency = 'monthly' | 'seasonal';
 interface SavedAddress {
   id: string;
   label: string | null;
-  full_name: string;
+  first_name: string;
+  last_name: string;
   phone: string | null;
   city: string;
   postal_code: string;
@@ -54,7 +55,8 @@ interface SavedAddress {
 
 const EMPTY_ADDRESS: AddressInput = {
   label: '',
-  fullName: '',
+  firstName: '',
+  lastName: '',
   phone: '',
   city: '',
   postalCode: '',
@@ -92,13 +94,15 @@ export default function SubscriptionConversionFlow({
   const [frequencyError, setFrequencyError] = useState(false);
 
   // ── Step 2: contact ─────────────────────────────────────────────────────
-  const [fullName, setFullName] = useState(source.customerFullName);
+  const [firstName, setFirstName] = useState(source.customerFirstName);
+  const [lastName, setLastName] = useState(source.customerLastName);
   const [phone, setPhone] = useState(source.customerPhone ?? '');
 
   // ── Step 2: address ─────────────────────────────────────────────────────
   const [address, setAddress] = useState<AddressInput>({
     ...EMPTY_ADDRESS,
-    fullName: source.customerFullName,
+    firstName: source.customerFirstName,
+    lastName: source.customerLastName,
     phone: source.customerPhone ?? '',
   });
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>('address');
@@ -221,12 +225,15 @@ export default function SubscriptionConversionFlow({
   // ── Validate contact ───────────────────────────────────────────────────
   const validateContact = useCallback((): boolean => {
     const errors: Record<string, string> = {};
-    if (!fullName.trim() || fullName.trim().length < 2) {
-      errors.fullName = 'Името трябва да е поне 2 символа';
+    if (!firstName.trim() || firstName.trim().length < 2) {
+      errors.firstName = 'Името трябва да е поне 2 символа';
+    }
+    if (!lastName.trim() || lastName.trim().length < 2) {
+      errors.lastName = 'Фамилията трябва да е поне 2 символа';
     }
     setContactErrors(errors);
     return Object.keys(errors).length === 0;
-  }, [fullName]);
+  }, [firstName, lastName]);
 
   // ── Step 1 → Step 2 ────────────────────────────────────────────────────
   const handleSummaryNext = useCallback(() => {
@@ -310,7 +317,8 @@ export default function SubscriptionConversionFlow({
         sizes: { upper: sizeUpper, lower: sizeLower },
         conversionToken: source.conversionToken,
         campaignPromoCode: source.campaignPromoCode,
-        fullName: fullName.trim(),
+        firstName: firstName.trim(),
+        lastName: lastName.trim(),
         email: source.customerEmail,
         phone: phone.trim(),
       };
@@ -328,14 +336,16 @@ export default function SubscriptionConversionFlow({
         body.speedyOfficeName = speedyOffice.name;
         body.speedyOfficeAddress = speedyOffice.address;
         body.address = {
-          fullName: address.fullName,
+          firstName: address.firstName,
+          lastName: address.lastName,
           phone: address.phone,
           deliveryNotes: address.deliveryNotes,
         };
       } else {
         body.deliveryMethod = 'address';
         body.address = {
-          fullName: address.fullName,
+          firstName: address.firstName,
+          lastName: address.lastName,
           phone: address.phone,
           city: address.city,
           postalCode: address.postalCode,
@@ -387,7 +397,8 @@ export default function SubscriptionConversionFlow({
     dietary,
     sizeUpper,
     sizeLower,
-    fullName,
+    firstName,
+    lastName,
     phone,
     onBehalfOfUserId,
     isAuthenticated,
@@ -451,8 +462,9 @@ export default function SubscriptionConversionFlow({
 
   const renderAddressForm = () => (
     <div className="space-y-3 sm:space-y-4">
-      {renderField('Име на получател', 'fullName', address.fullName, (v) => handleAddressChange('fullName', v), true, addressErrors)}
-      {renderField('Телефон', 'phone', address.phone, (v) => handleAddressChange('phone', v), false, addressErrors, { type: 'tel' })}
+      {renderField('Име на получател', 'firstName', address.firstName, (v) => handleAddressChange('firstName', v), true, addressErrors)}
+      {renderField('Фамилия на получател', 'lastName', address.lastName, (v) => handleAddressChange('lastName', v), true, addressErrors)}
+      {renderField('Телефон', 'phone', address.phone, (v) => handleAddressChange('phone', v), true, addressErrors, { type: 'tel' })}
       <div className="grid grid-cols-2 gap-3 sm:gap-4">
         {renderField('Град', 'city', address.city, (v) => handleAddressChange('city', v), true, addressErrors)}
         {renderField('Пощенски код', 'postalCode', address.postalCode, (v) => handleAddressChange('postalCode', v), true, addressErrors)}
@@ -468,7 +480,8 @@ export default function SubscriptionConversionFlow({
 
   const renderOfficeForm = () => (
     <div className="space-y-3 sm:space-y-4">
-      {renderField('Име на получател', 'fullName', address.fullName, (v) => handleAddressChange('fullName', v), true, addressErrors)}
+      {renderField('Име на получател', 'firstName', address.firstName, (v) => handleAddressChange('firstName', v), true, addressErrors)}
+      {renderField('Фамилия на получател', 'lastName', address.lastName, (v) => handleAddressChange('lastName', v), true, addressErrors)}
       {renderField('Телефон', 'phone', address.phone, (v) => handleAddressChange('phone', v), true, addressErrors, { type: 'tel' })}
       <div>
         <label className="block text-sm sm:text-base font-semibold text-[var(--color-brand-navy)] mb-1.5">
@@ -524,7 +537,7 @@ export default function SubscriptionConversionFlow({
                     </div>
                   )}
                   <div className="text-sm sm:text-base font-semibold text-[var(--color-brand-navy)]">
-                    {addr.full_name}
+                    {addr.first_name} {addr.last_name}
                   </div>
                   {addr.delivery_method === 'speedy_office' && addr.speedy_office_name ? (
                     <div className="text-sm text-gray-600 mt-0.5">
@@ -826,7 +839,7 @@ export default function SubscriptionConversionFlow({
           </h2>
           {isAdmin ? (
             <p className="text-gray-600">
-              Абонаментът за <span className="font-semibold">{source.customerFullName}</span> ({source.customerEmail}) е създаден успешно.
+              Абонаментът за <span className="font-semibold">{source.customerFirstName} {source.customerLastName}</span> ({source.customerEmail}) е създаден успешно.
             </p>
           ) : (
             <>
@@ -993,7 +1006,8 @@ export default function SubscriptionConversionFlow({
           {/* Path C: Admin flow */}
           {isAdmin && (
             <AdminCustomerPanel
-              defaultFullName={source.customerFullName}
+              defaultFirstName={source.customerFirstName}
+              defaultLastName={source.customerLastName}
               defaultEmail={source.customerEmail}
             />
           )}
@@ -1012,7 +1026,8 @@ export default function SubscriptionConversionFlow({
                 Данни за контакт
               </h3>
               <div className="space-y-3 sm:space-y-4">
-                {renderField('Имена', 'fullName', fullName, setFullName, true, contactErrors)}
+                {renderField('Име', 'firstName', firstName, setFirstName, true, contactErrors)}
+                {renderField('Фамилия', 'lastName', lastName, setLastName, true, contactErrors)}
                 {renderField('Имейл', 'email', source.customerEmail, () => {}, true, contactErrors, {
                   type: 'email',
                   readOnly: true,
@@ -1032,7 +1047,7 @@ export default function SubscriptionConversionFlow({
           {isAuthenticated && !isAdmin && (
             <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg">
               <p className="text-base sm:text-lg text-[var(--color-brand-navy)]">
-                Здравейте, <span className="font-bold">{user?.fullName}</span>
+                Здравейте, <span className="font-bold">{user?.firstName}</span>
               </p>
             </div>
           )}
@@ -1110,7 +1125,7 @@ export default function SubscriptionConversionFlow({
         {/* Admin: on-behalf banner */}
         {isAdmin && (
           <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-700">
-            Поръчка от името на: <span className="font-semibold">{source.customerFullName}</span> ({source.customerEmail})
+            Поръчка от името на: <span className="font-semibold">{source.customerFirstName} {source.customerLastName}</span> ({source.customerEmail})
           </div>
         )}
 
@@ -1168,7 +1183,7 @@ export default function SubscriptionConversionFlow({
             </button>
           </div>
           <div className="text-sm text-gray-700">
-            <p className="font-semibold">{address.fullName || fullName}</p>
+            <p className="font-semibold">{address.firstName ? `${address.firstName} ${address.lastName}`.trim() : `${firstName} ${lastName}`.trim()}</p>
             {displayAddress.line1 && <p className="mt-1">{displayAddress.line1}</p>}
             {displayAddress.line2 && <p>{displayAddress.line2}</p>}
           </div>

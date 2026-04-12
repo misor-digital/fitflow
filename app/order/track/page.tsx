@@ -21,7 +21,8 @@ interface TrackingOrder {
   orderNumber: string;
   status: OrderStatus;
   statusLabel: string;
-  customerFullName: string;
+  customerFirstName: string;
+  customerLastName: string;
   boxType: string;
   boxTypeName: string;
   shippingAddress: ShippingAddressSnapshot;
@@ -167,7 +168,7 @@ function OrderTrackingContent() {
             </div>
             <div>
               <dt className="text-gray-500 mb-1">Клиент</dt>
-              <dd className="font-semibold text-gray-900">{order.customerFullName}</dd>
+              <dd className="font-semibold text-gray-900">{order.customerFirstName} {order.customerLastName}</dd>
             </div>
             <div>
               <dt className="text-gray-500 mb-1">Тип кутия</dt>

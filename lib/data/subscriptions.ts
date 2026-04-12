@@ -51,7 +51,8 @@ async function insertHistory(entry: SubscriptionHistoryInsert): Promise<void> {
 /** Build a ShippingAddressSnapshot from an address row. */
 function addressToSnapshot(address: AddressRow): ShippingAddressSnapshot {
   return {
-    full_name: address.full_name,
+    first_name: address.first_name,
+    last_name: address.last_name,
     phone: address.phone,
     city: address.city ?? '',
     postal_code: address.postal_code ?? '',
@@ -787,7 +788,7 @@ export async function generateOrdersForCycle(
       // Load user profile for contact info
       const { data: profile, error: profileError } = await supabaseAdmin
         .from('user_profiles')
-        .select('full_name, phone')
+        .select('first_name, last_name, phone')
         .eq('id', sub.user_id)
         .single();
 
@@ -806,7 +807,8 @@ export async function generateOrdersForCycle(
       const orderData: OrderInsert = {
         user_id: sub.user_id,
         customer_email: authUser.user.email ?? '',
-        customer_full_name: profile.full_name,
+        customer_first_name: profile.first_name,
+        customer_last_name: profile.last_name,
         customer_phone: profile.phone ?? address.phone,
         shipping_address: snapshot,
         address_id: sub.default_address_id,
@@ -949,7 +951,7 @@ export const getOrdersBySubscription = cache(
 
 /**
  * Get paginated subscriptions with optional filters.
- * Returns SubscriptionWithUserInfo (includes user_email + user_full_name).
+ * Returns SubscriptionWithUserInfo (includes user_email + user_first_name + user_last_name).
  * Supports filtering by status, boxType, frequency, and search (user name/email).
  */
 export const getSubscriptionsPaginated = cache(
@@ -972,11 +974,11 @@ export const getSubscriptionsPaginated = cache(
     if (filters?.search) {
       const search = `%${filters.search}%`;
 
-      // Search in user_profiles (full_name)
+      // Search in user_profiles (first_name, last_name)
       const { data: profileMatches } = await supabaseAdmin
         .from('user_profiles')
         .select('id')
-        .ilike('full_name', search);
+        .or(`first_name.ilike.${search},last_name.ilike.${search}`);
 
       const profileIds = (profileMatches ?? []).map((p) => p.id);
       userIds = profileIds;
@@ -1032,11 +1034,14 @@ export const getSubscriptionsPaginated = cache(
     // Fetch profiles
     const { data: profiles } = await supabaseAdmin
       .from('user_profiles')
-      .select('id, full_name')
+      .select('id, first_name, last_name')
       .in('id', uniqueUserIds);
 
-    const profileMap = new Map(
-      (profiles ?? []).map((p) => [p.id, p.full_name]),
+    const profileFirstNameMap = new Map(
+      (profiles ?? []).map((p) => [p.id, p.first_name]),
+    );
+    const profileLastNameMap = new Map(
+      (profiles ?? []).map((p) => [p.id, p.last_name]),
     );
 
     // Fetch emails via auth - single batch query via PostgREST
@@ -1044,7 +1049,8 @@ export const getSubscriptionsPaginated = cache(
 
     const subscriptions: SubscriptionWithUserInfo[] = rows.map((row) => ({
       ...row,
-      user_full_name: profileMap.get(row.user_id) ?? 'Неизвестен',
+      user_first_name: profileFirstNameMap.get(row.user_id) ?? '',
+      user_last_name: profileLastNameMap.get(row.user_id) ?? '',
       user_email: emailMap.get(row.user_id) ?? '',
     }));
 

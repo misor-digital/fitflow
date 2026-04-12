@@ -11,7 +11,8 @@ interface Recipient {
   orderId: string;
   email: string;
   fullEmail: string;
-  fullName: string;
+  firstName: string;
+  lastName: string;
   boxType: string;
   wantsPersonalization: boolean;
   promoCode: string | null;
@@ -30,7 +31,8 @@ interface SendResultResponse {
   skipped: number;
   recipients: Array<{
     email: string;
-    fullName: string;
+    firstName: string;
+    lastName: string;
     status: 'sent' | 'failed' | 'skipped';
     error?: string;
   }>;
@@ -83,7 +85,7 @@ export default function PreorderCampaignPage() {
       if (showOnlyWithPromo && !r.promoCode) return false;
 
       // Search filter (name or email)
-      if (q && !r.fullName.toLowerCase().includes(q) && !r.email.toLowerCase().includes(q)) {
+      if (q && !`${r.firstName} ${r.lastName}`.toLowerCase().includes(q) && !r.email.toLowerCase().includes(q)) {
         return false;
       }
 
@@ -403,7 +405,7 @@ export default function PreorderCampaignPage() {
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-500">{idx + 1}</td>
                     <td className="px-4 py-3 text-sm text-gray-900" title={r.fullEmail}>{r.email}</td>
-                    <td className="px-4 py-3 text-sm text-gray-900">{r.fullName}</td>
+                    <td className="px-4 py-3 text-sm text-gray-900">{r.firstName} {r.lastName}</td>
                     <td className="px-4 py-3 text-sm text-gray-900">
                       {BOX_TYPE_LABELS[r.boxType] ?? r.boxType}
                     </td>

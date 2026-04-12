@@ -39,7 +39,7 @@ interface OrderStore extends OrderUserInput {
 
   // Step 3
   setGuestMode: (isGuest: boolean) => void;
-  setContactInfo: (name: string, email: string, phone: string) => void;
+  setContactInfo: (firstName: string, lastName: string, email: string, phone: string) => void;
   setSelectedAddressId: (id: string | null) => void;
   setAddress: (address: Partial<AddressInput>) => void;
   setDeliveryMethod: (method: DeliveryMethod) => void;
@@ -97,8 +97,8 @@ export const useOrderStore = create<OrderStore>()(
 
       // Step 3: Identity & Address
       setGuestMode: (isGuest) => set({ isGuest }),
-      setContactInfo: (name, email, phone) =>
-        set({ fullName: name, email, phone }),
+      setContactInfo: (firstName, lastName, email, phone) =>
+        set({ firstName, lastName, email, phone }),
       setSelectedAddressId: (id) => set({ selectedAddressId: id }),
       setAddress: (partial) =>
         set((state) => ({
@@ -192,7 +192,8 @@ function mapStoreToInput(store: OrderStore): OrderUserInput {
     dietaryOther: store.dietaryOther,
     additionalNotes: store.additionalNotes,
     isGuest: store.isGuest,
-    fullName: store.fullName,
+    firstName: store.firstName,
+    lastName: store.lastName,
     email: store.email,
     phone: store.phone,
     selectedAddressId: store.selectedAddressId,

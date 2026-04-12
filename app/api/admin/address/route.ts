@@ -11,6 +11,8 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import {
   sanitizeAddressBody,
   validateFieldLengths,
+  generateAddressLabel,
+  syncPhoneToProfile,
 } from '@/app/api/address/route';
 import type { AddressInsert } from '@/lib/supabase/types';
 
@@ -151,8 +153,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // Phone format validation
-    if (sanitized.phone && !isValidPhone(sanitized.phone)) {
+    // Phone validation (required for all delivery methods)
+    if (!sanitized.phone?.trim()) {
+      return NextResponse.json(
+        {
+          error: 'Невалидни данни',
+          details: [{ field: 'phone', message: 'Телефонният номер е задължителен', code: 'required' }],
+        },
+        { status: 400 },
+      );
+    }
+    if (!isValidPhone(sanitized.phone)) {
       return NextResponse.json(
         {
           error: 'Невалидни данни',
@@ -185,7 +196,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       const validationResult = validateSpeedyOffice(
         {
           label: sanitized.label ?? '',
-          fullName: sanitized.fullName ?? '',
+          firstName: sanitized.firstName ?? '',
+          lastName: sanitized.lastName ?? '',
           phone: sanitized.phone ?? '',
           city: '',
           postalCode: '',
@@ -208,7 +220,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     } else {
       const validationResult = validateAddress({
         label: sanitized.label ?? '',
-        fullName: sanitized.fullName ?? '',
+        firstName: sanitized.firstName ?? '',
+        lastName: sanitized.lastName ?? '',
         phone: sanitized.phone ?? '',
         city: sanitized.city ?? '',
         postalCode: sanitized.postalCode ?? '',
@@ -229,28 +242,32 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // Build insert payload - use target userId, not session userId
+    const autoLabel = generateAddressLabel(deliveryMethod, sanitized);
+
     const insertData: AddressInsert =
       deliveryMethod === 'speedy_office'
         ? {
             user_id: userId,
             delivery_method: 'speedy_office',
-            full_name: sanitized.fullName!,
+            first_name: sanitized.firstName!,
+            last_name: sanitized.lastName!,
             phone: sanitized.phone || null,
             speedy_office_id: sanitized.speedyOfficeId!,
             speedy_office_name: sanitized.speedyOfficeName!,
             speedy_office_address: sanitized.speedyOfficeAddress || null,
-            label: sanitized.label || null,
+            label: autoLabel,
             delivery_notes: sanitized.deliveryNotes || null,
             is_default: sanitized.isDefault ?? false,
           }
         : {
             user_id: userId,
             delivery_method: 'address',
-            full_name: sanitized.fullName!,
+            first_name: sanitized.firstName!,
+            last_name: sanitized.lastName!,
             city: sanitized.city!,
             postal_code: sanitized.postalCode!,
             street_address: sanitized.streetAddress!,
-            label: sanitized.label || null,
+            label: autoLabel,
             phone: sanitized.phone || null,
             building_entrance: sanitized.buildingEntrance || null,
             floor: sanitized.floor || null,
@@ -260,7 +277,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           };
 
     const address = await createAddress(insertData);
-    return NextResponse.json({ address }, { status: 201 });
+
+    // Sync phone to profile if profile phone is empty
+    let phoneSynced = false;
+    if (insertData.phone) {
+      try {
+        phoneSynced = await syncPhoneToProfile(userId, insertData.phone);
+      } catch (err) {
+        console.error('Failed to sync phone to profile:', err);
+      }
+    }
+
+    return NextResponse.json({ address, phoneSynced }, { status: 201 });
   } catch (error) {
     console.error('POST /api/admin/address error:', error);
     return NextResponse.json(

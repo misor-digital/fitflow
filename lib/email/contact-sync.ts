@@ -46,7 +46,8 @@ export interface SyncSubscriptionChangeData {
 
 export interface SyncPreorderData {
   email: string;
-  fullName?: string;
+  firstName?: string;
+  lastName?: string;
   boxType?: string;
 }
 
@@ -180,9 +181,8 @@ export async function syncSubscriptionChange(data: SyncSubscriptionChangeData): 
 export async function syncPreorder(data: SyncPreorderData): Promise<SyncResult> {
   try {
     // Parse full name into first/last
-    const nameParts = (data.fullName ?? '').trim().split(/\s+/);
-    const firstName = nameParts[0] || '';
-    const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : undefined;
+    const firstName = (data.firstName ?? '').trim();
+    const lastName = (data.lastName ?? '').trim();
 
     const listIds = EMAIL_CONFIG.lists.preorders
       ? [EMAIL_CONFIG.lists.preorders]

@@ -31,10 +31,15 @@ export async function GET(request: Request): Promise<NextResponse> {
     const user = await getUserByEmail(email);
 
     if (user) {
+      const meta = user.raw_user_meta_data as Record<string, unknown> | undefined;
+      const metaFullName = typeof meta?.full_name === 'string' ? meta.full_name : '';
       return NextResponse.json({
         exists: true,
         userId: user.id,
-        fullName: user.raw_user_meta_data?.full_name ?? null,
+        firstName: (typeof meta?.first_name === 'string' ? meta.first_name : null)
+          ?? (metaFullName.split(' ')[0] || null),
+        lastName: (typeof meta?.last_name === 'string' ? meta.last_name : null)
+          ?? (metaFullName.split(' ').slice(1).join(' ') || null),
       });
     }
 

@@ -12,7 +12,8 @@ export interface ConversionSource {
   id: string;
   orderId: string;
   conversionToken: string;
-  fullName: string;
+  firstName: string;
+  lastName: string;
   email: string;
   phone: string | null;
   boxType: BoxTypeId;

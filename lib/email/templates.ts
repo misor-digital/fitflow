@@ -160,7 +160,7 @@ function generateDeliverySection(data: ConfirmationEmailData): string {
 
   const recipient = data.shippingAddress;
   const recipientHtml = recipient ? `
-    ${recipient.fullName ? `<p style="margin: 5px 0;"><strong>Получател:</strong> ${escapeHtml(recipient.fullName)}</p>` : ''}
+    ${recipient.firstName ? `<p style="margin: 5px 0;"><strong>Получател:</strong> ${escapeHtml(`${recipient.firstName} ${recipient.lastName}`.trim())}</p>` : ''}
     ${recipient.phone ? `<p style="margin: 5px 0;"><strong>Телефон:</strong> ${escapeHtml(recipient.phone)}</p>` : ''}
   ` : '';
 
@@ -259,7 +259,7 @@ export function generateConfirmationEmail(
 
   const bodyHtml = `
             <h2 style="color: ${EMAIL.colors.textHeading}; margin-top: 0; font-size: 24px;">
-              Благодарим ти, ${escapeHtml(data.fullName)}!
+              Благодарим ти, ${escapeHtml(data.firstName)}!
             </h2>
             
             <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
@@ -671,6 +671,74 @@ export function generateDeliveryAutoConfirmedEmail(data: DeliveryAutoConfirmedEm
     </p>
   </div>
   ${emailCtaButton(reportProblemUrl, 'Имам проблем с доставката')}
+  ${emailContactLine()}
+`;
+  return wrapInEmailLayout(bodyHtml);
+}
+
+// ============================================================================
+// Admin Action Email Templates
+// ============================================================================
+
+export interface ProfileFieldChange {
+  label: string;
+  oldValue: string;
+  newValue: string;
+}
+
+export interface ProfileUpdatedParams {
+  changes: ProfileFieldChange[];
+}
+
+export function generateProfileUpdatedEmail(params: ProfileUpdatedParams): string {
+  const rows = params.changes
+    .map(
+      (c) => `<tr>
+        <td style="padding: 8px 12px; border-bottom: 1px solid #eee; font-weight: 600; color: ${EMAIL.colors.textHeading};">${escapeHtml(c.label)}</td>
+        <td style="padding: 8px 12px; border-bottom: 1px solid #eee; color: ${EMAIL.colors.textMuted}; text-decoration: line-through;">${escapeHtml(c.oldValue)}</td>
+        <td style="padding: 8px 12px; border-bottom: 1px solid #eee; color: ${EMAIL.colors.textPrimary}; font-weight: 600;">${escapeHtml(c.newValue)}</td>
+      </tr>`,
+    )
+    .join('\n');
+
+  const bodyHtml = `
+  <h2 style="color: ${EMAIL.colors.textHeading}; margin-top: 0; font-size: 24px;">
+    Профилът ти беше обновен
+  </h2>
+  <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
+    Администратор на FitFlow направи промени по профила ти:
+  </p>
+  <table style="width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 14px;">
+    <thead>
+      <tr style="background-color: ${EMAIL.sections.delivery};">
+        <th style="padding: 8px 12px; text-align: left; color: ${EMAIL.colors.textHeading};">Поле</th>
+        <th style="padding: 8px 12px; text-align: left; color: ${EMAIL.colors.textHeading};">Старо</th>
+        <th style="padding: 8px 12px; text-align: left; color: ${EMAIL.colors.textHeading};">Ново</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rows}
+    </tbody>
+  </table>
+  <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
+    Ако не си поисквал/а тези промени, моля свържи се с нас незабавно.
+  </p>
+  ${emailContactLine()}
+`;
+  return wrapInEmailLayout(bodyHtml);
+}
+
+export function generateAccountDeletedEmail(): string {
+  const bodyHtml = `
+  <h2 style="color: ${EMAIL.colors.textHeading}; margin-top: 0; font-size: 24px;">
+    Акаунтът ти беше изтрит
+  </h2>
+  <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
+    Администратор на FitFlow изтри акаунта ти. Всички лични данни са премахнати от системата.
+  </p>
+  <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
+    Ако смяташ, че това е грешка, свържи се с нас.
+  </p>
   ${emailContactLine()}
 `;
   return wrapInEmailLayout(bodyHtml);

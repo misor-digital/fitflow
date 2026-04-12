@@ -25,7 +25,8 @@ export default function InlineAuth({ onAuthenticated, onBack }: InlineAuthProps)
   const [phase, setPhase] = useState<AuthPhase>('form');
 
   // Form fields
-  const [fullName, setFullName] = useState('');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
 
   // OTP fields
@@ -72,8 +73,8 @@ export default function InlineAuth({ onAuthenticated, onBack }: InlineAuthProps)
     setError(null);
 
     // Client-side validation
-    if (tab === 'register' && !fullName.trim()) {
-      setError('Моля, въведете вашето име.');
+    if (tab === 'register' && (!firstName.trim() || !lastName.trim())) {
+      setError('Моля, въведете име и фамилия.');
       return;
     }
 
@@ -90,7 +91,7 @@ export default function InlineAuth({ onAuthenticated, onBack }: InlineAuthProps)
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: email.trim().toLowerCase(),
-          name: tab === 'register' ? fullName.trim() : undefined,
+          name: tab === 'register' ? `${firstName.trim()} ${lastName.trim()}` : undefined,
         }),
       });
 
@@ -113,7 +114,7 @@ export default function InlineAuth({ onAuthenticated, onBack }: InlineAuthProps)
     } finally {
       setSending(false);
     }
-  }, [email, fullName, tab]);
+  }, [email, firstName, lastName, tab]);
 
   // ------------------------------------------------------------------
   // Verify OTP
@@ -130,7 +131,8 @@ export default function InlineAuth({ onAuthenticated, onBack }: InlineAuthProps)
           body: JSON.stringify({
             email: email.trim().toLowerCase(),
             otp: code,
-            fullName: tab === 'register' ? fullName.trim() : undefined,
+            firstName: tab === 'register' ? firstName.trim() : undefined,
+            lastName: tab === 'register' ? lastName.trim() : undefined,
             intent: tab,
           }),
         });
@@ -166,7 +168,7 @@ export default function InlineAuth({ onAuthenticated, onBack }: InlineAuthProps)
         setVerifying(false);
       }
     },
-    [email, fullName, tab, onAuthenticated],
+    [email, firstName, lastName, tab, onAuthenticated],
   );
 
   // ------------------------------------------------------------------
@@ -289,18 +291,36 @@ export default function InlineAuth({ onAuthenticated, onBack }: InlineAuthProps)
           <div className="space-y-4">
             {tab === 'register' && (
               <div>
-                <label htmlFor="inline-auth-name" className="block text-sm font-semibold text-[var(--color-brand-navy)] mb-1">
-                  Имена <span className="text-red-500">*</span>
-                </label>
-                <input
-                  id="inline-auth-name"
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Иван Иванов"
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-sm sm:text-base focus:outline-none focus:border-[var(--color-brand-orange)] transition-colors"
-                  autoComplete="name"
-                />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label htmlFor="inline-auth-first" className="block text-sm font-semibold text-[var(--color-brand-navy)] mb-1">
+                      Име <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="inline-auth-first"
+                      type="text"
+                      value={firstName}
+                      onChange={(e) => setFirstName(e.target.value)}
+                      placeholder="Иван"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-sm sm:text-base focus:outline-none focus:border-[var(--color-brand-orange)] transition-colors"
+                      autoComplete="given-name"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="inline-auth-last" className="block text-sm font-semibold text-[var(--color-brand-navy)] mb-1">
+                      Фамилия <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      id="inline-auth-last"
+                      type="text"
+                      value={lastName}
+                      onChange={(e) => setLastName(e.target.value)}
+                      placeholder="Иванов"
+                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-sm sm:text-base focus:outline-none focus:border-[var(--color-brand-orange)] transition-colors"
+                      autoComplete="family-name"
+                    />
+                  </div>
+                </div>
               </div>
             )}
 

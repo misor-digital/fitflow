@@ -21,7 +21,8 @@ const roleDisplayNames: Record<StaffRole, string> = {
 
 interface InviteData {
   email: string;
-  fullName: string;
+  firstName: string;
+  lastName: string;
   role: StaffRole;
 }
 
@@ -36,19 +37,21 @@ export async function inviteStaff(data: InviteData) {
   }
 
   // 3. Validate inputs
-  if (!data.email.trim() || !data.fullName.trim()) {
+  if (!data.email.trim() || !data.firstName.trim() || !data.lastName.trim()) {
     return { error: 'Имейл и име са задължителни' };
   }
 
   const email = data.email.trim().toLowerCase();
-  const fullName = data.fullName.trim();
+  const firstName = data.firstName.trim();
+  const lastName = data.lastName.trim();
+  const displayName = `${firstName} ${lastName}`;
 
   // 4a. Create user via admin API
   const { data: userData, error: createError } = await supabaseAdmin.auth.admin.createUser({
     email,
     email_confirm: true,
     user_metadata: {
-      full_name: fullName,
+      full_name: displayName,
       invited_role: data.role,
       invited_by: session.userId,
     },
@@ -85,10 +88,10 @@ export async function inviteStaff(data: InviteData) {
   let emailFailed = false;
   if (setupUrl) {
     const result = await sendEmail({
-      to: { email, name: fullName },
+      to: { email, name: displayName },
       subject: 'Покана за екипа на FitFlow',
       htmlContent: generateStaffInviteEmail(
-        fullName,
+        displayName,
         roleDisplayNames[data.role] ?? data.role,
         setupUrl,
       ),
@@ -109,7 +112,8 @@ export async function inviteStaff(data: InviteData) {
       .update({
         user_type: 'staff',
         staff_role: data.role,
-        full_name: fullName,
+        first_name: firstName,
+        last_name: lastName,
       })
       .eq('id', userData.user.id);
 

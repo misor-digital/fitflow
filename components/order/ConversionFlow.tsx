@@ -66,7 +66,8 @@ export default function ConversionFlow({
       dietary: source.dietary ?? [],
       dietaryOther: source.dietaryOther ?? '',
       additionalNotes: source.additionalNotes ?? '',
-      fullName: source.fullName,
+      firstName: source.firstName,
+      lastName: source.lastName,
       email: source.email,
       phone: source.phone ?? '',
       promoCode: source.promoCode,
@@ -74,7 +75,8 @@ export default function ConversionFlow({
 
     // Set contact info from legacy order
     store.setContactInfo(
-      source.fullName,
+      source.firstName,
+      source.lastName,
       source.email,
       source.phone ?? '',
     );
@@ -82,7 +84,8 @@ export default function ConversionFlow({
     // Prefill address name/phone from the preorder so the delivery form
     // doesn't start empty when an admin converts on behalf of a customer.
     store.setAddress({
-      fullName: source.fullName,
+      firstName: source.firstName,
+      lastName: source.lastName,
       phone: source.phone ?? '',
     });
 
@@ -134,7 +137,8 @@ export default function ConversionFlow({
         dietaryOther: currentInput.dietaryOther,
         additionalNotes: currentInput.additionalNotes,
         isGuest: currentInput.isGuest,
-        fullName: currentInput.fullName,
+        firstName: currentInput.firstName,
+        lastName: currentInput.lastName,
         email: currentInput.email,
         phone: currentInput.phone,
         selectedAddressId: currentInput.selectedAddressId,

@@ -12,7 +12,8 @@ import type { UserType, StaffRole } from '@/lib/supabase/types';
 export interface AuthUser {
   id: string;
   email: string;
-  fullName: string;
+  firstName: string;
+  lastName: string;
   phone: string | null;
   userType: UserType;
   staffRole: StaffRole | null;

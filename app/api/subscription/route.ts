@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { verifySession } from '@/lib/auth';
+import { isValidPhone } from '@/lib/catalog';
 import {
   getSubscriptionsByUser,
   getUpcomingCycle,
@@ -147,7 +148,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       onBehalfOfUserId?: string | null;
       campaignPromoCode?: string | null;
       address?: {
-        fullName?: string;
+        firstName?: string;
+        lastName?: string;
         phone?: string;
         city?: string;
         postalCode?: string;
@@ -161,9 +163,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       speedyOfficeId?: string;
       speedyOfficeName?: string;
       speedyOfficeAddress?: string;
-      fullName?: string;
+      firstName?: string;
+      lastName?: string;
       phone?: string;
     };
+
+    // Validate phone (required)
+    const bodyPhone = (data as Record<string, unknown>).phone as string | undefined;
+    const addrPhone = ((data as Record<string, unknown>).address as Record<string, string> | undefined)?.phone;
+    const resolvedPhone = addrPhone?.trim() || (bodyPhone as string)?.trim() || '';
+    if (resolvedPhone && !isValidPhone(resolvedPhone)) {
+      return NextResponse.json({ error: 'Невалиден телефонен номер.' }, { status: 400 });
+    }
 
     // ------------------------------------------------------------------
     // Step 2: Conversion Token Handling (BEFORE auth check)
@@ -251,7 +262,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (!userId && sourceOrder) {
       const accountResult = await findOrCreateCustomerAccount(
         sourceOrder.customer_email,
-        sourceOrder.customer_full_name,
+        sourceOrder.customer_first_name,
+        sourceOrder.customer_last_name,
       );
       userId = accountResult.userId;
       accountLoginUrl = accountResult.loginUrl;
@@ -320,7 +332,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         speedyOfficeId: soId,
         speedyOfficeName: soName,
         speedyOfficeAddress: soAddr,
-        fullName: bodyFullName,
+        firstName: bodyFirstName,
+        lastName: bodyLastName,
         phone: bodyPhone,
       } = data as Record<string, unknown>;
       const addr = inlineAddress as Record<string, string> | undefined;
@@ -328,7 +341,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       if (dm === 'speedy_office' && soId) {
         const created = await createAddress({
           user_id: userId,
-          full_name: (addr?.fullName || bodyFullName as string || sourceOrder.customer_full_name).trim(),
+          first_name: (addr?.firstName || bodyFirstName as string || sourceOrder.customer_first_name).trim(),
+          last_name: (addr?.lastName || bodyLastName as string || sourceOrder.customer_last_name).trim(),
           phone: (addr?.phone || bodyPhone as string || sourceOrder.customer_phone || '').trim() || null,
           city: '',
           postal_code: '',
@@ -343,7 +357,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       } else if (addr?.city && addr?.streetAddress) {
         const created = await createAddress({
           user_id: userId,
-          full_name: (addr.fullName || bodyFullName as string || sourceOrder.customer_full_name).trim(),
+          first_name: (addr.firstName || bodyFirstName as string || sourceOrder.customer_first_name).trim(),
+          last_name: (addr.lastName || bodyLastName as string || sourceOrder.customer_last_name).trim(),
           phone: (addr.phone || bodyPhone as string || sourceOrder.customer_phone || '').trim() || null,
           city: addr.city.trim(),
           postal_code: (addr.postalCode || '').trim(),
@@ -501,12 +516,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     try {
       const headersList = await headers();
       const customerEmail = sourceOrder?.customer_email ?? session?.email ?? '';
-      const customerFullName = sourceOrder?.customer_full_name ?? '';
+      const customerFirstName = sourceOrder?.customer_first_name ?? '';
+      const customerLastName = sourceOrder?.customer_last_name ?? '';
 
       const { userData, referer } = await buildCapiUserData({
         headersObj: headersList,
         email: customerEmail || undefined,
-        fullName: customerFullName || undefined,
+        firstName: customerFirstName || undefined,
+        lastName: customerLastName || undefined,
         fbc: (data as Record<string, unknown>).fbc as string | undefined,
         fbp: (data as Record<string, unknown>).fbp as string | undefined,
       });
@@ -568,7 +585,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           const currentPriceBgn = await eurToBgn(subscription.current_price_eur);
 
           const html = generateSubscriptionConversionEmail({
-            fullName: sourceOrder.customer_full_name,
+            firstName: sourceOrder.customer_first_name,
+            lastName: sourceOrder.customer_last_name,
             email: customerEmail,
             boxType: effectiveBoxType,
             boxName,
@@ -588,7 +606,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           });
 
           await sendTransactionalEmail({
-            to: { email: customerEmail, name: sourceOrder.customer_full_name },
+            to: { email: customerEmail, name: `${sourceOrder.customer_first_name} ${sourceOrder.customer_last_name}`.trim() },
             subject: SUBSCRIPTION_CONVERSION_SUBJECT,
             htmlContent: html,
             tags: ['subscription', 'conversion'],

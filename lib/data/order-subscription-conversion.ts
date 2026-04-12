@@ -21,7 +21,8 @@ const ELIGIBLE_ORDER_SELECT = [
   'id',
   'order_number',
   'customer_email',
-  'customer_full_name',
+  'customer_first_name',
+  'customer_last_name',
   'customer_phone',
   'user_id',
   'box_type',
@@ -46,7 +47,8 @@ export type EligibleOrder = Pick<
   | 'id'
   | 'order_number'
   | 'customer_email'
-  | 'customer_full_name'
+  | 'customer_first_name'
+  | 'customer_last_name'
   | 'customer_phone'
   | 'user_id'
   | 'box_type'
@@ -118,7 +120,8 @@ export async function getEligibleOrdersForSubscription(
       | 'id'
       | 'order_number'
       | 'customer_email'
-      | 'customer_full_name'
+      | 'customer_first_name'
+      | 'customer_last_name'
       | 'customer_phone'
       | 'user_id'
       | 'box_type'
@@ -188,7 +191,8 @@ export async function getAllCycleOrdersForCampaign(
       | 'id'
       | 'order_number'
       | 'customer_email'
-      | 'customer_full_name'
+      | 'customer_first_name'
+      | 'customer_last_name'
       | 'customer_phone'
       | 'user_id'
       | 'box_type'
@@ -345,10 +349,12 @@ export async function markOrderConvertedToSubscription(
  */
 export async function findOrCreateCustomerAccount(
   email: string,
-  fullName: string,
+  firstName: string,
+  lastName: string,
 ): Promise<FindOrCreateResult> {
   const normalizedEmail = email.toLowerCase().trim();
-  const trimmedName = fullName.trim();
+  const trimmedFirstName = firstName.trim();
+  const trimmedLastName = lastName.trim();
 
   // 1. Check for existing user
   const existing = await getUserByEmail(normalizedEmail);
@@ -362,7 +368,8 @@ export async function findOrCreateCustomerAccount(
       email: normalizedEmail,
       email_confirm: true,
       user_metadata: {
-        full_name: trimmedName,
+        first_name: trimmedFirstName,
+        last_name: trimmedLastName,
         created_by_conversion: true,
       },
     });
