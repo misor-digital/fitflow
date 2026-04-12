@@ -12,6 +12,7 @@ import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import type { SubscriptionRow, OrderRow, OrderStatus, SubscriptionStatus } from '@/lib/supabase/types';
 import AdminAddressManager from '@/components/admin/AdminAddressManager';
+import AdminProfileManager from '@/components/admin/AdminProfileManager';
 import { formatDateTimeShort } from '@/lib/utils/date';
 
 export const metadata: Metadata = {
@@ -86,39 +87,40 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
         </Link>
       </div>
 
-      {/* Section A: Customer Info Card */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-        <h1 className="text-2xl font-bold text-[var(--color-brand-navy)] mb-3">
-          {profile.first_name} {profile.last_name}
-        </h1>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-600 mb-4">
-          <p><span className="font-medium text-gray-700">Имейл:</span> {email}</p>
-          <p><span className="font-medium text-gray-700">Телефон:</span> {profile.phone ?? '—'}</p>
-          <p><span className="font-medium text-gray-700">Тип:</span> {profile.user_type === 'staff' ? 'Персонал' : 'Клиент'}</p>
-          {isStaff && profile.staff_role && (
-            <p><span className="font-medium text-gray-700">Роля:</span> {profile.staff_role}</p>
-          )}
-          <p><span className="font-medium text-gray-700">Регистрация:</span> {authCreatedAt ? formatDateTimeShort(authCreatedAt) : formatDateTimeShort(profile.created_at)}</p>
-          <p><span className="font-medium text-gray-700">Последна промяна:</span> {formatDateTimeShort(profile.updated_at)}</p>
-          <p className="sm:col-span-2"><span className="font-medium text-gray-700">ID:</span> <span className="font-mono text-xs text-gray-400">{profile.id}</span></p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {hasActiveSub && (
-            <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
-              Активен абонамент
-            </span>
-          )}
-          {profile.is_subscriber && (
-            <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-violet-100 text-violet-700">
-              Бюлетин
-            </span>
-          )}
-          {isStaff && (
-            <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
-              Персонал
-            </span>
-          )}
-        </div>
+      {/* Section A: Customer Info Card (editable) */}
+      <AdminProfileManager
+        profile={{
+          id: profile.id,
+          firstName: profile.first_name,
+          lastName: profile.last_name,
+          phone: profile.phone ?? '',
+          email,
+          userType: profile.user_type,
+          staffRole: profile.staff_role,
+          isSubscriber: profile.is_subscriber,
+          createdAt: authCreatedAt ? formatDateTimeShort(authCreatedAt) : formatDateTimeShort(profile.created_at),
+          updatedAt: formatDateTimeShort(profile.updated_at),
+        }}
+        canManage={canManage}
+      />
+
+      {/* Badges */}
+      <div className="flex flex-wrap gap-2 -mt-4 mb-6 px-1">
+        {hasActiveSub && (
+          <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
+            Активен абонамент
+          </span>
+        )}
+        {profile.is_subscriber && (
+          <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-violet-100 text-violet-700">
+            Бюлетин
+          </span>
+        )}
+        {isStaff && (
+          <span className="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+            Персонал
+          </span>
+        )}
       </div>
 
       {/* Summary stats */}
