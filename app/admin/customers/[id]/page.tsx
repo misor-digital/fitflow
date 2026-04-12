@@ -148,6 +148,11 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
         userId={id}
         initialAddresses={addresses}
         canManage={canManage}
+        customerDefaults={{
+          firstName: profile.first_name,
+          lastName: profile.last_name,
+          phone: profile.phone ?? '',
+        }}
       />
 
       {/* Section C: Subscriptions */}

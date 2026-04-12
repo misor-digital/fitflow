@@ -11,6 +11,8 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import {
   sanitizeAddressBody,
   validateFieldLengths,
+  generateAddressLabel,
+  syncPhoneToProfile,
 } from '@/app/api/address/route';
 import type { AddressInsert } from '@/lib/supabase/types';
 
@@ -240,6 +242,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // Build insert payload - use target userId, not session userId
+    const autoLabel = generateAddressLabel(deliveryMethod, sanitized);
+
     const insertData: AddressInsert =
       deliveryMethod === 'speedy_office'
         ? {
@@ -251,7 +255,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             speedy_office_id: sanitized.speedyOfficeId!,
             speedy_office_name: sanitized.speedyOfficeName!,
             speedy_office_address: sanitized.speedyOfficeAddress || null,
-            label: sanitized.label || null,
+            label: autoLabel,
             delivery_notes: sanitized.deliveryNotes || null,
             is_default: sanitized.isDefault ?? false,
           }
@@ -263,7 +267,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             city: sanitized.city!,
             postal_code: sanitized.postalCode!,
             street_address: sanitized.streetAddress!,
-            label: sanitized.label || null,
+            label: autoLabel,
             phone: sanitized.phone || null,
             building_entrance: sanitized.buildingEntrance || null,
             floor: sanitized.floor || null,
@@ -273,7 +277,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           };
 
     const address = await createAddress(insertData);
-    return NextResponse.json({ address }, { status: 201 });
+
+    // Sync phone to profile if profile phone is empty
+    let phoneSynced = false;
+    if (insertData.phone) {
+      try {
+        phoneSynced = await syncPhoneToProfile(userId, insertData.phone);
+      } catch (err) {
+        console.error('Failed to sync phone to profile:', err);
+      }
+    }
+
+    return NextResponse.json({ address, phoneSynced }, { status: 201 });
   } catch (error) {
     console.error('POST /api/admin/address error:', error);
     return NextResponse.json(

@@ -14,7 +14,7 @@ import { useAuthStore } from '@/store/authStore';
 interface AddressFormProps {
   mode: 'create' | 'edit';
   initialData?: AddressRow;
-  onSuccess: (address: AddressRow) => void;
+  onSuccess: (address: AddressRow, phoneSynced?: boolean) => void;
   onCancel: () => void;
 }
 
@@ -212,7 +212,7 @@ export default function AddressForm({ mode, initialData, onSuccess, onCancel }: 
       }
 
       const data = await res.json();
-      onSuccess(data.address ?? data);
+      onSuccess(data.address ?? data, data.phoneSynced ?? false);
     } catch (err) {
       setApiError(err instanceof Error ? err.message : 'Възникна неочаквана грешка');
     } finally {

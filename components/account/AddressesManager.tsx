@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import type { AddressRow } from '@/lib/supabase/types';
 import AddressForm from './AddressForm';
 
@@ -39,6 +39,7 @@ function formatAddressDisplay(addr: AddressRow): { primary: string; secondary?: 
 
 export default function AddressesManager({ initialAddresses }: AddressesManagerProps) {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [addresses, setAddresses] = useState<AddressRow[]>(initialAddresses);
   const [formMode, setFormMode] = useState<FormMode>(
     searchParams.get('new') === 'true' ? 'create' : 'hidden',
@@ -90,7 +91,7 @@ export default function AddressesManager({ initialAddresses }: AddressesManagerP
   // ---- CRUD handlers ----
 
   const handleCreate = useCallback(
-    (address: AddressRow) => {
+    (address: AddressRow, phoneSynced?: boolean) => {
       setAddresses((prev) => {
         if (address.is_default) {
           return [address, ...prev.map((a) => ({ ...a, is_default: false }))];
@@ -98,8 +99,9 @@ export default function AddressesManager({ initialAddresses }: AddressesManagerP
         return [address, ...prev];
       });
       closeForm();
+      if (phoneSynced) router.refresh();
     },
-    [closeForm],
+    [closeForm, router],
   );
 
   const handleUpdate = useCallback(

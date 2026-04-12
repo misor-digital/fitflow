@@ -9,6 +9,7 @@ import { validateAddress, validateSpeedyOffice } from '@/lib/order';
 import type { SpeedyOfficeSelection } from '@/lib/order';
 import { isValidPhone } from '@/lib/catalog';
 import { checkRateLimit } from '@/lib/utils/rateLimit';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 import type { AddressInsert } from '@/lib/supabase/types';
 
 // Field length limits
@@ -196,6 +197,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // Build insert payload - conditional on delivery method
+    const autoLabel = generateAddressLabel(deliveryMethod, sanitized);
+
     const insertData: AddressInsert =
       deliveryMethod === 'speedy_office'
         ? {
@@ -207,7 +210,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             speedy_office_id: sanitized.speedyOfficeId!,
             speedy_office_name: sanitized.speedyOfficeName!,
             speedy_office_address: sanitized.speedyOfficeAddress || null,
-            label: sanitized.label || null,
+            label: autoLabel,
             delivery_notes: sanitized.deliveryNotes || null,
             is_default: sanitized.isDefault ?? false,
           }
@@ -219,7 +222,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             city: sanitized.city!,
             postal_code: sanitized.postalCode!,
             street_address: sanitized.streetAddress!,
-            label: sanitized.label || null,
+            label: autoLabel,
             phone: sanitized.phone || null,
             building_entrance: sanitized.buildingEntrance || null,
             floor: sanitized.floor || null,
@@ -229,7 +232,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           };
 
     const address = await createAddress(insertData);
-    return NextResponse.json({ address }, { status: 201 });
+
+    // Sync phone to profile if profile phone is empty
+    let phoneSynced = false;
+    if (insertData.phone) {
+      try {
+        phoneSynced = await syncPhoneToProfile(session.userId, insertData.phone);
+      } catch (err) {
+        console.error('Failed to sync phone to profile:', err);
+      }
+    }
+
+    return NextResponse.json({ address, phoneSynced }, { status: 201 });
   } catch (error) {
     console.error('POST /api/address error:', error);
     return NextResponse.json(
@@ -400,4 +414,47 @@ export function validateFieldLengths(
   }
 
   return errors;
+}
+
+/**
+ * Auto-generate address label when none provided.
+ */
+export function generateAddressLabel(
+  deliveryMethod: string,
+  sanitized: SanitizedBody,
+): string | null {
+  if (sanitized.label) return sanitized.label;
+
+  if (deliveryMethod === 'speedy_office') {
+    return (sanitized.speedyOfficeName ?? 'Speedy офис').slice(0, MAX_LABEL);
+  }
+
+  const city = sanitized.city ?? '';
+  const street = sanitized.streetAddress ?? '';
+  if (city && street) {
+    return `${city} - ${street}`.slice(0, MAX_LABEL);
+  }
+
+  return null;
+}
+
+/**
+ * If the user profile has no phone, copy the address phone to the profile.
+ * Returns true if the phone was synced.
+ */
+export async function syncPhoneToProfile(userId: string, phone: string): Promise<boolean> {
+  const { data: profile } = await supabaseAdmin
+    .from('user_profiles')
+    .select('phone')
+    .eq('id', userId)
+    .single();
+
+  if (profile && !profile.phone?.trim()) {
+    await supabaseAdmin
+      .from('user_profiles')
+      .update({ phone })
+      .eq('id', userId);
+    return true;
+  }
+  return false;
 }

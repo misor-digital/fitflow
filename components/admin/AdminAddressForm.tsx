@@ -10,11 +10,18 @@ import SpeedyOfficeSelector from '@/components/order/SpeedyOfficeSelector';
 // Types
 // ============================================================================
 
+interface CustomerDefaults {
+  firstName: string;
+  lastName: string;
+  phone: string;
+}
+
 interface AdminAddressFormProps {
   mode: 'create' | 'edit';
   userId: string;
   initialData?: AddressRow;
-  onSuccess: (address: AddressRow) => void;
+  customerDefaults?: CustomerDefaults;
+  onSuccess: (address: AddressRow, phoneSynced?: boolean) => void;
   onCancel: () => void;
 }
 
@@ -22,13 +29,13 @@ interface AdminAddressFormProps {
 // Helpers
 // ============================================================================
 
-function buildInitialAddress(initialData?: AddressRow): AddressInput {
+function buildInitialAddress(initialData?: AddressRow, defaults?: CustomerDefaults): AddressInput {
   if (!initialData) {
     return {
       label: '',
-      firstName: '',
-      lastName: '',
-      phone: '',
+      firstName: defaults?.firstName ?? '',
+      lastName: defaults?.lastName ?? '',
+      phone: defaults?.phone ?? '',
       city: '',
       postalCode: '',
       streetAddress: '',
@@ -78,6 +85,7 @@ export default function AdminAddressForm({
   mode,
   userId,
   initialData,
+  customerDefaults,
   onSuccess,
   onCancel,
 }: AdminAddressFormProps) {
@@ -85,7 +93,7 @@ export default function AdminAddressForm({
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>(
     initialData?.delivery_method ?? 'address',
   );
-  const [address, setAddress] = useState<AddressInput>(() => buildInitialAddress(initialData));
+  const [address, setAddress] = useState<AddressInput>(() => buildInitialAddress(initialData, customerDefaults));
   const [speedyOffice, setSpeedyOffice] = useState<SpeedyOfficeSelection | null>(() =>
     buildInitialOffice(initialData),
   );
@@ -208,7 +216,7 @@ export default function AdminAddressForm({
       }
 
       const data = await res.json();
-      onSuccess(data.address ?? data);
+      onSuccess(data.address ?? data, data.phoneSynced ?? false);
     } catch (err) {
       setApiError(err instanceof Error ? err.message : 'Възникна неочаквана грешка');
     } finally {
