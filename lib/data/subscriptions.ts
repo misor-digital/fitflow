@@ -31,7 +31,7 @@ import { sendDeliveryUpcomingEmail } from '@/lib/subscription/notifications';
 import { createOrder } from './orders';
 import { getAddressById } from './addresses';
 import { calculatePrice } from './catalog';
-import { getDeliveryCycleById, getDeliveryCycles } from './delivery-cycles';
+import { getDeliveryCycleById, getDeliveryCycles, getUpcomingCycle } from './delivery-cycles';
 
 // ============================================================================
 // Helpers
@@ -1080,4 +1080,62 @@ export async function getSubscriptionsForCycle(
   return activeSubs.filter((sub) =>
     shouldIncludeInCycle(sub, cycle, allCyclesSorted),
   );
+}
+
+// ============================================================================
+// Orphaned Subscriptions (no assigned cycle)
+// ============================================================================
+
+/**
+ * Count active subscriptions with no assigned first_cycle_id.
+ * These are subscriptions created after a cycle's cutoff passed
+ * and before a new cycle was available.
+ */
+export async function getOrphanedSubscriptionCount(): Promise<number> {
+  const { count, error } = await supabaseAdmin
+    .from('subscriptions')
+    .select('*', { count: 'exact', head: true })
+    .eq('status', 'active')
+    .is('first_cycle_id', null);
+
+  if (error) {
+    console.error('Error counting orphaned subscriptions:', error);
+    return 0;
+  }
+
+  return count ?? 0;
+}
+
+/**
+ * Assign all orphaned active subscriptions to the earliest upcoming cycle.
+ * Returns the count of updated subscriptions and the target cycle info.
+ * Throws if no upcoming cycle exists.
+ */
+export async function backfillOrphanedSubscriptions(): Promise<{
+  count: number;
+  cycleId: string;
+  cycleDate: string;
+}> {
+  const targetCycle = await getUpcomingCycle();
+  if (!targetCycle) {
+    throw new Error('Няма предстоящ цикъл. Създайте нов цикъл първо.');
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from('subscriptions')
+    .update({ first_cycle_id: targetCycle.id })
+    .eq('status', 'active')
+    .is('first_cycle_id', null)
+    .select('id');
+
+  if (error) {
+    console.error('Error backfilling orphaned subscriptions:', error);
+    throw new Error('Неуспешно назначаване на абонаменти към цикъл.');
+  }
+
+  return {
+    count: data?.length ?? 0,
+    cycleId: targetCycle.id,
+    cycleDate: targetCycle.delivery_date,
+  };
 }

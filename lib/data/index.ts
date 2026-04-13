@@ -138,6 +138,8 @@ export {
   getSubscriptionsForCycle,
   getOrdersBySubscription,
   enrichSubscriptionsWithLastCycle,
+  getOrphanedSubscriptionCount,
+  backfillOrphanedSubscriptions,
 } from './subscriptions';
 
 // Email campaigns
