@@ -155,7 +155,7 @@ export function CutoffCountdown({ variant }: CutoffCountdownProps) {
 
       <button
         onClick={handleDismiss}
-        className="text-xs opacity-50 hover:opacity-100 transition-opacity"
+        className="text-sm opacity-50 hover:opacity-100 transition-opacity border border-current rounded-full px-4 py-1.5"
       >
         Скрий
       </button>
