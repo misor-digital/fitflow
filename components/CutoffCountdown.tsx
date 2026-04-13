@@ -129,7 +129,7 @@ export function CutoffCountdown({ variant }: CutoffCountdownProps) {
 
   // Card variant
   return (
-    <div className={`border-2 rounded-2xl p-6 sm:p-8 text-center ${styles.card}`}>
+    <div className={`border-2 rounded-2xl p-6 sm:p-8 text-center shadow-2xl ${styles.card}`}>
       <p className="text-sm font-medium opacity-75 mb-2">
         {deliveryDate && <>Следваща доставка: {formatDeliveryDateShort(deliveryDate)}</>}
       </p>

@@ -9,6 +9,7 @@ import {
 import OrderFlow from '@/components/order/OrderFlow';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
+import { CutoffCountdown } from '@/components/CutoffCountdown';
 import type { Metadata } from 'next';
 import type { CatalogData, BoxType } from '@/lib/catalog';
 
@@ -103,6 +104,9 @@ export default async function OrderPage({ searchParams }: OrderPageProps) {
           orderType={params.orderType}
         />
       </main>
+      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[min(360px,calc(100vw-2rem))]">
+        <CutoffCountdown variant="card" />
+      </div>
       <Footer />
     </>
   );

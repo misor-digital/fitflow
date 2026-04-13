@@ -181,19 +181,17 @@ function HomeContent() {
         </div>
       </section>
 
+      {/* Floating Cutoff Countdown - sticky on viewport, centered */}
+      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[min(360px,calc(100vw-2rem))]">
+        <CutoffCountdown variant="card" />
+      </div>
+
       {/* How It Works */}
       <HowItWorks steps={[
         { num: 1, title: 'Избери честота', desc: 'Избери колко често искаш да получаваш своята кутия' },
         { num: 2, title: 'Кажи ни предпочитанията си', desc: 'Отговори на кратък въпросник, за да те опознаем по-добре (по желание)' },
         { num: 3, title: 'Завърши', desc: 'Попълни личните си данни и поръчай' },
       ]} />
-
-      {/* Cutoff Countdown */}
-      <section className="py-6 sm:py-8">
-        <div className="mx-auto max-w-2xl px-4">
-          <CutoffCountdown variant="card" />
-        </div>
-      </section>
 
       {/* Subscription CTA Section */}
       <section className="bg-[var(--color-brand-navy)] py-12 sm:py-14 md:py-16 text-white">
