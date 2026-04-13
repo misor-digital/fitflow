@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useOrderStore } from '@/store/orderStore';
 import { trackFunnelStep, trackBoxSelection, trackViewContent, generateEventId, getMetaClientContext } from '@/lib/analytics';
 import PriceDisplay from '@/components/PriceDisplay';
+import { CutoffCountdown } from '@/components/CutoffCountdown';
 import type { PricesMap, BoxTypeId, PriceInfo } from '@/lib/catalog';
 import { getDisplayBoxType, getPremiumFrequency, buildBoxTypeId } from '@/lib/catalog';
 
@@ -129,6 +130,9 @@ export default function OrderStepBox({ prices, boxTypeNames, onNext }: OrderStep
       <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold text-[var(--color-brand-navy)] text-center mb-8 sm:mb-10 md:mb-12 relative after:content-[''] after:block after:w-12 sm:after:w-16 after:h-1 after:bg-[var(--color-brand-orange)] after:mx-auto after:mt-3 sm:after:mt-4 after:rounded">
         Избери кутия
       </h2>
+
+      {/* Cutoff Countdown */}
+      <CutoffCountdown variant="inline" />
 
       {/* Discount Banner */}
       {hasDiscount && monthlyStandardPrice && (

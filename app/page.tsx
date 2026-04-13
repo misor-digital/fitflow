@@ -13,6 +13,7 @@ import { trackCTAClick, trackPromoCode } from '@/lib/analytics';
 import { useScrollDepth } from '@/lib/analytics/useScrollDepth';
 import { formatDeliveryDate, formatMonthYear } from '@/lib/delivery';
 import { formatPrice } from '@/lib/catalog';
+import { CutoffCountdown } from '@/components/CutoffCountdown';
 import type { PricesMap } from '@/lib/catalog';
 
 function HomeContent() {
@@ -185,6 +186,13 @@ function HomeContent() {
         { num: 2, title: 'Кажи ни предпочитанията си', desc: 'Отговори на кратък въпросник, за да те опознаем по-добре (по желание)' },
         { num: 3, title: 'Завърши', desc: 'Попълни личните си данни и поръчай' },
       ]} />
+
+      {/* Cutoff Countdown */}
+      <section className="py-6 sm:py-8">
+        <div className="mx-auto max-w-2xl px-4">
+          <CutoffCountdown variant="card" />
+        </div>
+      </section>
 
       {/* Subscription CTA Section */}
       <section className="bg-[var(--color-brand-navy)] py-12 sm:py-14 md:py-16 text-white">
