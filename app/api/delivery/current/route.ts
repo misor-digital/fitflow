@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import {
   getCurrentRevealedCycle,
   getCycleItems,
-  getUpcomingCycle,
+  getUpcomingCycles,
   getDeliveryConfigMap,
 } from '@/lib/data';
 import { getDeliveryConfig } from '@/lib/delivery';
@@ -34,10 +34,14 @@ export async function GET(): Promise<NextResponse> {
     }
 
     // 3. Load cycle items + upcoming cycle (for "available until")
-    const [items, upcomingCycle] = await Promise.all([
+    const [items, upcomingCycles] = await Promise.all([
       getCycleItems(cycle.id),
-      getUpcomingCycle(),
+      getUpcomingCycles(),
     ]);
+
+    // Pick the first cycle whose cutoff hasn't passed
+    const now = new Date();
+    const upcomingCycle = upcomingCycles.find(c => !c.order_cutoff_at || new Date(c.order_cutoff_at) > now) ?? null;
 
     // 4. Build response
     const response = NextResponse.json({

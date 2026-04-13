@@ -1,4 +1,4 @@
-import { getUpcomingCycle, getAllBoxPricesMap, getDeliveryConfigMap } from '@/lib/data';
+import { getUpcomingCycles, getAllBoxPricesMap, getDeliveryConfigMap } from '@/lib/data';
 import { getDeliveryConfig, formatDeliveryDate, calculateNextDeliveryDate } from '@/lib/delivery';
 import MysteryBoxContent from '@/components/box/MysteryBoxContent';
 import type { Metadata } from 'next';
@@ -11,13 +11,17 @@ export const metadata: Metadata = {
 };
 
 export default async function MysteryBoxPage() {
-  const [upcomingCycle, prices, configMap] = await Promise.all([
-    getUpcomingCycle(),
+  const [upcomingCycles, prices, configMap] = await Promise.all([
+    getUpcomingCycles(),
     getAllBoxPricesMap(null),
     getDeliveryConfigMap(),
   ]);
 
   const config = getDeliveryConfig(configMap);
+
+  // Pick the first cycle whose cutoff hasn't passed
+  const now = new Date();
+  const upcomingCycle = upcomingCycles.find(c => !c.order_cutoff_at || new Date(c.order_cutoff_at) > now) ?? null;
 
   // Use upcoming cycle date, or fall back to calculated next delivery date from config
   let deliveryDateStr: string;

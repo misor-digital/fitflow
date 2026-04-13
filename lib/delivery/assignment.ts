@@ -8,7 +8,7 @@
 
 import 'server-only';
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import { getUpcomingCycle } from '@/lib/data';
+import { getUpcomingCycles } from '@/lib/data';
 import type { DeliveryCycleRow, DeliveryCycleStatus } from '@/lib/supabase/types';
 
 /**
@@ -26,15 +26,14 @@ export async function determineFirstCycle(): Promise<{
   cycleId: string;
   needsImmediateOrder: boolean;
 }> {
-  // Check for upcoming cycle (not yet generated)
-  const upcoming = await getUpcomingCycle();
-  if (upcoming) {
-    // If cutoff has passed, don't assign — subscription becomes orphaned
-    const cutoffAt = new Date(upcoming.order_cutoff_at);
-    if (cutoffAt <= new Date()) {
-      throw new Error('Крайният срок за поръчки за текущия цикъл е изтекъл.');
-    }
-    return { cycleId: upcoming.id, needsImmediateOrder: false };
+  // Check for upcoming cycle whose cutoff hasn't passed
+  const upcomingCycles = await getUpcomingCycles();
+  const now = new Date();
+  const eligible = upcomingCycles.find(
+    (c) => !c.order_cutoff_at || new Date(c.order_cutoff_at) > now,
+  );
+  if (eligible) {
+    return { cycleId: eligible.id, needsImmediateOrder: false };
   }
 
   // Check for delivered cycle (orders generated but still active - not archived)

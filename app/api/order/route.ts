@@ -13,6 +13,7 @@ import {
   getPreorderByToken,
   markPreorderConverted,
   getDeliveryCycleById,
+  getUpcomingCycles,
 } from '@/lib/data';
 import { validateAddress, addressInputToSnapshot } from '@/lib/order';
 import { isSubscriptionBox, EMAIL_REGEX, isValidPhone } from '@/lib/catalog';
@@ -301,6 +302,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
       validatedCycleId = cycle.id;
       validatedCycleTitle = cycle.title ?? null;
+    } else if (orderType !== 'onetime-revealed') {
+      // Auto-resolve the upcoming cycle whose cutoff hasn't passed yet
+      const upcomingCycles = await getUpcomingCycles();
+      const now = new Date();
+      const eligibleCycle = upcomingCycles.find(
+        (c) => !c.order_cutoff_at || new Date(c.order_cutoff_at) > now,
+      );
+      if (eligibleCycle) {
+        validatedCycleId = eligibleCycle.id;
+        validatedCycleTitle = eligibleCycle.title ?? null;
+      }
     }
 
     // Validate onBehalfOfUserId if present
