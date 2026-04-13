@@ -64,39 +64,51 @@ export function DeliverySettingsForm({ config }: DeliverySettingsFormProps) {
   const [cutoffBannerEnabled, setCutoffBannerEnabled] = useState(config.cutoffBannerEnabled);
   const [cutoffPopupEnabled, setCutoffPopupEnabled] = useState(config.cutoffPopupEnabled);
 
+  // Snapshot of what's been saved — starts as server config, updates after each successful save
+  const [savedSnapshot, setSavedSnapshot] = useState({
+    deliveryDay: config.deliveryDay,
+    firstDeliveryDate: config.firstDeliveryDate ?? '',
+    subscriptionEnabled: config.subscriptionEnabled,
+    revealedBoxEnabled: config.revealedBoxEnabled,
+    cutoffDisplayDays: config.orderCutoffDisplayDays,
+    cutoffWidgetsEnabled: config.cutoffWidgetsEnabled,
+    cutoffBannerEnabled: config.cutoffBannerEnabled,
+    cutoffPopupEnabled: config.cutoffPopupEnabled,
+  });
+
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  // Track which fields changed from initial config
+  // Track which fields changed from last saved state
   const changes = useMemo(() => {
     const c: { key: string; value: string }[] = [];
-    if (deliveryDay !== config.deliveryDay) {
+    if (deliveryDay !== savedSnapshot.deliveryDay) {
       c.push({ key: 'SUBSCRIPTION_DELIVERY_DAY', value: String(deliveryDay) });
     }
-    if ((firstDeliveryDate || '') !== (config.firstDeliveryDate || '')) {
+    if ((firstDeliveryDate || '') !== (savedSnapshot.firstDeliveryDate || '')) {
       c.push({ key: 'FIRST_DELIVERY_DATE', value: firstDeliveryDate });
     }
-    if (subscriptionEnabled !== config.subscriptionEnabled) {
+    if (subscriptionEnabled !== savedSnapshot.subscriptionEnabled) {
       c.push({ key: 'SUBSCRIPTION_ENABLED', value: String(subscriptionEnabled) });
     }
-    if (revealedBoxEnabled !== config.revealedBoxEnabled) {
+    if (revealedBoxEnabled !== savedSnapshot.revealedBoxEnabled) {
       c.push({ key: 'REVEALED_BOX_ENABLED', value: String(revealedBoxEnabled) });
     }
-    if (cutoffDisplayDays !== config.orderCutoffDisplayDays) {
+    if (cutoffDisplayDays !== savedSnapshot.cutoffDisplayDays) {
       c.push({ key: 'ORDER_CUTOFF_DISPLAY_DAYS', value: String(cutoffDisplayDays) });
     }
-    if (cutoffWidgetsEnabled !== config.cutoffWidgetsEnabled) {
+    if (cutoffWidgetsEnabled !== savedSnapshot.cutoffWidgetsEnabled) {
       c.push({ key: 'CUTOFF_WIDGETS_ENABLED', value: String(cutoffWidgetsEnabled) });
     }
-    if (cutoffBannerEnabled !== config.cutoffBannerEnabled) {
+    if (cutoffBannerEnabled !== savedSnapshot.cutoffBannerEnabled) {
       c.push({ key: 'CUTOFF_BANNER_ENABLED', value: String(cutoffBannerEnabled) });
     }
-    if (cutoffPopupEnabled !== config.cutoffPopupEnabled) {
+    if (cutoffPopupEnabled !== savedSnapshot.cutoffPopupEnabled) {
       c.push({ key: 'CUTOFF_POPUP_ENABLED', value: String(cutoffPopupEnabled) });
     }
     return c;
-  }, [deliveryDay, firstDeliveryDate, subscriptionEnabled, revealedBoxEnabled, cutoffDisplayDays, cutoffWidgetsEnabled, cutoffBannerEnabled, cutoffPopupEnabled, config]);
+  }, [deliveryDay, firstDeliveryDate, subscriptionEnabled, revealedBoxEnabled, cutoffDisplayDays, cutoffWidgetsEnabled, cutoffBannerEnabled, cutoffPopupEnabled, savedSnapshot]);
 
   const hasChanges = changes.length > 0;
 
@@ -137,6 +149,16 @@ export function DeliverySettingsForm({ config }: DeliverySettingsFormProps) {
       }
 
       setSuccess('Настройките са запазени.');
+      setSavedSnapshot({
+        deliveryDay,
+        firstDeliveryDate,
+        subscriptionEnabled,
+        revealedBoxEnabled,
+        cutoffDisplayDays,
+        cutoffWidgetsEnabled,
+        cutoffBannerEnabled,
+        cutoffPopupEnabled,
+      });
       setTimeout(() => setSuccess(null), 3000);
     } catch {
       setError('Грешка при запазване на настройките.');
