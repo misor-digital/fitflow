@@ -31,6 +31,8 @@ export async function GET(): Promise<NextResponse> {
         },
         isFirstDelivery: isFirstDelivery(config),
         nextDeliveryDate: upcomingCycle.delivery_date,
+        orderCutoffAt: upcomingCycle.order_cutoff_at,
+        cutoffDisplayDays: config.orderCutoffDisplayDays,
       });
 
       response.headers.set(
@@ -48,6 +50,8 @@ export async function GET(): Promise<NextResponse> {
       cycle: null,
       isFirstDelivery: isFirstDelivery(config),
       nextDeliveryDate: nextDateStr,
+      orderCutoffAt: null,
+      cutoffDisplayDays: config.orderCutoffDisplayDays,
     });
 
     response.headers.set(
