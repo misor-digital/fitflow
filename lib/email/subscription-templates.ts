@@ -92,6 +92,7 @@ export function generateSubscriptionCreatedEmail(params: SubscriptionCreatedPara
   const boxTypeName = escapeHtml(params.boxTypeName);
   const frequency = escapeHtml(params.frequency);
   const nextDeliveryDate = escapeHtml(params.nextDeliveryDate);
+  const cycleName = params.deliveryCycleName ? escapeHtml(params.deliveryCycleName) : 'следващия цикъл на доставка';
 
   const body = `
     <h2 style="color: ${EMAIL.colors.textHeading}; margin: 0 0 20px 0;">Абонаментът ти е активиран! 🎉</h2>
