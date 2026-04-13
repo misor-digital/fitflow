@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useOrderStore } from '@/store/orderStore';
+import { useDeliveryStore } from '@/store/deliveryStore';
 import { trackFunnelStep, trackBoxSelection, trackViewContent, generateEventId, getMetaClientContext } from '@/lib/analytics';
 import PriceDisplay from '@/components/PriceDisplay';
 import type { PricesMap, BoxTypeId, PriceInfo } from '@/lib/catalog';
@@ -16,7 +17,11 @@ interface OrderStepBoxProps {
 
 export default function OrderStepBox({ prices, boxTypeNames, onNext }: OrderStepBoxProps) {
   const { boxType, setBoxType, setFrequency, promoCode } = useOrderStore();
+  const { upcomingDelivery, fetchUpcomingDelivery } = useDeliveryStore();
+  const cycleName = upcomingDelivery?.cycle?.title || 'следващия цикъл на доставка';
   const hasTrackedStep = useRef(false);
+
+  useEffect(() => { fetchUpcomingDelivery(); }, [fetchUpcomingDelivery]);
 
   // Track funnel step + ViewContent on mount
   useEffect(() => {
@@ -129,6 +134,14 @@ export default function OrderStepBox({ prices, boxTypeNames, onNext }: OrderStep
       <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold text-[var(--color-brand-navy)] text-center mb-8 sm:mb-10 md:mb-12 relative after:content-[''] after:block after:w-12 sm:after:w-16 after:h-1 after:bg-[var(--color-brand-orange)] after:mx-auto after:mt-3 sm:after:mt-4 after:rounded">
         Избери кутия
       </h2>
+
+      {/* Delivery Cycle Info */}
+      <div className="flex items-center justify-center gap-2 text-sm sm:text-base text-[var(--color-brand-navy)] mb-6 sm:mb-8">
+        <svg className="w-4 h-4 sm:w-5 sm:h-5 text-[var(--color-brand-orange)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        <span>Поръчката ти ще бъде изпратена през <strong className="font-semibold">{cycleName}</strong></span>
+      </div>
 
       {/* Discount Banner */}
       {hasDiscount && monthlyStandardPrice && (
