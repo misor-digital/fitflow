@@ -18,17 +18,6 @@ import SlidingBanner from '@/components/SlidingBanner';
 
 const MS_PER_DAY = 86_400_000;
 
-function formatCountdown(ms: number): string {
-  const totalSeconds = Math.max(0, Math.floor(ms / 1000));
-  const days = Math.floor(totalSeconds / 86400);
-  const hours = Math.floor((totalSeconds % 86400) / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-
-  if (days > 0) return `${days}д ${hours}ч`;
-  if (hours > 0) return `${hours}ч ${minutes}мин`;
-  return `${minutes}мин`;
-}
-
 function formatDeliveryDateShort(dateStr: string): string {
   const [y, m, d] = dateStr.split('-').map(Number);
   if (!d || !m) return dateStr;
@@ -73,6 +62,9 @@ export function CutoffBanner() {
   // Hide on thank-you page and admin pages
   if (pathname === '/order/thank-you') return null;
   if (pathname?.startsWith('/admin')) return null;
+
+  // Respect admin toggle
+  if (upcomingDelivery?.cutoffBannerEnabled === false) return null;
 
   // Only show within displayDays window and before cutoff
   if (

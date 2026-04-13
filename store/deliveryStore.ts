@@ -41,6 +41,8 @@ export interface UpcomingDeliveryPayload {
   nextDeliveryDate: string;
   orderCutoffAt: string | null;
   cutoffDisplayDays: number;
+  cutoffBannerEnabled: boolean;
+  cutoffPopupEnabled: boolean;
 }
 
 interface DeliveryState {

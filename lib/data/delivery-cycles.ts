@@ -32,6 +32,9 @@ const DELIVERY_CONFIG_KEYS = [
   'SUBSCRIPTION_ENABLED',
   'REVEALED_BOX_ENABLED',
   'ORDER_CUTOFF_DISPLAY_DAYS',
+  'CUTOFF_WIDGETS_ENABLED',
+  'CUTOFF_BANNER_ENABLED',
+  'CUTOFF_POPUP_ENABLED',
 ] as const;
 
 type DeliveryConfigKey = (typeof DELIVERY_CONFIG_KEYS)[number];
@@ -713,9 +716,19 @@ export async function updateDeliveryConfig(
     }
   }
 
+  if (key === 'ORDER_CUTOFF_DISPLAY_DAYS') {
+    const days = parseInt(value, 10);
+    if (isNaN(days) || days < 1 || days > 30) {
+      throw new Error('ORDER_CUTOFF_DISPLAY_DAYS must be a number between 1 and 30.');
+    }
+  }
+
   if (
     key === 'SUBSCRIPTION_ENABLED' ||
-    key === 'REVEALED_BOX_ENABLED'
+    key === 'REVEALED_BOX_ENABLED' ||
+    key === 'CUTOFF_WIDGETS_ENABLED' ||
+    key === 'CUTOFF_BANNER_ENABLED' ||
+    key === 'CUTOFF_POPUP_ENABLED'
   ) {
     if (value !== 'true' && value !== 'false') {
       throw new Error(`${key} must be 'true' or 'false'.`);

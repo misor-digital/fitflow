@@ -81,6 +81,12 @@ export function getDeliveryConfig(
     revealedBoxEnabled:
       configMap.REVEALED_BOX_ENABLED?.toLowerCase() === 'true',
     orderCutoffDisplayDays: parseIntSafe(configMap.ORDER_CUTOFF_DISPLAY_DAYS, 5),
+    cutoffWidgetsEnabled:
+      configMap.CUTOFF_WIDGETS_ENABLED?.toLowerCase() !== 'false',
+    cutoffBannerEnabled:
+      configMap.CUTOFF_BANNER_ENABLED?.toLowerCase() !== 'false',
+    cutoffPopupEnabled:
+      configMap.CUTOFF_POPUP_ENABLED?.toLowerCase() !== 'false',
   };
 }
 

@@ -79,12 +79,13 @@ export function CutoffCountdown({ variant }: CutoffCountdownProps) {
     return () => clearInterval(id);
   }, [cutoffAt]);
 
-  // Not visible: no data, cutoff passed, outside display window, or dismissed
+  // Not visible: no data, cutoff passed, outside display window, dismissed, or disabled
   if (
     remaining === null ||
     remaining <= 0 ||
     remaining > displayDays * MS_PER_DAY ||
-    dismissed
+    dismissed ||
+    upcomingDelivery?.cutoffPopupEnabled === false
   ) {
     return null;
   }

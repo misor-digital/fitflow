@@ -33,6 +33,8 @@ export async function GET(): Promise<NextResponse> {
         nextDeliveryDate: upcomingCycle.delivery_date,
         orderCutoffAt: upcomingCycle.order_cutoff_at,
         cutoffDisplayDays: config.orderCutoffDisplayDays,
+        cutoffBannerEnabled: config.cutoffWidgetsEnabled && config.cutoffBannerEnabled,
+        cutoffPopupEnabled: config.cutoffWidgetsEnabled && config.cutoffPopupEnabled,
       });
 
       response.headers.set(
@@ -52,6 +54,8 @@ export async function GET(): Promise<NextResponse> {
       nextDeliveryDate: nextDateStr,
       orderCutoffAt: null,
       cutoffDisplayDays: config.orderCutoffDisplayDays,
+      cutoffBannerEnabled: config.cutoffWidgetsEnabled && config.cutoffBannerEnabled,
+      cutoffPopupEnabled: config.cutoffWidgetsEnabled && config.cutoffPopupEnabled,
     });
 
     response.headers.set(

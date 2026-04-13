@@ -24,6 +24,9 @@ export interface DeliveryConfig {
   subscriptionEnabled: boolean;
   revealedBoxEnabled: boolean;
   orderCutoffDisplayDays: number; // days before cutoff to show countdown (default 5)
+  cutoffWidgetsEnabled: boolean; // master toggle for banner + popup (default true)
+  cutoffBannerEnabled: boolean; // sliding banner toggle (default true)
+  cutoffPopupEnabled: boolean; // floating countdown popup toggle (default true)
 }
 
 // ============================================================================

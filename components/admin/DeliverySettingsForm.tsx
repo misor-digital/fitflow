@@ -59,6 +59,10 @@ export function DeliverySettingsForm({ config }: DeliverySettingsFormProps) {
   const [firstDeliveryDate, setFirstDeliveryDate] = useState(config.firstDeliveryDate ?? '');
   const [subscriptionEnabled, setSubscriptionEnabled] = useState(config.subscriptionEnabled);
   const [revealedBoxEnabled, setRevealedBoxEnabled] = useState(config.revealedBoxEnabled);
+  const [cutoffDisplayDays, setCutoffDisplayDays] = useState(config.orderCutoffDisplayDays);
+  const [cutoffWidgetsEnabled, setCutoffWidgetsEnabled] = useState(config.cutoffWidgetsEnabled);
+  const [cutoffBannerEnabled, setCutoffBannerEnabled] = useState(config.cutoffBannerEnabled);
+  const [cutoffPopupEnabled, setCutoffPopupEnabled] = useState(config.cutoffPopupEnabled);
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -79,8 +83,20 @@ export function DeliverySettingsForm({ config }: DeliverySettingsFormProps) {
     if (revealedBoxEnabled !== config.revealedBoxEnabled) {
       c.push({ key: 'REVEALED_BOX_ENABLED', value: String(revealedBoxEnabled) });
     }
+    if (cutoffDisplayDays !== config.orderCutoffDisplayDays) {
+      c.push({ key: 'ORDER_CUTOFF_DISPLAY_DAYS', value: String(cutoffDisplayDays) });
+    }
+    if (cutoffWidgetsEnabled !== config.cutoffWidgetsEnabled) {
+      c.push({ key: 'CUTOFF_WIDGETS_ENABLED', value: String(cutoffWidgetsEnabled) });
+    }
+    if (cutoffBannerEnabled !== config.cutoffBannerEnabled) {
+      c.push({ key: 'CUTOFF_BANNER_ENABLED', value: String(cutoffBannerEnabled) });
+    }
+    if (cutoffPopupEnabled !== config.cutoffPopupEnabled) {
+      c.push({ key: 'CUTOFF_POPUP_ENABLED', value: String(cutoffPopupEnabled) });
+    }
     return c;
-  }, [deliveryDay, firstDeliveryDate, subscriptionEnabled, revealedBoxEnabled, config]);
+  }, [deliveryDay, firstDeliveryDate, subscriptionEnabled, revealedBoxEnabled, cutoffDisplayDays, cutoffWidgetsEnabled, cutoffBannerEnabled, cutoffPopupEnabled, config]);
 
   const hasChanges = changes.length > 0;
 
@@ -217,6 +233,90 @@ export function DeliverySettingsForm({ config }: DeliverySettingsFormProps) {
           />
           <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--color-brand-orange)]" />
         </label>
+      </div>
+
+      {/* Cutoff Widgets Section */}
+      <div className="border-t pt-6 mt-2">
+        <h3 className="text-sm font-bold text-gray-800 mb-4">Банер и обратно броене</h3>
+
+        {/* Master toggle */}
+        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg mb-3">
+          <div>
+            <p className="text-sm font-semibold text-gray-700">Банер и попъп (общ)</p>
+            <p className="text-xs text-gray-500">
+              Главен превключвател — изключва и двете наведнъж.
+            </p>
+          </div>
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={cutoffWidgetsEnabled}
+              onChange={(e) => setCutoffWidgetsEnabled(e.target.checked)}
+              className="sr-only peer"
+            />
+            <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--color-brand-orange)]" />
+          </label>
+        </div>
+
+        {/* Individual toggles — visually indented, disabled when master is off */}
+        <div className={`ml-4 space-y-3 ${!cutoffWidgetsEnabled ? 'opacity-50 pointer-events-none' : ''}`}>
+          {/* Banner toggle */}
+          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+            <div>
+              <p className="text-sm font-semibold text-gray-700">Плъзгащ банер</p>
+              <p className="text-xs text-gray-500">
+                Лентата с текст в горната част на страницата.
+              </p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={cutoffBannerEnabled}
+                onChange={(e) => setCutoffBannerEnabled(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--color-brand-orange)]" />
+            </label>
+          </div>
+
+          {/* Popup toggle */}
+          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+            <div>
+              <p className="text-sm font-semibold text-gray-700">Плаващ попъп</p>
+              <p className="text-xs text-gray-500">
+                Обратното броене в долната част на началната и поръчковата страница.
+              </p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={cutoffPopupEnabled}
+                onChange={(e) => setCutoffPopupEnabled(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[var(--color-brand-orange)]" />
+            </label>
+          </div>
+        </div>
+
+        {/* Display days */}
+        <div className="mt-4">
+          <label htmlFor="cutoffDisplayDays" className="block text-sm font-semibold text-gray-700 mb-1">
+            Показвай преди (дни)
+          </label>
+          <input
+            id="cutoffDisplayDays"
+            type="number"
+            min={1}
+            max={30}
+            value={cutoffDisplayDays}
+            onChange={(e) => setCutoffDisplayDays(parseInt(e.target.value, 10) || 5)}
+            className="w-32 border rounded-lg px-3 py-2 text-sm focus:border-[var(--color-brand-orange)] focus:outline-none"
+          />
+          <p className="text-xs text-gray-400 mt-1">
+            Колко дни преди крайния срок да се показват банерът и попъпът (1-30).
+          </p>
+        </div>
       </div>
 
       {/* Error / Success */}
