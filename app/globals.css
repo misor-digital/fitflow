@@ -8,6 +8,7 @@
   --color-brand-orange-dark: #e67100;
   --color-brand-navy: #023047;
   --color-brand-light-blue: #f0f9ff;
+  --banner-h: 0px;
 }
 
 @theme inline {
@@ -28,16 +29,8 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
-}
-
-/* Sliding banner animation */
-@keyframes slide {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-50%);
-  }
+  /* Offset for the fixed sliding banner when visible */
+  padding-top: var(--banner-h);
 }
 
 /* Hero image orientation switching */
@@ -94,10 +87,6 @@ body {
 }
 @media (orientation: landscape) and (max-aspect-ratio: 12/9) {
   :root { --hero-pos: 40% center; }
-}
-
-.sliding-banner-content {
-  animation: slide 45s linear infinite;
 }
 
 /* Gentle pulse animation for promo discount prompt (replaces JS setInterval) */

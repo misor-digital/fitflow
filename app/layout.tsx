@@ -3,7 +3,7 @@ import "./globals.css";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
 import OrderTrackingWidget from "@/components/OrderTrackingWidget";
 import ConditionalScripts from "@/components/ConditionalScripts";
-import SlidingBanner from "@/components/SlidingBanner";
+import { CutoffBanner } from "@/components/banners/CutoffBanner";
 import AuthProvider from "@/components/AuthProvider";
 import { initializeEmailSystem } from "@/lib/data";
 
@@ -34,7 +34,7 @@ export default function RootLayout({
     <html lang="bg">
       <body className="antialiased">
         <AuthProvider>
-          <SlidingBanner />
+          <CutoffBanner />
           {children}
         </AuthProvider>
         <CookieConsentBanner />
