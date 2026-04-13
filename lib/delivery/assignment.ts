@@ -15,10 +15,12 @@ import type { DeliveryCycleRow, DeliveryCycleStatus } from '@/lib/supabase/types
  * Determine which cycle a new subscription should be assigned to.
  *
  * Logic:
- * 1. If there's an `upcoming` cycle that hasn't had orders generated yet → assign to that
- * 2. If the current cycle is `delivered` (orders generated but still recent) → still assign
+ * 1. If there's an `upcoming` cycle whose cutoff hasn't passed → assign to that
+ * 2. If the upcoming cycle's cutoff has passed → orphan (first_cycle_id = null)
+ *    so the admin can backfill when ready
+ * 3. If the current cycle is `delivered` (orders generated but still recent) → still assign
  *    and create a late-addition order immediately
- * 3. If no cycles available → assign to the NEXT upcoming cycle when created
+ * 4. If no cycles available → orphan for later backfill
  */
 export async function determineFirstCycle(): Promise<{
   cycleId: string;
@@ -27,6 +29,11 @@ export async function determineFirstCycle(): Promise<{
   // Check for upcoming cycle (not yet generated)
   const upcoming = await getUpcomingCycle();
   if (upcoming) {
+    // If cutoff has passed, don't assign — subscription becomes orphaned
+    const cutoffAt = new Date(upcoming.order_cutoff_at);
+    if (cutoffAt <= new Date()) {
+      throw new Error('Крайният срок за поръчки за текущия цикъл е изтекъл.');
+    }
     return { cycleId: upcoming.id, needsImmediateOrder: false };
   }
 
@@ -36,9 +43,7 @@ export async function determineFirstCycle(): Promise<{
     return { cycleId: delivered.id, needsImmediateOrder: true };
   }
 
-  // Fallback: no available cycle
-  // This is handled by the subscription creation - first_cycle_id will reference
-  // the next cycle that gets created by admin
+  // Fallback: no available cycle — subscription will be orphaned
   throw new Error('Няма наличен цикъл за доставка. Моля, опитайте по-късно.');
 }
 
