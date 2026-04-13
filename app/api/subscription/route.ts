@@ -84,6 +84,7 @@ export async function GET(): Promise<NextResponse> {
         ...sub,
         nextDeliveryDate: nextCycle?.delivery_date ?? null,
         nextCycleId: nextCycle?.id ?? null,
+        nextCycleCutoffAt: nextCycle?.order_cutoff_at ?? null,
       };
     });
 
