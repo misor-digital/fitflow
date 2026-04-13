@@ -886,6 +886,7 @@ export async function generateOrdersForCycle(
         cycle.delivery_date,
         order.id,
         order.order_number,
+        cycle.title,
       ).catch(() => {});
 
       result.generated++;

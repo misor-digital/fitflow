@@ -273,6 +273,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // Validate delivery_cycle_id (optional)
     let validatedCycleId: string | null = null;
+    let validatedCycleTitle: string | null = null;
     if (deliveryCycleId && typeof deliveryCycleId === 'string') {
       const cycle = await getDeliveryCycleById(deliveryCycleId);
       if (!cycle) {
@@ -299,6 +300,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       }
 
       validatedCycleId = cycle.id;
+      validatedCycleTitle = cycle.title ?? null;
     }
 
     // Validate onBehalfOfUserId if present
@@ -700,6 +702,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         discountAmountEur: priceInfo.discountAmountEur ?? undefined,
         discountAmountBgn: priceInfo.discountAmountBgn ?? undefined,
         deliveryMethod: effectiveDeliveryMethod as 'address' | 'speedy_office',
+        deliveryCycleName: validatedCycleTitle,
         speedyOfficeName: addressSnapshot.speedy_office_name ?? null,
         speedyOfficeAddress: addressSnapshot.speedy_office_address ?? null,
         shippingAddress: {

@@ -604,6 +604,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             subscriptionNumber: subscription.subscription_number,
             isNewAccount,
             loginUrl: accountLoginUrl,
+            deliveryCycleName: upcomingForEmail?.title,
           });
 
           await sendTransactionalEmail({
@@ -634,7 +635,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       const emailAddr = session?.email ?? '';
 
       if (emailAddr) {
-        sendSubscriptionCreatedEmail(emailAddr, subscription, nextDate).catch(() => {});
+        sendSubscriptionCreatedEmail(emailAddr, subscription, nextDate, upcomingForEmail?.title).catch(() => {});
 
         // Sync subscription to Brevo contacts (fire-and-forget)
         syncSubscriptionChange({

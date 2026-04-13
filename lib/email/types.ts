@@ -100,6 +100,7 @@ export interface ConfirmationEmailData {
   discountAmountBgn?: number | null;
   // Delivery fields
   deliveryMethod?: 'address' | 'speedy_office';
+  deliveryCycleName?: string | null;
   speedyOfficeName?: string | null;
   speedyOfficeAddress?: string | null;
   shippingAddress?: {
