@@ -30,6 +30,7 @@ interface TrackingOrder {
   finalPriceEur: number | null;
   finalPriceBgn: number | null;
   createdAt: string;
+  deliveryCycleName: string | null;
   statusHistory: StatusHistoryEntry[];
 }
 
@@ -189,6 +190,14 @@ function OrderTrackingContent() {
               </dd>
             </div>
           </dl>
+        </div>
+
+        {/* Delivery Cycle Info */}
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-6">
+          <p className="text-sm text-gray-700">
+            📦 Поръчката ти ще бъде изпратена през{' '}
+            <strong className="text-gray-900">{order.deliveryCycleName ?? 'следващия цикъл на доставка'}</strong>
+          </p>
         </div>
 
         {/* Shipping Address Card */}

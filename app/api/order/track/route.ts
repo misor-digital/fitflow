@@ -9,6 +9,7 @@ import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { getOrderByNumberAndEmail, getOrderStatusHistory, getBoxTypeNames } from '@/lib/data';
 import { eurToBgn } from '@/lib/data';
+import { getDeliveryCycleByIdDirect } from '@/lib/data/delivery-cycles';
 import { isValidEmail } from '@/lib/catalog';
 import { checkRateLimit } from '@/lib/utils/rateLimit';
 import { ORDER_STATUS_LABELS } from '@/lib/order';
@@ -67,9 +68,10 @@ export async function GET(request: Request): Promise<NextResponse> {
     }
 
     // 4. Enrich data
-    const [statusHistory, boxTypeNames] = await Promise.all([
+    const [statusHistory, boxTypeNames, deliveryCycle] = await Promise.all([
       getOrderStatusHistory(order.id),
       getBoxTypeNames(),
+      order.delivery_cycle_id ? getDeliveryCycleByIdDirect(order.delivery_cycle_id) : null,
     ]);
 
     const finalPriceBgn = order.final_price_eur
@@ -90,6 +92,7 @@ export async function GET(request: Request): Promise<NextResponse> {
       finalPriceEur: order.final_price_eur,
       finalPriceBgn,
       createdAt: order.created_at,
+      deliveryCycleName: deliveryCycle?.title ?? null,
       statusHistory: statusHistory.map((h) => ({
         fromStatus: h.from_status,
         toStatus: h.to_status,
