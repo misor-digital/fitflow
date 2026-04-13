@@ -70,6 +70,7 @@ export default async function SubscriptionsPage() {
       ...sub,
       nextDeliveryDate: nextCycle?.delivery_date ?? null,
       nextCycleId: nextCycle?.id ?? null,
+      nextCycleCutoffAt: nextCycle?.order_cutoff_at ?? null,
     };
   });
 

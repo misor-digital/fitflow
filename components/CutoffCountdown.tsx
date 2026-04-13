@@ -5,7 +5,6 @@ import { useDeliveryStore } from '@/store/deliveryStore';
 
 const MS_PER_DAY = 86_400_000;
 const MS_PER_HOUR = 3_600_000;
-const MS_PER_MINUTE = 60_000;
 
 interface CutoffCountdownProps {
   variant: 'card' | 'inline';
@@ -54,7 +53,12 @@ const URGENCY_STYLES = {
 export function CutoffCountdown({ variant }: CutoffCountdownProps) {
   const { upcomingDelivery, fetchUpcomingDelivery } = useDeliveryStore();
   const [remaining, setRemaining] = useState<number | null>(null);
-  const [dismissed, setDismissed] = useState(false);
+  const [dismissed, setDismissed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return sessionStorage.getItem('cutoff-countdown-dismissed') === '1';
+    }
+    return false;
+  });
 
   useEffect(() => {
     fetchUpcomingDelivery();
@@ -74,13 +78,6 @@ export function CutoffCountdown({ variant }: CutoffCountdownProps) {
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
   }, [cutoffAt]);
-
-  // Check sessionStorage for dismiss
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setDismissed(sessionStorage.getItem('cutoff-countdown-dismissed') === '1');
-    }
-  }, []);
 
   // Not visible: no data, cutoff passed, outside display window, or dismissed
   if (
