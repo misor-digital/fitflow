@@ -32,6 +32,7 @@ export async function sendSubscriptionCreatedEmail(
   email: string,
   subscription: SubscriptionRow,
   nextDeliveryDate: string,
+  deliveryCycleName?: string | null,
 ): Promise<void> {
   try {
     const labels = await resolveEmailLabels();
@@ -43,6 +44,7 @@ export async function sendSubscriptionCreatedEmail(
       boxTypeName,
       frequency,
       nextDeliveryDate,
+      deliveryCycleName,
       manageUrl: 'https://fitflow.bg/account/subscriptions',
     });
 
@@ -164,6 +166,7 @@ export async function sendDeliveryUpcomingEmail(
   deliveryDate: string,
   orderId: string,
   orderNumber: string,
+  deliveryCycleName?: string | null,
 ): Promise<void> {
   try {
     const labels = await resolveEmailLabels();
@@ -174,6 +177,7 @@ export async function sendDeliveryUpcomingEmail(
       boxTypeName,
       orderNumber,
       deliveryDate,
+      deliveryCycleName,
       trackUrl: `https://fitflow.bg/order/track?orderId=${orderId}`,
     });
 

@@ -557,17 +557,20 @@ CREATE POLICY "Service role only" ON rate_limits
 CREATE TABLE delivery_cycles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   delivery_date DATE NOT NULL UNIQUE,
+  order_cutoff_at TIMESTAMPTZ NOT NULL,
   status delivery_cycle_status NOT NULL DEFAULT 'upcoming',
   title TEXT,
   description TEXT,
   is_revealed BOOLEAN NOT NULL DEFAULT false,
   revealed_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT chk_cutoff_before_delivery CHECK (order_cutoff_at <= (delivery_date + TIME '23:59:59'))
 );
 
 COMMENT ON TABLE delivery_cycles IS 'Monthly delivery cycles - each row represents one box shipment date';
 COMMENT ON COLUMN delivery_cycles.delivery_date IS 'The date this cycle ships (e.g. 2026-03-08)';
+COMMENT ON COLUMN delivery_cycles.order_cutoff_at IS 'Deadline for accepting orders for this cycle (e.g. 2026-04-15T14:00:00+03:00)';
 COMMENT ON COLUMN delivery_cycles.status IS 'Lifecycle state: upcoming, delivered, archived';
 COMMENT ON COLUMN delivery_cycles.title IS 'Display name (e.g. "Март 2026 кутия")';
 COMMENT ON COLUMN delivery_cycles.description IS 'Rich text for the revealed-box public page';
@@ -579,6 +582,8 @@ CREATE INDEX idx_delivery_cycles_upcoming ON delivery_cycles(delivery_date)
 CREATE INDEX idx_delivery_cycles_revealed ON delivery_cycles(delivery_date DESC)
   WHERE is_revealed = true;
 CREATE INDEX idx_delivery_cycles_status ON delivery_cycles(status);
+CREATE INDEX idx_delivery_cycles_cutoff ON delivery_cycles(order_cutoff_at)
+  WHERE status = 'upcoming';
 
 CREATE TRIGGER trigger_delivery_cycles_updated_at
   BEFORE UPDATE ON delivery_cycles FOR EACH ROW

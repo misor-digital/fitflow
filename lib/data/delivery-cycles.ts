@@ -31,6 +31,10 @@ const DELIVERY_CONFIG_KEYS = [
   'FIRST_DELIVERY_DATE',
   'SUBSCRIPTION_ENABLED',
   'REVEALED_BOX_ENABLED',
+  'ORDER_CUTOFF_DISPLAY_DAYS',
+  'CUTOFF_WIDGETS_ENABLED',
+  'CUTOFF_BANNER_ENABLED',
+  'CUTOFF_POPUP_ENABLED',
 ] as const;
 
 type DeliveryConfigKey = (typeof DELIVERY_CONFIG_KEYS)[number];
@@ -73,6 +77,27 @@ export const getDeliveryCycleById = cache(
     return cycles.find((c) => c.id === id) ?? null;
   },
 );
+
+/**
+ * Get a single delivery cycle by ID directly from DB (bypasses cache).
+ * Use in mutation functions where the cache may be stale.
+ */
+export async function getDeliveryCycleByIdDirect(
+  id: string,
+): Promise<DeliveryCycleRow | null> {
+  const { data, error } = await supabaseAdmin
+    .from('delivery_cycles')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Error fetching delivery cycle by id:', error);
+    throw new Error('Failed to load delivery cycle.');
+  }
+
+  return data;
+}
 
 /**
  * Get the next upcoming cycle (status = 'upcoming', delivery_date in the future).
@@ -130,17 +155,18 @@ export const getUpcomingCycles = cache(
 );
 
 /**
- * Get the earliest upcoming cycle whose delivery_date <= today.
+ * Get the earliest upcoming cycle whose order_cutoff_at <= now.
  * This is the cycle eligible for automatic order generation by the cron job.
+ * Orders can be generated once the cutoff datetime has passed.
  */
 export async function getEarliestEligibleCycle(): Promise<DeliveryCycleRow | null> {
-  const today = new Date().toISOString().split('T')[0];
+  const now = new Date().toISOString();
 
   const { data, error } = await supabaseAdmin
     .from('delivery_cycles')
     .select('*')
     .eq('status', 'upcoming')
-    .lte('delivery_date', today)
+    .lte('order_cutoff_at', now)
     .order('delivery_date', { ascending: true })
     .limit(1)
     .maybeSingle();
@@ -320,8 +346,8 @@ export async function updateDeliveryCycle(
  * Only allowed if status is 'upcoming' and no orders reference it.
  */
 export async function deleteDeliveryCycle(id: string): Promise<void> {
-  // 1. Verify cycle exists and is upcoming
-  const cycle = await getDeliveryCycleById(id);
+  // 1. Verify cycle exists and is upcoming (direct DB lookup, bypasses cache)
+  const cycle = await getDeliveryCycleByIdDirect(id);
   if (!cycle) {
     throw new Error('Delivery cycle not found.');
   }
@@ -690,9 +716,19 @@ export async function updateDeliveryConfig(
     }
   }
 
+  if (key === 'ORDER_CUTOFF_DISPLAY_DAYS') {
+    const days = parseInt(value, 10);
+    if (isNaN(days) || days < 1 || days > 30) {
+      throw new Error('ORDER_CUTOFF_DISPLAY_DAYS must be a number between 1 and 30.');
+    }
+  }
+
   if (
     key === 'SUBSCRIPTION_ENABLED' ||
-    key === 'REVEALED_BOX_ENABLED'
+    key === 'REVEALED_BOX_ENABLED' ||
+    key === 'CUTOFF_WIDGETS_ENABLED' ||
+    key === 'CUTOFF_BANNER_ENABLED' ||
+    key === 'CUTOFF_POPUP_ENABLED'
   ) {
     if (value !== 'true' && value !== 'false') {
       throw new Error(`${key} must be 'true' or 'false'.`);

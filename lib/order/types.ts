@@ -256,6 +256,7 @@ export interface OrderTrackingData {
   shippingAddress: ShippingAddressSnapshot;
   deliveryMethod: 'address' | 'speedy_office';
   finalPriceEur: number | null;
+  deliveryCycleName: string | null;
   createdAt: string;
   statusHistory: Array<{
     fromStatus: OrderStatus | null;

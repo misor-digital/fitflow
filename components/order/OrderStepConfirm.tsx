@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useOrderStore } from '@/store/orderStore';
+import { useDeliveryStore } from '@/store/deliveryStore';
 import { trackFunnelStep } from '@/lib/analytics';
 import PriceDisplay from '@/components/PriceDisplay';
 import type { PricesMap, CatalogData, PriceInfo } from '@/lib/catalog';
@@ -28,7 +29,11 @@ export default function OrderStepConfirm({
   isRevealedBox = false,
 }: OrderStepConfirmProps) {
   const store = useOrderStore();
+  const { upcomingDelivery, fetchUpcomingDelivery } = useDeliveryStore();
+  const cycleName = upcomingDelivery?.cycle?.title || 'следващия цикъл на доставка';
   const hasTrackedStep = useRef(false);
+
+  useEffect(() => { fetchUpcomingDelivery(); }, [fetchUpcomingDelivery]);
 
   // Track funnel step on mount
   useEffect(() => {
@@ -77,6 +82,14 @@ export default function OrderStepConfirm({
       <h2 className="text-2xl sm:text-3xl md:text-5xl font-bold text-[var(--color-brand-navy)] text-center mb-8 sm:mb-10 md:mb-12 relative after:content-[''] after:block after:w-12 sm:after:w-16 after:h-1 after:bg-[var(--color-brand-orange)] after:mx-auto after:mt-3 sm:after:mt-4 after:rounded">
         Преглед на поръчката
       </h2>
+
+      {/* Delivery Cycle Info */}
+      <div className="flex items-center justify-center gap-2 text-sm sm:text-base text-[var(--color-brand-navy)] mb-6 sm:mb-8">
+        <svg className="w-4 h-4 sm:w-5 sm:h-5 text-[var(--color-brand-orange)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        <span>Поръчката ти ще бъде изпратена през <strong className="font-semibold">{cycleName}</strong></span>
+      </div>
 
       {/* Summary Cards */}
       <div className="space-y-4 sm:space-y-5 md:space-y-6 mb-6 sm:mb-8 md:mb-10">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition, useCallback } from 'react';
+import { useState, useTransition } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import type {
@@ -60,6 +60,14 @@ interface CycleDetailViewProps {
   cycleState: DeliveryCycleDerivedState;
 }
 
+/** Convert an ISO/UTC date string to `datetime-local` input value in the browser's local timezone */
+function toDatetimeLocal(iso: string): string {
+  const d = new Date(iso);
+  const off = d.getTimezoneOffset();
+  const local = new Date(d.getTime() - off * 60_000);
+  return local.toISOString().slice(0, 16);
+}
+
 // ============================================================================
 // Component
 // ============================================================================
@@ -75,6 +83,12 @@ export function CycleDetailView({
   // Cycle fields
   const [title, setTitle] = useState(cycle.title ?? '');
   const [description, setDescription] = useState(cycle.description ?? '');
+  const [deliveryDate, setDeliveryDate] = useState(cycle.delivery_date);
+  const [orderCutoffAt, setOrderCutoffAt] = useState(
+    // Convert ISO to datetime-local format in local timezone (YYYY-MM-DDTHH:MM)
+    cycle.order_cutoff_at ? toDatetimeLocal(cycle.order_cutoff_at) : '',
+  );
+  const [isEditing, setIsEditing] = useState(false);
 
   // Items
   const [items, setItems] = useState(initialItems);
@@ -102,55 +116,69 @@ export function CycleDetailView({
   // Cycle field updates
   // ============================================================================
 
-  const handleTitleBlur = useCallback(async () => {
-    if (title === (cycle.title ?? '')) return;
+  const handleEditStart = () => {
+    setTitle(cycle.title ?? '');
+    setDescription(cycle.description ?? '');
+    setDeliveryDate(cycle.delivery_date);
+    setOrderCutoffAt(
+      cycle.order_cutoff_at ? toDatetimeLocal(cycle.order_cutoff_at) : '',
+    );
+    setIsEditing(true);
     clearFeedback();
-
-    try {
-      const res = await fetch(`/api/admin/delivery/${cycle.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title }),
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        setError(data.error || 'Грешка при запазване на заглавието.');
-      } else {
-        setSuccess('Заглавието е запазено.');
-        setTimeout(() => setSuccess(null), 2000);
-      }
-    } catch {
-      setError('Грешка при запазване на заглавието.');
-    }
-  }, [title, cycle.id, cycle.title]);
-
-  const handleTitleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      (e.target as HTMLElement).blur();
-    }
   };
 
-  const handleDescriptionBlur = async () => {
-    if (description === (cycle.description ?? '')) return;
+  const handleEditCancel = () => {
+    setTitle(cycle.title ?? '');
+    setDescription(cycle.description ?? '');
+    setDeliveryDate(cycle.delivery_date);
+    setOrderCutoffAt(
+      cycle.order_cutoff_at ? toDatetimeLocal(cycle.order_cutoff_at) : '',
+    );
+    setIsEditing(false);
+    clearFeedback();
+  };
+
+  const handleEditSave = async () => {
     clearFeedback();
 
-    try {
-      const res = await fetch(`/api/admin/delivery/${cycle.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ description }),
-      });
-      if (!res.ok) {
-        const data = await res.json();
-        setError(data.error || 'Грешка при запазване на описанието.');
-      } else {
-        setSuccess('Описанието е запазено.');
-        setTimeout(() => setSuccess(null), 2000);
-      }
-    } catch {
-      setError('Грешка при запазване на описанието.');
+    const updates: Record<string, unknown> = {};
+    if (title !== (cycle.title ?? '')) updates.title = title;
+    if (description !== (cycle.description ?? '')) updates.description = description;
+    if (deliveryDate !== cycle.delivery_date) updates.delivery_date = deliveryDate;
+
+    // Convert datetime-local back to ISO for the API
+    const originalCutoff = cycle.order_cutoff_at
+      ? toDatetimeLocal(cycle.order_cutoff_at)
+      : '';
+    if (orderCutoffAt !== originalCutoff) {
+      updates.order_cutoff_at = new Date(orderCutoffAt).toISOString();
     }
+
+    if (Object.keys(updates).length === 0) {
+      setIsEditing(false);
+      return;
+    }
+
+    startTransition(async () => {
+      try {
+        const res = await fetch(`/api/admin/delivery/${cycle.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updates),
+        });
+        if (!res.ok) {
+          const data = await res.json();
+          setError(data.error || 'Грешка при запазване.');
+        } else {
+          setSuccess('Промените са запазени.');
+          setTimeout(() => setSuccess(null), 2000);
+          setIsEditing(false);
+          router.refresh();
+        }
+      } catch {
+        setError('Грешка при запазване.');
+      }
+    });
   };
 
   // ============================================================================
@@ -260,6 +288,7 @@ export function CycleDetailView({
             });
             if (res.status === 204) {
               router.push('/admin/delivery');
+              router.refresh();
               return;
             }
             const data = await res.json();
@@ -385,37 +414,91 @@ export function CycleDetailView({
       <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex-1 min-w-0">
-            {/* Title - editable inline */}
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              onBlur={handleTitleBlur}
-              onKeyDown={handleTitleKeyDown}
-              placeholder="Заглавие на цикъла"
-              className="text-2xl font-bold text-[var(--color-brand-navy)] bg-transparent border-b border-transparent hover:border-gray-300 focus:border-[var(--color-brand-orange)] focus:outline-none w-full pb-1 transition-colors"
-            />
+            {isEditing ? (
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Заглавие на цикъла"
+                className="text-2xl font-bold text-[var(--color-brand-navy)] bg-transparent border-b border-gray-300 focus:border-[var(--color-brand-orange)] focus:outline-none w-full pb-1 transition-colors"
+              />
+            ) : (
+              <h2 className="text-2xl font-bold text-[var(--color-brand-navy)] pb-1">
+                {cycle.title || <span className="text-gray-300 italic">Без заглавие</span>}
+              </h2>
+            )}
           </div>
 
-          {/* Status badge */}
-          <span
-            className={`text-xs font-semibold px-3 py-1.5 rounded-full ${STATUS_COLORS[cycle.status]}`}
-          >
-            {STATUS_LABELS[cycle.status]}
-          </span>
+          {/* Status badge + Edit button */}
+          <div className="flex items-center gap-2">
+            <span
+              className={`text-xs font-semibold px-3 py-1.5 rounded-full ${STATUS_COLORS[cycle.status]}`}
+            >
+              {STATUS_LABELS[cycle.status]}
+            </span>
+            {!isEditing && (
+              <button
+                onClick={handleEditStart}
+                className="text-gray-400 hover:text-[var(--color-brand-orange)] transition-colors p-1.5 rounded-lg hover:bg-gray-50"
+                title="Редактирай"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Delivery Date */}
         <div className="text-sm text-gray-600">
           <span className="font-medium">Дата на доставка:</span>{' '}
-          <span className="font-mono">{cycleState.formattedDate}</span>
-          {cycleState.daysUntilDelivery !== null && (
-            <span className="ml-2 text-blue-600">
-              (след {cycleState.daysUntilDelivery} дни)
-            </span>
+          {isEditing ? (
+            <input
+              type="date"
+              value={deliveryDate}
+              onChange={(e) => setDeliveryDate(e.target.value)}
+              className="border rounded px-2 py-1 text-sm font-mono focus:border-[var(--color-brand-orange)] focus:outline-none"
+            />
+          ) : (
+            <>
+              <span className="font-mono">{cycleState.formattedDate}</span>
+              {cycleState.daysUntilDelivery !== null && (
+                <span className="ml-2 text-blue-600">
+                  (след {cycleState.daysUntilDelivery} дни)
+                </span>
+              )}
+            </>
           )}
         </div>
-        {cycle.status !== 'upcoming' && (
+
+        {/* Order Cutoff */}
+        <div className="text-sm text-gray-600">
+          <span className="font-medium">Краен срок за поръчки:</span>{' '}
+          {isEditing ? (
+            <input
+              type="datetime-local"
+              value={orderCutoffAt}
+              onChange={(e) => setOrderCutoffAt(e.target.value)}
+              className="border rounded px-2 py-1 text-sm font-mono focus:border-[var(--color-brand-orange)] focus:outline-none"
+            />
+          ) : (
+            <>
+              <span className="font-mono">{cycleState.formattedCutoffAt}</span>
+              {cycleState.isAcceptingOrders ? (
+                <span className="ml-2 text-green-600">
+                  (приема поръчки{cycleState.daysUntilCutoff !== null ? ` · още ${cycleState.daysUntilCutoff} дни` : ''})
+                </span>
+              ) : (
+                <span className="ml-2 text-red-600 font-medium">
+                  (поръчките приключиха)
+                </span>
+              )}
+            </>
+          )}
+        </div>
+
+        {isEditing && cycle.status !== 'upcoming' && (
           <p className="text-sm text-amber-600">
             ⚠ Промяната на дата на цикъл, който вече е в обработка, може да обърка клиентите.
           </p>
@@ -438,60 +521,84 @@ export function CycleDetailView({
           )}
         </div>
 
-        {/* Description - editable */}
+        {/* Description */}
         <div>
           <label className="block text-sm font-medium text-gray-600 mb-1">
             Описание (публично, при разкриване)
           </label>
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            onBlur={handleDescriptionBlur}
-            rows={3}
-            placeholder="Описание на кутията за този месец..."
-            className="w-full border rounded-lg px-3 py-2 text-sm resize-y focus:border-[var(--color-brand-orange)] focus:outline-none"
-          />
+          {isEditing ? (
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={3}
+              placeholder="Описание на кутията за този месец..."
+              className="w-full border rounded-lg px-3 py-2 text-sm resize-y focus:border-[var(--color-brand-orange)] focus:outline-none"
+            />
+          ) : (
+            <p className="text-sm text-gray-500 whitespace-pre-wrap">
+              {cycle.description || <span className="italic text-gray-300">Няма описание</span>}
+            </p>
+          )}
         </div>
 
-        {/* Action buttons */}
-        <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100">
-          {cycleState.canMarkDelivered && (
+        {/* Edit Save/Cancel or Action buttons */}
+        {isEditing ? (
+          <div className="flex gap-2 pt-2 border-t border-gray-100">
             <button
-              onClick={handleMarkDelivered}
-              disabled={isPending}
-              className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors disabled:opacity-50"
-            >
-              ✓ Маркирай като доставен
-            </button>
-          )}
-          {cycleState.canReveal && (
-            <button
-              onClick={handleReveal}
+              onClick={handleEditSave}
               disabled={isPending}
               className="bg-[var(--color-brand-orange)] text-white px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
             >
-              👁 Разкрий съдържанието
+              {isPending ? 'Запазване...' : 'Запази'}
             </button>
-          )}
-          {cycle.status === 'delivered' && (
             <button
-              onClick={handleArchive}
+              onClick={handleEditCancel}
               disabled={isPending}
-              className="bg-gray-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-600 transition-colors disabled:opacity-50"
+              className="border border-gray-300 text-gray-600 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-colors disabled:opacity-50"
             >
-              📁 Архивирай
+              Отказ
             </button>
-          )}
-          {cycle.status === 'upcoming' && (
-            <button
-              onClick={handleDeleteCycle}
-              disabled={isPending}
-              className="ml-auto text-red-500 border border-red-300 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-red-50 transition-colors disabled:opacity-50"
-            >
-              🗑 Изтрий цикъл
-            </button>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100">
+            {cycleState.canMarkDelivered && (
+              <button
+                onClick={handleMarkDelivered}
+                disabled={isPending}
+                className="bg-green-600 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors disabled:opacity-50"
+              >
+                ✓ Маркирай като доставен
+              </button>
+            )}
+            {cycleState.canReveal && (
+              <button
+                onClick={handleReveal}
+                disabled={isPending}
+                className="bg-[var(--color-brand-orange)] text-white px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+              >
+                👁 Разкрий съдържанието
+              </button>
+            )}
+            {cycle.status === 'delivered' && (
+              <button
+                onClick={handleArchive}
+                disabled={isPending}
+                className="bg-gray-500 text-white px-4 py-2 rounded-lg text-sm font-semibold hover:bg-gray-600 transition-colors disabled:opacity-50"
+              >
+                📁 Архивирай
+              </button>
+            )}
+            {cycle.status === 'upcoming' && (
+              <button
+                onClick={handleDeleteCycle}
+                disabled={isPending}
+                className="ml-auto text-red-500 border border-red-300 px-4 py-2 rounded-lg text-sm font-semibold hover:bg-red-50 transition-colors disabled:opacity-50"
+              >
+                🗑 Изтрий цикъл
+              </button>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Section B: Box Contents */}

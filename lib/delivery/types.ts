@@ -23,6 +23,10 @@ export interface DeliveryConfig {
   firstDeliveryDate: string | null; // ISO date string, e.g. '2026-03-08'
   subscriptionEnabled: boolean;
   revealedBoxEnabled: boolean;
+  orderCutoffDisplayDays: number; // days before cutoff to show countdown (default 5)
+  cutoffWidgetsEnabled: boolean; // master toggle for banner + popup (default true)
+  cutoffBannerEnabled: boolean; // sliding banner toggle (default true)
+  cutoffPopupEnabled: boolean; // floating countdown popup toggle (default true)
 }
 
 // ============================================================================
@@ -46,6 +50,9 @@ export interface DeliveryCycleDerivedState {
   canReveal: boolean; // status === 'delivered' && !is_revealed
   canMarkDelivered: boolean; // status === 'upcoming'
   daysUntilDelivery: number | null; // null if past
+  isAcceptingOrders: boolean; // order_cutoff_at > now
+  formattedCutoffAt: string; // DD.MM.YYYY HH:MM
+  daysUntilCutoff: number | null; // null if cutoff passed
   formattedDate: string; // DD.MM.YYYY
   monthYear: string; // "Март 2026"
 }

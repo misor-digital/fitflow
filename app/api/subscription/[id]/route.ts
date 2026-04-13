@@ -227,8 +227,10 @@ export async function PATCH(
 
         // Fire-and-forget email
         if (session.email) {
-          const { getUpcomingCycle } = await import('@/lib/data');
-          const upcoming = await getUpcomingCycle();
+          const { getUpcomingCycles } = await import('@/lib/data');
+          const now = new Date();
+          const upcomingAll = await getUpcomingCycles();
+          const upcoming = upcomingAll.find(c => !c.order_cutoff_at || new Date(c.order_cutoff_at) > now) ?? null;
           sendSubscriptionResumedEmail(
             session.email,
             sub,

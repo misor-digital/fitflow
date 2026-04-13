@@ -76,6 +76,8 @@ export {
   getOrderStatusHistoryBatch,
   getOrdersCount,
   getOrdersPaginated,
+  getOrphanedOrderCount,
+  backfillOrphanedOrders,
 } from './orders';
 
 // Preorder conversion
@@ -93,6 +95,7 @@ export {
 export {
   getDeliveryCycles,
   getDeliveryCycleById,
+  getDeliveryCycleByIdDirect,
   getUpcomingCycle,
   getUpcomingCycles,
   getEarliestEligibleCycle,
@@ -138,6 +141,8 @@ export {
   getSubscriptionsForCycle,
   getOrdersBySubscription,
   enrichSubscriptionsWithLastCycle,
+  getOrphanedSubscriptionCount,
+  backfillOrphanedSubscriptions,
 } from './subscriptions';
 
 // Email campaigns

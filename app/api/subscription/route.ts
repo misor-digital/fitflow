@@ -4,7 +4,6 @@ import { verifySession } from '@/lib/auth';
 import { isValidPhone } from '@/lib/catalog';
 import {
   getSubscriptionsByUser,
-  getUpcomingCycle,
   getUpcomingCycles,
   getDeliveryCycles,
   getAddressById,
@@ -84,6 +83,7 @@ export async function GET(): Promise<NextResponse> {
         ...sub,
         nextDeliveryDate: nextCycle?.delivery_date ?? null,
         nextCycleId: nextCycle?.id ?? null,
+        nextCycleCutoffAt: nextCycle?.order_cutoff_at ?? null,
       };
     });
 
@@ -464,8 +464,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       needsImmediateOrder = cycleResult.needsImmediateOrder;
     } catch {
       // No available cycle - subscription picked up when next cycle is created
-      const upcomingCycle = await getUpcomingCycle();
-      cycleId = upcomingCycle?.id ?? null;
+      const now = new Date();
+      const upcomingAll = await getUpcomingCycles();
+      const eligible = upcomingAll.find(c => !c.order_cutoff_at || new Date(c.order_cutoff_at) > now);
+      cycleId = eligible?.id ?? null;
     }
 
     // ------------------------------------------------------------------
@@ -572,7 +574,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       await markOrderConvertedToSubscription(sourceOrder.id, subscription.id);
 
       // Send conversion-specific email with setup-password link (fire-and-forget)
-      const upcomingForEmail = await getUpcomingCycle();
+      const nowForEmail = new Date();
+      const upcomingAllForEmail = await getUpcomingCycles();
+      const upcomingForEmail = upcomingAllForEmail.find(c => !c.order_cutoff_at || new Date(c.order_cutoff_at) > nowForEmail) ?? null;
       const nextDate = upcomingForEmail?.delivery_date ?? '';
       const customerEmail = sourceOrder.customer_email;
 
@@ -603,6 +607,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             subscriptionNumber: subscription.subscription_number,
             isNewAccount,
             loginUrl: accountLoginUrl,
+            deliveryCycleName: upcomingForEmail?.title,
           });
 
           await sendTransactionalEmail({
@@ -628,12 +633,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       }).catch(console.error);
     } else {
       // Regular flow - send confirmation email
-      const upcomingForEmail = await getUpcomingCycle();
+      const nowForRegEmail = new Date();
+      const upcomingAllForRegEmail = await getUpcomingCycles();
+      const upcomingForEmail = upcomingAllForRegEmail.find(c => !c.order_cutoff_at || new Date(c.order_cutoff_at) > nowForRegEmail) ?? null;
       const nextDate = upcomingForEmail?.delivery_date ?? '';
       const emailAddr = session?.email ?? '';
 
       if (emailAddr) {
-        sendSubscriptionCreatedEmail(emailAddr, subscription, nextDate).catch(() => {});
+        sendSubscriptionCreatedEmail(emailAddr, subscription, nextDate, upcomingForEmail?.title).catch(() => {});
 
         // Sync subscription to Brevo contacts (fire-and-forget)
         syncSubscriptionChange({

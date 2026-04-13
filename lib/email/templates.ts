@@ -273,6 +273,7 @@ export function generateConfirmationEmail(
               <h3 style="color: ${EMAIL.colors.textHeading}; margin-top: 0;">📦 Детайли на поръчката</h3>
               <p style="margin: 5px 0;"><strong>Номер на поръчка:</strong> ${data.orderId}</p>
               <p style="margin: 5px 0;"><strong>Избрана кутия:</strong> ${data.boxTypeDisplay}${!data.hasPromoCode ? ` (${safePriceDual(data.originalPriceEur, data.originalPriceBgn)})` : ''}</p>
+              <p style="margin: 5px 0;"><strong>Цикъл на доставка:</strong> ${data.deliveryCycleName ? escapeHtml(data.deliveryCycleName) : 'следващия цикъл на доставка'}</p>
               <p style="margin: 5px 0;"><strong>Персонализация:</strong> ${data.wantsPersonalization ? 'Да' : 'Не'}</p>
             </div>
             

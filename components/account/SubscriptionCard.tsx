@@ -10,7 +10,7 @@ import {
   FREQUENCY_LABELS,
   formatSubscriptionSummary,
 } from '@/lib/subscription';
-import { formatDeliveryDate } from '@/lib/delivery';
+import { formatDeliveryDate, formatCutoffAt } from '@/lib/delivery';
 import { formatDateShort } from '@/lib/utils/date';
 import { formatPriceDual, eurToBgnSync } from '@/lib/catalog';
 import type { AddressRow } from '@/lib/supabase/types';
@@ -125,6 +125,11 @@ export default function SubscriptionCard({
             {state.isActive && subscription.nextDeliveryDate && (
               <p className="text-xs text-gray-500 mt-1">
                 Следваща доставка: <span className="font-medium text-gray-700">{formatDeliveryDate(subscription.nextDeliveryDate)}</span>
+                {subscription.nextCycleCutoffAt && new Date(subscription.nextCycleCutoffAt) > new Date() && (
+                  <span className="text-gray-400 ml-1">
+                    · поръчки до {formatCutoffAt(subscription.nextCycleCutoffAt)}
+                  </span>
+                )}
               </p>
             )}
           </div>
@@ -144,6 +149,11 @@ export default function SubscriptionCard({
                 ? '—'
                 : formatDeliveryDate(subscription.nextDeliveryDate)}
             </p>
+            {state.isActive && subscription.nextCycleCutoffAt && new Date(subscription.nextCycleCutoffAt) > new Date() && (
+              <p className="text-xs text-gray-400 mt-0.5">
+                Поръчки до {formatCutoffAt(subscription.nextCycleCutoffAt)}
+              </p>
+            )}
           </div>
 
           <div>

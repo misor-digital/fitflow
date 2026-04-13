@@ -7,7 +7,7 @@ import {
   getOptions,
   getColors,
   getOptionLabels,
-  getUpcomingCycle,
+  getUpcomingCycles,
 } from '@/lib/data';
 import ConversionError from '@/components/subscription/ConversionError';
 import SubscriptionConversionFlow from '@/components/subscription/SubscriptionConversionFlow';
@@ -92,7 +92,7 @@ export default async function SubscriptionConvertPage({
     dietaryLabels,
     sizeLabels,
     priceInfo,
-    upcomingCycle,
+    upcomingCyclesAll,
   ] = await Promise.all([
     getBoxTypeNames(),
     getBoxTypes(),
@@ -107,8 +107,12 @@ export default async function SubscriptionConvertPage({
     getOptionLabels('dietary'),
     getOptionLabels('sizes'),
     calculatePrice(subscriptionBoxType, promo || order.promo_code || null),
-    getUpcomingCycle(),
+    getUpcomingCycles(),
   ]);
+
+  // Pick the first cycle whose cutoff hasn't passed
+  const now = new Date();
+  const upcomingCycle = upcomingCyclesAll.find(c => !c.order_cutoff_at || new Date(c.order_cutoff_at) > now) ?? null;
 
   const mappedBoxTypes: BoxType[] = boxTypes.map((bt) => ({
     id: bt.id as BoxType['id'],

@@ -1,7 +1,7 @@
 import {
   getCurrentRevealedCycle,
   getCycleItems,
-  getUpcomingCycle,
+  getUpcomingCycles,
   getAllBoxPricesMap,
   getDeliveryConfigMap,
 } from '@/lib/data';
@@ -37,11 +37,15 @@ export default async function RevealedBoxPage() {
   }
 
   // 3. Load cycle items, upcoming cycle for "available until", and prices in parallel
-  const [items, upcomingCycle, prices] = await Promise.all([
+  const [items, upcomingCycles, prices] = await Promise.all([
     getCycleItems(cycle.id),
-    getUpcomingCycle(),
+    getUpcomingCycles(),
     getAllBoxPricesMap(null),
   ]);
+
+  // Pick the first cycle whose cutoff hasn't passed
+  const now = new Date();
+  const upcomingCycle = upcomingCycles.find(c => !c.order_cutoff_at || new Date(c.order_cutoff_at) > now) ?? null;
 
   // 4. Compute display values
   const monthYear = formatMonthYear(cycle.delivery_date);

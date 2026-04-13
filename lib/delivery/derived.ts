@@ -80,6 +80,13 @@ export function getDeliveryConfig(
       configMap.SUBSCRIPTION_ENABLED?.toLowerCase() !== 'false',
     revealedBoxEnabled:
       configMap.REVEALED_BOX_ENABLED?.toLowerCase() === 'true',
+    orderCutoffDisplayDays: parseIntSafe(configMap.ORDER_CUTOFF_DISPLAY_DAYS, 5),
+    cutoffWidgetsEnabled:
+      configMap.CUTOFF_WIDGETS_ENABLED?.toLowerCase() !== 'false',
+    cutoffBannerEnabled:
+      configMap.CUTOFF_BANNER_ENABLED?.toLowerCase() !== 'false',
+    cutoffPopupEnabled:
+      configMap.CUTOFF_POPUP_ENABLED?.toLowerCase() !== 'false',
   };
 }
 
@@ -210,6 +217,7 @@ export function computeCycleState(
   now?: Date,
 ): DeliveryCycleDerivedState {
   const today = now ? startOfDay(now) : startOfDay(new Date());
+  const currentTime = now ?? new Date();
   const deliveryDate = parseISODate(cycle.delivery_date) ?? today;
 
   const isPast = deliveryDate < today;
@@ -225,6 +233,16 @@ export function computeCycleState(
     );
   }
 
+  // Cutoff state
+  const cutoffAt = new Date(cycle.order_cutoff_at);
+  const isAcceptingOrders = cutoffAt > currentTime;
+  let daysUntilCutoff: number | null = null;
+  if (isAcceptingOrders) {
+    daysUntilCutoff = Math.ceil(
+      (cutoffAt.getTime() - currentTime.getTime()) / MS_PER_DAY,
+    );
+  }
+
   return {
     isPast,
     isUpcoming,
@@ -232,6 +250,9 @@ export function computeCycleState(
     canReveal,
     canMarkDelivered,
     daysUntilDelivery,
+    isAcceptingOrders,
+    formattedCutoffAt: formatCutoffAt(cycle.order_cutoff_at),
+    daysUntilCutoff,
     formattedDate: formatDeliveryDate(cycle.delivery_date),
     monthYear: formatMonthYear(cycle.delivery_date),
   };
@@ -317,4 +338,50 @@ function toISODateStr(d: Date): string {
   const mm = String(d.getMonth() + 1).padStart(2, '0');
   const dd = String(d.getDate()).padStart(2, '0');
   return `${yyyy}-${mm}-${dd}`;
+}
+
+// ============================================================================
+// Cutoff Helpers
+// ============================================================================
+
+/**
+ * Format an ISO timestamp as "DD.MM.YYYY, HH:MM" for display.
+ *
+ * @example formatCutoffAt('2026-04-15T14:00:00+03:00') → '15.04.2026, 14:00'
+ */
+export function formatCutoffAt(isoStr: string): string {
+  const d = new Date(isoStr);
+  if (isNaN(d.getTime())) return isoStr;
+  const dd = String(d.getDate()).padStart(2, '0');
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const yyyy = d.getFullYear();
+  const hh = String(d.getHours()).padStart(2, '0');
+  const min = String(d.getMinutes()).padStart(2, '0');
+  return `${dd}.${mm}.${yyyy}, ${hh}:${min}`;
+}
+
+/**
+ * Calculate the default cutoff datetime for a given delivery date.
+ * Default: delivery_date - 2 days at 14:00 local time.
+ *
+ * @returns ISO string suitable for datetime-local input
+ * @example calculateDefaultCutoffAt('2026-04-17') → '2026-04-15T14:00'
+ */
+export function calculateDefaultCutoffAt(deliveryDateStr: string): string {
+  const delivery = parseISODate(deliveryDateStr);
+  if (!delivery) return '';
+  const cutoff = new Date(delivery);
+  cutoff.setDate(cutoff.getDate() - 2);
+  cutoff.setHours(14, 0, 0, 0);
+  const yyyy = cutoff.getFullYear();
+  const mm = String(cutoff.getMonth() + 1).padStart(2, '0');
+  const dd = String(cutoff.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}T14:00`;
+}
+
+/** Parse a string to int with a fallback default */
+function parseIntSafe(value: string | null | undefined, fallback: number): number {
+  if (!value) return fallback;
+  const parsed = parseInt(value, 10);
+  return isNaN(parsed) ? fallback : parsed;
 }

@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import { calculateDefaultCutoffAt } from '@/lib/delivery';
 
 interface AvailableDate {
   value: string;
@@ -23,6 +24,9 @@ export function CreateCycleForm({ availableDates }: CreateCycleFormProps) {
   const [customDate, setCustomDate] = useState('');
   const [useCustom, setUseCustom] = useState(false);
   const [title, setTitle] = useState(firstAvailable?.monthYear ?? '');
+  const [orderCutoffAt, setOrderCutoffAt] = useState(
+    firstAvailable ? calculateDefaultCutoffAt(firstAvailable.value) : '',
+  );
   const [error, setError] = useState<string | null>(null);
 
   const effectiveDate = useCustom ? customDate : selectedDate;
@@ -32,6 +36,7 @@ export function CreateCycleForm({ availableDates }: CreateCycleFormProps) {
     setUseCustom(false);
     setSelectedDate(date.value);
     setTitle(date.monthYear);
+    setOrderCutoffAt(calculateDefaultCutoffAt(date.value));
     setError(null);
   }
 
@@ -49,6 +54,7 @@ export function CreateCycleForm({ availableDates }: CreateCycleFormProps) {
       if (m >= 1 && m <= 12) {
         setTitle(`${months[m - 1]} ${y}`);
       }
+      setOrderCutoffAt(calculateDefaultCutoffAt(value));
     }
     setError(null);
   }
@@ -62,6 +68,11 @@ export function CreateCycleForm({ availableDates }: CreateCycleFormProps) {
       return;
     }
 
+    if (!orderCutoffAt) {
+      setError('Моля, задайте краен срок за поръчки.');
+      return;
+    }
+
     startTransition(async () => {
       try {
         const res = await fetch('/api/admin/delivery', {
@@ -69,6 +80,7 @@ export function CreateCycleForm({ availableDates }: CreateCycleFormProps) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             delivery_date: effectiveDate,
+            order_cutoff_at: orderCutoffAt,
             title: title.trim() || null,
           }),
         });
@@ -81,6 +93,7 @@ export function CreateCycleForm({ availableDates }: CreateCycleFormProps) {
         }
 
         router.push(`/admin/delivery/${data.cycle.id}`);
+        router.refresh();
       } catch {
         setError('Грешка при създаване на цикъл.');
       }
@@ -168,6 +181,24 @@ export function CreateCycleForm({ availableDates }: CreateCycleFormProps) {
         />
         <p className="text-xs text-gray-400 mt-1">
           Ако оставите празно, ще се генерира автоматично от датата.
+        </p>
+      </div>
+
+      {/* Order Cutoff */}
+      <div>
+        <label htmlFor="order_cutoff_at" className="block text-sm font-semibold text-gray-700 mb-1">
+          Краен срок за поръчки
+        </label>
+        <input
+          id="order_cutoff_at"
+          type="datetime-local"
+          value={orderCutoffAt}
+          onChange={(e) => setOrderCutoffAt(e.target.value)}
+          className="w-full border rounded-lg px-3 py-2 text-sm"
+        />
+        <p className="text-xs text-gray-400 mt-1">
+          След този момент нови поръчки няма да бъдат приемани за този цикъл.
+          По подразбиране: 2 дни преди доставката, 14:00ч.
         </p>
       </div>
 

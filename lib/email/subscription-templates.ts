@@ -18,6 +18,7 @@ export interface SubscriptionCreatedParams {
   boxTypeName: string;
   frequency: string;
   nextDeliveryDate: string;
+  deliveryCycleName?: string | null;
   manageUrl: string;
 }
 
@@ -45,6 +46,7 @@ export interface DeliveryUpcomingParams {
   boxTypeName: string;
   orderNumber: string;
   deliveryDate: string;
+  deliveryCycleName?: string | null;
   trackUrl: string;
 }
 
@@ -90,6 +92,7 @@ export function generateSubscriptionCreatedEmail(params: SubscriptionCreatedPara
   const boxTypeName = escapeHtml(params.boxTypeName);
   const frequency = escapeHtml(params.frequency);
   const nextDeliveryDate = escapeHtml(params.nextDeliveryDate);
+  const cycleName = params.deliveryCycleName ? escapeHtml(params.deliveryCycleName) : 'следващия цикъл на доставка';
 
   const body = `
     <h2 style="color: ${EMAIL.colors.textHeading}; margin: 0 0 20px 0;">Абонаментът ти е активиран! 🎉</h2>
@@ -101,6 +104,7 @@ export function generateSubscriptionCreatedEmail(params: SubscriptionCreatedPara
       `📦 Кутия: ${boxTypeName}`,
       `🔄 Честота: ${frequency}`,
       `📅 Следваща доставка: ${nextDeliveryDate}`,
+      `🚚 Цикъл: ${cycleName}`,
     ])}
     ${emailCtaButton(params.manageUrl, 'Управление на абонамента')}
     ${emailContactLine()}`;
@@ -163,6 +167,7 @@ export function generateDeliveryUpcomingEmail(params: DeliveryUpcomingParams): s
   const boxTypeName = escapeHtml(params.boxTypeName);
   const orderNumber = escapeHtml(params.orderNumber);
   const deliveryDate = escapeHtml(params.deliveryDate);
+  const upcomingCycleName = params.deliveryCycleName ? escapeHtml(params.deliveryCycleName) : 'следващия цикъл на доставка';
 
   const body = `
     <h2 style="color: ${EMAIL.colors.textHeading}; margin: 0 0 20px 0;">Доставката ти наближава! 🚚</h2>
@@ -174,6 +179,7 @@ export function generateDeliveryUpcomingEmail(params: DeliveryUpcomingParams): s
       `📦 Кутия: ${boxTypeName}`,
       `🧾 Поръчка: #${orderNumber}`,
       `📅 Очаквана доставка: ${deliveryDate}`,
+      `🚚 Цикъл: ${upcomingCycleName}`,
     ])}
     ${emailCtaButton(params.trackUrl, 'Проследи доставката')}
     ${emailContactLine()}`;

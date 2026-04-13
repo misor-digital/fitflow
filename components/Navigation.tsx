@@ -78,7 +78,10 @@ export default function Navigation() {
   const isActive = (path: string) => pathname === path;
 
   return (
-    <nav className="fixed left-0 right-0 bg-white/95 backdrop-blur-sm shadow-md z-40">
+    <nav
+      className="fixed left-0 right-0 bg-white/95 backdrop-blur-sm shadow-md z-40"
+      style={{ top: 'var(--banner-h, 0px)' }}
+    >
       <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
         <div className="flex justify-between items-center h-10 sm:h-12">
           {/* Desktop Menu - Left Side */}

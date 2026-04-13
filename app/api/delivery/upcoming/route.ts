@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getDeliveryConfigMap, getUpcomingCycle } from '@/lib/data';
+import { getDeliveryConfigMap, getUpcomingCycles } from '@/lib/data';
 import {
   getDeliveryConfig,
   calculateNextDeliveryDate,
@@ -13,13 +13,19 @@ import {
 
 export async function GET(): Promise<NextResponse> {
   try {
-    // 1. Load config + upcoming cycle
-    const [configMap, upcomingCycle] = await Promise.all([
+    // 1. Load config + upcoming cycles
+    const [configMap, upcomingCycles] = await Promise.all([
       getDeliveryConfigMap(),
-      getUpcomingCycle(),
+      getUpcomingCycles(),
     ]);
 
     const config = getDeliveryConfig(configMap);
+
+    // Pick the first cycle whose cutoff hasn't passed yet
+    const now = new Date();
+    const upcomingCycle = upcomingCycles.find(
+      (c) => !c.order_cutoff_at || new Date(c.order_cutoff_at) > now,
+    ) ?? null;
 
     // 2. Build response
     if (upcomingCycle) {
@@ -31,6 +37,10 @@ export async function GET(): Promise<NextResponse> {
         },
         isFirstDelivery: isFirstDelivery(config),
         nextDeliveryDate: upcomingCycle.delivery_date,
+        orderCutoffAt: upcomingCycle.order_cutoff_at,
+        cutoffDisplayDays: config.orderCutoffDisplayDays,
+        cutoffBannerEnabled: config.cutoffWidgetsEnabled && config.cutoffBannerEnabled,
+        cutoffPopupEnabled: config.cutoffWidgetsEnabled && config.cutoffPopupEnabled,
       });
 
       response.headers.set(
@@ -48,6 +58,10 @@ export async function GET(): Promise<NextResponse> {
       cycle: null,
       isFirstDelivery: isFirstDelivery(config),
       nextDeliveryDate: nextDateStr,
+      orderCutoffAt: null,
+      cutoffDisplayDays: config.orderCutoffDisplayDays,
+      cutoffBannerEnabled: config.cutoffWidgetsEnabled && config.cutoffBannerEnabled,
+      cutoffPopupEnabled: config.cutoffWidgetsEnabled && config.cutoffPopupEnabled,
     });
 
     response.headers.set(

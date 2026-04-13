@@ -13,6 +13,7 @@ import {
   getPreorderByToken,
   markPreorderConverted,
   getDeliveryCycleById,
+  getUpcomingCycles,
 } from '@/lib/data';
 import { validateAddress, addressInputToSnapshot } from '@/lib/order';
 import { isSubscriptionBox, EMAIL_REGEX, isValidPhone } from '@/lib/catalog';
@@ -273,6 +274,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // Validate delivery_cycle_id (optional)
     let validatedCycleId: string | null = null;
+    let validatedCycleTitle: string | null = null;
     if (deliveryCycleId && typeof deliveryCycleId === 'string') {
       const cycle = await getDeliveryCycleById(deliveryCycleId);
       if (!cycle) {
@@ -299,6 +301,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       }
 
       validatedCycleId = cycle.id;
+      validatedCycleTitle = cycle.title ?? null;
+    } else if (orderType !== 'onetime-revealed') {
+      // Auto-resolve the upcoming cycle whose cutoff hasn't passed yet
+      const upcomingCycles = await getUpcomingCycles();
+      const now = new Date();
+      const eligibleCycle = upcomingCycles.find(
+        (c) => !c.order_cutoff_at || new Date(c.order_cutoff_at) > now,
+      );
+      if (eligibleCycle) {
+        validatedCycleId = eligibleCycle.id;
+        validatedCycleTitle = eligibleCycle.title ?? null;
+      }
     }
 
     // Validate onBehalfOfUserId if present
@@ -700,6 +714,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         discountAmountEur: priceInfo.discountAmountEur ?? undefined,
         discountAmountBgn: priceInfo.discountAmountBgn ?? undefined,
         deliveryMethod: effectiveDeliveryMethod as 'address' | 'speedy_office',
+        deliveryCycleName: validatedCycleTitle,
         speedyOfficeName: addressSnapshot.speedy_office_name ?? null,
         speedyOfficeAddress: addressSnapshot.speedy_office_address ?? null,
         shippingAddress: {

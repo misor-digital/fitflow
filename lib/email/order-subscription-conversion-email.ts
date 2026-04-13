@@ -33,6 +33,7 @@ export interface SubscriptionConversionEmailData {
   subscriptionNumber: string;
   isNewAccount: boolean;
   loginUrl: string | null;
+  deliveryCycleName?: string | null;
 }
 
 // ============================================================================
@@ -88,6 +89,8 @@ export function generateSubscriptionConversionEmail(
   if (data.nextDeliveryDate) {
     infoLines.push(`📅 Следваща доставка: ${escapeHtml(data.nextDeliveryDate)}`);
   }
+  const cycleName = data.deliveryCycleName ? escapeHtml(data.deliveryCycleName) : 'следващия цикъл на доставка';
+  infoLines.push(`🚚 Цикъл: ${cycleName}`);
 
   // -- Account login block (conditional - new guests) -----------------------
   const accountLoginHtml =

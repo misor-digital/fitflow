@@ -76,4 +76,5 @@ export type SubscriptionAction =
 export interface SubscriptionWithDelivery extends SubscriptionRow {
   nextDeliveryDate: string | null;   // from upcoming cycle
   nextCycleId: string | null;
+  nextCycleCutoffAt: string | null;  // order_cutoff_at of the next cycle
 }

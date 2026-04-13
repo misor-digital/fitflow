@@ -13,6 +13,7 @@ import { trackCTAClick, trackPromoCode } from '@/lib/analytics';
 import { useScrollDepth } from '@/lib/analytics/useScrollDepth';
 import { formatDeliveryDate, formatMonthYear } from '@/lib/delivery';
 import { formatPrice } from '@/lib/catalog';
+import { CutoffCountdown } from '@/components/CutoffCountdown';
 import type { PricesMap } from '@/lib/catalog';
 
 function HomeContent() {
@@ -111,8 +112,9 @@ function HomeContent() {
       <div className="min-h-screen">
         {/* Hero Section */}
         <section
-          className="relative flex flex-col overflow-hidden h-[100dvh]"
+          className="relative flex flex-col overflow-hidden"
           style={{
+            height: 'calc(100dvh - var(--banner-h, 0px))',
             background:
               'linear-gradient(165deg, #6B1D3A 0%, #4A1838 20%, #1E2D45 45%, #023047 70%, #011a28 100%)',
           }}
@@ -178,6 +180,11 @@ function HomeContent() {
           </div>
         </div>
       </section>
+
+      {/* Floating Cutoff Countdown - sticky on viewport, centered */}
+      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[min(360px,calc(100vw-2rem))]">
+        <CutoffCountdown variant="card" />
+      </div>
 
       {/* How It Works */}
       <HowItWorks steps={[

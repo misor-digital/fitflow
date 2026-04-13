@@ -39,6 +39,10 @@ export interface UpcomingDeliveryPayload {
   cycle: { id: string; deliveryDate: string; title: string | null } | null;
   isFirstDelivery: boolean;
   nextDeliveryDate: string;
+  orderCutoffAt: string | null;
+  cutoffDisplayDays: number;
+  cutoffBannerEnabled: boolean;
+  cutoffPopupEnabled: boolean;
 }
 
 interface DeliveryState {

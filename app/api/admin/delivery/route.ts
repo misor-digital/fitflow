@@ -21,12 +21,27 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // 2. Parse body
     const body = await request.json();
-    const { delivery_date, title } = body;
+    const { delivery_date, title, order_cutoff_at } = body;
 
     // 3. Validate delivery_date
     if (!delivery_date || !/^\d{4}-\d{2}-\d{2}$/.test(delivery_date)) {
       return NextResponse.json(
         { error: 'Невалидна дата. Формат: YYYY-MM-DD.' },
+        { status: 400 },
+      );
+    }
+
+    // 3b. Validate order_cutoff_at
+    if (!order_cutoff_at) {
+      return NextResponse.json(
+        { error: 'Крайният срок за поръчки е задължителен.' },
+        { status: 400 },
+      );
+    }
+    const cutoffDate = new Date(order_cutoff_at);
+    if (isNaN(cutoffDate.getTime())) {
+      return NextResponse.json(
+        { error: 'Невалиден краен срок за поръчки.' },
         { status: 400 },
       );
     }
@@ -44,6 +59,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // 5. Create cycle
     const cycle = await createDeliveryCycle({
       delivery_date,
+      order_cutoff_at: cutoffDate.toISOString(),
       title: title?.trim() || null,
     });
 
