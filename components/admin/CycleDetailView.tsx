@@ -60,6 +60,14 @@ interface CycleDetailViewProps {
   cycleState: DeliveryCycleDerivedState;
 }
 
+/** Convert an ISO/UTC date string to `datetime-local` input value in the browser's local timezone */
+function toDatetimeLocal(iso: string): string {
+  const d = new Date(iso);
+  const off = d.getTimezoneOffset();
+  const local = new Date(d.getTime() - off * 60_000);
+  return local.toISOString().slice(0, 16);
+}
+
 // ============================================================================
 // Component
 // ============================================================================
@@ -77,8 +85,8 @@ export function CycleDetailView({
   const [description, setDescription] = useState(cycle.description ?? '');
   const [deliveryDate, setDeliveryDate] = useState(cycle.delivery_date);
   const [orderCutoffAt, setOrderCutoffAt] = useState(
-    // Convert ISO to datetime-local format (YYYY-MM-DDTHH:MM)
-    cycle.order_cutoff_at ? new Date(cycle.order_cutoff_at).toISOString().slice(0, 16) : '',
+    // Convert ISO to datetime-local format in local timezone (YYYY-MM-DDTHH:MM)
+    cycle.order_cutoff_at ? toDatetimeLocal(cycle.order_cutoff_at) : '',
   );
   const [isEditing, setIsEditing] = useState(false);
 
@@ -113,7 +121,7 @@ export function CycleDetailView({
     setDescription(cycle.description ?? '');
     setDeliveryDate(cycle.delivery_date);
     setOrderCutoffAt(
-      cycle.order_cutoff_at ? new Date(cycle.order_cutoff_at).toISOString().slice(0, 16) : '',
+      cycle.order_cutoff_at ? toDatetimeLocal(cycle.order_cutoff_at) : '',
     );
     setIsEditing(true);
     clearFeedback();
@@ -124,7 +132,7 @@ export function CycleDetailView({
     setDescription(cycle.description ?? '');
     setDeliveryDate(cycle.delivery_date);
     setOrderCutoffAt(
-      cycle.order_cutoff_at ? new Date(cycle.order_cutoff_at).toISOString().slice(0, 16) : '',
+      cycle.order_cutoff_at ? toDatetimeLocal(cycle.order_cutoff_at) : '',
     );
     setIsEditing(false);
     clearFeedback();
@@ -140,7 +148,7 @@ export function CycleDetailView({
 
     // Convert datetime-local back to ISO for the API
     const originalCutoff = cycle.order_cutoff_at
-      ? new Date(cycle.order_cutoff_at).toISOString().slice(0, 16)
+      ? toDatetimeLocal(cycle.order_cutoff_at)
       : '';
     if (orderCutoffAt !== originalCutoff) {
       updates.order_cutoff_at = new Date(orderCutoffAt).toISOString();
