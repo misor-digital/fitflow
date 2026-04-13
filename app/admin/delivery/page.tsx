@@ -1,13 +1,15 @@
 import { requireStaff } from '@/lib/auth';
-import { ORDER_VIEW_ROLES } from '@/lib/auth/permissions';
-import { getDeliveryCycles } from '@/lib/data';
+import { ORDER_VIEW_ROLES, STAFF_MANAGEMENT_ROLES } from '@/lib/auth/permissions';
+import { getDeliveryCycles, getOrphanedSubscriptionCount } from '@/lib/data';
 import {
   computeCycleState,
   calculateSendDate,
+  formatCutoffAt,
   CYCLE_STATUS_LABELS,
   CYCLE_STATUS_COLORS,
 } from '@/lib/delivery';
 import { AdminHelpLink } from '@/components/admin/AdminHelpLink';
+import { OrphanedSubsBanner } from '@/components/admin/OrphanedSubsBanner';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import type { DeliveryCycleRow } from '@/lib/delivery';
@@ -17,9 +19,16 @@ export const metadata: Metadata = {
 };
 
 export default async function DeliveryPage() {
-  await requireStaff([...ORDER_VIEW_ROLES]);
+  const session = await requireStaff([...ORDER_VIEW_ROLES]);
 
-  const cycles = await getDeliveryCycles();
+  const canManage = session.profile.staff_role
+    ? STAFF_MANAGEMENT_ROLES.has(session.profile.staff_role)
+    : false;
+
+  const [cycles, orphanedCount] = await Promise.all([
+    getDeliveryCycles(),
+    canManage ? getOrphanedSubscriptionCount() : Promise.resolve(0),
+  ]);
 
   // Group cycles by status: upcoming first, then delivered, then archived
   const upcoming: (DeliveryCycleRow & { state: ReturnType<typeof computeCycleState> })[] = [];
@@ -81,6 +90,15 @@ export default async function DeliveryPage() {
         ) : null;
       })()}
 
+      {/* Orphaned subscriptions banner */}
+      {canManage && orphanedCount > 0 && (
+        <OrphanedSubsBanner
+          count={orphanedCount}
+          targetCycleName={upcoming[0]?.title || upcoming[0]?.state.monthYear}
+          hasUpcomingCycle={upcoming.length > 0}
+        />
+      )}
+
       {/* Cycles grouped by status */}
       {cycles.length === 0 ? (
         <div className="text-center py-16 text-gray-500">
@@ -102,6 +120,7 @@ export default async function DeliveryPage() {
                     <thead>
                       <tr className="border-b border-gray-100 bg-gray-50/50">
                         <th className="text-left py-3 px-4 font-semibold text-gray-600">Дата</th>
+                        <th className="text-left py-3 px-4 font-semibold text-gray-600">Краен срок</th>
                         <th className="text-left py-3 px-4 font-semibold text-gray-600">Заглавие</th>
                         <th className="text-left py-3 px-4 font-semibold text-gray-600">Статус</th>
                         <th className="text-left py-3 px-4 font-semibold text-gray-600">Съдържание</th>
@@ -121,6 +140,14 @@ export default async function DeliveryPage() {
                             {cycle.state.daysUntilDelivery !== null && (
                               <span className="ml-2 text-xs text-blue-600">
                                 (след {cycle.state.daysUntilDelivery} дни)
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-3 px-4 text-gray-600 text-xs">
+                            {formatCutoffAt(cycle.order_cutoff_at)}
+                            {cycle.status === 'upcoming' && !cycle.state.isAcceptingOrders && (
+                              <span className="ml-1.5 inline-block bg-red-100 text-red-700 text-[10px] font-semibold px-1.5 py-0.5 rounded">
+                                Приключен
                               </span>
                             )}
                           </td>
