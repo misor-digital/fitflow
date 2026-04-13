@@ -52,6 +52,6 @@ export const TAG_SUBSCRIPTIONS = 'subscriptions';
  */
 export function revalidateDataTag(...tags: string[]): void {
   for (const tag of tags) {
-    revalidateTag(tag, 'max');
+    revalidateTag(tag, { expire: 0 });
   }
 }

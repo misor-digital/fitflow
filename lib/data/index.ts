@@ -93,6 +93,7 @@ export {
 export {
   getDeliveryCycles,
   getDeliveryCycleById,
+  getDeliveryCycleByIdDirect,
   getUpcomingCycle,
   getUpcomingCycles,
   getEarliestEligibleCycle,

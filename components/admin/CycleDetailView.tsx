@@ -260,6 +260,7 @@ export function CycleDetailView({
             });
             if (res.status === 204) {
               router.push('/admin/delivery');
+              router.refresh();
               return;
             }
             const data = await res.json();

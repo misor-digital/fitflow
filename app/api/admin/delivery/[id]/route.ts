@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifySession } from '@/lib/auth/dal';
 import { ORDER_VIEW_ROLES, STAFF_MANAGEMENT_ROLES } from '@/lib/auth/permissions';
 import {
-  getDeliveryCycleById,
+  getDeliveryCycleByIdDirect,
   updateDeliveryCycle,
   deleteDeliveryCycle,
 } from '@/lib/data';
@@ -28,8 +28,8 @@ export async function PATCH(
     const { id } = await params;
     const body = await request.json();
 
-    // Validate cycle exists
-    const existing = await getDeliveryCycleById(id);
+    // Validate cycle exists (direct DB lookup, bypasses cache)
+    const existing = await getDeliveryCycleByIdDirect(id);
     if (!existing) {
       return NextResponse.json({ error: 'Цикълът не е намерен.' }, { status: 404 });
     }

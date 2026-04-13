@@ -93,6 +93,7 @@ export function CreateCycleForm({ availableDates }: CreateCycleFormProps) {
         }
 
         router.push(`/admin/delivery/${data.cycle.id}`);
+        router.refresh();
       } catch {
         setError('Грешка при създаване на цикъл.');
       }

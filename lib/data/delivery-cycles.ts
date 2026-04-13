@@ -76,6 +76,27 @@ export const getDeliveryCycleById = cache(
 );
 
 /**
+ * Get a single delivery cycle by ID directly from DB (bypasses cache).
+ * Use in mutation functions where the cache may be stale.
+ */
+export async function getDeliveryCycleByIdDirect(
+  id: string,
+): Promise<DeliveryCycleRow | null> {
+  const { data, error } = await supabaseAdmin
+    .from('delivery_cycles')
+    .select('*')
+    .eq('id', id)
+    .maybeSingle();
+
+  if (error) {
+    console.error('Error fetching delivery cycle by id:', error);
+    throw new Error('Failed to load delivery cycle.');
+  }
+
+  return data;
+}
+
+/**
  * Get the next upcoming cycle (status = 'upcoming', delivery_date in the future).
  * Cached across requests for 5 min (tag: delivery).
  */
@@ -322,8 +343,8 @@ export async function updateDeliveryCycle(
  * Only allowed if status is 'upcoming' and no orders reference it.
  */
 export async function deleteDeliveryCycle(id: string): Promise<void> {
-  // 1. Verify cycle exists and is upcoming
-  const cycle = await getDeliveryCycleById(id);
+  // 1. Verify cycle exists and is upcoming (direct DB lookup, bypasses cache)
+  const cycle = await getDeliveryCycleByIdDirect(id);
   if (!cycle) {
     throw new Error('Delivery cycle not found.');
   }
