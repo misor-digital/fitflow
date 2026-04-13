@@ -575,6 +575,7 @@ export type DeliveryCycleStatus = 'upcoming' | 'delivered' | 'archived';
 export interface DeliveryCycleRow {
   id: string;
   delivery_date: string;        // DATE as ISO string
+  order_cutoff_at: string;      // TIMESTAMPTZ as ISO string
   status: DeliveryCycleStatus;
   title: string | null;
   description: string | null;
@@ -586,6 +587,7 @@ export interface DeliveryCycleRow {
 
 export interface DeliveryCycleInsert {
   delivery_date: string;
+  order_cutoff_at: string;      // TIMESTAMPTZ as ISO string
   status?: DeliveryCycleStatus;
   title?: string | null;
   description?: string | null;
@@ -594,6 +596,7 @@ export interface DeliveryCycleInsert {
 
 export interface DeliveryCycleUpdate {
   delivery_date?: string;
+  order_cutoff_at?: string;     // TIMESTAMPTZ as ISO string
   status?: DeliveryCycleStatus;
   title?: string | null;
   description?: string | null;
