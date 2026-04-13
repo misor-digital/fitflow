@@ -55,6 +55,24 @@ export async function PATCH(
       updateData.delivery_date = body.delivery_date;
     }
 
+    // Allow cutoff change only for upcoming cycles
+    if (body.order_cutoff_at !== undefined) {
+      if (existing.status !== 'upcoming') {
+        return NextResponse.json(
+          { error: 'Крайният срок може да бъде променен само за предстоящи цикли.' },
+          { status: 400 },
+        );
+      }
+      const cutoffDate = new Date(body.order_cutoff_at);
+      if (isNaN(cutoffDate.getTime())) {
+        return NextResponse.json(
+          { error: 'Невалиден краен срок за поръчки.' },
+          { status: 400 },
+        );
+      }
+      updateData.order_cutoff_at = cutoffDate.toISOString();
+    }
+
     if (Object.keys(updateData).length === 0) {
       return NextResponse.json({ error: 'Няма данни за обновяване.' }, { status: 400 });
     }

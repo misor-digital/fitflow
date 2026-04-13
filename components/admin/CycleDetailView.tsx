@@ -415,6 +415,21 @@ export function CycleDetailView({
             </span>
           )}
         </div>
+
+        {/* Order Cutoff */}
+        <div className="text-sm text-gray-600">
+          <span className="font-medium">Краен срок за поръчки:</span>{' '}
+          <span className="font-mono">{cycleState.formattedCutoffAt}</span>
+          {cycleState.isAcceptingOrders ? (
+            <span className="ml-2 text-green-600">
+              (приема поръчки{cycleState.daysUntilCutoff !== null ? ` · още ${cycleState.daysUntilCutoff} дни` : ''})
+            </span>
+          ) : (
+            <span className="ml-2 text-red-600 font-medium">
+              (поръчките приключиха)
+            </span>
+          )}
+        </div>
         {cycle.status !== 'upcoming' && (
           <p className="text-sm text-amber-600">
             ⚠ Промяната на дата на цикъл, който вече е в обработка, може да обърка клиентите.
