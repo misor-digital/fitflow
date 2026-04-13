@@ -1,5 +1,17 @@
 # fitflow
 
+## 1.6.0
+
+### Minor Changes
+
+- d7e8606: Split `full_name` into `first_name`/`last_name` across all tables, types, and templates. Make phone number mandatory in all order, address, and profile flows. Add full account information display, inline edit/delete with email notifications, and enriched orders table to the admin customer detail page. Auto-generate address labels from city/street or Speedy office name, pre-fill admin address form from customer profile, and sync address phone to profile when empty. Unmask customer listing table and add per-column filters for name, email, phone, subscriber status, order count, and subscription status.
+- 165fdc3: Replace redirect-based registration/login on the subscription order flow (step 3) with inline OTP email verification. Guests now verify their email with a 6-digit code without leaving the order page, preserving all order preferences and preventing phantom orders from mistyped emails.
+- af5892e: Add `order_cutoff_at` to delivery cycles with configurable per-cycle ordering deadlines. Replace all customer-facing `getUpcomingCycle()` calls with cutoff-aware `getUpcomingCycles()` filtering to prevent orders and subscriptions from being assigned to cycles whose cutoff has passed. Add sliding countdown banner and floating popup widget on homepage and order page with admin toggles. Show delivery cycle name in order steps, confirmation emails, subscription emails, and order tracking page. Add inline edit mode for cycle details, orphaned order/subscription detection with backfill, and admin delivery settings for widget controls.
+
+### Patch Changes
+
+- 46b0de7: Consolidate all date/time formatting into a shared `lib/utils/date.ts` module with 6 canonical functions. Removes 18 duplicated local helpers across ~25 files. Fixes raw ISO timestamps rendering on admin subscription pages, 2-digit year in email log table, and inconsistent bare-locale date formats. Admin order/subscription dates now show both date and time.
+
 ## 1.5.1
 
 ### Patch Changes
