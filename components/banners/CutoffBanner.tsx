@@ -84,7 +84,7 @@ export function CutoffBanner() {
   }
 
   const deliveryDate = upcomingDelivery?.nextDeliveryDate;
-  const text = `Поръчай до ${formatCutoffShort(cutoffAt!)} за доставка на ${deliveryDate ? formatDeliveryDateShort(deliveryDate) : ''}! Остават ${formatCountdown(remaining)}`;
+  const text = `Поръчай до ${formatCutoffShort(cutoffAt!)} за доставка на ${deliveryDate ? formatDeliveryDateShort(deliveryDate) : ''}!`;
 
   return <SlidingBanner text={text} />;
 }
