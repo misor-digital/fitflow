@@ -130,17 +130,18 @@ export const getUpcomingCycles = cache(
 );
 
 /**
- * Get the earliest upcoming cycle whose delivery_date <= today.
+ * Get the earliest upcoming cycle whose order_cutoff_at <= now.
  * This is the cycle eligible for automatic order generation by the cron job.
+ * Orders can be generated once the cutoff datetime has passed.
  */
 export async function getEarliestEligibleCycle(): Promise<DeliveryCycleRow | null> {
-  const today = new Date().toISOString().split('T')[0];
+  const now = new Date().toISOString();
 
   const { data, error } = await supabaseAdmin
     .from('delivery_cycles')
     .select('*')
     .eq('status', 'upcoming')
-    .lte('delivery_date', today)
+    .lte('order_cutoff_at', now)
     .order('delivery_date', { ascending: true })
     .limit(1)
     .maybeSingle();
