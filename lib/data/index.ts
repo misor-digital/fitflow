@@ -76,6 +76,8 @@ export {
   getOrderStatusHistoryBatch,
   getOrdersCount,
   getOrdersPaginated,
+  getOrphanedOrderCount,
+  backfillOrphanedOrders,
 } from './orders';
 
 // Preorder conversion

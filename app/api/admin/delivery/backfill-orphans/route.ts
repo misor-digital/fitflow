@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import { verifySession } from '@/lib/auth';
 import { STAFF_MANAGEMENT_ROLES } from '@/lib/auth/permissions';
-import { backfillOrphanedSubscriptions } from '@/lib/data';
-import { revalidateDataTag, TAG_SUBSCRIPTIONS } from '@/lib/data/cache-tags';
+import { backfillOrphanedSubscriptions, backfillOrphanedOrders } from '@/lib/data';
+import { revalidateDataTag, TAG_SUBSCRIPTIONS, TAG_ORDERS } from '@/lib/data/cache-tags';
 
 // ============================================================================
 // POST /api/admin/delivery/backfill-orphans
-// Assign orphaned subscriptions (first_cycle_id IS NULL) to earliest upcoming cycle
+// Assign orphaned subscriptions and orders to earliest upcoming cycle
 // ============================================================================
 
 export async function POST(): Promise<NextResponse> {
@@ -29,10 +29,18 @@ export async function POST(): Promise<NextResponse> {
       );
     }
 
-    const result = await backfillOrphanedSubscriptions();
-    revalidateDataTag(TAG_SUBSCRIPTIONS);
+    const [subsResult, ordersResult] = await Promise.all([
+      backfillOrphanedSubscriptions(),
+      backfillOrphanedOrders(),
+    ]);
+    revalidateDataTag(TAG_SUBSCRIPTIONS, TAG_ORDERS);
 
-    return NextResponse.json(result);
+    return NextResponse.json({
+      subscriptions: subsResult.count,
+      orders: ordersResult.count,
+      cycleId: subsResult.cycleId,
+      cycleDate: subsResult.cycleDate,
+    });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : 'Неуспешно назначаване.';

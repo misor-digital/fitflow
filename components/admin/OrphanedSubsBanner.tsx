@@ -4,13 +4,15 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface OrphanedSubsBannerProps {
-  count: number;
+  subCount: number;
+  orderCount: number;
   targetCycleName?: string;
   hasUpcomingCycle: boolean;
 }
 
 export function OrphanedSubsBanner({
-  count,
+  subCount,
+  orderCount,
   targetCycleName,
   hasUpcomingCycle,
 }: OrphanedSubsBannerProps) {
@@ -35,8 +37,15 @@ export function OrphanedSubsBanner({
           return;
         }
 
+        const parts: string[] = [];
+        if (data.subscriptions > 0) {
+          parts.push(`${data.subscriptions} абонамент${data.subscriptions === 1 ? '' : 'а'}`);
+        }
+        if (data.orders > 0) {
+          parts.push(`${data.orders} поръчк${data.orders === 1 ? 'а' : 'и'}`);
+        }
         setResult(
-          `${data.count} абонамент${data.count === 1 ? '' : 'а'} бяха назначени към цикъл ${data.cycleDate}.`,
+          `${parts.join(' и ')} бяха назначени към цикъл ${data.cycleDate}.`,
         );
         router.refresh();
       } catch {
@@ -53,10 +62,18 @@ export function OrphanedSubsBanner({
     );
   }
 
+  const parts: string[] = [];
+  if (subCount > 0) {
+    parts.push(`${subCount} абонамент${subCount === 1 ? '' : 'а'}`);
+  }
+  if (orderCount > 0) {
+    parts.push(`${orderCount} поръчк${orderCount === 1 ? 'а' : 'и'}`);
+  }
+
   return (
     <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800 flex flex-wrap items-center justify-between gap-3">
       <div>
-        <span className="font-semibold">⚠ {count} абонамент{count === 1 ? '' : 'а'} без назначен цикъл.</span>
+        <span className="font-semibold">⚠ {parts.join(' и ')} без назначен цикъл.</span>
         {targetCycleName && (
           <span className="ml-1 text-amber-600">
             Ще бъдат назначени към: <strong>{targetCycleName}</strong>

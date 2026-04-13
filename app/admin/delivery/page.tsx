@@ -1,6 +1,6 @@
 import { requireStaff } from '@/lib/auth';
 import { ORDER_VIEW_ROLES, STAFF_MANAGEMENT_ROLES } from '@/lib/auth/permissions';
-import { getDeliveryCycles, getOrphanedSubscriptionCount } from '@/lib/data';
+import { getDeliveryCycles, getOrphanedSubscriptionCount, getOrphanedOrderCount } from '@/lib/data';
 import {
   computeCycleState,
   calculateSendDate,
@@ -25,9 +25,10 @@ export default async function DeliveryPage() {
     ? STAFF_MANAGEMENT_ROLES.has(session.profile.staff_role)
     : false;
 
-  const [cycles, orphanedCount] = await Promise.all([
+  const [cycles, orphanedSubCount, orphanedOrderCount] = await Promise.all([
     getDeliveryCycles(),
     canManage ? getOrphanedSubscriptionCount() : Promise.resolve(0),
+    canManage ? getOrphanedOrderCount() : Promise.resolve(0),
   ]);
 
   // Group cycles by status: upcoming first, then delivered, then archived
@@ -90,10 +91,11 @@ export default async function DeliveryPage() {
         ) : null;
       })()}
 
-      {/* Orphaned subscriptions banner */}
-      {canManage && orphanedCount > 0 && (
+      {/* Orphaned subscriptions/orders banner */}
+      {canManage && (orphanedSubCount > 0 || orphanedOrderCount > 0) && (
         <OrphanedSubsBanner
-          count={orphanedCount}
+          subCount={orphanedSubCount}
+          orderCount={orphanedOrderCount}
           targetCycleName={upcoming[0]?.title || upcoming[0]?.state.monthYear}
           hasUpcomingCycle={upcoming.length > 0}
         />

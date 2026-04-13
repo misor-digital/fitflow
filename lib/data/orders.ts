@@ -6,6 +6,7 @@
 import 'server-only';
 import { cache } from 'react';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { getUpcomingCycle } from './delivery-cycles';
 import type {
   OrderRow,
   OrderInsert,
@@ -484,3 +485,59 @@ export const getOrdersPaginated = cache(
     };
   },
 );
+
+// ============================================================================
+// Orphaned Orders (no assigned cycle)
+// ============================================================================
+
+/**
+ * Count pending/processing orders with no assigned delivery_cycle_id.
+ */
+export async function getOrphanedOrderCount(): Promise<number> {
+  const { count, error } = await supabaseAdmin
+    .from('orders')
+    .select('*', { count: 'exact', head: true })
+    .is('delivery_cycle_id', null)
+    .in('status', ['pending', 'processing']);
+
+  if (error) {
+    console.error('Error counting orphaned orders:', error);
+    return 0;
+  }
+
+  return count ?? 0;
+}
+
+/**
+ * Assign all orphaned pending/processing orders to the earliest upcoming cycle.
+ * Returns the count of updated orders and the target cycle info.
+ * Throws if no upcoming cycle exists.
+ */
+export async function backfillOrphanedOrders(): Promise<{
+  count: number;
+  cycleId: string;
+  cycleDate: string;
+}> {
+  const targetCycle = await getUpcomingCycle();
+  if (!targetCycle) {
+    throw new Error('Няма предстоящ цикъл. Създайте нов цикъл първо.');
+  }
+
+  const { data, error } = await supabaseAdmin
+    .from('orders')
+    .update({ delivery_cycle_id: targetCycle.id })
+    .is('delivery_cycle_id', null)
+    .in('status', ['pending', 'processing'])
+    .select('id');
+
+  if (error) {
+    console.error('Error backfilling orphaned orders:', error);
+    throw new Error('Неуспешно назначаване на поръчки към цикъл.');
+  }
+
+  return {
+    count: data?.length ?? 0,
+    cycleId: targetCycle.id,
+    cycleDate: targetCycle.delivery_date,
+  };
+}
