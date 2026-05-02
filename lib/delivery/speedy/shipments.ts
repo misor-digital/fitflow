@@ -43,7 +43,12 @@ export interface WaybillResult {
   parcelIds: string[];
   pickupDate: string;
   deliveryDeadline: string;
-  priceTotal: number;
+  actualCost: {
+    amount: number;
+    vat: number;
+    total: number;
+    currency: string;
+  };
 }
 
 // ============================================================================
@@ -73,7 +78,7 @@ export async function createWaybillForOrder(order: OrderForShipment): Promise<Wa
     parcelIds: response.parcels.map((p) => p.id),
     pickupDate: response.pickupDate,
     deliveryDeadline: response.deliveryDeadline,
-    priceTotal: response.price.total,
+    actualCost: response.price,
   };
 }
 

@@ -48,7 +48,7 @@ export {
   getDestinationServices,
 } from './client';
 
-export { getSpeedySenderConfig, SPEEDY_SENDER_CLIENT_ID, SPEEDY_SERVICE_ID } from './config';
+export { getSpeedySenderConfig, SPEEDY_SENDER_CLIENT_ID, SPEEDY_SERVICE_ID, BGN_TO_EUR_RATE, bgnToEur, eurToBgn } from './config';
 
 export type { OrderForShipment, WaybillResult } from './shipments';
 export { createWaybillForOrder, buildShipmentRequest } from './shipments';

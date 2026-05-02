@@ -1,22 +1,21 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { verifySession } from '@/lib/auth/dal';
 import { STAFF_MANAGEMENT_ROLES } from '@/lib/auth/permissions';
-import { supabaseAdmin } from '@/lib/supabase/admin';
 import { getOrderById } from '@/lib/data';
-import { createWaybillForOrder, SpeedyApiError } from '@/lib/delivery/speedy';
+import { calculateShipment, SpeedyApiError } from '@/lib/delivery/speedy';
+import { buildShipmentRequest } from '@/lib/delivery/speedy/shipments';
 import { bgnToEur } from '@/lib/delivery/speedy/config';
 import type { OrderForShipment } from '@/lib/delivery/speedy';
 import type { ShippingAddressSnapshot } from '@/lib/supabase/types';
 
 /**
- * POST /api/admin/speedy/shipment
+ * POST /api/admin/speedy/calculate
  *
- * Admin-only. Creates a Speedy waybill for a single order.
+ * Admin-only. Preview Speedy shipping cost for an order without creating a waybill.
  * Body: { orderId: string }
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    // 1. Auth check
     const session = await verifySession();
     if (!session || session.profile.user_type !== 'staff') {
       return NextResponse.json({ error: 'Неоторизиран достъп.' }, { status: 401 });
@@ -25,7 +24,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: 'Нямате достъп до тази операция.' }, { status: 403 });
     }
 
-    // 2. Parse body
     const body = await request.json();
     const { orderId } = body as { orderId?: string };
 
@@ -33,21 +31,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: 'Полето orderId е задължително.' }, { status: 400 });
     }
 
-    // 3. Fetch order
     const order = await getOrderById(orderId);
     if (!order) {
       return NextResponse.json({ error: 'Поръчката не е намерена.' }, { status: 404 });
     }
 
-    // Don't recreate if already has a waybill
-    if (order.speedy_waybill_id) {
-      return NextResponse.json(
-        { error: `Поръчката вече има товарителница: ${order.speedy_waybill_id}` },
-        { status: 409 },
-      );
-    }
-
-    // 4. Build order for shipment
     const addr = order.shipping_address as ShippingAddressSnapshot;
     const orderForShipment: OrderForShipment = {
       id: order.id,
@@ -72,38 +60,29 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       readableId: order.order_number,
     };
 
-    // 5. Create waybill via Speedy API
-    const result = await createWaybillForOrder(orderForShipment);
+    const params = buildShipmentRequest(orderForShipment);
+    const calcResult = await calculateShipment(params);
 
-    // 6. Convert actual cost to EUR (Speedy returns BGN)
-    const actualCostEur = result.actualCost.currency === 'BGN'
-      ? bgnToEur(result.actualCost.total)
-      : Math.round(result.actualCost.total * 100) / 100;
-
-    // 7. Update order with waybill data and actual cost
-    const { error: updateError } = await supabaseAdmin
-      .from('orders')
-      .update({
-        speedy_waybill_id: result.waybillId,
-        speedy_parcel_ids: result.parcelIds,
-        speedy_created_at: new Date().toISOString(),
-        speedy_status: 'created',
-        delivery_fee_actual_eur: actualCostEur,
-      })
-      .eq('id', orderId);
-
-    if (updateError) {
-      console.error('Failed to update order with waybill data:', updateError);
-      return NextResponse.json({
-        ...result,
-        actualCostEur,
-        warning: 'Товарителницата е създадена, но записът в базата не е обновен.',
-      });
+    const calculation = calcResult.calculations[0];
+    if (!calculation) {
+      return NextResponse.json({ error: 'Няма калкулация от Speedy.' }, { status: 502 });
     }
 
-    return NextResponse.json({ ...result, actualCostEur });
+    const costEur = calculation.price.currency === 'BGN'
+      ? bgnToEur(calculation.price.total)
+      : Math.round(calculation.price.total * 100) / 100;
+
+    return NextResponse.json({
+      serviceId: calculation.serviceId,
+      price: calculation.price,
+      costEur,
+      deliveryDeadline: calculation.deliveryDeadline,
+      pickupDate: calculation.pickupDate,
+      customerPaid: order.delivery_fee_eur,
+      margin: Math.round((order.delivery_fee_eur - costEur) * 100) / 100,
+    });
   } catch (error) {
-    console.error('Speedy shipment creation error:', error);
+    console.error('Speedy calculation error:', error);
 
     if (error instanceof SpeedyApiError) {
       return NextResponse.json(
@@ -113,7 +92,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Грешка при създаване на товарителница.' },
+      { error: error instanceof Error ? error.message : 'Грешка при калкулация.' },
       { status: 500 },
     );
   }

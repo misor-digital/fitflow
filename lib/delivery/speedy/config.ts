@@ -19,3 +19,18 @@ export function getSpeedySenderConfig() {
     serviceId: SPEEDY_SERVICE_ID,
   };
 }
+
+// ============================================================================
+// Currency Conversion (BGN ↔ EUR fixed rate)
+// ============================================================================
+
+/** Fixed peg: 1 EUR = 1.95583 BGN */
+export const BGN_TO_EUR_RATE = 1.95583;
+
+export function bgnToEur(bgn: number): number {
+  return Math.round((bgn / BGN_TO_EUR_RATE) * 100) / 100;
+}
+
+export function eurToBgn(eur: number): number {
+  return Math.round(eur * BGN_TO_EUR_RATE * 100) / 100;
+}
