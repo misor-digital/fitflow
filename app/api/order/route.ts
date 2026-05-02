@@ -26,6 +26,7 @@ import { syncPreorderConverted, syncOrderCustomer } from '@/lib/email/contact-sy
 import { generateConfirmationEmail, resolveEmailLabels } from '@/lib/email';
 import type { ConfirmationEmailData } from '@/lib/email';
 import { getBoxTypeNames } from '@/lib/data';
+import { getDeliveryFee } from '@/lib/delivery/pricing';
 
 // ============================================================================
 // Input length limits
@@ -590,6 +591,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const priceInfo = await calculatePrice(effectiveBoxType, effectivePromoCode);
 
     // ------------------------------------------------------------------
+    // Step 6b: Server-Side Delivery Fee Lookup (never trust client)
+    // ------------------------------------------------------------------
+    const deliveryFeeEur = await getDeliveryFee(effectiveDeliveryMethod);
+
+    // ------------------------------------------------------------------
     // Step 7: Create Order
     // ------------------------------------------------------------------
     const orderData: OrderInsert = {
@@ -617,6 +623,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       discount_percent: priceInfo.discountPercent ?? null,
       original_price_eur: priceInfo.originalPriceEur ?? null,
       final_price_eur: priceInfo.finalPriceEur ?? null,
+      delivery_fee_eur: deliveryFeeEur,
       converted_from_preorder_id: preorder?.id || null,
       delivery_cycle_id: validatedCycleId ?? undefined,
       order_type: orderType,

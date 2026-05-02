@@ -4,6 +4,7 @@ import { useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useOrderStore } from '@/store/orderStore';
 import { useDeliveryStore } from '@/store/deliveryStore';
+import { useDeliveryPricing } from '@/hooks/useDeliveryPricing';
 import { trackFunnelStep } from '@/lib/analytics';
 import PriceDisplay from '@/components/PriceDisplay';
 import type { PricesMap, CatalogData, PriceInfo } from '@/lib/catalog';
@@ -30,6 +31,7 @@ export default function OrderStepConfirm({
 }: OrderStepConfirmProps) {
   const store = useOrderStore();
   const { upcomingDelivery, fetchUpcomingDelivery } = useDeliveryStore();
+  const { pricing: deliveryPricing } = useDeliveryPricing();
   const cycleName = upcomingDelivery?.cycle?.title || 'следващия цикъл на доставка';
   const hasTrackedStep = useRef(false);
 
@@ -339,21 +341,52 @@ export default function OrderStepConfirm({
                     <span>Отстъпка ({priceInfo.discountPercent}%):</span>
                     <span>-{formatPriceDual(priceInfo.discountAmountEur, priceInfo.discountAmountBgn)}</span>
                   </div>
-                  <div className="flex justify-between text-lg sm:text-xl font-bold pt-2 border-t border-gray-100">
-                    <span className="text-[var(--color-brand-navy)]">Крайна цена:</span>
-                    <span className="text-[var(--color-brand-orange)]">
+                  <div className="flex justify-between text-sm sm:text-base">
+                    <span className="text-gray-600">Кутия:</span>
+                    <span className="text-[var(--color-brand-navy)] font-semibold">
                       {formatPriceDual(priceInfo.finalPriceEur, priceInfo.finalPriceBgn)}
                     </span>
                   </div>
                 </>
               ) : (
-                <div className="flex justify-between text-lg sm:text-xl font-bold">
-                  <span className="text-[var(--color-brand-navy)]">Цена:</span>
-                  <span className="text-[var(--color-brand-orange)]">
+                <div className="flex justify-between text-sm sm:text-base">
+                  <span className="text-gray-600">Кутия:</span>
+                  <span className="text-[var(--color-brand-navy)] font-semibold">
                     {formatPriceDual(priceInfo.originalPriceEur, priceInfo.originalPriceBgn)}
                   </span>
                 </div>
               )}
+
+              {/* Delivery fee */}
+              {(() => {
+                const deliveryFee = deliveryPricing.get(store.deliveryMethod);
+                const deliveryLabel = deliveryFee?.label ?? formatDeliveryMethodLabel(store.deliveryMethod);
+                const deliveryPriceEur = deliveryFee?.priceEur ?? 0;
+                const deliveryPriceBgn = deliveryPriceEur * 1.95583;
+                const boxPriceEur = hasDiscount ? priceInfo.finalPriceEur : priceInfo.originalPriceEur;
+                const boxPriceBgn = hasDiscount ? priceInfo.finalPriceBgn : priceInfo.originalPriceBgn;
+                const totalEur = boxPriceEur + deliveryPriceEur;
+                const totalBgn = boxPriceBgn + deliveryPriceBgn;
+
+                return (
+                  <>
+                    <div className="flex justify-between text-sm sm:text-base">
+                      <span className="text-gray-600">{deliveryLabel}:</span>
+                      <span className="text-[var(--color-brand-navy)] font-semibold">
+                        {deliveryPriceEur > 0
+                          ? formatPriceDual(deliveryPriceEur, deliveryPriceBgn)
+                          : 'ще бъде изчислена'}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-lg sm:text-xl font-bold pt-2 border-t border-gray-100">
+                      <span className="text-[var(--color-brand-navy)]">Общо:</span>
+                      <span className="text-[var(--color-brand-orange)]">
+                        {formatPriceDual(totalEur, totalBgn)}
+                      </span>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
           </div>
         )}
