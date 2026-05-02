@@ -22,6 +22,8 @@ import type {
   TrackResponse,
   CancelShipmentParams,
   ContractClientsResponse,
+  DestinationServicesParams,
+  DestinationServicesResponse,
 } from './types';
 
 // ============================================================================
@@ -214,4 +216,14 @@ export async function cancelShipment(
 /** Get contract clients linked to the account. */
 export async function getContractClients(): Promise<ContractClientsResponse> {
   return speedyRequest<ContractClientsResponse>('client/contract/');
+}
+
+/** Get available courier services for a given sender → recipient route. */
+export async function getDestinationServices(
+  params: DestinationServicesParams
+): Promise<DestinationServicesResponse> {
+  return speedyRequest<DestinationServicesResponse>(
+    'services/destination/',
+    params as unknown as Record<string, unknown>
+  );
 }

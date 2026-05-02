@@ -289,3 +289,25 @@ export interface ContractClient {
 export interface ContractClientsResponse {
   clients: ContractClient[];
 }
+
+// ============================================================================
+// Request / Response — Destination Services
+// ============================================================================
+
+export interface DestinationServicesParams {
+  senderClientId: number;
+  senderSiteId?: number;
+  recipientSiteId: number;
+  date?: string;
+}
+
+export interface DestinationService {
+  serviceId: number;
+  name: string;
+  nameEn: string;
+  additionalServices?: { cod?: boolean; declaredValue?: boolean; obpd?: boolean };
+}
+
+export interface DestinationServicesResponse {
+  services: DestinationService[];
+}

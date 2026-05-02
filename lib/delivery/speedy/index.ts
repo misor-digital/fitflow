@@ -30,6 +30,9 @@ export type {
   CancelShipmentParams,
   ContractClient,
   ContractClientsResponse,
+  DestinationServicesParams,
+  DestinationService,
+  DestinationServicesResponse,
 } from './types';
 
 export {
@@ -42,4 +45,5 @@ export {
   trackParcels,
   cancelShipment,
   getContractClients,
+  getDestinationServices,
 } from './client';
