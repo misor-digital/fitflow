@@ -11,6 +11,7 @@ export type AdminDocSlug =
   | 'subscriptions'
   | 'customers'
   | 'delivery-cycles'
+  | 'dispatch-and-shipping'
   | 'promo-codes'
   | 'emails-and-campaigns'
   | 'staff-management'
@@ -30,6 +31,7 @@ const DOCS: Record<AdminDocSlug, AdminDocMeta> = {
   subscriptions: { file: 'subscriptions.md', title: 'Абонаменти', icon: '🔄' },
   customers: { file: 'customers.md', title: 'Клиенти', icon: '👥' },
   'delivery-cycles': { file: 'delivery-cycles.md', title: 'Цикли на доставка', icon: '📅' },
+  'dispatch-and-shipping': { file: 'dispatch-and-shipping.md', title: 'Доставка чрез Speedy', icon: '🚚' },
   'promo-codes': { file: 'promo-codes.md', title: 'Промо кодове', icon: '🏷️' },
   'emails-and-campaigns': { file: 'emails-and-campaigns.md', title: 'Имейли и кампании', icon: '📧' },
   'staff-management': { file: 'staff-management.md', title: 'Управление на служители', icon: '👤' },
