@@ -47,3 +47,8 @@ export {
   getContractClients,
   getDestinationServices,
 } from './client';
+
+export { getSpeedySenderConfig, SPEEDY_SENDER_CLIENT_ID, SPEEDY_SERVICE_ID } from './config';
+
+export type { OrderForShipment, WaybillResult } from './shipments';
+export { createWaybillForOrder, buildShipmentRequest } from './shipments';

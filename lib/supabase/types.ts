@@ -434,6 +434,10 @@ export interface OrderRow {
   shipped_at: string | null;       // TIMESTAMPTZ as ISO string, set when status → shipped
   delivery_fee_eur: number;
   delivery_fee_actual_eur: number | null;
+  speedy_waybill_id: string | null;
+  speedy_parcel_ids: string[] | null;
+  speedy_created_at: string | null;
+  speedy_status: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -473,6 +477,10 @@ export interface OrderInsert {
   subscription_conversion_status?: string | null;
   converted_to_subscription_id?: string | null;
   delivery_fee_eur?: number;
+  speedy_waybill_id?: string | null;
+  speedy_parcel_ids?: string[] | null;
+  speedy_created_at?: string | null;
+  speedy_status?: string | null;
 }
 
 export interface OrderUpdate {
@@ -494,6 +502,10 @@ export interface OrderUpdate {
   converted_to_subscription_id?: string | null;
   delivery_fee_eur?: number;
   delivery_fee_actual_eur?: number | null;
+  speedy_waybill_id?: string | null;
+  speedy_parcel_ids?: string[] | null;
+  speedy_created_at?: string | null;
+  speedy_status?: string | null;
 }
 
 // ============================================================================
