@@ -438,6 +438,8 @@ export interface OrderRow {
   speedy_parcel_ids: string[] | null;
   speedy_created_at: string | null;
   speedy_status: string | null;
+  speedy_status_code: number | null;
+  speedy_last_tracked_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -481,6 +483,8 @@ export interface OrderInsert {
   speedy_parcel_ids?: string[] | null;
   speedy_created_at?: string | null;
   speedy_status?: string | null;
+  speedy_status_code?: number | null;
+  speedy_last_tracked_at?: string | null;
 }
 
 export interface OrderUpdate {
@@ -506,6 +510,8 @@ export interface OrderUpdate {
   speedy_parcel_ids?: string[] | null;
   speedy_created_at?: string | null;
   speedy_status?: string | null;
+  speedy_status_code?: number | null;
+  speedy_last_tracked_at?: string | null;
 }
 
 // ============================================================================

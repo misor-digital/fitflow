@@ -55,3 +55,16 @@ export { createWaybillForOrder, buildShipmentRequest } from './shipments';
 
 export type { LabelFormat } from './labels';
 export { generateLabels, generateLabelsInBatches, mergePdfBuffers } from './labels';
+
+export type { TrackingResult } from './tracking';
+export {
+  FINAL_STATUS_CODES,
+  STATUS_LABELS,
+  STATUS_CODE_TO_STRING,
+  STATUS_COLORS,
+  isFinalStatus,
+  getStatusLabel,
+  getStatusString,
+  trackParcelsBulk,
+  trackParcelFull,
+} from './tracking';

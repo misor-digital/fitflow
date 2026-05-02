@@ -239,8 +239,34 @@ export default async function OrderDetailPage({
       </div>
 
       {/* Tracking placeholder - shown when order is shipped */}
-      {/* TODO: Integrate real tracking number from carrier API */}
-      {statusKey === 'shipped' && (
+      {statusKey === 'shipped' && order.speedy_waybill_id && (
+        <div className="bg-purple-50 border border-purple-100 rounded-lg p-4 text-sm text-purple-700 mb-6 flex items-start gap-3">
+          <svg
+            className="w-5 h-5 flex-shrink-0 mt-0.5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+            />
+          </svg>
+          <div>
+            <span className="font-semibold">Проследяване:</span>{' '}
+            {order.speedy_status === 'delivered'
+              ? 'Пратката е доставена успешно.'
+              : order.speedy_status === 'in_transit'
+                ? 'Пратката е на път към вас.'
+                : order.speedy_status === 'at_office'
+                  ? 'Пратката ви чака в офиса на Speedy.'
+                  : 'Пратката е изпратена чрез Speedy.'}
+          </div>
+        </div>
+      )}
+      {statusKey === 'shipped' && !order.speedy_waybill_id && (
         <div className="bg-purple-50 border border-purple-100 rounded-lg p-4 text-sm text-purple-700 mb-6 flex items-start gap-3">
           <svg
             className="w-5 h-5 flex-shrink-0 mt-0.5"
