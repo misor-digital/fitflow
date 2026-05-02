@@ -432,6 +432,8 @@ export interface OrderRow {
   subscription_conversion_status: string | null; // NULL | 'pending' | 'converted' | 'expired'
   converted_to_subscription_id: string | null;
   shipped_at: string | null;       // TIMESTAMPTZ as ISO string, set when status → shipped
+  delivery_fee_eur: number;
+  delivery_fee_actual_eur: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -470,6 +472,7 @@ export interface OrderInsert {
   subscription_conversion_token_expires_at?: string | null;
   subscription_conversion_status?: string | null;
   converted_to_subscription_id?: string | null;
+  delivery_fee_eur?: number;
 }
 
 export interface OrderUpdate {
@@ -489,6 +492,8 @@ export interface OrderUpdate {
   subscription_conversion_token_expires_at?: string | null;
   subscription_conversion_status?: string | null;
   converted_to_subscription_id?: string | null;
+  delivery_fee_eur?: number;
+  delivery_fee_actual_eur?: number | null;
 }
 
 // ============================================================================
@@ -1498,6 +1503,32 @@ export interface Database {
           referencedRelation: 'users';
           referencedColumns: ['id'];
         }];
+      };
+      delivery_pricing: {
+        Row: {
+          id: string;
+          delivery_method: string;
+          price_eur: number;
+          label_bg: string;
+          is_active: boolean;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          delivery_method: string;
+          price_eur: number;
+          label_bg: string;
+          is_active?: boolean;
+          updated_at?: string;
+        };
+        Update: {
+          delivery_method?: string;
+          price_eur?: number;
+          label_bg?: string;
+          is_active?: boolean;
+          updated_at?: string;
+        };
+        Relationships: [];
       };
     };
     Views: Record<string, never>;
