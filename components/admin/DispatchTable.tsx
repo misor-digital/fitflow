@@ -38,7 +38,35 @@ const METHOD_LABELS: Record<string, string> = {
 
 export default function DispatchTable({ orders, onRefresh }: DispatchTableProps) {
   const [creatingId, setCreatingId] = useState<string | null>(null);
+  const [cancelingId, setCancelingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const handleCancelWaybill = useCallback(async (orderId: string, waybillId: string) => {
+    const confirmed = window.confirm(
+      `Сигурни ли сте, че искате да анулирате товарителница ${waybillId}? Това е възможно само ако пратката НЕ е взета от куриер.`,
+    );
+    if (!confirmed) return;
+
+    setCancelingId(orderId);
+    setError(null);
+    try {
+      const res = await fetch('/api/admin/speedy/shipment/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || 'Грешка при анулиране.');
+      } else {
+        onRefresh();
+      }
+    } catch {
+      setError('Грешка при анулиране на товарителницата.');
+    } finally {
+      setCancelingId(null);
+    }
+  }, [onRefresh]);
 
   const handleCreateSingle = useCallback(async (orderId: string) => {
     setCreatingId(orderId);
@@ -149,6 +177,15 @@ export default function DispatchTable({ orders, onRefresh }: DispatchTableProps)
                         className="text-xs bg-[var(--color-brand-orange)] text-white px-2 py-1 rounded font-semibold disabled:opacity-50"
                       >
                         {creatingId === order.id ? '...' : 'Създай'}
+                      </button>
+                    )}
+                    {hasWaybill && order.speedy_status !== 'delivered' && (
+                      <button
+                        onClick={() => handleCancelWaybill(order.id, order.speedy_waybill_id!)}
+                        disabled={cancelingId === order.id}
+                        className="text-xs bg-red-600 text-white px-2 py-1 rounded font-semibold disabled:opacity-50"
+                      >
+                        {cancelingId === order.id ? '...' : 'Анулирай'}
                       </button>
                     )}
                   </td>

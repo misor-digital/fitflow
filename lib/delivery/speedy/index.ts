@@ -68,3 +68,6 @@ export {
   trackParcelsBulk,
   trackParcelFull,
 } from './tracking';
+
+export type { CancellationResult } from './cancellation';
+export { cancelWaybill } from './cancellation';
