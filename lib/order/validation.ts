@@ -271,8 +271,8 @@ export function validateOrderStep3(input: OrderUserInput): boolean {
     return false;
   }
 
-  // --- Office delivery branch ---
-  if (input.deliveryMethod === 'speedy_office') {
+  // --- Office / Automat delivery branch ---
+  if (input.deliveryMethod === 'speedy_office' || input.deliveryMethod === 'speedy_automat') {
     const officeResult = validateSpeedyOffice(input.address, input.speedyOffice);
     if (!officeResult.valid) return false;
 
@@ -468,7 +468,7 @@ export function validateOrderSubmission(input: OrderUserInput): ValidationResult
   }
 
   // Address validation
-  if (input.deliveryMethod === 'speedy_office') {
+  if (input.deliveryMethod === 'speedy_office' || input.deliveryMethod === 'speedy_automat') {
     const officeResult = validateSpeedyOffice(input.address, input.speedyOffice ?? null);
     errors.push(...officeResult.errors.map((e) => ({
       ...e,

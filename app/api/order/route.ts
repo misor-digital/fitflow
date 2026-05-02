@@ -453,10 +453,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // ------------------------------------------------------------------
     let addressSnapshot: ShippingAddressSnapshot;
     let addressId: string | null = null;
-    const effectiveDeliveryMethod: 'address' | 'speedy_office' =
-      deliveryMethod === 'speedy_office' ? 'speedy_office' : 'address';
+    const effectiveDeliveryMethod: 'address' | 'speedy_office' | 'speedy_automat' =
+      (deliveryMethod === 'speedy_office' || deliveryMethod === 'speedy_automat') ? deliveryMethod : 'address';
 
-    if (effectiveDeliveryMethod === 'speedy_office') {
+    if (effectiveDeliveryMethod === 'speedy_office' || effectiveDeliveryMethod === 'speedy_automat') {
       // ── Office delivery ──────────────────────────────────────────
       if (!speedyOffice || !speedyOffice.id || !speedyOffice.name) {
         return NextResponse.json(
@@ -494,7 +494,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         floor: null,
         apartment: null,
         delivery_notes: address?.deliveryNotes?.trim() || null,
-        delivery_method: 'speedy_office',
+        delivery_method: effectiveDeliveryMethod,
         speedy_office_id: speedyOffice.id,
         speedy_office_name: speedyOffice.name,
         speedy_office_address: speedyOffice.address || '',

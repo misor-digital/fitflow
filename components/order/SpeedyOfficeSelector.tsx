@@ -1,11 +1,12 @@
 'use client';
 
 import { useEffect, useCallback, useState } from 'react';
-import type { SpeedyOfficeSelection } from '@/lib/order';
+import type { SpeedyOfficeSelection, DeliveryMethod } from '@/lib/order';
 
 interface SpeedyOfficeSelectorProps {
   selectedOffice: SpeedyOfficeSelection | null;
   onSelect: (office: SpeedyOfficeSelection) => void;
+  onDeliveryMethodDetected?: (method: DeliveryMethod) => void;
   error?: string | null;
 }
 
@@ -25,6 +26,7 @@ function buildWidgetSrc(): string {
 export default function SpeedyOfficeSelector({
   selectedOffice,
   onSelect,
+  onDeliveryMethodDetected,
   error,
 }: SpeedyOfficeSelectorProps) {
   const [showWidget, setShowWidget] = useState(!selectedOffice);
@@ -52,12 +54,20 @@ export default function SpeedyOfficeSelector({
           };
           onSelect(office);
           setShowWidget(false);
+
+          // Detect automat/locker based on type or name patterns
+          if (onDeliveryMethodDetected) {
+            const isAutomat =
+              data.type === 'APT' ||
+              /\bАПС\b|\bAPT\b|\bавтомат\b/i.test(office.name);
+            onDeliveryMethodDetected(isAutomat ? 'speedy_automat' : 'speedy_office');
+          }
         }
       } catch {
         // Ignore non-JSON messages or parse errors
       }
     },
-    [onSelect],
+    [onSelect, onDeliveryMethodDetected],
   );
 
   useEffect(() => {

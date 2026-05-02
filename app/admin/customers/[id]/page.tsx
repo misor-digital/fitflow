@@ -237,7 +237,7 @@ export default async function CustomerDetailPage({ params }: { params: Promise<{
                             {formatPrice(order.final_price_eur)}
                           </td>
                           <td className="px-4 py-3 text-gray-500 text-xs">
-                            {order.delivery_method === 'speedy_office' ? 'Офис на Speedy' : 'Адрес'}
+                            {order.delivery_method === 'speedy_automat' ? 'Автомат на Speedy' : order.delivery_method === 'speedy_office' ? 'Офис на Speedy' : 'Адрес'}
                           </td>
                           <td className="px-4 py-3 text-gray-500">
                             {formatDateTimeShort(order.created_at)}

@@ -338,7 +338,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       } = data as Record<string, unknown>;
       const addr = inlineAddress as Record<string, string> | undefined;
 
-      if (dm === 'speedy_office' && soId) {
+      if ((dm === 'speedy_office' || dm === 'speedy_automat') && soId) {
         const created = await createAddress({
           user_id: userId,
           first_name: (addr?.firstName || bodyFirstName as string || sourceOrder.customer_first_name).trim(),
@@ -347,7 +347,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           city: '',
           postal_code: '',
           street_address: '',
-          delivery_method: 'speedy_office',
+          delivery_method: dm as 'speedy_office' | 'speedy_automat',
           speedy_office_id: soId as string,
           speedy_office_name: (soName as string) || null,
           speedy_office_address: (soAddr as string) || null,

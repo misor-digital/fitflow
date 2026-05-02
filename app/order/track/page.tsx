@@ -26,7 +26,7 @@ interface TrackingOrder {
   boxType: string;
   boxTypeName: string;
   shippingAddress: ShippingAddressSnapshot;
-  deliveryMethod: 'address' | 'speedy_office';
+  deliveryMethod: 'address' | 'speedy_office' | 'speedy_automat';
   finalPriceEur: number | null;
   finalPriceBgn: number | null;
   createdAt: string;
@@ -203,10 +203,10 @@ function OrderTrackingContent() {
         {/* Shipping Address Card */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-6">
           <h2 className="text-lg font-bold text-gray-900 mb-4">Адрес за доставка</h2>
-          {order.deliveryMethod === 'speedy_office' && (
+          {(order.deliveryMethod === 'speedy_office' || order.deliveryMethod === 'speedy_automat') && (
             <div className="flex items-center gap-2 mb-2">
               <span className="inline-block text-xs px-2 py-0.5 rounded-full font-semibold bg-blue-100 text-blue-700">
-                📦 До офис на Speedy
+                📦 {order.deliveryMethod === 'speedy_automat' ? 'До автомат на Speedy' : 'До офис на Speedy'}
               </span>
             </div>
           )}

@@ -335,8 +335,8 @@ export function formatAddressForEmail(addr: {
   postal_code?: string | null;
 } | null): string {
   if (!addr) return 'Не е зададен';
-  if (addr.delivery_method === 'speedy_office') {
-    const name = addr.speedy_office_name ?? 'Speedy офис';
+  if (addr.delivery_method === 'speedy_office' || addr.delivery_method === 'speedy_automat') {
+    const name = addr.speedy_office_name ?? (addr.delivery_method === 'speedy_automat' ? 'Speedy автомат' : 'Speedy офис');
     return addr.speedy_office_address ? `${name} - ${addr.speedy_office_address}` : name;
   }
   return [addr.street_address, addr.city, addr.postal_code].filter(Boolean).join(', ') || 'Не е зададен';

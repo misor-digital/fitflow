@@ -319,8 +319,8 @@ export interface ShippingAddressSnapshot {
   floor: string | null;
   apartment: string | null;
   delivery_notes: string | null;
-  // Speedy office delivery fields (present when delivery_method = 'speedy_office')
-  delivery_method?: 'address' | 'speedy_office';
+  // Speedy office/automat delivery fields (present when delivery_method != 'address')
+  delivery_method?: 'address' | 'speedy_office' | 'speedy_automat';
   speedy_office_id?: string;
   speedy_office_name?: string;
   speedy_office_address?: string;
@@ -340,7 +340,7 @@ export interface AddressRow {
   floor: string | null;
   apartment: string | null;
   delivery_notes: string | null;
-  delivery_method: 'address' | 'speedy_office';
+  delivery_method: 'address' | 'speedy_office' | 'speedy_automat';
   speedy_office_id: string | null;
   speedy_office_name: string | null;
   speedy_office_address: string | null;
@@ -362,7 +362,7 @@ export interface AddressInsert {
   floor?: string | null;
   apartment?: string | null;
   delivery_notes?: string | null;
-  delivery_method?: 'address' | 'speedy_office';
+  delivery_method?: 'address' | 'speedy_office' | 'speedy_automat';
   speedy_office_id?: string | null;
   speedy_office_name?: string | null;
   speedy_office_address?: string | null;
@@ -381,7 +381,7 @@ export interface AddressUpdate {
   floor?: string | null;
   apartment?: string | null;
   delivery_notes?: string | null;
-  delivery_method?: 'address' | 'speedy_office';
+  delivery_method?: 'address' | 'speedy_office' | 'speedy_automat';
   speedy_office_id?: string | null;
   speedy_office_name?: string | null;
   speedy_office_address?: string | null;
@@ -405,7 +405,7 @@ export interface OrderRow {
   customer_phone: string | null;
   shipping_address: ShippingAddressSnapshot;
   address_id: string | null;
-  delivery_method: 'address' | 'speedy_office';
+  delivery_method: 'address' | 'speedy_office' | 'speedy_automat';
   box_type: string;
   wants_personalization: boolean;
   sports: string[] | null;
@@ -444,7 +444,7 @@ export interface OrderInsert {
   customer_phone?: string | null;
   shipping_address: ShippingAddressSnapshot;
   address_id?: string | null;
-  delivery_method?: 'address' | 'speedy_office';
+  delivery_method?: 'address' | 'speedy_office' | 'speedy_automat';
   box_type: string;
   wants_personalization: boolean;
   sports?: string[] | null;
