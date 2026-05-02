@@ -52,3 +52,6 @@ export { getSpeedySenderConfig, SPEEDY_SENDER_CLIENT_ID, SPEEDY_SERVICE_ID, BGN_
 
 export type { OrderForShipment, WaybillResult } from './shipments';
 export { createWaybillForOrder, buildShipmentRequest } from './shipments';
+
+export type { LabelFormat } from './labels';
+export { generateLabels, generateLabelsInBatches, mergePdfBuffers } from './labels';
