@@ -37,7 +37,11 @@ export default function SpeedyOfficeSelector({
   deliveryMethod,
   error,
 }: SpeedyOfficeSelectorProps) {
-  const [showWidget, setShowWidget] = useState(!selectedOffice);
+  // Track whether user explicitly toggled to show widget (after having a selection)
+  const [userToggledWidget, setUserToggledWidget] = useState(false);
+
+  // Show widget if: no selection, or user explicitly toggled it
+  const showWidget = !selectedOffice || userToggledWidget;
 
   // Listen for postMessage from the Speedy widget
   const handleMessage = useCallback(
@@ -61,7 +65,7 @@ export default function SpeedyOfficeSelector({
                 : data.fullAddressString || data.fullAddress || data.address?.fullAddressString || '',
           };
           onSelect(office);
-          setShowWidget(false);
+          setUserToggledWidget(false);
 
           // Detect automat/locker based on type or name patterns
           if (onDeliveryMethodDetected) {
@@ -104,7 +108,7 @@ export default function SpeedyOfficeSelector({
             </div>
             <button
               type="button"
-              onClick={() => setShowWidget(true)}
+              onClick={() => setUserToggledWidget(true)}
               className="text-sm text-[var(--color-brand-orange)] font-semibold hover:underline flex-shrink-0"
             >
               Промени
@@ -121,7 +125,7 @@ export default function SpeedyOfficeSelector({
       {selectedOffice && (
         <button
           type="button"
-          onClick={() => setShowWidget(false)}
+          onClick={() => setUserToggledWidget(false)}
           className="text-sm text-[var(--color-brand-orange)] font-semibold hover:underline"
         >
           ← Назад към избрания офис

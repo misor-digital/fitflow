@@ -219,6 +219,8 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
   const handleDeliveryMethodChange = useCallback((method: DeliveryMethod) => {
     setDeliveryMethodLocal(method);
     setOfficeError(null);
+    // Clear selected office/locker when switching between office and automat
+    setSpeedyOfficeLocal(null);
     // Clear address errors when switching
     setAddressErrors({});
     setHasAttemptedSubmit(false);

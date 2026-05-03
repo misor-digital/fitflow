@@ -290,10 +290,10 @@ export default function OrderStepConfirm({
             </div>
 
             {/* Address / Office display */}
-            {store.deliveryMethod === 'speedy_office' && store.speedyOffice ? (
+            {(store.deliveryMethod === 'speedy_office' || store.deliveryMethod === 'speedy_automat') && store.speedyOffice ? (
               <div className="mt-2 pt-2 border-t border-gray-100">
                 <div className="text-sm sm:text-base font-semibold text-[var(--color-brand-navy)] mb-1">
-                  Офис на Speedy:
+                  {store.deliveryMethod === 'speedy_automat' ? 'Автомат на Speedy:' : 'Офис на Speedy:'}
                 </div>
                 <div className="text-sm sm:text-base text-gray-600">
                   <div className="font-medium">{store.speedyOffice.name}</div>
