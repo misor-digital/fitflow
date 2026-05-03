@@ -1,5 +1,15 @@
 # fitflow
 
+## 1.7.0
+
+### Minor Changes
+
+- f6f0c06: Add Speedy.bg shipping API integration with automated waybill creation, label printing (A6/A4 with sender copy), shipment tracking, delivery fee calculation, and admin dispatch dashboard.
+
+### Patch Changes
+
+- 60ccb67: Add marathon charity sliding banner and donation floating bubble for the May 2026 "Студентите бягат с УАСГ" campaign. Extends SlidingBanner with color/emoji/link props and introduces a reusable FloatingBubble component.
+
 ## 1.6.0
 
 ### Minor Changes
