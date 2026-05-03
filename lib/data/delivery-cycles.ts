@@ -35,6 +35,11 @@ const DELIVERY_CONFIG_KEYS = [
   'CUTOFF_WIDGETS_ENABLED',
   'CUTOFF_BANNER_ENABLED',
   'CUTOFF_POPUP_ENABLED',
+  'PARCEL_WEIGHT_KG',
+  'PARCEL_WIDTH_CM',
+  'PARCEL_DEPTH_CM',
+  'PARCEL_HEIGHT_CM',
+  'PARCEL_CONTENTS',
 ] as const;
 
 type DeliveryConfigKey = (typeof DELIVERY_CONFIG_KEYS)[number];
@@ -732,6 +737,26 @@ export async function updateDeliveryConfig(
   ) {
     if (value !== 'true' && value !== 'false') {
       throw new Error(`${key} must be 'true' or 'false'.`);
+    }
+  }
+
+  if (key === 'PARCEL_WEIGHT_KG') {
+    const w = parseFloat(value);
+    if (isNaN(w) || w <= 0 || w > 50) {
+      throw new Error('PARCEL_WEIGHT_KG must be a number between 0 and 50.');
+    }
+  }
+
+  if (key === 'PARCEL_WIDTH_CM' || key === 'PARCEL_DEPTH_CM' || key === 'PARCEL_HEIGHT_CM') {
+    const dim = parseFloat(value);
+    if (isNaN(dim) || dim <= 0 || dim > 200) {
+      throw new Error(`${key} must be a number between 0 and 200.`);
+    }
+  }
+
+  if (key === 'PARCEL_CONTENTS') {
+    if (!value || value.length > 100) {
+      throw new Error('PARCEL_CONTENTS must be 1-100 characters.');
     }
   }
 

@@ -9,6 +9,7 @@ import 'server-only';
 
 import { createShipment } from './client';
 import { getSpeedySenderConfig } from './config';
+import { getDeliveryConfigMap } from '@/lib/data';
 import type { CreateShipmentParams, ShipmentParty, SpeedyAddress } from './types';
 
 // ============================================================================
@@ -55,12 +56,38 @@ export interface WaybillResult {
 // Default parcel specs
 // ============================================================================
 
-const DEFAULT_PARCEL = {
+const FALLBACK_PARCEL = {
   weight: 2.5,
   size: { width: 30, depth: 30, height: 15 },
   contents: 'Фитнес кутия',
   package: 'BOX',
 };
+
+interface ParcelConfig {
+  weight: number;
+  size: { width: number; depth: number; height: number };
+  contents: string;
+  package: string;
+}
+
+/** Read parcel config from DB, falling back to hardcoded defaults. */
+async function getParcelConfig(): Promise<ParcelConfig> {
+  try {
+    const configMap = await getDeliveryConfigMap();
+    return {
+      weight: parseFloat(configMap.PARCEL_WEIGHT_KG ?? '') || FALLBACK_PARCEL.weight,
+      size: {
+        width: parseFloat(configMap.PARCEL_WIDTH_CM ?? '') || FALLBACK_PARCEL.size.width,
+        depth: parseFloat(configMap.PARCEL_DEPTH_CM ?? '') || FALLBACK_PARCEL.size.depth,
+        height: parseFloat(configMap.PARCEL_HEIGHT_CM ?? '') || FALLBACK_PARCEL.size.height,
+      },
+      contents: configMap.PARCEL_CONTENTS || FALLBACK_PARCEL.contents,
+      package: FALLBACK_PARCEL.package,
+    };
+  } catch {
+    return FALLBACK_PARCEL;
+  }
+}
 
 // ============================================================================
 // Public API
@@ -70,7 +97,8 @@ const DEFAULT_PARCEL = {
  * Create a Speedy waybill for a single FitFlow order.
  */
 export async function createWaybillForOrder(order: OrderForShipment): Promise<WaybillResult> {
-  const params = buildShipmentRequest(order);
+  const parcel = await getParcelConfig();
+  const params = buildShipmentRequest(order, parcel);
   const response = await createShipment(params);
 
   return {
@@ -85,7 +113,7 @@ export async function createWaybillForOrder(order: OrderForShipment): Promise<Wa
 /**
  * Build Speedy shipment params from a FitFlow order.
  */
-export function buildShipmentRequest(order: OrderForShipment): CreateShipmentParams {
+export function buildShipmentRequest(order: OrderForShipment, parcel: ParcelConfig = FALLBACK_PARCEL): CreateShipmentParams {
   const config = getSpeedySenderConfig();
   const recipient = buildRecipient(order);
 
@@ -100,14 +128,14 @@ export function buildShipmentRequest(order: OrderForShipment): CreateShipmentPar
     },
     content: {
       parcelsCount: 1,
-      totalWeight: DEFAULT_PARCEL.weight,
-      contents: DEFAULT_PARCEL.contents,
-      package: DEFAULT_PARCEL.package,
+      totalWeight: parcel.weight,
+      contents: parcel.contents,
+      package: parcel.package,
       parcels: [
         {
           seqNo: 1,
-          weight: DEFAULT_PARCEL.weight,
-          size: DEFAULT_PARCEL.size,
+          weight: parcel.weight,
+          size: parcel.size,
           ref1: order.readableId || order.id,
         },
       ],

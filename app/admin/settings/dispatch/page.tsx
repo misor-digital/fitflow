@@ -2,6 +2,8 @@ import { requireStaff } from '@/lib/auth';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import SpeedySetupClient from '@/app/admin/speedy/SpeedySetupClient';
+import ParcelConfigEditor from '@/components/admin/ParcelConfigEditor';
+import { getDeliveryConfigMap } from '@/lib/data';
 
 export const metadata: Metadata = {
   title: 'Настройки за изпращане | Администрация | FitFlow',
@@ -14,6 +16,16 @@ export default async function DispatchSettingsPage() {
   const speedyUsername = process.env.SPEEDY_USERNAME || '—';
   const speedyClientId = process.env.SPEEDY_CLIENT_ID || '—';
   const speedyServiceId = process.env.SPEEDY_SERVICE_ID || '505';
+
+  // Read parcel config from DB
+  const configMap = await getDeliveryConfigMap();
+  const parcelConfig = {
+    weight: configMap.PARCEL_WEIGHT_KG || '2.5',
+    width: configMap.PARCEL_WIDTH_CM || '30',
+    depth: configMap.PARCEL_DEPTH_CM || '30',
+    height: configMap.PARCEL_HEIGHT_CM || '15',
+    contents: configMap.PARCEL_CONTENTS || 'Фитнес кутия',
+  };
 
   return (
     <div>
@@ -30,10 +42,10 @@ export default async function DispatchSettingsPage() {
         Настройки за изпращане (Speedy)
       </h1>
 
-      {/* Current Config (read-only from env) */}
+      {/* Speedy account (read-only from env) */}
       <section className="mb-8">
         <h2 className="text-lg font-semibold text-[var(--color-brand-navy)] mb-3">
-          Текуща конфигурация
+          Speedy акаунт
         </h2>
         <div className="bg-gray-50 rounded-xl border p-5 space-y-3 text-sm">
           <div className="grid grid-cols-[160px_1fr] gap-2">
@@ -48,22 +60,18 @@ export default async function DispatchSettingsPage() {
             <span className="text-gray-500 font-medium">Service ID:</span>
             <code className="bg-white px-2 py-0.5 rounded border text-xs">{speedyServiceId}</code>
           </div>
-          <div className="grid grid-cols-[160px_1fr] gap-2">
-            <span className="text-gray-500 font-medium">Тегло по подразб.:</span>
-            <span>2.5 кг</span>
-          </div>
-          <div className="grid grid-cols-[160px_1fr] gap-2">
-            <span className="text-gray-500 font-medium">Размери:</span>
-            <span>30×30×15 см</span>
-          </div>
-          <div className="grid grid-cols-[160px_1fr] gap-2">
-            <span className="text-gray-500 font-medium">Съдържание:</span>
-            <span>Фитнес кутия</span>
-          </div>
           <p className="text-xs text-gray-400 pt-2 border-t">
-            Тези стойности се задават в <code>.env</code> файла и кода. За промяна е необходим deploy.
+            Тези стойности се задават в <code>.env</code>. За промяна е необходим deploy.
           </p>
         </div>
+      </section>
+
+      {/* Parcel defaults (editable from DB) */}
+      <section className="mb-8">
+        <h2 className="text-lg font-semibold text-[var(--color-brand-navy)] mb-3">
+          Параметри на пратката по подразбиране
+        </h2>
+        <ParcelConfigEditor initialConfig={parcelConfig} />
       </section>
 
       {/* Speedy API Discovery Tool */}
