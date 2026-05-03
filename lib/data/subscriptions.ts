@@ -28,6 +28,7 @@ import type { BatchGenerationResult, SubscriptionPreferencesUpdate, Subscription
 import { getUserEmailsByIds } from '@/lib/auth/get-users-by-ids';
 import { shouldIncludeInCycle } from '@/lib/subscription';
 import { sendDeliveryUpcomingEmail } from '@/lib/subscription/notifications';
+import { getDeliveryFee } from '@/lib/delivery/pricing';
 import { createOrder } from './orders';
 import { getAddressById } from './addresses';
 import { calculatePrice } from './catalog';
@@ -785,6 +786,10 @@ export async function generateOrdersForCycle(
       // Recalculate price server-side
       const pricing = await calculatePrice(sub.box_type, effectivePromoCode);
 
+      // Look up delivery fee based on address delivery method
+      const deliveryMethod = address.delivery_method ?? 'address';
+      const deliveryFeeEur = await getDeliveryFee(deliveryMethod);
+
       // Load user profile for contact info
       const { data: profile, error: profileError } = await supabaseAdmin
         .from('user_profiles')
@@ -831,7 +836,8 @@ export async function generateOrdersForCycle(
         subscription_id: sub.id,
         delivery_cycle_id: cycleId,
         order_type: 'subscription',
-        delivery_method: address.delivery_method ?? 'address',
+        delivery_method: deliveryMethod,
+        delivery_fee_eur: deliveryFeeEur,
       };
 
       const order = await createOrder(orderData);

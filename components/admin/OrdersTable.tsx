@@ -73,8 +73,9 @@ const FIELD_LABELS: Record<string, string> = {
 
 function formatShortDelivery(order: OrderRow): { text: string; tooltip: string; isSpeedy: boolean } {
   const addr = order.shipping_address;
-  if (order.delivery_method === 'speedy_office' || addr.delivery_method === 'speedy_office') {
-    const name = addr.speedy_office_name ?? 'Speedy офис';
+  const dm = order.delivery_method ?? addr.delivery_method;
+  if (dm === 'speedy_office' || dm === 'speedy_automat') {
+    const name = addr.speedy_office_name ?? (dm === 'speedy_automat' ? 'Speedy автомат' : 'Speedy офис');
     return {
       text: name,
       tooltip: addr.speedy_office_address ? `📦 ${name} - ${addr.speedy_office_address}` : `📦 ${name}`,
@@ -741,9 +742,9 @@ function OrderRowDetail({
       {/* Column 2: Shipping + Promo */}
       <div>
         <h4 className="font-semibold text-[var(--color-brand-navy)] mb-2">Доставка</h4>
-        {order.delivery_method === 'speedy_office' && (
+        {(order.delivery_method === 'speedy_office' || order.delivery_method === 'speedy_automat') && (
           <span className="inline-block text-xs px-2 py-0.5 rounded-full font-semibold bg-blue-100 text-blue-700 mr-2 mb-1">
-            Офис Speedy
+            {order.delivery_method === 'speedy_automat' ? 'Автомат Speedy' : 'Офис Speedy'}
           </span>
         )}
         <p className="text-gray-800 mb-1">{formatShippingAddressOneLine(order.shipping_address)}</p>

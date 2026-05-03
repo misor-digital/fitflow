@@ -1,33 +1,47 @@
 'use client';
 
 import { useEffect, useCallback, useState } from 'react';
-import type { SpeedyOfficeSelection } from '@/lib/order';
+import type { SpeedyOfficeSelection, DeliveryMethod } from '@/lib/order';
 
 interface SpeedyOfficeSelectorProps {
   selectedOffice: SpeedyOfficeSelection | null;
   onSelect: (office: SpeedyOfficeSelection) => void;
+  onDeliveryMethodDetected?: (method: DeliveryMethod) => void;
+  deliveryMethod?: DeliveryMethod;
   error?: string | null;
 }
 
 const WIDGET_URL = 'https://services.speedy.bg/office_locator_widget_v3/office_locator.php';
 const WIDGET_ORIGIN = 'https://services.speedy.bg';
 
-function buildWidgetSrc(): string {
+function buildWidgetSrc(deliveryMethod?: DeliveryMethod): string {
   const params = new URLSearchParams({
     lang: 'bg',
     showOfficesList: 'true',
     pickUp: 'true',
     selectOfficeButtonCaption: 'Избери този офис',
   });
+  // Filter widget: OFFICE = offices only, APT = automats/lockers only
+  if (deliveryMethod === 'speedy_automat') {
+    params.set('officeType', 'APT');
+  } else if (deliveryMethod === 'speedy_office') {
+    params.set('officeType', 'OFFICE');
+  }
   return `${WIDGET_URL}?${params.toString()}`;
 }
 
 export default function SpeedyOfficeSelector({
   selectedOffice,
   onSelect,
+  onDeliveryMethodDetected,
+  deliveryMethod,
   error,
 }: SpeedyOfficeSelectorProps) {
-  const [showWidget, setShowWidget] = useState(!selectedOffice);
+  // Track whether user explicitly toggled to show widget (after having a selection)
+  const [userToggledWidget, setUserToggledWidget] = useState(false);
+
+  // Show widget if: no selection, or user explicitly toggled it
+  const showWidget = !selectedOffice || userToggledWidget;
 
   // Listen for postMessage from the Speedy widget
   const handleMessage = useCallback(
@@ -51,13 +65,21 @@ export default function SpeedyOfficeSelector({
                 : data.fullAddressString || data.fullAddress || data.address?.fullAddressString || '',
           };
           onSelect(office);
-          setShowWidget(false);
+          setUserToggledWidget(false);
+
+          // Detect automat/locker based on type or name patterns
+          if (onDeliveryMethodDetected) {
+            const isAutomat =
+              data.type === 'APT' ||
+              /\bАПС\b|\bAPT\b|\bавтомат\b/i.test(office.name);
+            onDeliveryMethodDetected(isAutomat ? 'speedy_automat' : 'speedy_office');
+          }
         }
       } catch {
         // Ignore non-JSON messages or parse errors
       }
     },
-    [onSelect],
+    [onSelect, onDeliveryMethodDetected],
   );
 
   useEffect(() => {
@@ -86,7 +108,7 @@ export default function SpeedyOfficeSelector({
             </div>
             <button
               type="button"
-              onClick={() => setShowWidget(true)}
+              onClick={() => setUserToggledWidget(true)}
               className="text-sm text-[var(--color-brand-orange)] font-semibold hover:underline flex-shrink-0"
             >
               Промени
@@ -103,7 +125,7 @@ export default function SpeedyOfficeSelector({
       {selectedOffice && (
         <button
           type="button"
-          onClick={() => setShowWidget(false)}
+          onClick={() => setUserToggledWidget(false)}
           className="text-sm text-[var(--color-brand-orange)] font-semibold hover:underline"
         >
           ← Назад към избрания офис
@@ -115,7 +137,8 @@ export default function SpeedyOfficeSelector({
         }`}
       >
         <iframe
-          src={buildWidgetSrc()}
+          key={deliveryMethod}
+          src={buildWidgetSrc(deliveryMethod)}
           width="100%"
           height="500"
           style={{ border: 'none', minHeight: '500px' }}

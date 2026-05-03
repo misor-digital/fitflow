@@ -60,8 +60,8 @@ export function validateConversionInput(
     errors.push('Невалидна честота на доставка');
   }
 
-  // 2. Delivery method: speedy_office
-  if (input.deliveryMethod === 'speedy_office') {
+  // 2. Delivery method: speedy_office or speedy_automat
+  if (input.deliveryMethod === 'speedy_office' || input.deliveryMethod === 'speedy_automat') {
     if (!input.speedyOfficeId?.trim()) {
       errors.push('Моля, изберете офис на Спиди');
     }

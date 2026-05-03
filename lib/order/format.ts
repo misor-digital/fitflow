@@ -69,11 +69,12 @@ export function formatOrderNumber(orderNumber: string): string {
  *   1000 София
  */
 export function formatShippingAddress(address: ShippingAddressSnapshot): string {
-  // Speedy office delivery
-  if (address.delivery_method === 'speedy_office' && address.speedy_office_name) {
+  // Speedy office / automat delivery
+  if ((address.delivery_method === 'speedy_office' || address.delivery_method === 'speedy_automat') && address.speedy_office_name) {
     const lines: string[] = [];
     lines.push(`${address.first_name} ${address.last_name}`.trim());
-    lines.push(`Офис на Speedy: ${address.speedy_office_name}`);
+    const label = address.delivery_method === 'speedy_automat' ? 'Автомат на Speedy' : 'Офис на Speedy';
+    lines.push(`${label}: ${address.speedy_office_name}`);
     if (address.speedy_office_address) {
       lines.push(address.speedy_office_address);
     }
@@ -109,9 +110,10 @@ export function formatShippingAddress(address: ShippingAddressSnapshot): string 
  *   ул. Витоша 1, 1000 София
  */
 export function formatShippingAddressOneLine(address: ShippingAddressSnapshot): string {
-  // Speedy office delivery
-  if (address.delivery_method === 'speedy_office' && address.speedy_office_name) {
-    return `Офис на Speedy: ${address.speedy_office_name}`;
+  // Speedy office / automat delivery
+  if ((address.delivery_method === 'speedy_office' || address.delivery_method === 'speedy_automat') && address.speedy_office_name) {
+    const label = address.delivery_method === 'speedy_automat' ? 'Автомат на Speedy' : 'Офис на Speedy';
+    return `${label}: ${address.speedy_office_name}`;
   }
 
   // Address delivery (existing logic)
@@ -174,10 +176,12 @@ export const ORDER_TYPE_COLORS: Record<string, string> = {
 /**
  * Get the Bulgarian label for a delivery method.
  */
-export function formatDeliveryMethodLabel(method: 'address' | 'speedy_office' | undefined): string {
+export function formatDeliveryMethodLabel(method: 'address' | 'speedy_office' | 'speedy_automat' | undefined): string {
   switch (method) {
     case 'speedy_office':
       return 'До офис на Speedy';
+    case 'speedy_automat':
+      return 'До автомат на Speedy';
     case 'address':
     default:
       return 'Доставка до адрес';

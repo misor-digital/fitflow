@@ -219,6 +219,8 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
   const handleDeliveryMethodChange = useCallback((method: DeliveryMethod) => {
     setDeliveryMethodLocal(method);
     setOfficeError(null);
+    // Clear selected office/locker when switching between office and automat
+    setSpeedyOfficeLocal(null);
     // Clear address errors when switching
     setAddressErrors({});
     setHasAttemptedSubmit(false);
@@ -228,6 +230,11 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
   const handleOfficeSelect = useCallback((office: SpeedyOfficeSelection) => {
     setSpeedyOfficeLocal(office);
     setOfficeError(null);
+  }, []);
+
+  // Auto-detect delivery method from widget selection (office vs automat)
+  const handleDeliveryMethodDetected = useCallback((method: DeliveryMethod) => {
+    setDeliveryMethodLocal(method);
   }, []);
 
   // Validate contact info (guest only)
@@ -312,8 +319,8 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
       onNext();
     };
 
-    // --- SPEEDY OFFICE DELIVERY ---
-    if (deliveryMethod === 'speedy_office') {
+    // --- SPEEDY OFFICE / AUTOMAT DELIVERY ---
+    if (deliveryMethod === 'speedy_office' || deliveryMethod === 'speedy_automat') {
       // Validate office selection + required fields (firstName, lastName, phone)
       const officeResult = validateSpeedyOffice(address, speedyOffice);
       if (!officeResult.valid) {
@@ -344,7 +351,7 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
         store.setContactInfo(...resolveContact());
       }
 
-      store.setDeliveryMethod('speedy_office');
+      store.setDeliveryMethod(deliveryMethod);
       store.setSpeedyOffice(speedyOffice);
       store.setSelectedAddressId(null);
       store.setAddress({
@@ -468,11 +475,13 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
       {/* Speedy Office Widget */}
       <div>
         <label className="block text-sm sm:text-base font-semibold text-[var(--color-brand-navy)] mb-1.5">
-          Офис на Speedy <span className="text-red-500">*</span>
+          {deliveryMethod === 'speedy_automat' ? 'Автомат на Speedy' : 'Офис на Speedy'} <span className="text-red-500">*</span>
         </label>
         <SpeedyOfficeSelector
           selectedOffice={speedyOffice}
           onSelect={handleOfficeSelect}
+          onDeliveryMethodDetected={handleDeliveryMethodDetected}
+          deliveryMethod={deliveryMethod}
           error={hasAttemptedSubmit ? officeError : null}
         />
       </div>
@@ -533,9 +542,9 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
             {/* Address / Office Form */}
             <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg">
               <h3 className="text-lg sm:text-xl font-bold text-[var(--color-brand-navy)] mb-4 border-b pb-2">
-                {deliveryMethod === 'speedy_office' ? 'Данни за получаване' : 'Адрес за доставка'}
+                {(deliveryMethod === 'speedy_office' || deliveryMethod === 'speedy_automat') ? 'Данни за получаване' : 'Адрес за доставка'}
               </h3>
-              {deliveryMethod === 'speedy_office' ? renderOfficeForm() : renderAddressForm()}
+              {(deliveryMethod === 'speedy_office' || deliveryMethod === 'speedy_automat') ? renderOfficeForm() : renderAddressForm()}
             </div>
 
             {/* Navigation buttons */}
@@ -606,9 +615,9 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
           {/* Address / Office Form */}
           <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg">
             <h3 className="text-lg sm:text-xl font-bold text-[var(--color-brand-navy)] mb-4 border-b pb-2">
-              {deliveryMethod === 'speedy_office' ? 'Данни за получаване' : 'Адрес за доставка'}
+              {(deliveryMethod === 'speedy_office' || deliveryMethod === 'speedy_automat') ? 'Данни за получаване' : 'Адрес за доставка'}
             </h3>
-            {deliveryMethod === 'speedy_office' ? renderOfficeForm() : renderAddressForm()}
+            {(deliveryMethod === 'speedy_office' || deliveryMethod === 'speedy_automat') ? renderOfficeForm() : renderAddressForm()}
           </div>
         </div>
 
@@ -712,9 +721,9 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
             {/* Address / Office Form */}
             <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg">
               <h3 className="text-lg sm:text-xl font-bold text-[var(--color-brand-navy)] mb-4 border-b pb-2">
-                {deliveryMethod === 'speedy_office' ? 'Данни за получаване' : 'Адрес за доставка'}
+                {(deliveryMethod === 'speedy_office' || deliveryMethod === 'speedy_automat') ? 'Данни за получаване' : 'Адрес за доставка'}
               </h3>
-              {deliveryMethod === 'speedy_office' ? renderOfficeForm() : renderAddressForm()}
+              {(deliveryMethod === 'speedy_office' || deliveryMethod === 'speedy_automat') ? renderOfficeForm() : renderAddressForm()}
             </div>
           </div>
         )}

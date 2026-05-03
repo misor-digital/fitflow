@@ -17,7 +17,7 @@ export type { BoxTypeId, PriceInfo, PriceDisplayInfo, PricesMap };
 // ============================================================================
 
 /** Delivery method discriminator */
-export type DeliveryMethod = 'address' | 'speedy_office';
+export type DeliveryMethod = 'address' | 'speedy_office' | 'speedy_automat';
 
 /** Selected Speedy office data from the widget */
 export interface SpeedyOfficeSelection {
@@ -254,8 +254,10 @@ export interface OrderTrackingData {
   boxType: string;
   boxTypeName: string;
   shippingAddress: ShippingAddressSnapshot;
-  deliveryMethod: 'address' | 'speedy_office';
+  deliveryMethod: 'address' | 'speedy_office' | 'speedy_automat';
   finalPriceEur: number | null;
+  deliveryFeeEur: number | null;
+  deliveryFeeBgn: number | null;
   deliveryCycleName: string | null;
   createdAt: string;
   statusHistory: Array<{

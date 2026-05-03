@@ -42,7 +42,10 @@ export function addressInputToSnapshot(
     delivery_notes: address.deliveryNotes.trim() || null,
   };
 
-  if (options?.deliveryMethod === 'speedy_office' && options.speedyOffice) {
+  if (
+    (options?.deliveryMethod === 'speedy_office' || options?.deliveryMethod === 'speedy_automat') &&
+    options.speedyOffice
+  ) {
     return {
       first_name: address.firstName.trim(),
       last_name: address.lastName.trim(),
@@ -54,7 +57,7 @@ export function addressInputToSnapshot(
       floor: null,
       apartment: null,
       delivery_notes: address.deliveryNotes.trim() || null,
-      delivery_method: 'speedy_office',
+      delivery_method: options.deliveryMethod,
       speedy_office_id: options.speedyOffice.id,
       speedy_office_name: options.speedyOffice.name,
       speedy_office_address: options.speedyOffice.address,
@@ -171,7 +174,10 @@ export function transformOrderToApiRequest(input: OrderUserInput): OrderApiReque
 
   // Delivery method
   request.deliveryMethod = input.deliveryMethod ?? 'address';
-  if (input.deliveryMethod === 'speedy_office' && input.speedyOffice) {
+  if (
+    (input.deliveryMethod === 'speedy_office' || input.deliveryMethod === 'speedy_automat') &&
+    input.speedyOffice
+  ) {
     request.speedyOffice = input.speedyOffice;
   }
 

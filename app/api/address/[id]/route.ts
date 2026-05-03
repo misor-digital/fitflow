@@ -130,7 +130,7 @@ export async function PUT(
     const deliveryMethod = sanitized.deliveryMethod ?? 'address';
 
     // Domain validation - conditional on delivery method
-    if (deliveryMethod === 'speedy_office') {
+    if (deliveryMethod === 'speedy_office' || deliveryMethod === 'speedy_automat') {
       const officeSelection: SpeedyOfficeSelection | null =
         sanitized.speedyOfficeId && sanitized.speedyOfficeName
           ? {
@@ -191,9 +191,9 @@ export async function PUT(
     // Build update payload - conditional on delivery method
     // When switching method, explicitly null out fields that no longer apply
     const updateData: AddressUpdate =
-      deliveryMethod === 'speedy_office'
+      deliveryMethod === 'speedy_office' || deliveryMethod === 'speedy_automat'
         ? {
-            delivery_method: 'speedy_office',
+            delivery_method: deliveryMethod,
             first_name: sanitized.firstName!,
             last_name: sanitized.lastName!,
             phone: sanitized.phone || null,

@@ -26,9 +26,11 @@ interface TrackingOrder {
   boxType: string;
   boxTypeName: string;
   shippingAddress: ShippingAddressSnapshot;
-  deliveryMethod: 'address' | 'speedy_office';
+  deliveryMethod: 'address' | 'speedy_office' | 'speedy_automat';
   finalPriceEur: number | null;
   finalPriceBgn: number | null;
+  deliveryFeeEur: number | null;
+  deliveryFeeBgn: number | null;
   createdAt: string;
   deliveryCycleName: string | null;
   statusHistory: StatusHistoryEntry[];
@@ -183,6 +185,14 @@ function OrderTrackingContent() {
                   : '—'}
               </dd>
             </div>
+            {order.deliveryFeeEur != null && order.deliveryFeeEur > 0 && (
+              <div>
+                <dt className="text-gray-500 mb-1">Доставка</dt>
+                <dd className="font-semibold text-gray-900">
+                  {formatPriceDual(order.deliveryFeeEur, order.deliveryFeeBgn ?? order.deliveryFeeEur * 1.95583)}
+                </dd>
+              </div>
+            )}
             <div>
               <dt className="text-gray-500 mb-1">Дата</dt>
               <dd className="font-semibold text-gray-900">
@@ -203,10 +213,10 @@ function OrderTrackingContent() {
         {/* Shipping Address Card */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-6">
           <h2 className="text-lg font-bold text-gray-900 mb-4">Адрес за доставка</h2>
-          {order.deliveryMethod === 'speedy_office' && (
+          {(order.deliveryMethod === 'speedy_office' || order.deliveryMethod === 'speedy_automat') && (
             <div className="flex items-center gap-2 mb-2">
               <span className="inline-block text-xs px-2 py-0.5 rounded-full font-semibold bg-blue-100 text-blue-700">
-                📦 До офис на Speedy
+                📦 {order.deliveryMethod === 'speedy_automat' ? 'До автомат на Speedy' : 'До офис на Speedy'}
               </span>
             </div>
           )}

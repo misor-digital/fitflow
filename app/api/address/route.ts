@@ -25,7 +25,7 @@ const MAX_SPEEDY_OFFICE_ADDRESS = 500;
 const MAX_SPEEDY_OFFICE_ID = 100;
 const MAX_ADDRESSES = 10;
 
-const VALID_DELIVERY_METHODS = ['address', 'speedy_office'] as const;
+const VALID_DELIVERY_METHODS = ['address', 'speedy_office', 'speedy_automat'] as const;
 type DeliveryMethodValue = (typeof VALID_DELIVERY_METHODS)[number];
 
 /** Rate limit: 20 requests per minute */
@@ -138,7 +138,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const deliveryMethod = sanitized.deliveryMethod ?? 'address';
 
     // Domain validation - conditional on delivery method
-    if (deliveryMethod === 'speedy_office') {
+    if (deliveryMethod === 'speedy_office' || deliveryMethod === 'speedy_automat') {
       const officeSelection: SpeedyOfficeSelection | null =
         sanitized.speedyOfficeId && sanitized.speedyOfficeName
           ? {
@@ -200,10 +200,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const autoLabel = generateAddressLabel(deliveryMethod, sanitized);
 
     const insertData: AddressInsert =
-      deliveryMethod === 'speedy_office'
+      deliveryMethod === 'speedy_office' || deliveryMethod === 'speedy_automat'
         ? {
             user_id: session.userId,
-            delivery_method: 'speedy_office',
+            delivery_method: deliveryMethod,
             first_name: sanitized.firstName!,
             last_name: sanitized.lastName!,
             phone: sanitized.phone || null,
@@ -425,7 +425,7 @@ export function generateAddressLabel(
 ): string | null {
   if (sanitized.label) return sanitized.label;
 
-  if (deliveryMethod === 'speedy_office') {
+  if (deliveryMethod === 'speedy_office' || deliveryMethod === 'speedy_automat') {
     return (sanitized.speedyOfficeName ?? 'Speedy офис').slice(0, MAX_LABEL);
   }
 

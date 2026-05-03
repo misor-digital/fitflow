@@ -260,7 +260,7 @@ export default function SubscriptionConversionFlow({
     // Validate address or speedy office
     if (isAuthenticated && !isAdmin && selectedAddressId && !showNewAddressForm) {
       // Using saved address - no validation needed
-    } else if (deliveryMethod === 'speedy_office') {
+    } else if ((deliveryMethod === 'speedy_office' || deliveryMethod === 'speedy_automat')) {
       const result = validateSpeedyOffice(address, speedyOffice);
       if (!result.valid) {
         const errors: Record<string, string> = {};
@@ -330,8 +330,8 @@ export default function SubscriptionConversionFlow({
       // Address resolution
       if (isAuthenticated && !isAdmin && selectedAddressId && !showNewAddressForm) {
         body.addressId = selectedAddressId;
-      } else if (deliveryMethod === 'speedy_office' && speedyOffice) {
-        body.deliveryMethod = 'speedy_office';
+      } else if ((deliveryMethod === 'speedy_office' || deliveryMethod === 'speedy_automat') && speedyOffice) {
+        body.deliveryMethod = deliveryMethod;
         body.speedyOfficeId = speedyOffice.id;
         body.speedyOfficeName = speedyOffice.name;
         body.speedyOfficeAddress = speedyOffice.address;
@@ -539,9 +539,9 @@ export default function SubscriptionConversionFlow({
                   <div className="text-sm sm:text-base font-semibold text-[var(--color-brand-navy)]">
                     {addr.first_name} {addr.last_name}
                   </div>
-                  {addr.delivery_method === 'speedy_office' && addr.speedy_office_name ? (
+                  {(addr.delivery_method === 'speedy_office' || addr.delivery_method === 'speedy_automat') && addr.speedy_office_name ? (
                     <div className="text-sm text-gray-600 mt-0.5">
-                      📦 Офис на Speedy: {addr.speedy_office_name}
+                      📦 {addr.delivery_method === 'speedy_automat' ? 'Автомат на Speedy' : 'Офис на Speedy'}: {addr.speedy_office_name}
                     </div>
                   ) : (
                     <>
@@ -583,7 +583,7 @@ export default function SubscriptionConversionFlow({
         {/* Delivery method + form for new address */}
         <div className="space-y-4">
           <DeliveryMethodToggle value={deliveryMethod} onChange={handleDeliveryMethodChange} />
-          {deliveryMethod === 'speedy_office' ? renderOfficeForm() : renderAddressForm()}
+          {(deliveryMethod === 'speedy_office' || deliveryMethod === 'speedy_automat') ? renderOfficeForm() : renderAddressForm()}
         </div>
       </div>
     );
@@ -736,9 +736,10 @@ export default function SubscriptionConversionFlow({
     if (isAuthenticated && !isAdmin && selectedAddressId && !showNewAddressForm) {
       const addr = savedAddresses.find((a) => a.id === selectedAddressId);
       if (addr) {
-        if (addr.delivery_method === 'speedy_office' && addr.speedy_office_name) {
+        if ((addr.delivery_method === 'speedy_office' || addr.delivery_method === 'speedy_automat') && addr.speedy_office_name) {
+          const label = addr.delivery_method === 'speedy_automat' ? 'Автомат на Speedy' : 'Офис на Speedy';
           return {
-            line1: `📦 Офис на Speedy: ${addr.speedy_office_name}`,
+            line1: `📦 ${label}: ${addr.speedy_office_name}`,
             line2: addr.speedy_office_address ?? '',
           };
         }
@@ -751,7 +752,7 @@ export default function SubscriptionConversionFlow({
       }
     }
 
-    if (deliveryMethod === 'speedy_office' && speedyOffice) {
+    if ((deliveryMethod === 'speedy_office' || deliveryMethod === 'speedy_automat') && speedyOffice) {
       return {
         line1: `📦 Офис на Speedy: ${speedyOffice.name}`,
         line2: speedyOffice.address,
@@ -1074,9 +1075,9 @@ export default function SubscriptionConversionFlow({
                   </div>
                   <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg">
                     <h3 className="text-lg sm:text-xl font-bold text-[var(--color-brand-navy)] mb-4 border-b pb-2">
-                      {deliveryMethod === 'speedy_office' ? 'Данни за получаване' : 'Адрес за доставка'}
+                      {(deliveryMethod === 'speedy_office' || deliveryMethod === 'speedy_automat') ? 'Данни за получаване' : 'Адрес за доставка'}
                     </h3>
-                    {deliveryMethod === 'speedy_office' ? renderOfficeForm() : renderAddressForm()}
+                    {(deliveryMethod === 'speedy_office' || deliveryMethod === 'speedy_automat') ? renderOfficeForm() : renderAddressForm()}
                   </div>
                 </>
               )}

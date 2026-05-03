@@ -319,8 +319,8 @@ export interface ShippingAddressSnapshot {
   floor: string | null;
   apartment: string | null;
   delivery_notes: string | null;
-  // Speedy office delivery fields (present when delivery_method = 'speedy_office')
-  delivery_method?: 'address' | 'speedy_office';
+  // Speedy office/automat delivery fields (present when delivery_method != 'address')
+  delivery_method?: 'address' | 'speedy_office' | 'speedy_automat';
   speedy_office_id?: string;
   speedy_office_name?: string;
   speedy_office_address?: string;
@@ -340,7 +340,7 @@ export interface AddressRow {
   floor: string | null;
   apartment: string | null;
   delivery_notes: string | null;
-  delivery_method: 'address' | 'speedy_office';
+  delivery_method: 'address' | 'speedy_office' | 'speedy_automat';
   speedy_office_id: string | null;
   speedy_office_name: string | null;
   speedy_office_address: string | null;
@@ -362,7 +362,7 @@ export interface AddressInsert {
   floor?: string | null;
   apartment?: string | null;
   delivery_notes?: string | null;
-  delivery_method?: 'address' | 'speedy_office';
+  delivery_method?: 'address' | 'speedy_office' | 'speedy_automat';
   speedy_office_id?: string | null;
   speedy_office_name?: string | null;
   speedy_office_address?: string | null;
@@ -381,7 +381,7 @@ export interface AddressUpdate {
   floor?: string | null;
   apartment?: string | null;
   delivery_notes?: string | null;
-  delivery_method?: 'address' | 'speedy_office';
+  delivery_method?: 'address' | 'speedy_office' | 'speedy_automat';
   speedy_office_id?: string | null;
   speedy_office_name?: string | null;
   speedy_office_address?: string | null;
@@ -405,7 +405,7 @@ export interface OrderRow {
   customer_phone: string | null;
   shipping_address: ShippingAddressSnapshot;
   address_id: string | null;
-  delivery_method: 'address' | 'speedy_office';
+  delivery_method: 'address' | 'speedy_office' | 'speedy_automat';
   box_type: string;
   wants_personalization: boolean;
   sports: string[] | null;
@@ -432,6 +432,14 @@ export interface OrderRow {
   subscription_conversion_status: string | null; // NULL | 'pending' | 'converted' | 'expired'
   converted_to_subscription_id: string | null;
   shipped_at: string | null;       // TIMESTAMPTZ as ISO string, set when status → shipped
+  delivery_fee_eur: number;
+  delivery_fee_actual_eur: number | null;
+  speedy_waybill_id: string | null;
+  speedy_parcel_ids: string[] | null;
+  speedy_created_at: string | null;
+  speedy_status: string | null;
+  speedy_status_code: number | null;
+  speedy_last_tracked_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -444,7 +452,7 @@ export interface OrderInsert {
   customer_phone?: string | null;
   shipping_address: ShippingAddressSnapshot;
   address_id?: string | null;
-  delivery_method?: 'address' | 'speedy_office';
+  delivery_method?: 'address' | 'speedy_office' | 'speedy_automat';
   box_type: string;
   wants_personalization: boolean;
   sports?: string[] | null;
@@ -470,6 +478,13 @@ export interface OrderInsert {
   subscription_conversion_token_expires_at?: string | null;
   subscription_conversion_status?: string | null;
   converted_to_subscription_id?: string | null;
+  delivery_fee_eur?: number;
+  speedy_waybill_id?: string | null;
+  speedy_parcel_ids?: string[] | null;
+  speedy_created_at?: string | null;
+  speedy_status?: string | null;
+  speedy_status_code?: number | null;
+  speedy_last_tracked_at?: string | null;
 }
 
 export interface OrderUpdate {
@@ -489,6 +504,14 @@ export interface OrderUpdate {
   subscription_conversion_token_expires_at?: string | null;
   subscription_conversion_status?: string | null;
   converted_to_subscription_id?: string | null;
+  delivery_fee_eur?: number;
+  delivery_fee_actual_eur?: number | null;
+  speedy_waybill_id?: string | null;
+  speedy_parcel_ids?: string[] | null;
+  speedy_created_at?: string | null;
+  speedy_status?: string | null;
+  speedy_status_code?: number | null;
+  speedy_last_tracked_at?: string | null;
 }
 
 // ============================================================================
@@ -1498,6 +1521,32 @@ export interface Database {
           referencedRelation: 'users';
           referencedColumns: ['id'];
         }];
+      };
+      delivery_pricing: {
+        Row: {
+          id: string;
+          delivery_method: string;
+          price_eur: number;
+          label_bg: string;
+          is_active: boolean;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          delivery_method: string;
+          price_eur: number;
+          label_bg: string;
+          is_active?: boolean;
+          updated_at?: string;
+        };
+        Update: {
+          delivery_method?: string;
+          price_eur?: number;
+          label_bg?: string;
+          is_active?: boolean;
+          updated_at?: string;
+        };
+        Relationships: [];
       };
     };
     Views: Record<string, never>;
