@@ -479,6 +479,7 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
           selectedOffice={speedyOffice}
           onSelect={handleOfficeSelect}
           onDeliveryMethodDetected={handleDeliveryMethodDetected}
+          deliveryMethod={deliveryMethod}
           error={hasAttemptedSubmit ? officeError : null}
         />
       </div>

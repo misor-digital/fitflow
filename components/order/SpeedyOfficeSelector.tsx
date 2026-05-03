@@ -7,19 +7,26 @@ interface SpeedyOfficeSelectorProps {
   selectedOffice: SpeedyOfficeSelection | null;
   onSelect: (office: SpeedyOfficeSelection) => void;
   onDeliveryMethodDetected?: (method: DeliveryMethod) => void;
+  deliveryMethod?: DeliveryMethod;
   error?: string | null;
 }
 
 const WIDGET_URL = 'https://services.speedy.bg/office_locator_widget_v3/office_locator.php';
 const WIDGET_ORIGIN = 'https://services.speedy.bg';
 
-function buildWidgetSrc(): string {
+function buildWidgetSrc(deliveryMethod?: DeliveryMethod): string {
   const params = new URLSearchParams({
     lang: 'bg',
     showOfficesList: 'true',
     pickUp: 'true',
     selectOfficeButtonCaption: 'Избери този офис',
   });
+  // Filter widget: OFFICE = offices only, APT = automats/lockers only
+  if (deliveryMethod === 'speedy_automat') {
+    params.set('officeType', 'APT');
+  } else if (deliveryMethod === 'speedy_office') {
+    params.set('officeType', 'OFFICE');
+  }
   return `${WIDGET_URL}?${params.toString()}`;
 }
 
@@ -27,6 +34,7 @@ export default function SpeedyOfficeSelector({
   selectedOffice,
   onSelect,
   onDeliveryMethodDetected,
+  deliveryMethod,
   error,
 }: SpeedyOfficeSelectorProps) {
   const [showWidget, setShowWidget] = useState(!selectedOffice);
@@ -125,7 +133,8 @@ export default function SpeedyOfficeSelector({
         }`}
       >
         <iframe
-          src={buildWidgetSrc()}
+          key={deliveryMethod}
+          src={buildWidgetSrc(deliveryMethod)}
           width="100%"
           height="500"
           style={{ border: 'none', minHeight: '500px' }}

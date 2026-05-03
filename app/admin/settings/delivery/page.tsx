@@ -2,6 +2,7 @@ import { requireStaff } from '@/lib/auth';
 import { STAFF_MANAGEMENT_ROLES } from '@/lib/auth/permissions';
 import { getDeliveryConfigMap } from '@/lib/data';
 import { getDeliveryConfig } from '@/lib/delivery';
+import { getDeliveryPricing } from '@/lib/delivery/pricing';
 import { DeliverySettingsForm } from '@/components/admin/DeliverySettingsForm';
 import Link from 'next/link';
 import type { Metadata } from 'next';
@@ -13,7 +14,10 @@ export const metadata: Metadata = {
 export default async function DeliverySettingsPage() {
   await requireStaff([...STAFF_MANAGEMENT_ROLES]);
 
-  const configMap = await getDeliveryConfigMap();
+  const [configMap, pricing] = await Promise.all([
+    getDeliveryConfigMap(),
+    getDeliveryPricing(),
+  ]);
   const config = getDeliveryConfig(configMap);
 
   return (
@@ -31,7 +35,7 @@ export default async function DeliverySettingsPage() {
         Настройки за доставки
       </h1>
 
-      <DeliverySettingsForm config={config} />
+      <DeliverySettingsForm config={config} pricing={pricing} />
     </div>
   );
 }

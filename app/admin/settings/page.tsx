@@ -11,10 +11,15 @@ const settingsLinks = [
   {
     href: '/admin/settings/delivery',
     label: 'Доставки',
-    description: 'Ден на доставка, дати, функционалности',
+    description: 'Ден на доставка, дати, функционалности, цени',
     icon: '📅',
   },
-  // Future: more settings categories
+  {
+    href: '/admin/settings/dispatch',
+    label: 'Изпращане (Speedy)',
+    description: 'API конфигурация, параметри на пратките',
+    icon: '🚚',
+  },
 ];
 
 export default async function SettingsPage() {
