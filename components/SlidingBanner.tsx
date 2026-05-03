@@ -16,9 +16,14 @@ import { useEffect, useRef } from 'react';
 
 interface SlidingBannerProps {
   text: string;
+  emoji?: string;
+  linkHref?: string;
+  linkLabel?: string;
+  bgColor?: string;
+  textColor?: string;
 }
 
-export default function SlidingBanner({ text }: SlidingBannerProps) {
+export default function SlidingBanner({ text, emoji = '⏰', linkHref, linkLabel, bgColor, textColor }: SlidingBannerProps) {
   const trackRef = useRef<HTMLDivElement>(null);
 
   // Publish banner height as CSS variable
@@ -53,12 +58,17 @@ export default function SlidingBanner({ text }: SlidingBannerProps) {
   }, [text]);
 
   return (
-    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50, overflow: 'hidden', display: 'flex', alignItems: 'center' }} className="bg-[var(--color-brand-navy)] h-10 sm:h-12">
+    <div style={{ position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50, overflow: 'hidden', display: 'flex', alignItems: 'center', backgroundColor: bgColor }} className={`${bgColor ? '' : 'bg-[var(--color-brand-navy)]'} h-10 sm:h-12`}>
       <div ref={trackRef} style={{ display: 'flex', width: 'max-content' }}>
         {[0, 1, 2].map((i) => (
           <span key={i} style={{ display: 'inline-flex', alignItems: 'center', flexShrink: 0, whiteSpace: 'nowrap', padding: '0 3rem' }}>
-            <span className="text-[#FFD700] font-bold text-xs sm:text-sm md:text-base tracking-wide">
-              ⏰ {text}
+            <span className="font-bold text-xs sm:text-sm md:text-base tracking-wide" style={{ color: textColor ?? '#FFD700' }}>
+              {emoji} {text}
+              {linkHref && (
+                <a href={linkHref} target="_blank" rel="noopener noreferrer" className="underline ml-2 hover:text-white transition-colors">
+                  {linkLabel ?? 'Научи повече'}
+                </a>
+              )}
             </span>
           </span>
         ))}
