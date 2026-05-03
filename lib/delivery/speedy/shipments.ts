@@ -153,13 +153,13 @@ export function buildShipmentRequest(order: OrderForShipment, parcel: ParcelConf
 
 function buildRecipient(order: OrderForShipment): ShipmentParty {
   const addr = order.shippingAddress;
-  const phone = addr.phone || order.userPhone;
+  const phone = normalizePhoneBG(addr.phone || order.userPhone);
   const contactName = `${addr.first_name} ${addr.last_name}`.trim();
 
   if (order.deliveryMethod === 'speedy_office' || order.deliveryMethod === 'speedy_automat') {
     return {
       phone1: { number: phone },
-      contactName,
+      clientName: contactName,
       email: order.userEmail,
       privatePerson: true,
       pickupOfficeId: Number(addr.speedy_office_id),
@@ -176,7 +176,7 @@ function buildRecipient(order: OrderForShipment): ShipmentParty {
 
   return {
     phone1: { number: phone },
-    contactName,
+    clientName: contactName,
     email: order.userEmail,
     privatePerson: true,
     address,
@@ -191,4 +191,28 @@ function buildAddressNote(addr: OrderForShipment['shippingAddress']): string {
   if (addr.apartment) parts.push(`ап. ${addr.apartment}`);
   if (addr.delivery_notes) parts.push(`(${addr.delivery_notes})`);
   return parts.filter(Boolean).join(', ');
+}
+
+/**
+ * Normalize a Bulgarian phone number for Speedy API.
+ * Speedy requires: digits only, may start with "+" or "0".
+ * Valid examples from docs: +359999123456, 0999123456, 0040799123456
+ * We always output +359XXXXXXXXX format for reliability.
+ */
+function normalizePhoneBG(raw: string): string {
+  // Strip everything except digits and leading +
+  const cleaned = raw.trim();
+  let digits = cleaned.replace(/[^\d]/g, '');
+
+  // Convert to raw subscriber digits (without country code or leading 0)
+  if (digits.startsWith('00359')) {
+    digits = digits.slice(5);
+  } else if (digits.startsWith('359') && digits.length >= 11) {
+    digits = digits.slice(3);
+  } else if (digits.startsWith('0')) {
+    digits = digits.slice(1);
+  }
+
+  // Output in international format with + prefix
+  return `+359${digits}`;
 }
