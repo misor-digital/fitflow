@@ -78,8 +78,12 @@ export async function GET(request: Request): Promise<NextResponse> {
       ? await eurToBgn(order.final_price_eur)
       : null;
 
+    const deliveryFeeBgn = order.delivery_fee_eur
+      ? await eurToBgn(order.delivery_fee_eur)
+      : null;
+
     // 5. Build safe response - no internal IDs, no email
-    const trackingData: OrderTrackingData & { statusLabel: string; boxTypeName: string; finalPriceBgn: number | null } = {
+    const trackingData: OrderTrackingData & { statusLabel: string; finalPriceBgn: number | null } = {
       orderNumber: order.order_number,
       status: order.status,
       statusLabel: ORDER_STATUS_LABELS[order.status],
@@ -91,6 +95,8 @@ export async function GET(request: Request): Promise<NextResponse> {
       deliveryMethod: order.delivery_method ?? 'address',
       finalPriceEur: order.final_price_eur,
       finalPriceBgn,
+      deliveryFeeEur: order.delivery_fee_eur ?? null,
+      deliveryFeeBgn,
       createdAt: order.created_at,
       deliveryCycleName: deliveryCycle?.title ?? null,
       statusHistory: statusHistory.map((h) => ({

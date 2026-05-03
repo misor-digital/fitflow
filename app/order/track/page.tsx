@@ -29,6 +29,8 @@ interface TrackingOrder {
   deliveryMethod: 'address' | 'speedy_office' | 'speedy_automat';
   finalPriceEur: number | null;
   finalPriceBgn: number | null;
+  deliveryFeeEur: number | null;
+  deliveryFeeBgn: number | null;
   createdAt: string;
   deliveryCycleName: string | null;
   statusHistory: StatusHistoryEntry[];
@@ -183,6 +185,14 @@ function OrderTrackingContent() {
                   : '—'}
               </dd>
             </div>
+            {order.deliveryFeeEur != null && order.deliveryFeeEur > 0 && (
+              <div>
+                <dt className="text-gray-500 mb-1">Доставка</dt>
+                <dd className="font-semibold text-gray-900">
+                  {formatPriceDual(order.deliveryFeeEur, order.deliveryFeeBgn ?? order.deliveryFeeEur * 1.95583)}
+                </dd>
+              </div>
+            )}
             <div>
               <dt className="text-gray-500 mb-1">Дата</dt>
               <dd className="font-semibold text-gray-900">

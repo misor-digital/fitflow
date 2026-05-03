@@ -173,6 +173,14 @@ export default async function OrderDetailPage({
                 : '—'}
             </dd>
           </div>
+          {order.delivery_fee_eur != null && order.delivery_fee_eur > 0 && (
+            <div>
+              <dt className="text-gray-500 mb-1">Доставка</dt>
+              <dd className="font-semibold text-gray-900">
+                {formatPriceDual(order.delivery_fee_eur, order.delivery_fee_eur * eurToBgnRate)}
+              </dd>
+            </div>
+          )}
           <div>
             <dt className="text-gray-500 mb-1">Дата на поръчка</dt>
             <dd className="font-semibold text-gray-900">
