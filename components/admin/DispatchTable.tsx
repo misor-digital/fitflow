@@ -1,10 +1,12 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import Link from 'next/link';
 
 interface DispatchOrder {
   id: string;
   order_number: string;
+  user_id: string;
   customer_first_name: string;
   customer_last_name: string;
   delivery_method: 'address' | 'speedy_office' | 'speedy_automat';
@@ -14,6 +16,7 @@ interface DispatchOrder {
     speedy_office_id?: string;
   };
   speedy_waybill_id: string | null;
+  speedy_parcel_ids: string[] | null;
   speedy_status: string | null;
   delivery_fee_eur: number;
   delivery_fee_actual_eur: number | null;
@@ -133,8 +136,17 @@ export default function DispatchTable({ orders, onRefresh }: DispatchTableProps)
               const margin = getMargin(order);
               return (
                 <tr key={order.id} className="hover:bg-gray-50 border-b">
-                  <td className="p-2 font-mono text-xs">{order.order_number}</td>
-                  <td className="p-2">{order.customer_first_name} {order.customer_last_name}</td>
+                  <td className="p-2 font-mono text-xs">
+                    <Link
+                      href={`/admin/orders?search=${encodeURIComponent(order.order_number)}`}
+                      className="text-blue-600 hover:underline"
+                    >
+                      {order.order_number}
+                    </Link>
+                  </td>
+                  <td className="p-2">
+                    {order.customer_first_name} {order.customer_last_name}
+                  </td>
                   <td className="p-2">
                     <span className="inline-flex items-center gap-1">
                       <span>{METHOD_ICONS[order.delivery_method]}</span>
@@ -155,7 +167,38 @@ export default function DispatchTable({ orders, onRefresh }: DispatchTableProps)
                       </span>
                     )}
                   </td>
-                  <td className="p-2 font-mono text-xs">{order.speedy_waybill_id || '—'}</td>
+                  <td className="p-2 font-mono text-xs">
+                    {order.speedy_waybill_id ? (
+                      <span className="inline-flex items-center gap-2">
+                        {order.speedy_waybill_id}
+                        <a
+                          href={`/api/admin/speedy/labels/${order.id}?format=A6`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 hover:text-blue-800"
+                          title="Преглед A6 (получател)"
+                        >
+                          👁️
+                        </a>
+                        <a
+                          href={`/api/admin/speedy/labels/${order.id}?format=A4&senderCopy=true`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-green-600 hover:text-green-800"
+                          title="Преглед A4 (подател + получател)"
+                        >
+                          👁️‍📝
+                        </a>
+                        <a
+                          href={`/api/admin/speedy/labels/${order.id}?format=A6&download=true`}
+                          className="text-gray-600 hover:text-gray-800"
+                          title="Изтегли PDF"
+                        >
+                          🖨️
+                        </a>
+                      </span>
+                    ) : '—'}
+                  </td>
                   <td className="p-2 text-right">{order.delivery_fee_eur.toFixed(2)} €</td>
                   <td className="p-2 text-right">
                     {order.delivery_fee_actual_eur != null

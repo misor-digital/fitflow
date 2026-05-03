@@ -235,7 +235,7 @@ export interface CalculateResponse {
 export interface PrintParams {
   paperSize: 'A4' | 'A6' | 'A4_4xA6';
   parcels: Array<{ parcel: { id: string } }>;
-  additionalWaybillSenderCopy?: 'NONE' | 'ALL';
+  additionalWaybillSenderCopy?: 'NONE' | 'ON_SAME_PAGE' | 'ON_SINGLE_PAGE';
 }
 
 // Response is binary PDF (ArrayBuffer)

@@ -14,6 +14,7 @@ interface CycleOption {
 interface DispatchOrder {
   id: string;
   order_number: string;
+  user_id: string;
   customer_first_name: string;
   customer_last_name: string;
   delivery_method: 'address' | 'speedy_office' | 'speedy_automat';
@@ -23,6 +24,7 @@ interface DispatchOrder {
     speedy_office_id?: string;
   };
   speedy_waybill_id: string | null;
+  speedy_parcel_ids: string[] | null;
   speedy_status: string | null;
   delivery_fee_eur: number;
   delivery_fee_actual_eur: number | null;

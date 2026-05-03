@@ -19,6 +19,7 @@ export default function DispatchActions({
   isBulkCreating,
 }: DispatchActionsProps) {
   const [labelFormat, setLabelFormat] = useState<LabelFormat>('A6');
+  const [senderCopy, setSenderCopy] = useState(false);
   const [isPrinting, setIsPrinting] = useState(false);
 
   async function handlePrintLabels() {
@@ -27,7 +28,7 @@ export default function DispatchActions({
       const res = await fetch('/api/admin/speedy/labels', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cycleId, format: labelFormat }),
+        body: JSON.stringify({ cycleId, format: labelFormat, senderCopy }),
       });
 
       if (!res.ok) {
@@ -74,6 +75,19 @@ export default function DispatchActions({
           <option value="A4">A4</option>
           <option value="A4_4xA6">A4 (4×A6)</option>
         </select>
+        <label className="flex items-center gap-1 text-xs text-gray-600 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={senderCopy}
+            onChange={(e) => {
+              const checked = e.target.checked;
+              setSenderCopy(checked);
+              if (checked) setLabelFormat('A4');
+            }}
+            className="rounded"
+          />
+          Екземпляр подател
+        </label>
         <button
           onClick={handlePrintLabels}
           disabled={!hasWaybills || isPrinting}

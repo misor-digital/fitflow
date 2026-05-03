@@ -25,10 +25,11 @@ export async function POST(request: NextRequest): Promise<Response> {
     }
 
     const body = await request.json();
-    const { orderIds, cycleId, format = 'A6' } = body as {
+    const { orderIds, cycleId, format = 'A6', senderCopy = false } = body as {
       orderIds?: string[];
       cycleId?: string;
       format?: string;
+      senderCopy?: boolean;
     };
 
     if (!VALID_FORMATS.includes(format as LabelFormat)) {
@@ -73,7 +74,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     }
 
     // Generate labels (with batching if needed)
-    const pdfBuffers = await generateLabelsInBatches(allParcelIds, format as LabelFormat);
+    const pdfBuffers = await generateLabelsInBatches(allParcelIds, format as LabelFormat, senderCopy);
     const mergedPdf = await mergePdfBuffers(pdfBuffers);
 
     return new Response(Buffer.from(mergedPdf), {

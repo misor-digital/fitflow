@@ -26,7 +26,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const { data: orders, error } = await supabaseAdmin
       .from('orders')
       .select(
-        'id, order_number, customer_first_name, customer_last_name, delivery_method, shipping_address, speedy_waybill_id, speedy_status, delivery_fee_eur, delivery_fee_actual_eur',
+        'id, order_number, user_id, customer_first_name, customer_last_name, delivery_method, shipping_address, speedy_waybill_id, speedy_parcel_ids, speedy_status, delivery_fee_eur, delivery_fee_actual_eur',
       )
       .eq('delivery_cycle_id', cycleId)
       .neq('status', 'cancelled')

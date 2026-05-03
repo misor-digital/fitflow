@@ -20,6 +20,7 @@ const BATCH_SIZE = 10;
 export async function generateLabels(
   parcelIds: string[],
   format: LabelFormat = 'A6',
+  senderCopy: boolean = false,
 ): Promise<ArrayBuffer> {
   if (parcelIds.length === 0) {
     throw new Error('No parcel IDs provided for label generation');
@@ -28,6 +29,7 @@ export async function generateLabels(
   return speedyPrintLabels({
     paperSize: format,
     parcels: parcelIds.map((id) => ({ parcel: { id } })),
+    ...(senderCopy && format === 'A4' ? { additionalWaybillSenderCopy: 'ON_SAME_PAGE' } : {}),
   });
 }
 
@@ -38,13 +40,14 @@ export async function generateLabels(
 export async function generateLabelsInBatches(
   parcelIds: string[],
   format: LabelFormat = 'A6',
+  senderCopy: boolean = false,
 ): Promise<ArrayBuffer[]> {
   if (parcelIds.length === 0) {
     throw new Error('No parcel IDs provided for label generation');
   }
 
   if (parcelIds.length <= BATCH_SIZE) {
-    return [await generateLabels(parcelIds, format)];
+    return [await generateLabels(parcelIds, format, senderCopy)];
   }
 
   const batches: string[][] = [];
@@ -52,7 +55,7 @@ export async function generateLabelsInBatches(
     batches.push(parcelIds.slice(i, i + BATCH_SIZE));
   }
 
-  return Promise.all(batches.map((batch) => generateLabels(batch, format)));
+  return Promise.all(batches.map((batch) => generateLabels(batch, format, senderCopy)));
 }
 
 /**

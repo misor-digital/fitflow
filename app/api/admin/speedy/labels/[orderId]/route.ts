@@ -44,12 +44,18 @@ export async function GET(
       );
     }
 
-    const pdfBuffer = await generateLabels(order.speedy_parcel_ids, format as LabelFormat);
+    const senderCopy = request.nextUrl.searchParams.get('senderCopy') === 'true';
+    const download = request.nextUrl.searchParams.get('download') === 'true';
+    const pdfBuffer = await generateLabels(order.speedy_parcel_ids, format as LabelFormat, senderCopy);
+
+    const disposition = download
+      ? `attachment; filename="label-${order.order_number}.pdf"`
+      : `inline; filename="label-${order.order_number}.pdf"`;
 
     return new Response(pdfBuffer, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="label-${order.order_number}.pdf"`,
+        'Content-Disposition': disposition,
       },
     });
   } catch (error) {
