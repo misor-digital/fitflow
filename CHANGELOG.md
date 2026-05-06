@@ -1,5 +1,11 @@
 # fitflow
 
+## 1.7.1
+
+### Patch Changes
+
+- fbe15d8: Fix Speedy automat address metadata not being saved during subscription checkout
+
 ## 1.7.0
 
 ### Minor Changes
