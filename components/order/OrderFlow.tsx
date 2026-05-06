@@ -208,7 +208,7 @@ export default function OrderFlow({
             ...currentInput.address,
             deliveryMethod: currentInput.deliveryMethod,
           };
-          if (currentInput.deliveryMethod === 'speedy_office' && currentInput.speedyOffice) {
+          if ((currentInput.deliveryMethod === 'speedy_office' || currentInput.deliveryMethod === 'speedy_automat') && currentInput.speedyOffice) {
             addressPayload.speedyOfficeId = currentInput.speedyOffice.id;
             addressPayload.speedyOfficeName = currentInput.speedyOffice.name;
             addressPayload.speedyOfficeAddress = currentInput.speedyOffice.address;
