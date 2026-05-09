@@ -20,9 +20,9 @@ type FormMode = 'hidden' | 'create' | 'edit';
 // ============================================================================
 
 function formatAddressDisplay(addr: AddressRow): { primary: string; secondary?: string } {
-  if (addr.delivery_method === 'speedy_office') {
+  if (addr.delivery_method === 'speedy_office' || addr.delivery_method === 'speedy_automat') {
     return {
-      primary: addr.speedy_office_name ?? 'Speedy офис',
+      primary: addr.speedy_office_name ?? (addr.delivery_method === 'speedy_automat' ? 'Speedy автомат' : 'Speedy офис'),
       secondary: addr.speedy_office_address ?? undefined,
     };
   }

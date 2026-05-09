@@ -29,9 +29,9 @@ type FormMode = 'hidden' | 'create' | 'edit';
 // ============================================================================
 
 function formatAddressDisplay(addr: AddressRow): { primary: string; secondary?: string } {
-  if (addr.delivery_method === 'speedy_office') {
+  if (addr.delivery_method === 'speedy_office' || addr.delivery_method === 'speedy_automat') {
     return {
-      primary: addr.speedy_office_name ?? 'Speedy офис',
+      primary: addr.speedy_office_name ?? (addr.delivery_method === 'speedy_automat' ? 'Speedy автомат' : 'Speedy офис'),
       secondary: addr.speedy_office_address ?? undefined,
     };
   }
@@ -288,7 +288,7 @@ export default function AdminAddressManager({
                     {addr.label || 'Без етикет'}
                   </span>
                   <span className="text-xs text-gray-500">
-                    {addr.delivery_method === 'speedy_office' ? '📦 Speedy' : '📍 Адрес'}
+                    {(addr.delivery_method === 'speedy_office' || addr.delivery_method === 'speedy_automat') ? '📦 Speedy' : '📍 Адрес'}
                   </span>
                   {addr.is_default && (
                     <span className="inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-[var(--color-brand-orange)] text-white">

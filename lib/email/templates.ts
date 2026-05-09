@@ -133,10 +133,12 @@ function generateDeliverySection(data: ConfirmationEmailData): string {
 
   let addressHtml = '';
 
-  if (data.deliveryMethod === 'speedy_office') {
+  if (data.deliveryMethod === 'speedy_office' || data.deliveryMethod === 'speedy_automat') {
+    const methodLabel = data.deliveryMethod === 'speedy_automat' ? 'До автомат на Speedy' : 'До офис на Speedy';
+    const locationLabel = data.deliveryMethod === 'speedy_automat' ? 'Автомат' : 'Офис';
     addressHtml = `
-      <p style="margin: 5px 0;"><strong>Метод на доставка:</strong> До офис на Speedy</p>
-      ${data.speedyOfficeName ? `<p style="margin: 5px 0;"><strong>Офис:</strong> ${escapeHtml(data.speedyOfficeName)}</p>` : ''}
+      <p style="margin: 5px 0;"><strong>Метод на доставка:</strong> ${methodLabel}</p>
+      ${data.speedyOfficeName ? `<p style="margin: 5px 0;"><strong>${locationLabel}:</strong> ${escapeHtml(data.speedyOfficeName)}</p>` : ''}
       ${data.speedyOfficeAddress ? `<p style="margin: 5px 0; color: ${EMAIL.colors.textMutedAlt}; font-size: 14px;">${escapeHtml(data.speedyOfficeAddress)}</p>` : ''}
     `;
   } else {

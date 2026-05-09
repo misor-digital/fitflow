@@ -229,10 +229,10 @@ export default async function OrderDetailPage({
       {/* Shipping Address Card */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-6">
         <h2 className="text-lg font-bold text-gray-900 mb-4">Адрес за доставка</h2>
-        {order.delivery_method === 'speedy_office' && (
+        {(order.delivery_method === 'speedy_office' || order.delivery_method === 'speedy_automat') && (
           <div className="flex items-center gap-2 mb-2">
             <span className="inline-block text-xs px-2 py-0.5 rounded-full font-semibold bg-blue-100 text-blue-700">
-              📦 До офис на Speedy
+              📦 {order.delivery_method === 'speedy_automat' ? 'До автомат на Speedy' : 'До офис на Speedy'}
             </span>
           </div>
         )}

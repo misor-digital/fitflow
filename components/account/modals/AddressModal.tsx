@@ -49,8 +49,8 @@ export default function AddressModal({
   };
 
   const formatAddress = (addr: AddressRow) => {
-    if (addr.delivery_method === 'speedy_office') {
-      return addr.speedy_office_name ?? 'Speedy офис';
+    if (addr.delivery_method === 'speedy_office' || addr.delivery_method === 'speedy_automat') {
+      return addr.speedy_office_name ?? (addr.delivery_method === 'speedy_automat' ? 'Speedy автомат' : 'Speedy офис');
     }
     const parts = [addr.street_address, addr.city, addr.postal_code].filter(Boolean);
     if (addr.building_entrance) parts.push(`вх. ${addr.building_entrance}`);
@@ -102,7 +102,7 @@ export default function AddressModal({
                     )}
                   </div>
                   <p className="text-xs text-gray-500 mt-0.5 truncate">
-                    {addr.delivery_method === 'speedy_office' ? (
+                    {(addr.delivery_method === 'speedy_office' || addr.delivery_method === 'speedy_automat') ? (
                       <>
                         <span>📦 {formatAddress(addr)}</span>
                         {addr.speedy_office_address && (

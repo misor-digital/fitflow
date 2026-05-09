@@ -65,7 +65,7 @@ export default function SubscriptionCard({
   const address = addresses.find((a) => a.id === subscription.default_address_id);
   const addressLabel = address?.label || null;
   const addressDetail = address
-    ? address.delivery_method === 'speedy_office'
+    ? (address.delivery_method === 'speedy_office' || address.delivery_method === 'speedy_automat')
       ? address.speedy_office_name ?? ''
       : [address.street_address, address.city, address.postal_code].filter(Boolean).join(', ')
     : null;
