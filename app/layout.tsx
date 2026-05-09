@@ -33,6 +33,13 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="bg">
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js')}`,
+          }}
+        />
+      </head>
       <body className="antialiased">
         <AuthProvider>
           {/* Marathon charity banner takes priority during May 2026; falls back to cutoff banner otherwise */}
