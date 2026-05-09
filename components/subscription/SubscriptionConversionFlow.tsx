@@ -20,6 +20,7 @@ import DeliveryMethodToggle from '@/components/order/DeliveryMethodToggle';
 import SpeedyOfficeSelector from '@/components/order/SpeedyOfficeSelector';
 import AdminCustomerPanel from '@/components/order/AdminCustomerPanel';
 import { trackOrderToSubscriptionConversion } from '@/lib/analytics/subscription';
+import { useDeliveryPricing } from '@/hooks/useDeliveryPricing';
 import type { SubscriptionConversionFlowProps } from './conversion-types';
 
 // ============================================================================
@@ -106,6 +107,8 @@ export default function SubscriptionConversionFlow({
     phone: source.customerPhone ?? '',
   });
   const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>('address');
+  const { pricing: deliveryPricing } = useDeliveryPricing();
+  const deliveryFeeEur = deliveryPricing.get(deliveryMethod)?.priceEur ?? 0;
   const [speedyOffice, setSpeedyOffice] = useState<SpeedyOfficeSelection | null>(null);
   const [officeError, setOfficeError] = useState<string | null>(null);
 
@@ -927,10 +930,18 @@ export default function SubscriptionConversionFlow({
                 Код {source.campaignPromoCode} приложен - {priceInfo.discountPercent}% отстъпка
               </div>
             )}
+
+            {/* Delivery fee */}
+            <div className="flex justify-between items-center text-sm text-gray-600 pt-2 border-t border-gray-100">
+              <span>Такса доставка:</span>
+              <span className="font-semibold text-[var(--color-brand-navy)]">
+                {deliveryFeeEur > 0 ? formatPriceDual(deliveryFeeEur, deliveryFeeEur * 1.95583) : 'Безплатна'}
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Frequency picker */}
+        {/* Frequency picker */
         <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg mb-6">
           <h3 className="text-lg sm:text-xl font-bold text-[var(--color-brand-navy)] mb-4 border-b pb-2">
             Честота на доставка <span className="text-red-500">*</span>
@@ -1170,9 +1181,17 @@ export default function SubscriptionConversionFlow({
               Код {source.campaignPromoCode} - {priceInfo.discountPercent}% отстъпка
             </div>
           )}
+
+          {/* Delivery fee */}
+          <div className="flex justify-between items-center text-sm text-gray-600 pt-2 border-t border-gray-100">
+            <span>Такса доставка:</span>
+            <span className="font-semibold text-[var(--color-brand-navy)]">
+              {deliveryFeeEur > 0 ? formatPriceDual(deliveryFeeEur, deliveryFeeEur * 1.95583) : 'Безплатна'}
+            </span>
+          </div>
         </div>
 
-        {/* Address */}
+        {/* Address */
         <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg">
           <div className="flex justify-between items-start mb-3 border-b pb-2">
             <h3 className="text-lg sm:text-xl font-bold text-[var(--color-brand-navy)]">Адрес</h3>

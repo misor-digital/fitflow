@@ -257,6 +257,10 @@ export default function ConversionSummary({
               </span>
             </div>
           )}
+          <div className="flex justify-between text-sm sm:text-base text-gray-500 pt-2 border-t border-gray-100">
+            <span>Доставка:</span>
+            <span className="italic">По тарифа</span>
+          </div>
         </div>
       </div>
 
