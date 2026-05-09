@@ -94,7 +94,6 @@ export function generateSubscriptionCreatedEmail(params: SubscriptionCreatedPara
   const subscriptionNumber = escapeHtml(params.subscriptionNumber);
   const boxTypeName = escapeHtml(params.boxTypeName);
   const frequency = escapeHtml(params.frequency);
-  const nextDeliveryDate = escapeHtml(params.nextDeliveryDate);
   const cycleName = params.deliveryCycleName ? escapeHtml(params.deliveryCycleName) : 'следващия цикъл на доставка';
 
   const body = `

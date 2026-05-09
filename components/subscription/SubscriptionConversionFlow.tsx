@@ -941,7 +941,7 @@ export default function SubscriptionConversionFlow({
           </div>
         </div>
 
-        {/* Frequency picker */
+        {/* Frequency picker */}
         <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg mb-6">
           <h3 className="text-lg sm:text-xl font-bold text-[var(--color-brand-navy)] mb-4 border-b pb-2">
             Честота на доставка <span className="text-red-500">*</span>
@@ -1191,7 +1191,7 @@ export default function SubscriptionConversionFlow({
           </div>
         </div>
 
-        {/* Address */
+        {/* Address */}
         <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg">
           <div className="flex justify-between items-start mb-3 border-b pb-2">
             <h3 className="text-lg sm:text-xl font-bold text-[var(--color-brand-navy)]">Адрес</h3>
