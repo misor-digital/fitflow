@@ -276,6 +276,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // Validate delivery_cycle_id (optional)
     let validatedCycleId: string | null = null;
     let validatedCycleTitle: string | null = null;
+    let validatedCycleDate: string | null = null;
     if (deliveryCycleId && typeof deliveryCycleId === 'string') {
       const cycle = await getDeliveryCycleById(deliveryCycleId);
       if (!cycle) {
@@ -303,6 +304,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
       validatedCycleId = cycle.id;
       validatedCycleTitle = cycle.title ?? null;
+      // Revealed cycles have a past delivery_date — not meaningful for the customer's new order
+      validatedCycleDate = orderType !== 'onetime-revealed' ? cycle.delivery_date : null;
     } else if (orderType !== 'onetime-revealed') {
       // Auto-resolve the upcoming cycle whose cutoff hasn't passed yet
       const upcomingCycles = await getUpcomingCycles();
@@ -313,6 +316,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       if (eligibleCycle) {
         validatedCycleId = eligibleCycle.id;
         validatedCycleTitle = eligibleCycle.title ?? null;
+        validatedCycleDate = eligibleCycle.delivery_date;
       }
     }
 
@@ -721,7 +725,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         discountAmountEur: priceInfo.discountAmountEur ?? undefined,
         discountAmountBgn: priceInfo.discountAmountBgn ?? undefined,
         deliveryMethod: effectiveDeliveryMethod as 'address' | 'speedy_office',
+        deliveryFeeEur: deliveryFeeEur,
         deliveryCycleName: validatedCycleTitle,
+        deliveryDate: validatedCycleDate,
         speedyOfficeName: addressSnapshot.speedy_office_name ?? null,
         speedyOfficeAddress: addressSnapshot.speedy_office_address ?? null,
         shippingAddress: {

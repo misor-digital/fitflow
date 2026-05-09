@@ -13,7 +13,7 @@ import {
   formatSavings,
 } from '@/lib/catalog';
 import { escapeHtml } from '@/lib/utils/sanitize';
-import { formatDateShort } from '@/lib/utils/date';
+import { formatDateShort, formatDateLong } from '@/lib/utils/date';
 import { EMAIL } from './constants';
 import { wrapInEmailLayout, emailCtaButton, emailContactLine } from './layout';
 
@@ -172,6 +172,8 @@ function generateDeliverySection(data: ConfirmationEmailData): string {
     <div style="background-color: ${EMAIL.sections.delivery}; padding: 20px; border-radius: 8px; margin: 20px 0;">
       <h3 style="color: ${EMAIL.colors.textHeading}; margin-top: 0;">🚚 Данни за доставка</h3>
       ${recipientHtml}
+      ${data.deliveryDate ? `<p style="margin: 5px 0;"><strong>Дата на доставка:</strong> ${formatDateLong(data.deliveryDate)}</p>` : ''}
+      <p style="margin: 5px 0;"><strong>Цена:</strong> ${data.deliveryFeeEur != null && data.deliveryFeeEur > 0 ? safePriceDual(data.deliveryFeeEur, null) : 'Безплатна'}</p>
       ${addressHtml}
       ${notesHtml}
     </div>
@@ -228,7 +230,7 @@ export function generateConfirmationEmail(
   const personalizationSection = data.wantsPersonalization
     ? `
       <div style="background-color: ${EMAIL.sections.personalization}; padding: 20px; border-radius: 8px; margin: 20px 0;">
-        <h3 style="color: ${EMAIL.colors.textHeading}; margin-top: 0;">Твоите предпочитания</h3>
+        <h3 style="color: ${EMAIL.colors.textHeading}; margin-top: 0;">🎯 Твоите предпочитания</h3>
         ${sportsDisplay.length ? `<p><strong>Спортове:</strong> ${sportsDisplay.join(', ')}  ${printOtherOption(data.sports, data.sportOther)}</p>` : ''}
         ${data.colors?.length ? generateColorSwatchesHtml(data.colors, colorLabels) : ''}
         ${flavorsDisplay.length ? `<p><strong>Вкусове:</strong> ${flavorsDisplay.join(', ')}  ${printOtherOption(data.flavors, data.flavorOther)}</p>` : ''}
@@ -271,9 +273,9 @@ export function generateConfirmationEmail(
             <!-- Order Details -->
             <div style="background-color: ${EMAIL.sections.personalization}; padding: 20px; border-radius: 8px; margin: 20px 0;">
               <h3 style="color: ${EMAIL.colors.textHeading}; margin-top: 0;">📦 Детайли на поръчката</h3>
-              <p style="margin: 5px 0;"><strong>Номер на поръчка:</strong> ${data.orderId}</p>
-              <p style="margin: 5px 0;"><strong>Избрана кутия:</strong> ${data.boxTypeDisplay}${!data.hasPromoCode ? ` (${safePriceDual(data.originalPriceEur, data.originalPriceBgn)})` : ''}</p>
-              <p style="margin: 5px 0;"><strong>Цикъл на доставка:</strong> ${data.deliveryCycleName ? escapeHtml(data.deliveryCycleName) : 'следващия цикъл на доставка'}</p>
+              <p style="margin: 5px 0;"><strong>Поръчка:</strong> ${data.orderId}</p>
+              <p style="margin: 5px 0;"><strong>Кутия:</strong> ${data.boxTypeDisplay}${!data.hasPromoCode ? ` (${safePriceDual(data.originalPriceEur, data.originalPriceBgn)})` : ''}</p>
+              <p style="margin: 5px 0;"><strong>Цикъл:</strong> ${data.deliveryCycleName ? escapeHtml(data.deliveryCycleName) : 'следващия цикъл на доставка'}</p>
               <p style="margin: 5px 0;"><strong>Персонализация:</strong> ${data.wantsPersonalization ? 'Да' : 'Не'}</p>
             </div>
             
@@ -282,17 +284,6 @@ export function generateConfirmationEmail(
             ${promoCodeSection}
             
             ${personalizationSection}
-            
-            <!-- What's Next -->
-            <div style="border-left: 4px solid ${EMAIL.colors.ctaButton}; padding-left: 20px; margin: 30px 0;">
-              <h3 style="color: ${EMAIL.colors.textHeading}; margin-top: 0;">Какво следва?</h3>
-              <ol style="color: ${EMAIL.colors.textPrimary}; padding-left: 20px;">
-                <li style="margin-bottom: 10px;">Ще прегледаме твоята поръчка и предпочитания.</li>
-                <li style="margin-bottom: 10px;">Ще се свържем с теб за потвърждение на детайлите в близко бъдеще.</li>
-                <li style="margin-bottom: 10px;">Ще подготвим твоята персонализирана FitFlow кутия.</li>
-                <li>Ще получиш известие, когато кутията е на път към теб!</li>
-              </ol>
-            </div>
             
             ${emailContactLine()}
   `;
