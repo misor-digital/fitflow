@@ -1,5 +1,17 @@
 # fitflow
 
+## 1.8.0
+
+### Minor Changes
+
+- d906db8: Enrich order and subscription emails with delivery fee, delivery date, personalization summary, and delivery address details; show delivery fee in conversion flow UI and account orders list; add admin email template preview page and AdminSidebar sub-menus
+- fbc84d0: Add hero carousel with crossfade transitions, mobile/desktop image variants, and per-slide mobile text overlays
+- 3489869: Improve order-to-subscription conversion flow by pre-filling shipping address from the original order; fix speedy_automat delivery method not handled alongside speedy_office across email templates, order detail, address managers, and admin orders table
+
+### Patch Changes
+
+- a1ee94e: Fix PWA installability: populate manifest name/short_name/start_url, add manifest meta link, and register a service worker
+
 ## 1.7.1
 
 ### Patch Changes
