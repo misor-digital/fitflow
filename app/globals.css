@@ -74,19 +74,11 @@ body {
   .hero-cta-button { font-size: 1.2vw; padding: 1vw 1.85vw; }
 }
 
-/* Progressive landscape shift: smoothly slides the image left as the viewport
-   narrows, keeping the FitFlow box clear of the CTA overlay.
-   At wide viewports (≥16:9 aspect): left-aligned, no shift.
-   As it narrows: shifts toward center progressively.
-   Uses % so zoom doesn't cause over-shifting. */
-@media (orientation: landscape) and (max-aspect-ratio: 16/9) {
-  :root { --hero-pos: 20% center; }
-}
-@media (orientation: landscape) and (max-aspect-ratio: 14/9) {
-  :root { --hero-pos: 30% center; }
-}
-@media (orientation: landscape) and (max-aspect-ratio: 12/9) {
-  :root { --hero-pos: 40% center; }
+/* Hero carousel crossfade transition */
+@media (prefers-reduced-motion: reduce) {
+  .hero-carousel-slide {
+    transition: none !important;
+  }
 }
 
 /* Gentle pulse animation for promo discount prompt (replaces JS setInterval) */

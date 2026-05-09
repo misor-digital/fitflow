@@ -14,6 +14,7 @@ import { useScrollDepth } from '@/lib/analytics/useScrollDepth';
 import { formatDeliveryDate, formatMonthYear } from '@/lib/delivery';
 import { formatPrice } from '@/lib/catalog';
 import { CutoffCountdown } from '@/components/CutoffCountdown';
+import HeroCarousel from '@/components/HeroCarousel';
 import type { PricesMap } from '@/lib/catalog';
 
 function HomeContent() {
@@ -128,30 +129,8 @@ function HomeContent() {
           }}
         />
 
-        {/* Hero image - full viewport cover */}
-        <div className="absolute inset-0 z-10">
-          {/* Portrait viewport: tall hero */}
-          <Image
-            src="/storage/hero-portrait.png"
-            alt="FitFlow кутия с фитнес продукти"
-            fill
-            quality={100}
-            className="object-cover hero-portrait"
-            priority
-            sizes="100vw"
-          />
-          {/* Landscape viewport: wide hero */}
-          <Image
-            src="/storage/hero-landscape.png"
-            alt="FitFlow кутия с фитнес продукти"
-            fill
-            quality={100}
-            className="object-cover hero-landscape"
-            style={{ objectPosition: 'var(--hero-pos, left center)' }}
-            priority
-            sizes="100vw"
-          />
-        </div>
+        {/* Hero carousel - crossfade images */}
+        <HeroCarousel />
 
         {/* Bottom fade - contrast behind text (desktop only, mobile uses stacked layout) */}
         <div
