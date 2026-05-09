@@ -1,5 +1,5 @@
 import type { CatalogData, PriceInfo } from '@/lib/catalog';
-import type { DeliveryCycleRow } from '@/lib/supabase/types';
+import type { DeliveryCycleRow, ShippingAddressSnapshot } from '@/lib/supabase/types';
 
 // ============================================================================
 // Conversion Source Type
@@ -25,6 +25,7 @@ export interface SubscriptionConversionSource {
   sizeUpper: string | null;
   sizeLower: string | null;
   additionalNotes: string | null;
+  shippingAddress: ShippingAddressSnapshot | null;
   conversionToken: string;
   campaignPromoCode: string | null;
 }

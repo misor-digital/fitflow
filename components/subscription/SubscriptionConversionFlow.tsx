@@ -99,17 +99,34 @@ export default function SubscriptionConversionFlow({
   const [lastName, setLastName] = useState(source.customerLastName);
   const [phone, setPhone] = useState(source.customerPhone ?? '');
 
-  // ── Step 2: address ─────────────────────────────────────────────────────
+  // ── Step 2: address (pre-fill from order's shipping address) ────────────
+  const srcAddr = source.shippingAddress;
   const [address, setAddress] = useState<AddressInput>({
     ...EMPTY_ADDRESS,
-    firstName: source.customerFirstName,
-    lastName: source.customerLastName,
-    phone: source.customerPhone ?? '',
+    firstName: srcAddr?.first_name ?? source.customerFirstName,
+    lastName: srcAddr?.last_name ?? source.customerLastName,
+    phone: srcAddr?.phone ?? source.customerPhone ?? '',
+    city: srcAddr?.city ?? '',
+    postalCode: srcAddr?.postal_code ?? '',
+    streetAddress: srcAddr?.street_address ?? '',
+    buildingEntrance: srcAddr?.building_entrance ?? '',
+    floor: srcAddr?.floor ?? '',
+    apartment: srcAddr?.apartment ?? '',
+    deliveryNotes: srcAddr?.delivery_notes ?? '',
   });
-  const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>('address');
+  const initialDeliveryMethod: DeliveryMethod = srcAddr?.delivery_method ?? 'address';
+  const [deliveryMethod, setDeliveryMethod] = useState<DeliveryMethod>(initialDeliveryMethod);
   const { pricing: deliveryPricing } = useDeliveryPricing();
   const deliveryFeeEur = deliveryPricing.get(deliveryMethod)?.priceEur ?? 0;
-  const [speedyOffice, setSpeedyOffice] = useState<SpeedyOfficeSelection | null>(null);
+  const [speedyOffice, setSpeedyOffice] = useState<SpeedyOfficeSelection | null>(
+    srcAddr?.speedy_office_id
+      ? {
+          id: srcAddr.speedy_office_id,
+          name: srcAddr.speedy_office_name ?? '',
+          address: srcAddr.speedy_office_address ?? '',
+        }
+      : null,
+  );
   const [officeError, setOfficeError] = useState<string | null>(null);
 
   // Saved addresses (authenticated)

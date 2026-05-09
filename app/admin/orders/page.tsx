@@ -93,7 +93,7 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
   function buildUrl(overrides: Record<string, string | undefined>) {
     const p = new URLSearchParams();
     const merged = {
-      cycleId: activeCycleId !== 'all' ? activeCycleId : undefined,
+      cycleId: activeCycleId,
       status: params.status,
       boxType: params.boxType,
       search: params.search,
