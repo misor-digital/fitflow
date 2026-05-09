@@ -25,7 +25,7 @@ import {
   generateSubscriptionConversionEmail,
   SUBSCRIPTION_CONVERSION_SUBJECT,
 } from '@/lib/email/order-subscription-conversion-email';
-import { resolveEmailLabels, FREQUENCY_LABELS } from '@/lib/email/labels';
+import { resolveEmailLabels, FREQUENCY_LABELS, buildPersonalizationLines } from '@/lib/email/labels';
 import { sendTransactionalEmail } from '@/lib/email/brevo/transactional';
 import { eurToBgn } from '@/lib/data';
 import {
@@ -587,6 +587,19 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           const frequencyLabel = FREQUENCY_LABELS[frequency] ?? frequency;
           const basePriceBgn = await eurToBgn(subscription.base_price_eur);
           const currentPriceBgn = await eurToBgn(subscription.current_price_eur);
+          const personalizationLines = buildPersonalizationLines({
+            wants_personalization: effectiveWantsPersonalization,
+            sports: effectiveSports,
+            sport_other: preferences?.sportOther ?? sourceOrder?.sport_other ?? null,
+            colors: effectiveColors,
+            flavors: effectiveFlavors,
+            flavor_other: preferences?.flavorOther ?? sourceOrder?.flavor_other ?? null,
+            dietary: effectiveDietary,
+            dietary_other: preferences?.dietaryOther ?? sourceOrder?.dietary_other ?? null,
+            size_upper: effectiveSizeUpper,
+            size_lower: effectiveSizeLower,
+            additional_notes: preferences?.additionalNotes ?? sourceOrder?.additional_notes ?? null,
+          }, labels);
 
           const html = generateSubscriptionConversionEmail({
             firstName: sourceOrder.customer_first_name,
@@ -607,7 +620,30 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             subscriptionNumber: subscription.subscription_number,
             isNewAccount,
             loginUrl: accountLoginUrl,
+            deliveryFeeEur: sourceOrder.delivery_fee_eur ?? null,
             deliveryCycleName: upcomingForEmail?.title,
+            personalizationLines,
+            delivery: {
+              deliveryMethod: sourceOrder.delivery_method as 'address' | 'speedy_office' | 'speedy_automat' | null,
+              speedyOfficeName: sourceOrder.shipping_address?.speedy_office_name ?? null,
+              speedyOfficeAddress: sourceOrder.shipping_address?.speedy_office_address ?? null,
+              recipientName: `${sourceOrder.customer_first_name} ${sourceOrder.customer_last_name}`.trim(),
+              recipientPhone: sourceOrder.customer_phone ?? null,
+              shippingAddress: sourceOrder.shipping_address
+                ? {
+                    firstName: sourceOrder.shipping_address.first_name,
+                    lastName: sourceOrder.shipping_address.last_name,
+                    phone: sourceOrder.shipping_address.phone ?? null,
+                    city: sourceOrder.shipping_address.city ?? null,
+                    postalCode: sourceOrder.shipping_address.postal_code ?? null,
+                    streetAddress: sourceOrder.shipping_address.street_address ?? null,
+                    buildingEntrance: sourceOrder.shipping_address.building_entrance ?? null,
+                    floor: sourceOrder.shipping_address.floor ?? null,
+                    apartment: sourceOrder.shipping_address.apartment ?? null,
+                    deliveryNotes: sourceOrder.shipping_address.delivery_notes ?? null,
+                  }
+                : null,
+            },
           });
 
           await sendTransactionalEmail({
@@ -640,7 +676,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       const emailAddr = session?.email ?? '';
 
       if (emailAddr) {
-        sendSubscriptionCreatedEmail(emailAddr, subscription, nextDate, upcomingForEmail?.title).catch(() => {});
+        sendSubscriptionCreatedEmail(emailAddr, subscription, nextDate, upcomingForEmail?.title, savedAddress).catch(() => {});
 
         // Sync subscription to Brevo contacts (fire-and-forget)
         syncSubscriptionChange({

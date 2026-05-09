@@ -7,7 +7,7 @@
 
 import { escapeHtml } from '@/lib/utils/sanitize';
 import { EMAIL } from './constants';
-import { wrapInEmailLayout, emailCtaButton, emailContactLine } from './layout';
+import { wrapInEmailLayout, emailCtaButton, emailContactLine, emailDeliverySection, type EmailDeliveryInfo } from './layout';
 
 // ============================================================================
 // Parameter Interfaces
@@ -19,6 +19,8 @@ export interface SubscriptionCreatedParams {
   frequency: string;
   nextDeliveryDate: string;
   deliveryCycleName?: string | null;
+  personalizationLines?: string[];
+  delivery?: EmailDeliveryInfo;
   manageUrl: string;
 }
 
@@ -77,8 +79,9 @@ export interface PreferencesUpdatedParams {
 // Shared Helpers
 // ============================================================================
 
-function infoBox(lines: string[]): string {
+function infoBox(title: string, lines: string[]): string {
   return `<div style="background-color: ${EMAIL.sections.delivery}; padding: 20px; border-radius: 8px; margin: 20px 0;">
+  <h3 style="color: ${EMAIL.colors.textHeading}; margin: 0 0 12px 0;">${title}</h3>
   ${lines.map((l) => `<p style="margin: 5px 0; color: ${EMAIL.colors.textHeading};"><strong>${l}</strong></p>`).join('\n  ')}
 </div>`;
 }
@@ -91,7 +94,6 @@ export function generateSubscriptionCreatedEmail(params: SubscriptionCreatedPara
   const subscriptionNumber = escapeHtml(params.subscriptionNumber);
   const boxTypeName = escapeHtml(params.boxTypeName);
   const frequency = escapeHtml(params.frequency);
-  const nextDeliveryDate = escapeHtml(params.nextDeliveryDate);
   const cycleName = params.deliveryCycleName ? escapeHtml(params.deliveryCycleName) : 'следващия цикъл на доставка';
 
   const body = `
@@ -99,13 +101,29 @@ export function generateSubscriptionCreatedEmail(params: SubscriptionCreatedPara
     <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
       Благодарим ти, че се абонира за <strong>${boxTypeName}</strong> кутия с <strong>${frequency}</strong> доставка.
     </p>
-    ${infoBox([
-      `📋 Абонамент: ${subscriptionNumber}`,
-      `📦 Кутия: ${boxTypeName}`,
-      `🔄 Честота: ${frequency}`,
-      `📅 Следваща доставка: ${nextDeliveryDate}`,
-      `🚚 Цикъл: ${cycleName}`,
+    ${infoBox('📦 Детайли', [
+      `Абонамент: ${subscriptionNumber}`,
+      `Кутия: ${boxTypeName}`,
+      `Честота: ${frequency}`,
+      `Цикъл: ${cycleName}`,
     ])}
+    ${params.personalizationLines?.length ? `
+    <div style="background-color: ${EMAIL.sections.personalization}; padding: 20px; border-radius: 8px; margin: 20px 0;">
+      <h3 style="color: ${EMAIL.colors.textHeading}; margin: 0 0 12px 0;">🎯 Твоите предпочитания</h3>
+      ${params.personalizationLines.map((l) => `<p style="margin: 5px 0; color: ${EMAIL.colors.textPrimary};">${escapeHtml(l)}</p>`).join('\n      ')}
+    </div>
+    ` : ''}
+    ${params.delivery ? emailDeliverySection(params.delivery) : ''}
+
+    <div style="background-color: ${EMAIL.sections.personalization}; padding: 20px; border-radius: 8px; margin: 30px 0;">
+      <h3 style="color: ${EMAIL.colors.textHeading}; margin: 0 0 12px 0;">📋 Какво следва?</h3>
+      <ul style="color: ${EMAIL.colors.textPrimary}; font-size: 15px; line-height: 1.8; margin: 0; padding-left: 20px;">
+        <li>Ще получиш имейл преди всяка доставка</li>
+        <li>Можеш да управляваш абонамента си от <a href="https://fitflow.bg/account/subscriptions" style="color: ${EMAIL.colors.linkColor}; font-weight: 600;">профила си</a></li>
+        <li>Можеш да поставиш на пауза или да откажеш по всяко време</li>
+      </ul>
+    </div>
+
     ${emailCtaButton(params.manageUrl, 'Управление на абонамента')}
     ${emailContactLine()}`;
 
@@ -137,7 +155,7 @@ export function generateSubscriptionResumedEmail(params: SubscriptionResumedPara
     <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
       Твоят абонамент <strong>${subscriptionNumber}</strong> за <strong>${boxTypeName}</strong> кутия отново е активен.
     </p>
-    ${infoBox([`📅 Следваща доставка: ${nextDeliveryDate}`])}
+    ${infoBox('📅 Детайли', [`Следваща доставка: ${nextDeliveryDate}`])}
     ${emailCtaButton(params.manageUrl, 'Управление на абонамента')}
     ${emailContactLine()}`;
 
@@ -174,7 +192,7 @@ export function generateDeliveryUpcomingEmail(params: DeliveryUpcomingParams): s
     <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
       Твоята <strong>${boxTypeName}</strong> кутия е на път!
     </p>
-    ${infoBox([
+    ${infoBox('📦 Детайли', [
       `📋 Абонамент: ${subscriptionNumber}`,
       `📦 Кутия: ${boxTypeName}`,
       `🧾 Поръчка: #${orderNumber}`,
@@ -198,7 +216,7 @@ export function generateFrequencyChangedEmail(params: FrequencyChangedParams): s
     <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
       Честотата на абонамент <strong>${subscriptionNumber}</strong> е успешно променена.
     </p>
-    ${infoBox([
+    ${infoBox('🔄 Промяна', [
       `📋 Абонамент: ${subscriptionNumber}`,
       `📦 Кутия: ${boxTypeName}`,
       `❌ Предишна честота: ${oldFrequency}`,
@@ -221,7 +239,7 @@ export function generateAddressChangedEmail(params: AddressChangedParams): strin
     <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
       Адресът за доставка на абонамент <strong>${subscriptionNumber}</strong> е успешно променен.
     </p>
-    ${infoBox([
+    ${infoBox('📍 Промяна', [
       `📋 Абонамент: ${subscriptionNumber}`,
       `📦 Кутия: ${boxTypeName}`,
       `❌ Предишен адрес: ${oldAddress}`,
@@ -242,7 +260,7 @@ export function generatePreferencesUpdatedEmail(params: PreferencesUpdatedParams
     <p style="color: ${EMAIL.colors.textPrimary}; font-size: 16px; line-height: 1.6;">
       Персонализацията на абонамент <strong>${subscriptionNumber}</strong> е успешно обновена.
     </p>
-    ${infoBox([
+    ${infoBox('🎯 Предпочитания', [
       `📋 Абонамент: ${subscriptionNumber}`,
       `📦 Кутия: ${boxTypeName}`,
       ...params.summaryLines.map((l) => escapeHtml(l)),

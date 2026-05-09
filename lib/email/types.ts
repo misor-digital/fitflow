@@ -99,8 +99,10 @@ export interface ConfirmationEmailData {
   finalPriceBgn?: number | null;
   discountAmountBgn?: number | null;
   // Delivery fields
-  deliveryMethod?: 'address' | 'speedy_office';
+  deliveryMethod?: 'address' | 'speedy_office' | 'speedy_automat';
+  deliveryFeeEur?: number | null;
   deliveryCycleName?: string | null;
+  deliveryDate?: string | null;
   speedyOfficeName?: string | null;
   speedyOfficeAddress?: string | null;
   shippingAddress?: {

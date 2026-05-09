@@ -7,7 +7,9 @@
  */
 
 import { sendTransactionalEmail } from '@/lib/email/brevo';
-import { resolveEmailLabels, FREQUENCY_LABELS } from '@/lib/email/labels';
+import { resolveEmailLabels, FREQUENCY_LABELS, buildPersonalizationLines } from '@/lib/email/labels';
+import { formatPriceDual } from '@/lib/catalog';
+import { getDeliveryFee } from '@/lib/delivery/pricing';
 import {
   generateSubscriptionCreatedEmail,
   generateSubscriptionPausedEmail,
@@ -23,7 +25,7 @@ import {
   SUBSCRIPTION_CONVERSION_SUBJECT,
   type SubscriptionConversionEmailData,
 } from '@/lib/email/order-subscription-conversion-email';
-import type { SubscriptionRow } from '@/lib/supabase/types';
+import type { SubscriptionRow, AddressRow } from '@/lib/supabase/types';
 
 /**
  * Send email when a new subscription is created.
@@ -33,11 +35,28 @@ export async function sendSubscriptionCreatedEmail(
   subscription: SubscriptionRow,
   nextDeliveryDate: string,
   deliveryCycleName?: string | null,
+  address?: AddressRow | null,
 ): Promise<void> {
   try {
     const labels = await resolveEmailLabels();
     const boxTypeName = labels.boxTypes[subscription.box_type] ?? subscription.box_type;
     const frequency = FREQUENCY_LABELS[subscription.frequency] ?? subscription.frequency;
+    const personalizationLines = buildPersonalizationLines({
+      wants_personalization: subscription.wants_personalization,
+      sports: subscription.sports,
+      sport_other: subscription.sport_other,
+      colors: subscription.colors,
+      flavors: subscription.flavors,
+      flavor_other: subscription.flavor_other,
+      dietary: subscription.dietary,
+      dietary_other: subscription.dietary_other,
+      size_upper: subscription.size_upper,
+      size_lower: subscription.size_lower,
+      additional_notes: subscription.additional_notes,
+    }, labels);
+
+    const feeEur = address ? await getDeliveryFee(address.delivery_method) : null;
+    const feeLabel = feeEur != null ? (feeEur > 0 ? formatPriceDual(feeEur, feeEur * 1.95583) : 'Безплатна') : null;
 
     const htmlContent = generateSubscriptionCreatedEmail({
       subscriptionNumber: subscription.subscription_number,
@@ -45,6 +64,26 @@ export async function sendSubscriptionCreatedEmail(
       frequency,
       nextDeliveryDate,
       deliveryCycleName,
+      personalizationLines,
+      delivery: address ? {
+        deliveryMethod: address.delivery_method,
+        speedyOfficeName: address.speedy_office_name,
+        speedyOfficeAddress: address.speedy_office_address,
+        deliveryDate: nextDeliveryDate,
+        deliveryFeeLabel: feeLabel,
+        shippingAddress: {
+          firstName: address.first_name,
+          lastName: address.last_name,
+          phone: address.phone,
+          city: address.city,
+          postalCode: address.postal_code,
+          streetAddress: address.street_address,
+          buildingEntrance: address.building_entrance,
+          floor: address.floor,
+          apartment: address.apartment,
+          deliveryNotes: address.delivery_notes,
+        },
+      } : undefined,
       manageUrl: 'https://fitflow.bg/account/subscriptions',
     });
 

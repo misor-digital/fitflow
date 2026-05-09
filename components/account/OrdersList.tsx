@@ -580,6 +580,14 @@ export function OrdersList({
               <span className="font-medium text-gray-700">Метод на доставка:</span>{' '}
               {formatDeliveryMethodLabel(order.delivery_method)}
             </div>
+            {order.delivery_fee_eur != null && (
+              <div>
+                <span className="font-medium text-gray-700">Такса доставка:</span>{' '}
+                {order.delivery_fee_eur > 0
+                  ? dualPrice(order.delivery_fee_eur, eurToBgnRate)
+                  : 'Безплатна'}
+              </div>
+            )}
             {order.promo_code && (
               <div>
                 <span className="font-medium text-gray-700">Промо код:</span>{' '}

@@ -80,3 +80,87 @@ export function emailContactLine(): string {
   </a>
 </p>`;
 }
+
+// ============================================================================
+// Shared Delivery Section
+// ============================================================================
+
+export interface EmailDeliveryInfo {
+  deliveryMethod?: 'address' | 'speedy_office' | 'speedy_automat' | null;
+  speedyOfficeName?: string | null;
+  speedyOfficeAddress?: string | null;
+  deliveryDate?: string | null;
+  deliveryFeeLabel?: string | null;
+  recipientName?: string | null;
+  recipientPhone?: string | null;
+  shippingAddress?: {
+    firstName?: string | null;
+    lastName?: string | null;
+    phone?: string | null;
+    city?: string | null;
+    postalCode?: string | null;
+    streetAddress?: string | null;
+    buildingEntrance?: string | null;
+    floor?: string | null;
+    apartment?: string | null;
+    deliveryNotes?: string | null;
+  } | null;
+}
+
+/** Renders a "🚚 Данни за доставка" section. Returns empty string when no delivery method is provided. */
+export function emailDeliverySection(info: EmailDeliveryInfo): string {
+  if (!info.deliveryMethod) return '';
+
+  const esc = (v: string | null | undefined) =>
+    v ? v.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') : '';
+
+  let addressHtml = '';
+  if (info.deliveryMethod === 'speedy_office' || info.deliveryMethod === 'speedy_automat') {
+    const label = info.deliveryMethod === 'speedy_automat' ? 'До автомат на Speedy' : 'До офис на Speedy';
+    addressHtml = `
+      <p style="margin: 5px 0;"><strong>Метод на доставка:</strong> ${label}</p>
+      ${info.speedyOfficeName ? `<p style="margin: 5px 0;"><strong>Локация:</strong> ${esc(info.speedyOfficeName)}</p>` : ''}
+      ${info.speedyOfficeAddress ? `<p style="margin: 5px 0; color: ${EMAIL.colors.textMuted}; font-size: 14px;">${esc(info.speedyOfficeAddress)}</p>` : ''}
+    `;
+  } else {
+    const addr = info.shippingAddress;
+    if (addr) {
+      const parts: string[] = [];
+      if (addr.streetAddress) parts.push(esc(addr.streetAddress));
+      if (addr.buildingEntrance) parts.push(`Вход ${esc(addr.buildingEntrance)}`);
+      if (addr.floor) parts.push(`ет. ${esc(addr.floor)}`);
+      if (addr.apartment) parts.push(`ап. ${esc(addr.apartment)}`);
+      const line1 = parts.join(', ');
+      const line2 = [addr.postalCode, addr.city].filter(Boolean).map(esc).join(' ');
+      addressHtml = `
+        <p style="margin: 5px 0;"><strong>Метод на доставка:</strong> Доставка до адрес</p>
+        ${line1 ? `<p style="margin: 5px 0;">${line1}</p>` : ''}
+        ${line2 ? `<p style="margin: 5px 0;">${line2}</p>` : ''}
+      `;
+    }
+  }
+
+  const addr = info.shippingAddress;
+  const resolvedName = addr?.firstName
+    ? `${esc(addr.firstName)} ${esc(addr.lastName ?? '')}`.trim()
+    : esc(info.recipientName);
+  const resolvedPhone = addr?.phone ?? info.recipientPhone;
+  const recipientHtml = resolvedName ? `
+    <p style="margin: 5px 0;"><strong>Получател:</strong> ${resolvedName}</p>
+    ${resolvedPhone ? `<p style="margin: 5px 0;"><strong>Телефон:</strong> ${esc(resolvedPhone)}</p>` : ''}
+  ` : '';
+
+  const notesHtml = addr?.deliveryNotes
+    ? `<p style="margin: 5px 0; color: ${EMAIL.colors.textMuted}; font-size: 14px;"><strong>Бележки:</strong> ${esc(addr.deliveryNotes)}</p>`
+    : '';
+
+  return `
+  <div style="background-color: ${EMAIL.sections.delivery}; padding: 20px; border-radius: 8px; margin: 20px 0;">
+    <h3 style="color: ${EMAIL.colors.textHeading}; margin-top: 0;">🚚 Данни за доставка</h3>
+    ${recipientHtml}
+    ${info.deliveryDate ? `<p style="margin: 5px 0;"><strong>Дата на доставка:</strong> ${esc(info.deliveryDate)}</p>` : ''}
+    ${info.deliveryFeeLabel != null ? `<p style="margin: 5px 0;"><strong>Цена:</strong> ${esc(info.deliveryFeeLabel)}</p>` : ''}
+    ${addressHtml}
+    ${notesHtml}
+  </div>`;
+}

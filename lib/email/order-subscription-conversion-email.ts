@@ -8,7 +8,7 @@
 import { escapeHtml } from '@/lib/utils/sanitize';
 import { formatPriceDual } from '@/lib/catalog/format';
 import { EMAIL } from './constants';
-import { wrapInEmailLayout, emailCtaButton, emailContactLine } from './layout';
+import { wrapInEmailLayout, emailCtaButton, emailContactLine, emailDeliverySection, type EmailDeliveryInfo } from './layout';
 
 // ============================================================================
 // Parameter Interface
@@ -33,7 +33,10 @@ export interface SubscriptionConversionEmailData {
   subscriptionNumber: string;
   isNewAccount: boolean;
   loginUrl: string | null;
+  deliveryFeeEur?: number | null;
   deliveryCycleName?: string | null;
+  personalizationLines?: string[];
+  delivery?: EmailDeliveryInfo;
 }
 
 // ============================================================================
@@ -64,33 +67,37 @@ export function generateSubscriptionConversionEmail(
 
   if (hasDiscount) {
     priceLines.push(
-      `💰 Редовна цена: <span style="text-decoration: line-through;">${formatPriceDual(data.basePriceEur, data.basePriceBgn)}</span>`,
+      `Редовна цена: <span style="text-decoration: line-through;">${formatPriceDual(data.basePriceEur, data.basePriceBgn)}</span>`,
     );
     priceLines.push(
-      `🏷️ Цена с отстъпка: <strong>${formatPriceDual(data.currentPriceEur, data.currentPriceBgn)}</strong>`,
+      `Цена с отстъпка: <strong>${formatPriceDual(data.currentPriceEur, data.currentPriceBgn)}</strong>`,
     );
     priceLines.push(
-      `✅ Приложен код: <strong>${escapeHtml(data.promoCode!)}</strong> (-${data.discountPercent}%)`,
+      `Приложен код: <strong>${escapeHtml(data.promoCode!)}</strong> (-${data.discountPercent}%)`,
     );
   } else {
     priceLines.push(
-      `💰 Цена: <strong>${formatPriceDual(data.currentPriceEur, data.currentPriceBgn)}</strong>`,
+      `Цена: <strong>${formatPriceDual(data.currentPriceEur, data.currentPriceBgn)}</strong>`,
     );
   }
 
   // -- Info box lines -------------------------------------------------------
+  const cycleName = data.deliveryCycleName ? escapeHtml(data.deliveryCycleName) : 'следващия цикъл на доставка';
   const infoLines = [
-    `� Абонамент: ${escapeHtml(data.subscriptionNumber)}`,
-    `�📦 Кутия: ${boxName}`,
-    `🔄 Честота: ${frequencyLabel}`,
+    `Абонамент: ${escapeHtml(data.subscriptionNumber)}`,
+    `Кутия: ${boxName}`,
+    `Честота: ${frequencyLabel}`,
     ...priceLines,
+    `Цикъл: ${cycleName}`,
   ];
 
-  if (data.nextDeliveryDate) {
-    infoLines.push(`📅 Следваща доставка: ${escapeHtml(data.nextDeliveryDate)}`);
-  }
-  const cycleName = data.deliveryCycleName ? escapeHtml(data.deliveryCycleName) : 'следващия цикъл на доставка';
-  infoLines.push(`🚚 Цикъл: ${cycleName}`);
+  // -- Merged delivery info (adds date + fee into the delivery section) -----
+  const feeLabel = data.deliveryFeeEur != null
+    ? (data.deliveryFeeEur > 0 ? formatPriceDual(data.deliveryFeeEur, data.deliveryFeeEur * 1.95583) : 'Безплатна')
+    : null;
+  const mergedDelivery: EmailDeliveryInfo | undefined = data.delivery
+    ? { ...data.delivery, deliveryDate: data.nextDeliveryDate ?? null, deliveryFeeLabel: feeLabel }
+    : undefined;
 
   // -- Account login block (conditional - new guests) -----------------------
   const accountLoginHtml =
@@ -123,6 +130,7 @@ export function generateSubscriptionConversionEmail(
     </p>
 
     <div style="background-color: ${EMAIL.sections.delivery}; padding: 20px; border-radius: 8px; margin: 20px 0;">
+      <h3 style="color: ${EMAIL.colors.textHeading}; margin: 0 0 12px 0;">📦 Детайли</h3>
       ${infoLines.map((l) => `<p style="margin: 5px 0; color: ${EMAIL.colors.textHeading};"><strong>${l}</strong></p>`).join('\n      ')}
     </div>
 
@@ -131,6 +139,15 @@ export function generateSubscriptionConversionEmail(
     </p>
 
     ${accountLoginHtml}
+
+    ${data.personalizationLines?.length ? `
+    <div style="background-color: ${EMAIL.sections.personalization}; padding: 20px; border-radius: 8px; margin: 30px 0;">
+      <h3 style="color: ${EMAIL.colors.textHeading}; margin: 0 0 12px 0;">🎯 Твоите предпочитания</h3>
+      ${data.personalizationLines.map((l) => `<p style="margin: 5px 0; color: ${EMAIL.colors.textPrimary};">${escapeHtml(l)}</p>`).join('\n      ')}
+    </div>
+    ` : ''}
+
+    ${mergedDelivery ? emailDeliverySection(mergedDelivery) : ''}
 
     <div style="background-color: ${EMAIL.sections.personalization}; padding: 20px; border-radius: 8px; margin: 30px 0;">
       <h3 style="color: ${EMAIL.colors.textHeading}; margin: 0 0 12px 0;">📋 Какво следва?</h3>
