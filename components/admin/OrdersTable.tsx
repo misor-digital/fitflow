@@ -11,6 +11,7 @@ import { formatShippingAddressOneLine, ALLOWED_TRANSITIONS } from '@/lib/order';
 import { formatPriceDual, eurToBgnSync } from '@/lib/catalog';
 import { formatDateTimeShort } from '@/lib/utils/date';
 import OrderPromoAction from './OrderPromoAction';
+import OrderConversionAction from './OrderConversionAction';
 
 // ============================================================================
 // Types
@@ -789,6 +790,9 @@ function OrderRowDetail({
             Преобразувана от предварителна поръчка
           </p>
         )}
+
+        {/* Subscription conversion action */}
+        <OrderConversionAction order={order} onSuccess={onRefresh} />
 
         {/* Admin promo management */}
         <OrderPromoAction

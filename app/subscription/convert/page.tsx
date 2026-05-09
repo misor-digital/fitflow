@@ -164,6 +164,7 @@ export default async function SubscriptionConvertPage({
     sizeUpper: order.size_upper,
     sizeLower: order.size_lower,
     additionalNotes: order.additional_notes,
+    shippingAddress: order.shipping_address ?? null,
     conversionToken: token,
     campaignPromoCode: promo || null,
   };
