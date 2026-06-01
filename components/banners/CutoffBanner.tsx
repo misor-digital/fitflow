@@ -63,10 +63,6 @@ export function CutoffBanner() {
   if (pathname === '/order/thank-you') return null;
   if (pathname?.startsWith('/admin')) return null;
 
-  // Yield to marathon charity banner during May 2026
-  const now = new Date();
-  if (now.getFullYear() === 2026 && now.getMonth() === 4) return null;
-
   // Respect admin toggle
   if (upcomingDelivery?.cutoffBannerEnabled === false) return null;
 

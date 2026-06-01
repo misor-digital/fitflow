@@ -3,8 +3,6 @@ import "./globals.css";
 import CookieConsentBanner from "@/components/CookieConsentBanner";
 import ConditionalScripts from "@/components/ConditionalScripts";
 import { CutoffBanner } from "@/components/banners/CutoffBanner";
-import { MarathonBanner } from "@/components/banners/MarathonBanner";
-import { DonationBubble } from "@/components/banners/DonationBubble";
 import AuthProvider from "@/components/AuthProvider";
 import { initializeEmailSystem } from "@/lib/data";
 
@@ -42,13 +40,10 @@ export default function RootLayout({
       </head>
       <body className="antialiased">
         <AuthProvider>
-          {/* Marathon charity banner takes priority during May 2026; falls back to cutoff banner otherwise */}
-          <MarathonBanner />
           <CutoffBanner />
           {children}
         </AuthProvider>
         <CookieConsentBanner />
-        <DonationBubble />
         <ConditionalScripts 
           googleAnalyticsId={process.env.NEXT_PUBLIC_GA_ID ?? ''}
           facebookPixelId={process.env.NEXT_PUBLIC_META_PIXEL_ID ?? ''}
