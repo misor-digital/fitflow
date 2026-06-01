@@ -5,12 +5,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 const slides = [
   {
-    desktop: '/storage/carousel/marathon-desktop.png',
-    mobile: '/storage/carousel/marathon-mobile.png',
-    alt: 'FitFlow - Благотворителна кампания в подкрепа на онкоболни студенти - за каузата на "Студентите бягат с УАСГ" 2026',
-    mobileOverlay: true,
-  },
-  {
     desktop: '/storage/carousel/box-april-desktop.jpg',
     mobile: '/storage/carousel/box-april-mobile.png',
     alt: 'FitFlow - кутия Април 2026',
@@ -66,7 +60,6 @@ export default function HeroCarousel() {
   };
 
   return (
-    <>
     <div
       className="absolute inset-x-0 bottom-0 z-10"
       style={{ top: 'var(--banner-h, 0px)' }}
@@ -128,30 +121,5 @@ export default function HeroCarousel() {
         ))}
       </div>
     </div>
-
-    {/* Mobile-only text overlay for charity slide — rendered outside z-10 carousel */}
-    <div
-      className="absolute inset-0 z-35 pointer-events-none flex items-center justify-center landscape:hidden"
-      style={{
-        opacity: active === 0 ? 1 : 0,
-        transition: `opacity ${TRANSITION_MS}ms ease-in-out`,
-      }}
-    >
-      <div className="bg-[rgba(90,30,30,0.75)] backdrop-blur-[2px] rounded-xl px-5 py-5 mx-4 text-center">
-        <p className="text-white font-extrabold text-lg leading-tight mb-1">
-          <span className="text-[#FB7D00] text-2xl">10%</span> от всяка продадена кутия
-        </p>
-        <p className="text-white/90 italic text-base mb-3">
-          през май ще бъдат дарени
-        </p>
-        <p className="text-white/80 font-bold text-[0.65rem] uppercase tracking-wide leading-snug">
-          За каузата на &quot;Студентите бягат с УАСГ&quot; 2026 — подпомагане на онкоболни студенти.
-        </p>
-        <p className="text-[#FB7D00] font-bold text-[0.65rem] uppercase tracking-wide leading-snug mt-2">
-          Допълнително: всеки участник ще получи 10% отстъпка към стартовите номера.
-        </p>
-      </div>
-    </div>
-  </>
   );
 }
