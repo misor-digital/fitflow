@@ -58,9 +58,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       userEmail: order.customer_email,
       userPhone: order.customer_phone || addr.phone || '',
       readableId: order.order_number,
+      finalPriceEur: Number(order.final_price_eur) || 0,
+      deliveryFeeEur: Number(order.delivery_fee_eur) || 0,
     };
 
-    const params = buildShipmentRequest(orderForShipment);
+    const params = await buildShipmentRequest(orderForShipment);
     const calcResult = await calculateShipment(params);
 
     const calculation = calcResult.calculations[0];

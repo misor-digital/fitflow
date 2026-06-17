@@ -9,6 +9,8 @@ interface ParcelConfigEditorProps {
     depth: string;
     height: string;
     contents: string;
+    package: string;
+    dropoffOfficeId: string;
   };
 }
 
@@ -18,6 +20,8 @@ export default function ParcelConfigEditor({ initialConfig }: ParcelConfigEditor
   const [depth, setDepth] = useState(initialConfig.depth);
   const [height, setHeight] = useState(initialConfig.height);
   const [contents, setContents] = useState(initialConfig.contents);
+  const [pkg, setPkg] = useState(initialConfig.package);
+  const [dropoffOfficeId, setDropoffOfficeId] = useState(initialConfig.dropoffOfficeId);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
@@ -26,7 +30,9 @@ export default function ParcelConfigEditor({ initialConfig }: ParcelConfigEditor
     width !== initialConfig.width ||
     depth !== initialConfig.depth ||
     height !== initialConfig.height ||
-    contents !== initialConfig.contents;
+    contents !== initialConfig.contents ||
+    pkg !== initialConfig.package ||
+    dropoffOfficeId !== initialConfig.dropoffOfficeId;
 
   const handleSave = useCallback(async () => {
     setSaving(true);
@@ -38,6 +44,8 @@ export default function ParcelConfigEditor({ initialConfig }: ParcelConfigEditor
     if (depth !== initialConfig.depth) updates.push({ key: 'PARCEL_DEPTH_CM', value: depth });
     if (height !== initialConfig.height) updates.push({ key: 'PARCEL_HEIGHT_CM', value: height });
     if (contents !== initialConfig.contents) updates.push({ key: 'PARCEL_CONTENTS', value: contents });
+    if (pkg !== initialConfig.package) updates.push({ key: 'PARCEL_PACKAGE', value: pkg });
+    if (dropoffOfficeId !== initialConfig.dropoffOfficeId) updates.push({ key: 'SPEEDY_DROPOFF_OFFICE_ID', value: dropoffOfficeId });
 
     try {
       for (const { key, value } of updates) {
@@ -57,7 +65,7 @@ export default function ParcelConfigEditor({ initialConfig }: ParcelConfigEditor
     } finally {
       setSaving(false);
     }
-  }, [weight, width, depth, height, contents, initialConfig]);
+  }, [weight, width, depth, height, contents, pkg, dropoffOfficeId, initialConfig]);
 
   return (
     <div className="bg-gray-50 rounded-xl border p-5 space-y-4">
@@ -81,6 +89,16 @@ export default function ParcelConfigEditor({ initialConfig }: ParcelConfigEditor
             maxLength={100}
             value={contents}
             onChange={(e) => setContents(e.target.value)}
+            className="w-full border rounded-lg px-3 py-2 text-sm"
+          />
+        </div>
+        <div>
+          <label className="block text-gray-600 font-medium mb-1">Опаковка</label>
+          <input
+            type="text"
+            maxLength={50}
+            value={pkg}
+            onChange={(e) => setPkg(e.target.value)}
             className="w-full border rounded-lg px-3 py-2 text-sm"
           />
         </div>
@@ -117,6 +135,17 @@ export default function ParcelConfigEditor({ initialConfig }: ParcelConfigEditor
             max="200"
             value={height}
             onChange={(e) => setHeight(e.target.value)}
+            className="w-full border rounded-lg px-3 py-2 text-sm"
+          />
+        </div>
+        <div>
+          <label className="block text-gray-600 font-medium mb-1">Dropoff офис ID</label>
+          <input
+            type="number"
+            step="1"
+            min="1"
+            value={dropoffOfficeId}
+            onChange={(e) => setDropoffOfficeId(e.target.value)}
             className="w-full border rounded-lg px-3 py-2 text-sm"
           />
         </div>

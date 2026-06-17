@@ -40,6 +40,8 @@ const DELIVERY_CONFIG_KEYS = [
   'PARCEL_DEPTH_CM',
   'PARCEL_HEIGHT_CM',
   'PARCEL_CONTENTS',
+  'PARCEL_PACKAGE',
+  'SPEEDY_DROPOFF_OFFICE_ID',
 ] as const;
 
 type DeliveryConfigKey = (typeof DELIVERY_CONFIG_KEYS)[number];
