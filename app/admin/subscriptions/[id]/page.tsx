@@ -62,9 +62,8 @@ export default async function SubscriptionDetailPage({ params }: { params: Promi
     supabaseAdmin.auth.admin.getUserById(subscription.user_id),
   ]);
 
-  const userName = profileResult.data
-    ? `${profileResult.data.first_name} ${profileResult.data.last_name}`.trim()
-    : 'Неизвестен';
+  const userFirstName = profileResult.data?.first_name ?? '';
+  const userLastName = profileResult.data?.last_name ?? '';
   const userEmail = authResult.data?.user?.email ?? '';
 
   return (
@@ -84,7 +83,8 @@ export default async function SubscriptionDetailPage({ params }: { params: Promi
         defaultAddress={address}
         allAddresses={allAddresses}
         canManage={canManage}
-        userName={userName}
+        userFirstName={userFirstName}
+        userLastName={userLastName}
         userEmail={userEmail}
         eurToBgnRate={eurToBgnRate}
       />

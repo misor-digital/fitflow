@@ -467,6 +467,7 @@ export default function AdminAddressForm({
           <SpeedyOfficeSelector
             selectedOffice={speedyOffice}
             onSelect={handleOfficeSelect}
+            deliveryMethod={deliveryMethod}
             error={errorFor('speedyOffice')}
           />
         </div>

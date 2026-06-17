@@ -8,6 +8,7 @@ import { SUBSCRIPTION_STATUS_LABELS, SUBSCRIPTION_STATUS_COLORS, FREQUENCY_LABEL
 import { formatDateTimeShort } from '@/lib/utils/date';
 import { formatPriceDual, eurToBgnSync } from '@/lib/catalog';
 import type { OrderRow, AddressRow } from '@/lib/supabase/types';
+import AdminAddressForm from '@/components/admin/AdminAddressForm';
 
 // ============================================================================
 // Constants
@@ -76,7 +77,8 @@ interface SubscriptionDetailViewProps {
   defaultAddress: AddressRow | null;
   allAddresses: AddressRow[];
   canManage: boolean;
-  userName: string;
+  userFirstName: string;
+  userLastName: string;
   userEmail: string;
   eurToBgnRate: number;
 }
@@ -94,7 +96,8 @@ export function SubscriptionDetailView({
   defaultAddress,
   allAddresses,
   canManage,
-  userName,
+  userFirstName,
+  userLastName,
   userEmail,
   eurToBgnRate,
 }: SubscriptionDetailViewProps) {
@@ -116,6 +119,8 @@ export function SubscriptionDetailView({
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(
     subscription.default_address_id ?? null,
   );
+  const [showNewAddressForm, setShowNewAddressForm] = useState(false);
+  const [localAddresses, setLocalAddresses] = useState<AddressRow[]>(allAddresses);
   const [showFrequencyPicker, setShowFrequencyPicker] = useState(false);
   const [selectedFrequency, setSelectedFrequency] = useState<string>(subscription.frequency);
   const [showPromoEditor, setShowPromoEditor] = useState(false);
@@ -270,7 +275,7 @@ export function SubscriptionDetailView({
 
         {/* Info Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <InfoItem label="Потребител" value={`${userName} (${userEmail})`} />
+          <InfoItem label="Потребител" value={`${userFirstName} ${userLastName} (${userEmail})`} />
           <InfoItem
             label="Статус"
             value={
@@ -737,83 +742,122 @@ export function SubscriptionDetailView({
       {/* ================================================================ */}
       {showAddressPicker && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/50" onClick={() => setShowAddressPicker(false)} />
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => {
+              setShowAddressPicker(false);
+              setShowNewAddressForm(false);
+            }}
+          />
           <div className="relative bg-white rounded-xl shadow-xl p-6 max-w-lg w-full mx-4 max-h-[80vh] overflow-y-auto">
             <h3 className="text-lg font-bold text-[var(--color-brand-navy)] mb-4">
-              Промяна на адрес за абонамент
+              {showNewAddressForm ? 'Нов адрес' : 'Промяна на адрес за абонамент'}
             </h3>
 
-            <div className="space-y-2">
-              {/* No address option */}
-              <label className="flex items-start gap-3 p-3 rounded-lg border cursor-pointer hover:bg-gray-50 transition-colors" style={{ borderColor: selectedAddressId === null ? 'var(--color-brand-navy)' : undefined }}>
-                <input
-                  type="radio"
-                  name="address"
-                  checked={selectedAddressId === null}
-                  onChange={() => setSelectedAddressId(null)}
-                  className="mt-1"
-                />
-                <span className="text-sm text-gray-600">Без адрес</span>
-              </label>
+            {showNewAddressForm ? (
+              <AdminAddressForm
+                mode="create"
+                userId={subscription.user_id}
+                customerDefaults={{ firstName: userFirstName, lastName: userLastName, phone: defaultAddress?.phone ?? '' }}
+                onSuccess={(newAddress) => {
+                  setLocalAddresses((prev) =>
+                    [
+                      ...prev.map((a) =>
+                        newAddress.is_default ? { ...a, is_default: false } : a,
+                      ),
+                      newAddress,
+                    ],
+                  );
+                  setSelectedAddressId(newAddress.id);
+                  setShowNewAddressForm(false);
+                }}
+                onCancel={() => setShowNewAddressForm(false)}
+              />
+            ) : (
+              <>
+                <div className="space-y-2">
+                  {/* No address option */}
+                  <label className="flex items-start gap-3 p-3 rounded-lg border cursor-pointer hover:bg-gray-50 transition-colors" style={{ borderColor: selectedAddressId === null ? 'var(--color-brand-navy)' : undefined }}>
+                    <input
+                      type="radio"
+                      name="address"
+                      checked={selectedAddressId === null}
+                      onChange={() => setSelectedAddressId(null)}
+                      className="mt-1"
+                    />
+                    <span className="text-sm text-gray-600">Без адрес</span>
+                  </label>
 
-              {allAddresses.map((addr) => (
-                <label
-                  key={addr.id}
-                  className="flex items-start gap-3 p-3 rounded-lg border cursor-pointer hover:bg-gray-50 transition-colors"
-                  style={{ borderColor: selectedAddressId === addr.id ? 'var(--color-brand-navy)' : undefined }}
-                >
-                  <input
-                    type="radio"
-                    name="address"
-                    checked={selectedAddressId === addr.id}
-                    onChange={() => setSelectedAddressId(addr.id)}
-                    className="mt-1"
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      {addr.label && (
-                        <span className="text-sm font-semibold text-gray-900">{addr.label}</span>
-                      )}
-                      <span
-                        className={`text-xs font-semibold px-2 py-0.5 rounded ${
-                          addr.delivery_method === 'speedy_office'
-                            ? 'bg-orange-100 text-orange-800'
-                            : 'bg-blue-100 text-blue-800'
-                        }`}
-                      >
-                        {addr.delivery_method === 'speedy_office' ? 'Speedy офис' : 'До адрес'}
-                      </span>
-                      {addr.is_default && (
-                        <span className="text-xs font-semibold px-2 py-0.5 rounded bg-green-100 text-green-800">
-                          По подразбиране
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-sm text-gray-600 mt-1">{formatAddress(addr)}</p>
-                    {addr.phone && (
-                      <p className="text-xs text-gray-400 mt-0.5">Тел: {addr.phone}</p>
-                    )}
-                  </div>
-                </label>
-              ))}
-            </div>
+                  {localAddresses.map((addr) => (
+                    <label
+                      key={addr.id}
+                      className="flex items-start gap-3 p-3 rounded-lg border cursor-pointer hover:bg-gray-50 transition-colors"
+                      style={{ borderColor: selectedAddressId === addr.id ? 'var(--color-brand-navy)' : undefined }}
+                    >
+                      <input
+                        type="radio"
+                        name="address"
+                        checked={selectedAddressId === addr.id}
+                        onChange={() => setSelectedAddressId(addr.id)}
+                        className="mt-1"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          {addr.label && (
+                            <span className="text-sm font-semibold text-gray-900">{addr.label}</span>
+                          )}
+                          <span
+                            className={`text-xs font-semibold px-2 py-0.5 rounded ${
+                              addr.delivery_method === 'speedy_office'
+                                ? 'bg-orange-100 text-orange-800'
+                                : 'bg-blue-100 text-blue-800'
+                            }`}
+                          >
+                            {addr.delivery_method === 'speedy_office' ? 'Speedy офис' : 'До адрес'}
+                          </span>
+                          {addr.is_default && (
+                            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-green-100 text-green-800">
+                              По подразбиране
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm text-gray-600 mt-1">{formatAddress(addr)}</p>
+                        {addr.phone && (
+                          <p className="text-xs text-gray-400 mt-0.5">Тел: {addr.phone}</p>
+                        )}
+                      </div>
+                    </label>
+                  ))}
+                </div>
 
-            <div className="flex gap-3 justify-end mt-4">
-              <button
-                onClick={() => setShowAddressPicker(false)}
-                className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50"
-                disabled={isPending}
-              >
-                Отказ
-              </button>
-              <button
-                onClick={handleSaveAddress}
-                disabled={isPending}
-                className="px-4 py-2 text-sm bg-[var(--color-brand-navy)] text-white rounded-lg font-semibold hover:opacity-90 disabled:opacity-50"
-              >
-                {isPending ? 'Запазва се...' : 'Запази'}
-              </button>
-            </div>
+                {canManage && (
+                  <button
+                    type="button"
+                    onClick={() => setShowNewAddressForm(true)}
+                    className="mt-3 w-full inline-flex items-center justify-center gap-1.5 rounded-lg border border-dashed border-gray-300 px-4 py-2.5 text-sm font-medium text-gray-600 transition-colors hover:border-[var(--color-brand-orange)] hover:text-[var(--color-brand-orange)]"
+                  >
+                    + Добави нов адрес
+                  </button>
+                )}
+
+                <div className="flex gap-3 justify-end mt-4">
+                  <button
+                    onClick={() => setShowAddressPicker(false)}
+                    className="px-4 py-2 text-sm border rounded-lg hover:bg-gray-50"
+                    disabled={isPending}
+                  >
+                    Отказ
+                  </button>
+                  <button
+                    onClick={handleSaveAddress}
+                    disabled={isPending}
+                    className="px-4 py-2 text-sm bg-[var(--color-brand-navy)] text-white rounded-lg font-semibold hover:opacity-90 disabled:opacity-50"
+                  >
+                    {isPending ? 'Запазва се...' : 'Запази'}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}
