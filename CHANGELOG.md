@@ -1,5 +1,19 @@
 # fitflow
 
+## 1.9.0
+
+### Minor Changes
+
+- 87c2c7c: Allow admins to create a new address directly from the subscription address picker modal
+
+  Admins can now add a new delivery address for a customer without leaving the subscription detail page. The inline form pre-fills name and phone from the customer profile, filters the Speedy widget by delivery method, and correctly handles the default-address flag to prevent duplicate defaults.
+
+### Patch Changes
+
+- 9d73e98: Fix Speedy waybill creation to include COD, declared value, dropoff office, and correct parcel defaults
+
+  Waybills generated via the Speedy API were missing cash-on-delivery, declared value, and sender dropoff office fields. Parcel weight, contents, and packaging also did not match actual shipment data. All values are now sent correctly and are configurable through the admin Dispatch settings page via `site_config`.
+
 ## 1.8.1
 
 ### Patch Changes
