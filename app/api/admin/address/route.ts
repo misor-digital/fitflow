@@ -276,6 +276,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             is_default: sanitized.isDefault ?? false,
           };
 
+    // Explicitly unset other defaults before insert (defense against trigger edge cases)
+    if (insertData.is_default) {
+      await supabaseAdmin
+        .from('addresses')
+        .update({ is_default: false })
+        .eq('user_id', userId)
+        .eq('is_default', true);
+    }
+
     const address = await createAddress(insertData);
 
     // Sync phone to profile if profile phone is empty
