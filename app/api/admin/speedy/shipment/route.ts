@@ -70,6 +70,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       userEmail: order.customer_email,
       userPhone: order.customer_phone || addr.phone || '',
       readableId: order.order_number,
+      finalPriceEur: Number(order.final_price_eur) || 0,
+      deliveryFeeEur: Number(order.delivery_fee_eur) || 0,
     };
 
     // 5. Create waybill via Speedy API

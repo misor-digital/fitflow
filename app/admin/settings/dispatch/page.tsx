@@ -20,11 +20,13 @@ export default async function DispatchSettingsPage() {
   // Read parcel config from DB
   const configMap = await getDeliveryConfigMap();
   const parcelConfig = {
-    weight: configMap.PARCEL_WEIGHT_KG || '2.5',
-    width: configMap.PARCEL_WIDTH_CM || '30',
-    depth: configMap.PARCEL_DEPTH_CM || '30',
-    height: configMap.PARCEL_HEIGHT_CM || '15',
-    contents: configMap.PARCEL_CONTENTS || 'Фитнес кутия',
+    weight: configMap.PARCEL_WEIGHT_KG || '1.36',
+    width: configMap.PARCEL_WIDTH_CM || '19',
+    depth: configMap.PARCEL_DEPTH_CM || '26.5',
+    height: configMap.PARCEL_HEIGHT_CM || '10',
+    contents: configMap.PARCEL_CONTENTS || 'КУТИЯ СЪС СПОРТНИ СТОКИ',
+    package: configMap.PARCEL_PACKAGE || 'КАШОН',
+    dropoffOfficeId: configMap.SPEEDY_DROPOFF_OFFICE_ID || '189',
   };
 
   return (

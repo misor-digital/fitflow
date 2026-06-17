@@ -37,6 +37,10 @@ export interface OrderForShipment {
   userEmail: string;
   userPhone: string;
   readableId?: string;
+  /** Box price in EUR (excluding delivery fee) */
+  finalPriceEur: number;
+  /** Delivery fee in EUR */
+  deliveryFeeEur: number;
 }
 
 export interface WaybillResult {
@@ -57,10 +61,10 @@ export interface WaybillResult {
 // ============================================================================
 
 const FALLBACK_PARCEL = {
-  weight: 2.5,
-  size: { width: 30, depth: 30, height: 15 },
-  contents: 'Фитнес кутия',
-  package: 'BOX',
+  weight: 1.36,
+  size: { width: 19, depth: 26.5, height: 10 },
+  contents: 'КУТИЯ СЪС СПОРТНИ СТОКИ',
+  package: 'КАШОН',
 };
 
 interface ParcelConfig {
@@ -82,7 +86,7 @@ async function getParcelConfig(): Promise<ParcelConfig> {
         height: parseFloat(configMap.PARCEL_HEIGHT_CM ?? '') || FALLBACK_PARCEL.size.height,
       },
       contents: configMap.PARCEL_CONTENTS || FALLBACK_PARCEL.contents,
-      package: FALLBACK_PARCEL.package,
+      package: configMap.PARCEL_PACKAGE || FALLBACK_PARCEL.package,
     };
   } catch {
     return FALLBACK_PARCEL;
@@ -98,7 +102,7 @@ async function getParcelConfig(): Promise<ParcelConfig> {
  */
 export async function createWaybillForOrder(order: OrderForShipment): Promise<WaybillResult> {
   const parcel = await getParcelConfig();
-  const params = buildShipmentRequest(order, parcel);
+  const params = await buildShipmentRequest(order, parcel);
   const response = await createShipment(params);
 
   return {
@@ -113,18 +117,32 @@ export async function createWaybillForOrder(order: OrderForShipment): Promise<Wa
 /**
  * Build Speedy shipment params from a FitFlow order.
  */
-export function buildShipmentRequest(order: OrderForShipment, parcel: ParcelConfig = FALLBACK_PARCEL): CreateShipmentParams {
-  const config = getSpeedySenderConfig();
+export async function buildShipmentRequest(order: OrderForShipment, parcel: ParcelConfig = FALLBACK_PARCEL): Promise<CreateShipmentParams> {
+  const config = await getSpeedySenderConfig();
   const recipient = buildRecipient(order);
+
+  // COD amount = box price + delivery fee (what the customer pays on delivery)
+  const codAmountEur = order.finalPriceEur + order.deliveryFeeEur;
 
   return {
     sender: {
       clientId: config.clientId,
+      dropoffOfficeId: config.dropoffOfficeId,
     },
     recipient,
     service: {
       serviceId: config.serviceId,
       autoAdjustPickupDate: true,
+      additionalServices: {
+        cod: {
+          amount: codAmountEur,
+          processingType: 'CASH',
+        },
+        declaredValue: {
+          amount: codAmountEur,
+          fragile: true,
+        },
+      },
     },
     content: {
       parcelsCount: 1,
@@ -142,6 +160,7 @@ export function buildShipmentRequest(order: OrderForShipment, parcel: ParcelConf
     },
     payment: {
       courierServicePayer: 'SENDER',
+      declaredValuePayer: 'SENDER',
     },
     ref1: order.readableId || order.id,
   };
