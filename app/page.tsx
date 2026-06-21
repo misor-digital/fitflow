@@ -142,14 +142,14 @@ function HomeContent() {
         />
 
         {/* Text & CTA - bottom-center in portrait, center-right in landscape */}
-        <div className="relative z-30 flex-1 flex items-end justify-center px-4 pb-6 hero-cta-wrapper">
+        <div className="relative z-30 flex-1 flex items-end justify-center px-4 pb-4 hero-cta-wrapper">
           <div className="w-full hero-cta-box bg-[var(--color-brand-navy)]/35 backdrop-blur-[6px] rounded-2xl px-4 py-4 text-center">
             <h1 className="text-2xl hero-cta-heading font-bold text-white mb-1.5 tracking-wide leading-tight">
               <span className="block pb-0.5">Кутия за</span>
               <span className="block text-[var(--color-brand-orange)]">АКТИВНИ дами</span>
             </h1>
             <p className="text-sm hero-cta-text text-white/85 mt-2 mb-3 leading-relaxed">
-              Протеин, облекло, аксесоари, здравословни снакове, добавки и мотивация
+              Всеки месец получаваш кутия със спортни продукти, здравословни снакове и ексклузивни изнендади, подбрани специално за теб
             </p>
             <Link href="/order" onClick={() => trackCTAClick({ cta_text: 'Поръчай сега', cta_location: 'hero', destination: '/order' })}>
               <button className="bg-[var(--color-brand-orange)] text-white px-6 py-2.5 hero-cta-button rounded-full text-sm font-semibold uppercase tracking-wide shadow-lg hover:bg-[var(--color-brand-orange-dark)] transition-all hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0">

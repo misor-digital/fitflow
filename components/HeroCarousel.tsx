@@ -50,15 +50,6 @@ export default function HeroCarousel() {
     };
   }, [paused, advance]);
 
-  const goTo = (index: number) => {
-    setActive(index);
-    // Reset timer on manual navigation
-    if (timerRef.current) clearInterval(timerRef.current);
-    if (!paused && !reducedMotion.current) {
-      timerRef.current = setInterval(advance, INTERVAL_MS);
-    }
-  };
-
   return (
     <div
       className="absolute inset-x-0 bottom-0 z-10"
@@ -104,22 +95,6 @@ export default function HeroCarousel() {
           />
         </div>
       ))}
-
-      {/* Dot indicators */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-40 flex gap-2">
-        {slides.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => goTo(i)}
-            aria-label={`Слайд ${i + 1}`}
-            className={`w-2.5 h-2.5 rounded-full transition-all duration-300 ${
-              i === active
-                ? 'bg-white scale-110 shadow-md'
-                : 'bg-white/50 hover:bg-white/75'
-            }`}
-          />
-        ))}
-      </div>
     </div>
   );
 }
