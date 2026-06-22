@@ -13,9 +13,14 @@ interface OrderStepBoxProps {
   prices: PricesMap;
   boxTypeNames: Record<string, string>;
   onNext: () => void;
+  /** Called whenever a box (or premium frequency) is chosen. Used by the
+   *  single-page flow to scroll the user down to the next question. */
+  onSelectBox?: () => void;
+  /** Hide the bottom "Напред" navigation button (single-page flow). */
+  hideNav?: boolean;
 }
 
-export default function OrderStepBox({ prices, boxTypeNames, onNext }: OrderStepBoxProps) {
+export default function OrderStepBox({ prices, boxTypeNames, onNext, onSelectBox, hideNav }: OrderStepBoxProps) {
   const { boxType, setBoxType, setFrequency, promoCode } = useOrderStore();
   const { upcomingDelivery, fetchUpcomingDelivery } = useDeliveryStore();
   const cycleName = upcomingDelivery?.cycle?.title || 'следващия цикъл на доставка';
@@ -109,6 +114,8 @@ export default function OrderStepBox({ prices, boxTypeNames, onNext }: OrderStep
         has_promo: !!promoCode,
       });
     }
+
+    onSelectBox?.();
   };
 
   const handleFrequencySelect = (frequency: 'monthly' | 'seasonal') => {
@@ -126,6 +133,8 @@ export default function OrderStepBox({ prices, boxTypeNames, onNext }: OrderStep
       currency: 'EUR',
       has_promo: !!promoCode,
     });
+
+    onSelectBox?.();
   };
 
   return (
@@ -331,15 +340,17 @@ export default function OrderStepBox({ prices, boxTypeNames, onNext }: OrderStep
       </div>
 
       {/* Navigation */}
-      <div className="flex gap-2 sm:gap-4 justify-center">
-        <button
-          onClick={onNext}
-          disabled={!selected}
-          className="bg-[var(--color-brand-orange)] text-white px-8 sm:px-10 md:px-12 py-3 sm:py-4 rounded-full text-sm sm:text-base md:text-lg font-semibold uppercase tracking-wide shadow-lg hover:bg-[#e67100] transition-all hover:-translate-y-0.5 hover:shadow-xl disabled:bg-gray-300 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-lg"
-        >
-          Напред
-        </button>
-      </div>
+      {!hideNav && (
+        <div className="flex gap-2 sm:gap-4 justify-center">
+          <button
+            onClick={onNext}
+            disabled={!selected}
+            className="bg-[var(--color-brand-orange)] text-white px-8 sm:px-10 md:px-12 py-3 sm:py-4 rounded-full text-sm sm:text-base md:text-lg font-semibold uppercase tracking-wide shadow-lg hover:bg-[#e67100] transition-all hover:-translate-y-0.5 hover:shadow-xl disabled:bg-gray-300 disabled:cursor-not-allowed disabled:hover:translate-y-0 disabled:hover:shadow-lg"
+          >
+            Напред
+          </button>
+        </div>
+      )}
     </div>
   );
 }

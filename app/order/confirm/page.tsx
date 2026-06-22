@@ -6,7 +6,7 @@ import {
   getColors,
   getOptionLabels,
 } from '@/lib/data';
-import OrderPageFlow from '@/components/order/OrderPageFlow';
+import OrderConfirmClient from '@/components/order/OrderConfirmClient';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { CutoffCountdown } from '@/components/CutoffCountdown';
@@ -14,20 +14,11 @@ import type { Metadata } from 'next';
 import type { CatalogData, BoxType } from '@/lib/catalog';
 
 export const metadata: Metadata = {
-  title: 'Поръчка | FitFlow',
-  description: 'Поръчайте вашата FitFlow кутия за активни дами',
+  title: 'Потвърждение на поръчка | FitFlow',
+  description: 'Прегледай и потвърди своята FitFlow поръчка',
 };
 
-interface OrderPageProps {
-  searchParams: Promise<{
-    boxType?: string;
-    cycleId?: string;
-    orderType?: string;
-  }>;
-}
-
-export default async function OrderPage({ searchParams }: OrderPageProps) {
-  const params = await searchParams;
+export default async function OrderConfirmPage() {
   // Fetch all catalog data in parallel (server-side, no waterfall)
   const [
     prices,
@@ -59,7 +50,6 @@ export default async function OrderPage({ searchParams }: OrderPageProps) {
     getOptionLabels('sizes'),
   ]);
 
-  // Map BoxTypeRow (snake_case) → BoxType (camelCase)
   const mappedBoxTypes: BoxType[] = boxTypes.map((bt) => ({
     id: bt.id as BoxType['id'],
     name: bt.name,
@@ -71,7 +61,6 @@ export default async function OrderPage({ searchParams }: OrderPageProps) {
     sortOrder: bt.sort_order,
   }));
 
-  // Assemble CatalogData for client components
   const catalogData: CatalogData = {
     boxTypes: mappedBoxTypes,
     options: {
@@ -95,14 +84,7 @@ export default async function OrderPage({ searchParams }: OrderPageProps) {
     <>
       <Navigation />
       <main className="min-h-screen bg-white pt-16">
-        <OrderPageFlow
-          initialPrices={prices}
-          boxTypeNames={boxTypeNames}
-          catalogData={catalogData}
-          initialBoxType={params.boxType}
-          deliveryCycleId={params.cycleId}
-          orderType={params.orderType}
-        />
+        <OrderConfirmClient initialPrices={prices} catalogData={catalogData} />
       </main>
       <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 w-[min(360px,calc(100vw-2rem))]">
         <CutoffCountdown variant="card" />
