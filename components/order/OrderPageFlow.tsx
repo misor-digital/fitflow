@@ -30,8 +30,7 @@ export default function OrderPageFlow({
 }: OrderPageFlowProps) {
   const router = useRouter();
   const [hydrated, setHydrated] = useState(false);
-  const [prices, setPrices] = useState<PricesMap>(initialPrices);
-  const lastPromoRef = useRef<string | null>(null);
+  const [promoPrices, setPromoPrices] = useState<{ code: string; map: PricesMap } | null>(null);
   const hasAppliedPreselection = useRef(false);
 
   const boxType = useOrderStore((s) => s.boxType);
@@ -41,6 +40,11 @@ export default function OrderPageFlow({
   const dietaryOther = useOrderStore((s) => s.dietaryOther);
   const orderType = useOrderStore((s) => s.orderType);
   const promoCode = useOrderStore((s) => s.promoCode);
+
+  // Prices are the promo-adjusted overlay when it matches the current promo
+  // code, otherwise the server-provided defaults. Derived during render so the
+  // promo effect only ever sets state asynchronously.
+  const prices: PricesMap = promoPrices && promoPrices.code === promoCode ? promoPrices.map : initialPrices;
 
   const isPremium = isPremiumBox(boxType);
   const isRevealedBox = orderType === 'onetime-revealed' || propOrderType === 'onetime-revealed';
@@ -64,7 +68,10 @@ export default function OrderPageFlow({
   // Hydration guard
   useEffect(() => {
     const unsub = useOrderStore.persist.onFinishHydration(() => setHydrated(true));
-    if (useOrderStore.persist.hasHydrated()) setHydrated(true);
+    if (useOrderStore.persist.hasHydrated()) {
+      // Defer to avoid a synchronous setState-in-effect (cascading render)
+      queueMicrotask(() => setHydrated(true));
+    }
     return () => unsub?.();
   }, []);
 
@@ -85,16 +92,11 @@ export default function OrderPageFlow({
     }
   }, [hydrated, initialBoxType, propCycleId, propOrderType]);
 
-  // Promo price refresh
+  // Promo price refresh — fetch the discounted prices for the active promo.
+  // Only ever sets state inside the async callback (no synchronous setState).
   useEffect(() => {
-    if (!hydrated) return;
-    if (promoCode === lastPromoRef.current) return;
-    lastPromoRef.current = promoCode;
-
-    if (!promoCode) {
-      setPrices(initialPrices);
-      return;
-    }
+    if (!hydrated || !promoCode) return;
+    if (promoPrices?.code === promoCode) return;
 
     let cancelled = false;
     (async () => {
@@ -102,7 +104,7 @@ export default function OrderPageFlow({
         const res = await fetch(`/api/catalog?type=prices&promoCode=${encodeURIComponent(promoCode)}`);
         if (!res.ok) return;
         const data = await res.json();
-        if (!cancelled && data.prices) setPrices(data.prices);
+        if (!cancelled && data.prices) setPromoPrices({ code: promoCode, map: data.prices });
       } catch {
         /* keep current prices on error */
       }
@@ -110,7 +112,7 @@ export default function OrderPageFlow({
     return () => {
       cancelled = true;
     };
-  }, [promoCode, hydrated, initialPrices]);
+  }, [promoCode, hydrated, promoPrices]);
 
   // -------------------------------------------------------------------------
   // Selection handlers (mark personalization + scroll forward)

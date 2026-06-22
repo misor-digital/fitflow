@@ -25,7 +25,10 @@ export default function OrderConfirmClient({ initialPrices, catalogData }: Order
   // Hydration guard
   useEffect(() => {
     const unsub = useOrderStore.persist.onFinishHydration(() => setHydrated(true));
-    if (useOrderStore.persist.hasHydrated()) setHydrated(true);
+    if (useOrderStore.persist.hasHydrated()) {
+      // Defer to avoid a synchronous setState-in-effect (cascading render)
+      queueMicrotask(() => setHydrated(true));
+    }
     return () => unsub?.();
   }, []);
 
