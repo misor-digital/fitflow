@@ -19,7 +19,6 @@ import DeliveryMethodToggle from './DeliveryMethodToggle';
 import SpeedyOfficeSelector from './SpeedyOfficeSelector';
 import AdminCustomerPanel from './AdminCustomerPanel';
 import InlineAuth from './InlineAuth';
-import Link from 'next/link';
 
 interface OrderStepDetailsProps {
   onNext: () => void;
@@ -683,8 +682,8 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
           >
             Продължи като гост
           </button>
-          <Link
-            href="/login?redirect=/order"
+          <button
+            onClick={() => setIsGuest(false)}
             className={`flex-1 py-3 px-4 border-2 rounded-xl font-semibold text-sm sm:text-base transition-all text-center ${
               !isGuest
                 ? 'bg-[var(--color-brand-navy)] text-white border-[var(--color-brand-navy)]'
@@ -692,7 +691,7 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
             }`}
           >
             Вход в акаунт
-          </Link>
+          </button>
         </div>
 
         {isGuest && (
@@ -728,23 +727,34 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
           </div>
         )}
 
+        {/* Login: inline OTP auth (same as subscription flow) */}
+        {!isGuest && (
+          <InlineAuth
+            onAuthenticated={() => {
+              // Auth store updates via AuthProvider → isAuthenticated becomes true
+              // → Branch C renders on next re-render (address form)
+            }}
+            onBack={onBack}
+          />
+        )}
+
         {/* Navigation */}
-        <div className="flex gap-2 sm:gap-4 justify-center mt-6 sm:mt-8">
-          <button
-            onClick={onBack}
-            className="bg-gray-300 text-[var(--color-brand-navy)] px-6 sm:px-8 md:px-10 py-3 sm:py-4 rounded-full text-sm sm:text-base md:text-lg font-semibold uppercase tracking-wide hover:bg-gray-400 transition-all"
-          >
-            Назад
-          </button>
-          {isGuest && (
+        {isGuest && (
+          <div className="flex gap-2 sm:gap-4 justify-center mt-6 sm:mt-8">
+            <button
+              onClick={onBack}
+              className="bg-gray-300 text-[var(--color-brand-navy)] px-6 sm:px-8 md:px-10 py-3 sm:py-4 rounded-full text-sm sm:text-base md:text-lg font-semibold uppercase tracking-wide hover:bg-gray-400 transition-all"
+            >
+              Назад
+            </button>
             <button
               onClick={handleContinue}
               className="bg-[var(--color-brand-orange)] text-white px-8 sm:px-10 md:px-12 py-3 sm:py-4 rounded-full text-sm sm:text-base md:text-lg font-semibold uppercase tracking-wide shadow-lg hover:bg-[#e67100] transition-all hover:-translate-y-0.5 hover:shadow-xl"
             >
               Напред
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     );
   }
