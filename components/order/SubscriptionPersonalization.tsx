@@ -150,7 +150,7 @@ export default function SubscriptionPersonalization({ subscriptionId, onDone }: 
           onClick={() => setPhase('questions')}
           className="w-full bg-[#FB7D00] text-white py-3 sm:py-4 px-4 rounded-full text-sm sm:text-base font-semibold shadow-lg hover:bg-[#e67100] transition-all hover:-translate-y-0.5 hover:shadow-xl"
         >
-          Помогни да персонализираме твоята кутия (време: ~ 30 секунди)
+          Помогни ни - персонализирай
         </button>
         <button
           onClick={onDone}
