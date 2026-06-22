@@ -19,6 +19,8 @@ interface OrderStepConfirmProps {
   onSubmit: () => Promise<void>;
   isSubmitting: boolean;
   isRevealedBox?: boolean;
+  /** Navigate back to the order page to edit any section. */
+  onEdit?: () => void;
 }
 
 export default function OrderStepConfirm({
@@ -28,6 +30,7 @@ export default function OrderStepConfirm({
   onSubmit,
   isSubmitting,
   isRevealedBox = false,
+  onEdit,
 }: OrderStepConfirmProps) {
   const store = useOrderStore();
   const { upcomingDelivery, fetchUpcomingDelivery } = useDeliveryStore();
@@ -47,9 +50,6 @@ export default function OrderStepConfirm({
 
   // Resolve labels from catalog data
   const boxTypeNames = catalogData?.labels?.boxTypes ?? {};
-  const sportLabels = catalogData?.labels?.sports ?? {};
-  const colorLabels = catalogData?.labels?.colors ?? {};
-  const flavorLabels = catalogData?.labels?.flavors ?? {};
   const dietaryLabels = catalogData?.labels?.dietary ?? {};
   const sizeLabels = catalogData?.labels?.sizes ?? {};
 
@@ -60,9 +60,10 @@ export default function OrderStepConfirm({
   const isPremium = isPremiumBox(store.boxType);
   const isSubscription = isSubscriptionBox(store.boxType);
 
-  // Navigate to step
-  const goToStep = (step: OrderStep) => {
-    store.setStep(step);
+  // Navigate back to the order page to edit a section
+  const handleEdit = () => {
+    if (onEdit) onEdit();
+    else store.setStep(1 as OrderStep);
   };
 
   // Format full address
@@ -100,7 +101,7 @@ export default function OrderStepConfirm({
           <div className="flex justify-between items-start mb-3 sm:mb-4 border-b pb-2">
             <h3 className="text-lg sm:text-xl font-bold text-[var(--color-brand-navy)]">Кутия</h3>
             <button
-              onClick={() => goToStep(1)}
+              onClick={handleEdit}
               className="text-sm text-[var(--color-brand-orange)] font-semibold hover:underline"
             >
               Редактирай
@@ -182,7 +183,7 @@ export default function OrderStepConfirm({
           <div className="flex justify-between items-start mb-3 sm:mb-4 border-b pb-2">
             <h3 className="text-lg sm:text-xl font-bold text-[var(--color-brand-navy)]">Персонализация</h3>
             <button
-              onClick={() => goToStep(2)}
+              onClick={handleEdit}
               className="text-sm text-[var(--color-brand-orange)] font-semibold hover:underline"
             >
               Редактирай
@@ -191,34 +192,6 @@ export default function OrderStepConfirm({
 
           {store.wantsPersonalization ? (
             <div className="space-y-3 sm:space-y-4">
-              {store.sports.length > 0 && (
-                <div>
-                  <div className="text-sm sm:text-base font-semibold text-[var(--color-brand-navy)] mb-0.5 sm:mb-1">Спорт:</div>
-                  <div className="text-sm sm:text-base text-gray-600">
-                    {store.sports.map(s => sportLabels[s] || s).join(', ')}
-                    {store.sports.includes('other') && store.sportOther && ` (${store.sportOther})`}
-                  </div>
-                </div>
-              )}
-              {store.colors.length > 0 && (
-                <div>
-                  <div className="text-sm sm:text-base font-semibold text-[var(--color-brand-navy)] mb-1.5 sm:mb-2">Цветове:</div>
-                  <div className="flex gap-1.5 sm:gap-2 flex-wrap">
-                    {store.colors.map(c => (
-                      <div key={c} title={colorLabels[c] || c} className="w-6 h-6 sm:w-8 sm:h-8 rounded-md sm:rounded-lg border-2 border-gray-300 shadow-sm" style={{ backgroundColor: c }} />
-                    ))}
-                  </div>
-                </div>
-              )}
-              {store.flavors.length > 0 && (
-                <div>
-                  <div className="text-sm sm:text-base font-semibold text-[var(--color-brand-navy)] mb-0.5 sm:mb-1">Вкусове:</div>
-                  <div className="text-sm sm:text-base text-gray-600">
-                    {store.flavors.map(f => flavorLabels[f] || f).join(', ')}
-                    {store.flavors.includes('other') && store.flavorOther && ` (${store.flavorOther})`}
-                  </div>
-                </div>
-              )}
               {(store.sizeUpper || store.sizeLower) && (
                 <div>
                   <div className="text-sm sm:text-base font-semibold text-[var(--color-brand-navy)] mb-0.5 sm:mb-1">Размери:</div>
@@ -238,12 +211,6 @@ export default function OrderStepConfirm({
                   </div>
                 </div>
               )}
-              {store.additionalNotes && store.additionalNotes.trim() !== '' && (
-                <div>
-                  <div className="text-sm sm:text-base font-semibold text-[var(--color-brand-navy)] mb-0.5 sm:mb-1">Допълнителни бележки:</div>
-                  <div className="text-sm sm:text-base text-gray-600">{store.additionalNotes}</div>
-                </div>
-              )}
               <p className="text-xs text-gray-400 mt-4 pt-3 border-t border-gray-100">
                 Предпочитанията ти ни помагат да разберем какво харесваш, но не гарантират 100% съвпадение.
               </p>
@@ -259,7 +226,7 @@ export default function OrderStepConfirm({
           <div className="flex justify-between items-start mb-3 sm:mb-4 border-b pb-2">
             <h3 className="text-lg sm:text-xl font-bold text-[var(--color-brand-navy)]">Данни за доставка</h3>
             <button
-              onClick={() => goToStep(3)}
+              onClick={handleEdit}
               className="text-sm text-[var(--color-brand-orange)] font-semibold hover:underline"
             >
               Редактирай

@@ -11,6 +11,7 @@ import {
   setUserProperties,
 } from '@/lib/analytics';
 import { trackSubscriptionCreated } from '@/lib/analytics/subscription';
+import SubscriptionPersonalization from '@/components/order/SubscriptionPersonalization';
 
 interface LastOrderInfo {
   orderNumber: string | null;
@@ -235,13 +236,20 @@ export default function OrderThankYou() {
             </p>
           </div>
 
-          {/* Go home button */}
-          <button
-            onClick={handleGoHome}
-            className="w-full bg-[#FB7D00] text-white py-3 sm:py-4 rounded-full text-base sm:text-lg font-semibold uppercase tracking-wide shadow-lg hover:bg-[#e67100] transition-all hover:-translate-y-0.5 hover:shadow-xl"
-          >
-            Към начална страница
-          </button>
+          {/* Go home / Subscription personalization */}
+          {orderInfo.isSubscription && orderInfo.subscriptionId ? (
+            <SubscriptionPersonalization
+              subscriptionId={orderInfo.subscriptionId}
+              onDone={handleGoHome}
+            />
+          ) : (
+            <button
+              onClick={handleGoHome}
+              className="w-full bg-[#FB7D00] text-white py-3 sm:py-4 rounded-full text-base sm:text-lg font-semibold uppercase tracking-wide shadow-lg hover:bg-[#e67100] transition-all hover:-translate-y-0.5 hover:shadow-xl"
+            >
+              Към начална страница
+            </button>
+          )}
         </div>
       </div>
     </div>
