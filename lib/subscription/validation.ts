@@ -23,13 +23,20 @@ import { isPremiumBox } from '@/lib/catalog';
 export function validatePreferenceUpdate(
   prefs: SubscriptionPreferencesUpdate,
   boxType: string,
+  options: { requireSelections?: boolean } = {},
 ): { valid: boolean; errors: string[] } {
+  // When `requireSelections` is false, the "choose at least one" checks for
+  // sports / colors / flavors are skipped. This supports the order flow, which
+  // collects size + dietary up front but defers sports/colors/flavors to a
+  // later personalization step. Size (premium) and "other requires detail"
+  // checks are always enforced.
+  const { requireSelections = true } = options;
   const errors: string[] = [];
   const isPremium = isPremiumBox(boxType as BoxTypeId);
 
   if (prefs.wants_personalization) {
     // Sports required
-    if (!prefs.sports || prefs.sports.length === 0) {
+    if (requireSelections && (!prefs.sports || prefs.sports.length === 0)) {
       errors.push('Моля, изберете поне един спорт');
     }
     if (prefs.sports?.includes('other') && !prefs.sport_other?.trim()) {
@@ -47,12 +54,12 @@ export function validatePreferenceUpdate(
     }
 
     // Colors required for premium
-    if (isPremium && (!prefs.colors || prefs.colors.length === 0)) {
+    if (requireSelections && isPremium && (!prefs.colors || prefs.colors.length === 0)) {
       errors.push('Моля, изберете поне един цвят');
     }
 
     // Flavors required
-    if (!prefs.flavors || prefs.flavors.length === 0) {
+    if (requireSelections && (!prefs.flavors || prefs.flavors.length === 0)) {
       errors.push('Моля, изберете поне един вкус');
     }
     if (prefs.flavors?.includes('other') && !prefs.flavor_other?.trim()) {

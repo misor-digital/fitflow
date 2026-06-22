@@ -428,7 +428,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         additional_notes: preferences?.additionalNotes ?? sourceOrder?.additional_notes ?? null,
       };
 
-      const validation = validatePreferenceUpdate(prefsForValidation, effectiveBoxType);
+      const validation = validatePreferenceUpdate(prefsForValidation, effectiveBoxType, {
+        requireSelections: false,
+      });
       if (!validation.valid) {
         return NextResponse.json(
           { error: validation.errors[0], errors: validation.errors },
