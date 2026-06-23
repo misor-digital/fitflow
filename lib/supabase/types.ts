@@ -431,6 +431,8 @@ export interface OrderRow {
   subscription_conversion_token_expires_at: string | null;
   subscription_conversion_status: string | null; // NULL | 'pending' | 'converted' | 'expired'
   converted_to_subscription_id: string | null;
+  personalization_token: string | null;
+  personalization_token_expires_at: string | null;
   shipped_at: string | null;       // TIMESTAMPTZ as ISO string, set when status → shipped
   delivery_fee_eur: number;
   delivery_fee_actual_eur: number | null;
@@ -478,6 +480,8 @@ export interface OrderInsert {
   subscription_conversion_token_expires_at?: string | null;
   subscription_conversion_status?: string | null;
   converted_to_subscription_id?: string | null;
+  personalization_token?: string | null;
+  personalization_token_expires_at?: string | null;
   delivery_fee_eur?: number;
   speedy_waybill_id?: string | null;
   speedy_parcel_ids?: string[] | null;
@@ -504,6 +508,21 @@ export interface OrderUpdate {
   subscription_conversion_token_expires_at?: string | null;
   subscription_conversion_status?: string | null;
   converted_to_subscription_id?: string | null;
+  // Post-checkout personalization (thank-you page)
+  personalization_token?: string | null;
+  personalization_token_expires_at?: string | null;
+  // Personalization preference columns (updated post-checkout)
+  wants_personalization?: boolean;
+  sports?: string[] | null;
+  sport_other?: string | null;
+  colors?: string[] | null;
+  flavors?: string[] | null;
+  flavor_other?: string | null;
+  dietary?: string[] | null;
+  dietary_other?: string | null;
+  size_upper?: string | null;
+  size_lower?: string | null;
+  additional_notes?: string | null;
   delivery_fee_eur?: number;
   delivery_fee_actual_eur?: number | null;
   speedy_waybill_id?: string | null;

@@ -8,10 +8,9 @@
  * simplified 2-page flow can reuse it without duplication.
  *
  * Behaviour notes:
- * - One-time orders reset the order store immediately after success.
- * - Subscriptions DEFER the reset to the thank-you page so the deferred
- *   personalization step can still read the chosen size/dietary values from
- *   the store when saving preferences.
+ * - Neither flow resets the order store here. The thank-you page's deferred
+ *   personalization step needs the chosen size/dietary values from the store
+ *   when saving preferences, so the reset is deferred to that page.
  */
 
 import { useCallback, useRef, useState } from 'react';
@@ -126,11 +125,12 @@ export function useOrderSubmit() {
             finalPriceEur: responseData.finalPriceEur ?? null,
             boxType: currentInput.boxType,
             capiEventId: responseData.capiEventId ?? null,
+            personalizationToken: responseData.personalizationToken ?? null,
           }),
         );
 
-        // One-time orders are fully complete — clear the store now.
-        useOrderStore.getState().reset();
+        // NOTE: store is intentionally NOT reset here — the thank-you page's
+        // deferred personalization step needs the chosen size/dietary values.
       }
 
       router.push('/order/thank-you');

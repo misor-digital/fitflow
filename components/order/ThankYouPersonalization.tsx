@@ -6,15 +6,31 @@ import { isPremiumBox, sortWithOtherAtEnd } from '@/lib/catalog';
 import type { CatalogOption, ColorOption } from '@/lib/catalog';
 import { SportsQuestion, ColorsQuestion, FlavorsQuestion, NotesQuestion } from './PersonalizationQuestions';
 
-interface SubscriptionPersonalizationProps {
-  subscriptionId: string;
+/** Snake_case preferences payload sent to the save handler. */
+export interface ThankYouPreferences {
+  wants_personalization: boolean;
+  sports: string[];
+  sport_other: string | null;
+  colors: string[] | null;
+  flavors: string[];
+  flavor_other: string | null;
+  dietary: string[] | null;
+  dietary_other: string | null;
+  size_upper: string | null;
+  size_lower: string | null;
+  additional_notes: string | null;
+}
+
+interface ThankYouPersonalizationProps {
+  /** Persists the personalization. Should throw on failure. */
+  onSave: (preferences: ThankYouPreferences) => Promise<void>;
   /** Called after the user finishes (saved or declined) to navigate home. */
   onDone: () => void;
 }
 
 type Phase = 'cta' | 'questions';
 
-export default function SubscriptionPersonalization({ subscriptionId, onDone }: SubscriptionPersonalizationProps) {
+export default function ThankYouPersonalization({ onSave, onDone }: ThankYouPersonalizationProps) {
   const [phase, setPhase] = useState<Phase>('cta');
   const [sportsOptions, setSportsOptions] = useState<CatalogOption[]>([]);
   const [colorsOptions, setColorsOptions] = useState<ColorOption[]>([]);
@@ -107,30 +123,19 @@ export default function SubscriptionPersonalization({ subscriptionId, onDone }: 
     // store) so the preferences update does not wipe them.
     const store = useOrderStore.getState();
     try {
-      const res = await fetch(`/api/subscription/${subscriptionId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'update_preferences',
-          preferences: {
-            wants_personalization: true,
-            sports: sortWithOtherAtEnd(sports),
-            sport_other: sportOther.trim() || null,
-            colors: colors.length > 0 ? colors : null,
-            flavors: sortWithOtherAtEnd(flavors),
-            flavor_other: flavorOther.trim() || null,
-            dietary: store.dietary.length > 0 ? sortWithOtherAtEnd(store.dietary) : null,
-            dietary_other: store.dietaryOther.trim() || null,
-            size_upper: store.sizeUpper || null,
-            size_lower: store.sizeLower || null,
-            additional_notes: notes.trim() || null,
-          },
-        }),
+      await onSave({
+        wants_personalization: true,
+        sports: sortWithOtherAtEnd(sports),
+        sport_other: sportOther.trim() || null,
+        colors: colors.length > 0 ? colors : null,
+        flavors: sortWithOtherAtEnd(flavors),
+        flavor_other: flavorOther.trim() || null,
+        dietary: store.dietary.length > 0 ? sortWithOtherAtEnd(store.dietary) : null,
+        dietary_other: store.dietaryOther.trim() || null,
+        size_upper: store.sizeUpper || null,
+        size_lower: store.sizeLower || null,
+        additional_notes: notes.trim() || null,
       });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || 'Грешка при запазване на предпочитанията');
-      }
       setSaved(true);
       scrollTo(submitRef);
     } catch (err) {

@@ -748,6 +748,8 @@ CREATE TABLE orders (
     CHECK (subscription_conversion_status IN ('pending', 'converted', 'expired')),
   converted_to_subscription_id UUID UNIQUE                      -- FK to subscription created from this order
     REFERENCES subscriptions(id) ON DELETE SET NULL,
+  personalization_token UUID UNIQUE,                           -- one-time token for post-checkout personalization (thank-you page; guest-safe)
+  personalization_token_expires_at TIMESTAMPTZ,                -- token expiry (short-lived)
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
@@ -793,7 +795,8 @@ COMMENT ON COLUMN orders.subscription_conversion_token IS 'One-time UUID token f
 COMMENT ON COLUMN orders.subscription_conversion_token_expires_at IS 'Token expiry (default 90 days from generation).';
 COMMENT ON COLUMN orders.subscription_conversion_status IS 'NULL = not targeted, pending = email sent, converted = subscription created, expired = token expired.';
 COMMENT ON COLUMN orders.converted_to_subscription_id IS 'FK to the subscription created from this order. UNIQUE enforces one-to-one.';
-
+COMMENT ON COLUMN orders.personalization_token IS 'One-time token authorizing post-checkout personalization from the thank-you page (guest-safe). Cleared after use.';
+COMMENT ON COLUMN orders.personalization_token_expires_at IS 'Token expiry (short-lived; set at order creation).';
 CREATE INDEX idx_orders_user_id ON orders(user_id);
 CREATE INDEX idx_orders_order_number ON orders(order_number);
 CREATE INDEX idx_orders_customer_email ON orders(customer_email);
@@ -805,6 +808,7 @@ CREATE INDEX idx_orders_order_type ON orders(order_type);
 CREATE INDEX idx_orders_delivery_method ON orders(delivery_method);
 CREATE INDEX idx_orders_subscription ON orders(subscription_id) WHERE subscription_id IS NOT NULL;
 CREATE INDEX idx_orders_sub_conversion_token ON orders(subscription_conversion_token) WHERE subscription_conversion_token IS NOT NULL;
+CREATE INDEX idx_orders_personalization_token ON orders(personalization_token) WHERE personalization_token IS NOT NULL;
 
 CREATE TRIGGER trigger_orders_updated_at
   BEFORE UPDATE ON orders FOR EACH ROW

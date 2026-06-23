@@ -38,6 +38,9 @@ const MAX_PHONE = 30;
 const MAX_NOTES = 2000;
 const MAX_OTHER = 200;
 
+// Post-checkout personalization token lifetime (short-lived, single-use).
+const PERSONALIZATION_TOKEN_TTL_MS = 2 * 60 * 60 * 1000; // 2 hours
+
 const VALID_BOX_TYPES = new Set([
   'monthly-standard',
   'monthly-premium',
@@ -648,6 +651,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       orderData.additional_notes = null;
     }
 
+    // Mint a short-lived, single-use personalization token so the customer can
+    // finish personalizing from the thank-you page (guest-safe). Revealed boxes
+    // have fixed contents, so they get no token.
+    let personalizationToken: string | null = null;
+    if (orderType !== 'onetime-revealed') {
+      personalizationToken = crypto.randomUUID();
+      orderData.personalization_token = personalizationToken;
+      orderData.personalization_token_expires_at = new Date(
+        Date.now() + PERSONALIZATION_TOKEN_TTL_MS,
+      ).toISOString();
+    }
+
     const order = await createOrder(orderData);
 
     // ------------------------------------------------------------------
@@ -839,6 +854,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         orderNumber: order.order_number,
         finalPriceEur: priceInfo.finalPriceEur ?? null,
         capiEventId: capiEventId ?? null,
+        personalizationToken,
         _meta: {
           emailSent,
           conversionCompleted,
