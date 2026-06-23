@@ -129,8 +129,10 @@ export function useOrderSubmit() {
           }),
         );
 
-        // One-time orders are fully complete — clear the store now.
-        useOrderStore.getState().reset();
+        // NOTE: store is intentionally NOT reset here. Resetting now flips
+        // boxType to null while OrderConfirmClient is still mounted, tripping
+        // its "incomplete order" guard which redirects back to /order before
+        // the push below lands. The thank-you page clears the store instead.
       }
 
       router.push('/order/thank-you');
