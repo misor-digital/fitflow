@@ -11,7 +11,9 @@ import {
   setUserProperties,
 } from '@/lib/analytics';
 import { trackSubscriptionCreated } from '@/lib/analytics/subscription';
-import SubscriptionPersonalization from '@/components/order/SubscriptionPersonalization';
+import ThankYouPersonalization, {
+  type ThankYouPreferences,
+} from '@/components/order/ThankYouPersonalization';
 
 interface LastOrderInfo {
   orderNumber: string | null;
@@ -23,6 +25,7 @@ interface LastOrderInfo {
   boxType?: string | null;
   finalPriceEur?: number | null;
   capiEventId?: string | null;
+  personalizationToken?: string | null;
 }
 
 export default function OrderThankYou() {
@@ -105,6 +108,37 @@ export default function OrderThankYou() {
     useOrderStore.getState().reset();
     sessionStorage.removeItem('fitflow-last-order');
     router.push('/');
+  };
+
+  // Save handler for the post-checkout personalization step. Subscriptions use
+  // the session-authorized subscription endpoint; direct (one-time) orders use
+  // the token-authorized order endpoint (guest-safe).
+  const handleSavePersonalization = async (preferences: ThankYouPreferences) => {
+    let url: string;
+    let payload: Record<string, unknown>;
+    if (orderInfo?.isSubscription && orderInfo.subscriptionId) {
+      url = `/api/subscription/${orderInfo.subscriptionId}`;
+      payload = { action: 'update_preferences', preferences };
+    } else if (orderInfo?.orderId && orderInfo.personalizationToken) {
+      url = `/api/order/${orderInfo.orderId}`;
+      payload = {
+        action: 'update_preferences',
+        token: orderInfo.personalizationToken,
+        preferences,
+      };
+    } else {
+      throw new Error('Невъзможно е да се запази персонализацията.');
+    }
+
+    const res = await fetch(url, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || 'Грешка при запазване на предпочитанията');
+    }
   };
 
   // Loading state
@@ -236,10 +270,11 @@ export default function OrderThankYou() {
             </p>
           </div>
 
-          {/* Go home / Subscription personalization */}
-          {orderInfo.isSubscription && orderInfo.subscriptionId ? (
-            <SubscriptionPersonalization
-              subscriptionId={orderInfo.subscriptionId}
+          {/* Go home / Post-checkout personalization */}
+          {(orderInfo.isSubscription && orderInfo.subscriptionId) ||
+          (orderInfo.orderId && orderInfo.personalizationToken) ? (
+            <ThankYouPersonalization
+              onSave={handleSavePersonalization}
               onDone={handleGoHome}
             />
           ) : (
