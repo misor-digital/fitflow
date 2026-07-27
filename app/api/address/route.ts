@@ -197,7 +197,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // Build insert payload - conditional on delivery method
-    const autoLabel = generateAddressLabel(deliveryMethod, sanitized);
+    const userLabel = sanitized.label || null;
 
     const insertData: AddressInsert =
       deliveryMethod === 'speedy_office' || deliveryMethod === 'speedy_automat'
@@ -210,7 +210,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             speedy_office_id: sanitized.speedyOfficeId!,
             speedy_office_name: sanitized.speedyOfficeName!,
             speedy_office_address: sanitized.speedyOfficeAddress || null,
-            label: autoLabel,
+            label: userLabel,
             delivery_notes: sanitized.deliveryNotes || null,
             is_default: sanitized.isDefault ?? false,
           }
@@ -222,7 +222,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             city: sanitized.city!,
             postal_code: sanitized.postalCode!,
             street_address: sanitized.streetAddress!,
-            label: autoLabel,
+            label: userLabel,
             phone: sanitized.phone || null,
             building_entrance: sanitized.buildingEntrance || null,
             floor: sanitized.floor || null,
@@ -418,6 +418,8 @@ export function validateFieldLengths(
 
 /**
  * Auto-generate address label when none provided.
+ * @deprecated No longer used for DB persistence. Kept for backwards compatibility
+ * if needed elsewhere. Frontend now computes display labels via getAddressDisplayLabel().
  */
 export function generateAddressLabel(
   deliveryMethod: string,

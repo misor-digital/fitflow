@@ -335,7 +335,7 @@ export function SubscriptionDetailView({
                       ? 'bg-orange-100 text-orange-800'
                       : 'bg-blue-100 text-blue-800'
                   }`}>
-                    {defaultAddress.delivery_method === 'speedy_office' ? 'Speedy офис' : 'До адрес'}
+                    {defaultAddress.delivery_method === 'speedy_automat' ? 'Speedy автомат' : defaultAddress.delivery_method === 'speedy_office' ? 'Speedy офис' : 'До адрес'}
                   </span>
                   <span>{formatAddress(defaultAddress)}</span>
                 </span>
@@ -813,7 +813,7 @@ export function SubscriptionDetailView({
                                 : 'bg-blue-100 text-blue-800'
                             }`}
                           >
-                            {addr.delivery_method === 'speedy_office' ? 'Speedy офис' : 'До адрес'}
+                            {addr.delivery_method === 'speedy_automat' ? 'Speedy автомат' : addr.delivery_method === 'speedy_office' ? 'Speedy офис' : 'До адрес'}
                           </span>
                           {addr.is_default && (
                             <span className="text-xs font-semibold px-2 py-0.5 rounded bg-green-100 text-green-800">

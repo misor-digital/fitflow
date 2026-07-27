@@ -244,7 +244,7 @@ export default function AddressForm({ mode, initialData, onSuccess, onCancel }: 
               : 'text-gray-500 hover:text-gray-700'
           }`}
         >
-          📍 До адрес
+          🏠 До адрес
         </button>
         <button
           type="button"
@@ -255,7 +255,7 @@ export default function AddressForm({ mode, initialData, onSuccess, onCancel }: 
               : 'text-gray-500 hover:text-gray-700'
           }`}
         >
-          📦 До офис
+          📦 Speedy офис
         </button>
         <button
           type="button"
@@ -266,7 +266,7 @@ export default function AddressForm({ mode, initialData, onSuccess, onCancel }: 
               : 'text-gray-500 hover:text-gray-700'
           }`}
         >
-          🔒 До автомат
+          🔒 Speedy автомат
         </button>
       </div>
 
@@ -506,6 +506,8 @@ export default function AddressForm({ mode, initialData, onSuccess, onCancel }: 
           <SpeedyOfficeSelector
             selectedOffice={selectedOffice}
             onSelect={handleOfficeSelect}
+            onDeliveryMethodDetected={setDeliveryMethod}
+            deliveryMethod={deliveryMethod}
             error={errorFor('speedyOffice')}
           />
         </div>

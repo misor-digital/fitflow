@@ -216,7 +216,7 @@ function OrderTrackingContent() {
           {(order.deliveryMethod === 'speedy_office' || order.deliveryMethod === 'speedy_automat') && (
             <div className="flex items-center gap-2 mb-2">
               <span className="inline-block text-xs px-2 py-0.5 rounded-full font-semibold bg-blue-100 text-blue-700">
-                📦 {order.deliveryMethod === 'speedy_automat' ? 'До автомат на Speedy' : 'До офис на Speedy'}
+                📦 {order.deliveryMethod === 'speedy_automat' ? 'Speedy автомат' : 'Speedy офис'}
               </span>
             </div>
           )}

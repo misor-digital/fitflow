@@ -9,9 +9,9 @@ interface DeliveryMethodToggleProps {
 }
 
 const OPTIONS: { method: DeliveryMethod; label: string; icon: string }[] = [
-  { method: 'speedy_office', label: 'До офис на Speedy', icon: '📦' },
-  { method: 'speedy_automat', label: 'До автомат на Speedy', icon: '🔒' },
-  { method: 'address', label: 'Доставка до адрес', icon: '🏠' },
+  { method: 'speedy_office', label: 'Speedy офис', icon: '📦' },
+  { method: 'speedy_automat', label: 'Speedy автомат', icon: '🔒' },
+  { method: 'address', label: 'До адрес', icon: '🏠' },
 ];
 
 export default function DeliveryMethodToggle({ value, onChange }: DeliveryMethodToggleProps) {

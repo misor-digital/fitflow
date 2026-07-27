@@ -112,6 +112,9 @@ export {
   // Delivery method formatting
   formatDeliveryMethodLabel,
 
+  // Address display label helper
+  getAddressDisplayLabel,
+
   // Name display helper
   displayName,
 } from './format';

@@ -32,14 +32,41 @@ interface SavedAddress {
   first_name: string;
   last_name: string;
   phone: string | null;
-  city: string;
-  postal_code: string;
-  street_address: string;
+  city: string | null;
+  postal_code: string | null;
+  street_address: string | null;
   building_entrance: string | null;
   floor: string | null;
   apartment: string | null;
   delivery_notes: string | null;
+  delivery_method: 'address' | 'speedy_office' | 'speedy_automat';
+  speedy_office_id: string | null;
+  speedy_office_name: string | null;
+  speedy_office_address: string | null;
   is_default: boolean;
+}
+
+/** Build a one-line summary for a saved address card */
+function formatAddressSummary(addr: SavedAddress): string {
+  if (addr.delivery_method === 'speedy_office' || addr.delivery_method === 'speedy_automat') {
+    return addr.speedy_office_name || 'Speedy';
+  }
+  return [addr.street_address, addr.city].filter(Boolean).join(', ')
+    || `${addr.first_name} ${addr.last_name}`.trim();
+}
+
+/** Delivery method icon for a saved address */
+function addressMethodIcon(method: SavedAddress['delivery_method']): string {
+  if (method === 'speedy_automat') return '🔒';
+  if (method === 'speedy_office') return '📦';
+  return '🏠';
+}
+
+/** Delivery method label for a saved address */
+function addressMethodLabel(method: SavedAddress['delivery_method']): string {
+  if (method === 'speedy_automat') return 'Speedy автомат';
+  if (method === 'speedy_office') return 'Speedy офис';
+  return 'До адрес';
 }
 
 export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsProps) {
@@ -100,6 +127,8 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<string | null>(store.selectedAddressId);
   const [showNewAddressForm, setShowNewAddressForm] = useState(false);
+  const [showAllAddresses, setShowAllAddresses] = useState(false);
+  const [expandSingleAddress, setExpandSingleAddress] = useState(false);
   const [loadingAddresses, setLoadingAddresses] = useState(false);
 
   // Delivery method state
@@ -391,16 +420,27 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
     } else if (isAuthenticated) {
       // Branch C: Authenticated
       if (selectedAddressId && !showNewAddressForm) {
+        // Saved address selected — read delivery method from the card
+        const selectedAddr = savedAddresses.find(a => a.id === selectedAddressId);
+        const savedMethod: DeliveryMethod = selectedAddr?.delivery_method ?? 'address';
         store.setGuestMode(false);
         store.setContactInfo(...resolveContact());
         store.setSelectedAddressId(selectedAddressId);
-        store.setDeliveryMethod('address');
-        store.setSpeedyOffice(null);
+        store.setDeliveryMethod(savedMethod);
+        if (selectedAddr && (savedMethod === 'speedy_office' || savedMethod === 'speedy_automat')) {
+          store.setSpeedyOffice({
+            id: selectedAddr.speedy_office_id || '',
+            name: selectedAddr.speedy_office_name || '',
+            address: selectedAddr.speedy_office_address || '',
+          });
+        } else {
+          store.setSpeedyOffice(null);
+        }
         advanceToNext();
       } else {
+        // New address form — address delivery (speedy is handled above)
         const addressValid = validateAddressForm();
         if (!addressValid) return;
-
         store.setGuestMode(false);
         store.setContactInfo(...resolveContact());
         store.setSelectedAddressId(null);
@@ -474,7 +514,7 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
       {/* Speedy Office Widget */}
       <div>
         <label className="block text-sm sm:text-base font-semibold text-[var(--color-brand-navy)] mb-1.5">
-          {deliveryMethod === 'speedy_automat' ? 'Автомат на Speedy' : 'Офис на Speedy'} <span className="text-red-500">*</span>
+          {deliveryMethod === 'speedy_automat' ? 'Speedy автомат' : 'Speedy офис'} <span className="text-red-500">*</span>
         </label>
         <SpeedyOfficeSelector
           selectedOffice={speedyOffice}
@@ -762,6 +802,69 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
   // =========================================================================
   // Branch C: Authenticated user
   // =========================================================================
+
+  // Helper: render a saved address card (reused for single-expand & multi views)
+  const renderSavedAddressCard = (addr: SavedAddress) => {
+    const isSpeedy = addr.delivery_method === 'speedy_office' || addr.delivery_method === 'speedy_automat';
+    return (
+      <div
+        key={addr.id}
+        onClick={() => setSelectedAddressId(addr.id)}
+        className={`rounded-xl p-4 cursor-pointer transition-all border-3 ${
+          selectedAddressId === addr.id
+            ? 'border-[var(--color-brand-orange)] bg-gradient-to-br from-[var(--color-brand-orange)]/5 to-[var(--color-brand-orange)]/2'
+            : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
+        }`}
+      >
+        <div className="flex items-start gap-3">
+          <div className={`mt-1 w-5 h-5 rounded-full border-3 flex-shrink-0 ${
+            selectedAddressId === addr.id ? 'border-[var(--color-brand-orange)]' : 'border-gray-300'
+          }`}>
+            {selectedAddressId === addr.id && (
+              <div className="w-full h-full rounded-full bg-[var(--color-brand-orange)] scale-[0.5]" />
+            )}
+          </div>
+          <div className="flex-1 min-w-0">
+            {/* Delivery method badge */}
+            <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+              {addressMethodIcon(addr.delivery_method)} {addressMethodLabel(addr.delivery_method)}
+            </div>
+            {addr.label && (
+              <div className="text-xs font-semibold text-[var(--color-brand-orange)] uppercase tracking-wide mb-1">
+                {addr.label}
+              </div>
+            )}
+            {isSpeedy ? (
+              <>
+                <div className="text-sm sm:text-base font-semibold text-[var(--color-brand-navy)]">
+                  {addr.speedy_office_name}
+                </div>
+                {addr.speedy_office_address && (
+                  <div className="text-sm text-gray-600 mt-0.5">{addr.speedy_office_address}</div>
+                )}
+              </>
+            ) : (
+              <>
+                <div className="text-sm sm:text-base font-semibold text-[var(--color-brand-navy)]">
+                  {addr.street_address}
+                  {addr.building_entrance && `, Вход ${addr.building_entrance}`}
+                  {addr.floor && `, ет. ${addr.floor}`}
+                  {addr.apartment && `, ап. ${addr.apartment}`}
+                </div>
+                <div className="text-sm text-gray-600 mt-0.5">
+                  {addr.postal_code} {addr.city}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Determine whether we're in the "new address" sub-flow
+  const hasSavedAddresses = savedAddresses.length > 0;
+
   return (
     <div>
       <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-[var(--color-brand-navy)] text-center mb-8 sm:mb-10 md:mb-12 relative after:content-[''] after:block after:w-12 sm:after:w-16 after:h-1 after:bg-[var(--color-brand-orange)] after:mx-auto after:mt-3 sm:after:mt-4 after:rounded">
@@ -775,16 +878,11 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
         </p>
       </div>
 
-      {/* Delivery Method Toggle */}
-      <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg mb-6">
-        <h3 className="text-lg sm:text-xl font-bold text-[var(--color-brand-navy)] mb-4 border-b pb-2">
-          Метод на доставка
-        </h3>
-        <DeliveryMethodToggle value={deliveryMethod} onChange={handleDeliveryMethodChange} />
-      </div>
-
-      {/* Address section - only show when delivery method is 'address' */}
-      {deliveryMethod === 'address' ? (
+      {/* ----------------------------------------------------------------- */}
+      {/* Saved addresses exist + NOT creating a new one                     */}
+      {/* → No delivery method toggle; each card carries its own method      */}
+      {/* ----------------------------------------------------------------- */}
+      {hasSavedAddresses && !showNewAddressForm ? (
         <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg">
           <h3 className="text-lg sm:text-xl font-bold text-[var(--color-brand-navy)] mb-4 border-b pb-2">
             Адрес за доставка
@@ -794,48 +892,58 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
             <div className="flex items-center justify-center py-8">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--color-brand-orange)]"></div>
             </div>
-          ) : savedAddresses.length > 0 && !showNewAddressForm ? (
-            <div className="space-y-3">
-              {savedAddresses.map((addr) => (
-                <div
-                  key={addr.id}
-                  onClick={() => setSelectedAddressId(addr.id)}
-                  className={`rounded-xl p-4 cursor-pointer transition-all border-3 ${
-                    selectedAddressId === addr.id
-                      ? 'border-[var(--color-brand-orange)] bg-gradient-to-br from-[var(--color-brand-orange)]/5 to-[var(--color-brand-orange)]/2'
-                      : 'border-gray-200 hover:border-gray-300 hover:shadow-md'
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className={`mt-1 w-5 h-5 rounded-full border-3 flex-shrink-0 ${
-                      selectedAddressId === addr.id ? 'border-[var(--color-brand-orange)]' : 'border-gray-300'
-                    }`}>
-                      {selectedAddressId === addr.id && (
-                        <div className="w-full h-full rounded-full bg-[var(--color-brand-orange)] scale-[0.5]" />
-                      )}
-                    </div>
+          ) : savedAddresses.length === 1 && !expandSingleAddress ? (
+            /* Single saved address — compact summary */
+            (() => {
+              const addr = savedAddresses[0];
+              const displayText = formatAddressSummary(addr);
+              if (!displayText) {
+                setExpandSingleAddress(true);
+                return null;
+              }
+              return (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-3 rounded-xl p-4 border-3 border-[var(--color-brand-orange)] bg-gradient-to-br from-[var(--color-brand-orange)]/5 to-[var(--color-brand-orange)]/2">
+                    <span className="text-[var(--color-brand-orange)]">{addressMethodIcon(addr.delivery_method)}</span>
                     <div className="flex-1 min-w-0">
-                      {addr.label && (
-                        <div className="text-xs font-semibold text-[var(--color-brand-orange)] uppercase tracking-wide mb-1">
-                          {addr.label}
-                        </div>
-                      )}
-                      <div className="text-sm sm:text-base font-semibold text-[var(--color-brand-navy)]">
-                        {addr.first_name} {addr.last_name}
-                      </div>
-                      <div className="text-sm text-gray-600 mt-0.5">
-                        {addr.street_address}
-                        {addr.building_entrance && `, Вход ${addr.building_entrance}`}
-                        {addr.floor && `, ет. ${addr.floor}`}
-                        {addr.apartment && `, ап. ${addr.apartment}`}
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        {addr.postal_code} {addr.city}
-                      </div>
+                      <span className="text-sm sm:text-base font-semibold text-[var(--color-brand-navy)]">
+                        {addressMethodLabel(addr.delivery_method)}: {displayText}
+                      </span>
                     </div>
+                    <button
+                      onClick={() => setExpandSingleAddress(true)}
+                      className="text-sm font-semibold text-[var(--color-brand-orange)] hover:underline flex-shrink-0"
+                    >
+                      промени
+                    </button>
                   </div>
                 </div>
-              ))}
+              );
+            })()
+          ) : (
+            /* Multiple saved addresses (or single expanded) — card list */
+            <div className="space-y-3">
+              {savedAddresses.length === 1 && expandSingleAddress && (
+                <button
+                  onClick={() => setExpandSingleAddress(false)}
+                  className="text-sm text-[var(--color-brand-orange)] font-semibold mb-2 hover:underline"
+                >
+                  ← Назад
+                </button>
+              )}
+
+              {(showAllAddresses ? savedAddresses : savedAddresses.slice(0, 3)).map(
+                (addr) => renderSavedAddressCard(addr),
+              )}
+
+              {!showAllAddresses && savedAddresses.length > 3 && (
+                <button
+                  onClick={() => setShowAllAddresses(true)}
+                  className="w-full py-2 text-sm sm:text-base font-semibold text-[var(--color-brand-orange)] hover:underline transition-all"
+                >
+                  Покажи всички ({savedAddresses.length})
+                </button>
+              )}
 
               <button
                 onClick={() => setShowNewAddressForm(true)}
@@ -844,26 +952,38 @@ export default function OrderStepDetails({ onNext, onBack }: OrderStepDetailsPro
                 + Добави нов адрес
               </button>
             </div>
-          ) : (
-            <div>
-              {savedAddresses.length > 0 && showNewAddressForm && (
-                <button
-                  onClick={() => setShowNewAddressForm(false)}
-                  className="text-sm text-[var(--color-brand-orange)] font-semibold mb-4 hover:underline"
-                >
-                  ← Назад към запазените адреси
-                </button>
-              )}
-              {renderAddressForm()}
-            </div>
           )}
         </div>
       ) : (
-        <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg">
-          <h3 className="text-lg sm:text-xl font-bold text-[var(--color-brand-navy)] mb-4 border-b pb-2">
-            Данни за получаване
-          </h3>
-          {renderOfficeForm()}
+        /* --------------------------------------------------------------- */
+        /* No saved addresses OR creating a new one                         */
+        /* → Show delivery method toggle + fresh form (like guest flow)     */
+        /* --------------------------------------------------------------- */
+        <div className="space-y-6 sm:space-y-8">
+          {hasSavedAddresses && showNewAddressForm && (
+            <button
+              onClick={() => { setShowNewAddressForm(false); setExpandSingleAddress(false); }}
+              className="text-sm text-[var(--color-brand-orange)] font-semibold hover:underline"
+            >
+              ← Назад към запазените адреси
+            </button>
+          )}
+
+          {/* Delivery Method Toggle */}
+          <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg">
+            <h3 className="text-lg sm:text-xl font-bold text-[var(--color-brand-navy)] mb-4 border-b pb-2">
+              Метод на доставка
+            </h3>
+            <DeliveryMethodToggle value={deliveryMethod} onChange={handleDeliveryMethodChange} />
+          </div>
+
+          {/* Address / Office Form (fresh — no saved addresses shown) */}
+          <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg">
+            <h3 className="text-lg sm:text-xl font-bold text-[var(--color-brand-navy)] mb-4 border-b pb-2">
+              {(deliveryMethod === 'speedy_office' || deliveryMethod === 'speedy_automat') ? 'Данни за получаване' : 'Адрес за доставка'}
+            </h3>
+            {(deliveryMethod === 'speedy_office' || deliveryMethod === 'speedy_automat') ? renderOfficeForm() : renderAddressForm()}
+          </div>
         </div>
       )}
 

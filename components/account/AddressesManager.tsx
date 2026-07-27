@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import type { AddressRow } from '@/lib/supabase/types';
+import { getAddressDisplayLabel } from '@/lib/order/format';
 import AddressForm from './AddressForm';
 
 // ============================================================================
@@ -264,12 +265,16 @@ export default function AddressesManager({ initialAddresses }: AddressesManagerP
                 {/* Header: label + badges */}
                 <div className="flex flex-wrap items-center gap-2 mb-2">
                   <span className="text-base font-bold text-[var(--color-brand-navy)]">
-                    {addr.label || 'Без етикет'}
+                    {getAddressDisplayLabel(addr)}
                   </span>
 
                   {addr.delivery_method === 'address' ? (
                     <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded bg-blue-100 text-blue-800">
-                      📍 До адрес
+                      🏠 До адрес
+                    </span>
+                  ) : addr.delivery_method === 'speedy_automat' ? (
+                    <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded bg-orange-100 text-orange-800">
+                      🔒 Speedy автомат
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded bg-orange-100 text-orange-800">

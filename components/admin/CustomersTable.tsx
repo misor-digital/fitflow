@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useCallback, useRef, useEffect, useTransition } from 'react';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import type { CustomerWithStats } from '@/lib/supabase/types';
 import { formatDateShort } from '@/lib/utils/date';
@@ -10,6 +11,12 @@ interface CustomersTableProps {
   total: number;
   currentPage: number;
   perPage: number;
+  initialName?: string;
+  initialEmail?: string;
+  initialPhone?: string;
+  initialSubscriber?: string;
+  initialSubscription?: string;
+  initialMinOrders?: string;
 }
 
 type BoolFilter = '' | 'true' | 'false';
@@ -19,65 +26,100 @@ export function CustomersTable({
   total,
   currentPage,
   perPage,
+  initialName = '',
+  initialEmail = '',
+  initialPhone = '',
+  initialSubscriber = '',
+  initialSubscription = '',
+  initialMinOrders = '',
 }: CustomersTableProps) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const start = (currentPage - 1) * perPage + 1;
   const end = Math.min(currentPage * perPage, total);
 
-  // Column filters (client-side on current page)
-  const [nameFilter, setNameFilter] = useState('');
-  const [emailFilter, setEmailFilter] = useState('');
-  const [phoneFilter, setPhoneFilter] = useState('');
-  const [subscriberFilter, setSubscriberFilter] = useState<BoolFilter>('');
-  const [subscriptionFilter, setSubscriptionFilter] = useState<BoolFilter>('');
-  const [minOrders, setMinOrders] = useState('');
+  // All filters (server-side, debounced URL navigation)
+  const [nameFilter, setNameFilter] = useState(initialName);
+  const [emailFilter, setEmailFilter] = useState(initialEmail);
+  const [phoneFilter, setPhoneFilter] = useState(initialPhone);
+  const [subscriberFilter, setSubscriberFilter] = useState<BoolFilter>(initialSubscriber as BoolFilter);
+  const [subscriptionFilter, setSubscriptionFilter] = useState<BoolFilter>(initialSubscription as BoolFilter);
+  const [minOrders, setMinOrders] = useState(initialMinOrders);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isPending, startTransition] = useTransition();
 
-  const filtered = useMemo(() => {
-    let result = customers;
+  const navigateWithFilters = useCallback(
+    (overrides: Record<string, string>) => {
+      const p = new URLSearchParams(searchParams.toString());
+      p.delete('page'); // Reset to page 1 on filter change
+      for (const [k, v] of Object.entries(overrides)) {
+        if (v) p.set(k, v);
+        else p.delete(k);
+      }
+      const qs = p.toString();
+      startTransition(() => {
+        router.push(`${pathname}${qs ? `?${qs}` : ''}`);
+      });
+    },
+    [router, pathname, searchParams],
+  );
 
-    if (nameFilter) {
-      const q = nameFilter.toLowerCase();
-      result = result.filter(
-        (c) =>
-          c.first_name.toLowerCase().includes(q) ||
-          c.last_name.toLowerCase().includes(q),
-      );
-    }
-    if (emailFilter) {
-      const q = emailFilter.toLowerCase();
-      result = result.filter((c) => c.email.toLowerCase().includes(q));
-    }
-    if (phoneFilter) {
-      result = result.filter((c) => (c.phone ?? '').includes(phoneFilter));
-    }
-    if (subscriberFilter === 'true') {
-      result = result.filter((c) => c.is_subscriber);
-    } else if (subscriberFilter === 'false') {
-      result = result.filter((c) => !c.is_subscriber);
-    }
-    if (subscriptionFilter === 'true') {
-      result = result.filter((c) => c.has_active_subscription);
-    } else if (subscriptionFilter === 'false') {
-      result = result.filter((c) => !c.has_active_subscription);
-    }
-    if (minOrders) {
-      const n = parseInt(minOrders, 10);
-      if (!isNaN(n)) result = result.filter((c) => c.order_count >= n);
-    }
+  const debouncedNavigate = useCallback(
+    (overrides: Record<string, string>) => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+      debounceRef.current = setTimeout(() => navigateWithFilters(overrides), 400);
+    },
+    [navigateWithFilters],
+  );
 
-    return result;
-  }, [customers, nameFilter, emailFilter, phoneFilter, subscriberFilter, subscriptionFilter, minOrders]);
+  useEffect(() => () => { if (debounceRef.current) clearTimeout(debounceRef.current); }, []);
 
-  const hasFilters = nameFilter || emailFilter || phoneFilter || subscriberFilter || subscriptionFilter || minOrders;
+  const handleNameChange = (v: string) => { setNameFilter(v); debouncedNavigate({ search: v }); };
+  const handleEmailChange = (v: string) => { setEmailFilter(v); debouncedNavigate({ email: v }); };
+  const handlePhoneChange = (v: string) => { setPhoneFilter(v); debouncedNavigate({ phone: v }); };
+  const handleSubscriberChange = (v: BoolFilter) => { setSubscriberFilter(v); navigateWithFilters({ subscriber: v }); };
+  const handleSubscriptionChange = (v: BoolFilter) => { setSubscriptionFilter(v); navigateWithFilters({ subscription: v }); };
+  const handleMinOrdersChange = (v: string) => { setMinOrders(v); debouncedNavigate({ minOrders: v }); };
+
+  const hasAnyFilter = nameFilter || emailFilter || phoneFilter || subscriberFilter || subscriptionFilter || minOrders;
+
+  const clearAllFilters = () => {
+    setNameFilter('');
+    setEmailFilter('');
+    setPhoneFilter('');
+    setSubscriberFilter('');
+    setSubscriptionFilter('');
+    setMinOrders('');
+    startTransition(() => {
+      router.push(pathname);
+    });
+  };
 
   return (
     <div>
-      {/* Results summary */}
-      <p className="text-sm text-gray-500 mb-3">
-        Показване на {start}–{end} от {total} клиенти
-        {hasFilters ? ` (${filtered.length} съвпадения на страницата)` : ''}
-      </p>
+      {/* Results summary + clear button */}
+      <div className="flex items-center justify-between mb-3">
+        <p className="text-sm text-gray-500">
+          Показване на {start}–{end} от {total} клиенти
+          {hasAnyFilter ? ' · филтрирано' : ''}
+        </p>
+        {hasAnyFilter && (
+          <button
+            onClick={clearAllFilters}
+            className="text-xs text-gray-500 hover:text-red-600 underline transition-colors"
+          >
+            Изчисти филтрите
+          </button>
+        )}
+      </div>
 
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden relative">
+        {isPending && (
+          <div className="absolute inset-0 bg-white/60 z-10 flex items-center justify-center">
+            <div className="animate-spin w-6 h-6 border-3 border-[var(--color-brand-navy)] border-t-transparent rounded-full" />
+          </div>
+        )}
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
@@ -94,36 +136,51 @@ export function CustomersTable({
               {/* Filter row */}
               <tr className="border-b border-gray-200 bg-gray-50/50">
                 <th className="px-4 py-2">
-                  <input
-                    type="text"
-                    value={nameFilter}
-                    onChange={(e) => setNameFilter(e.target.value)}
-                    placeholder="Филтър..."
-                    className="w-full border border-gray-200 rounded px-2 py-1 text-xs font-normal focus:outline-none focus:ring-1 focus:ring-[var(--color-brand-navy)]"
-                  />
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={nameFilter}
+                      onChange={(e) => handleNameChange(e.target.value)}
+                      placeholder="Филтър..."
+                      className="w-full border border-gray-200 rounded px-2 py-1 pr-6 text-xs font-normal focus:outline-none focus:ring-1 focus:ring-[var(--color-brand-navy)]"
+                    />
+                    {nameFilter && (
+                      <button onClick={() => handleNameChange('')} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 text-xs">✕</button>
+                    )}
+                  </div>
                 </th>
                 <th className="px-4 py-2">
-                  <input
-                    type="text"
-                    value={emailFilter}
-                    onChange={(e) => setEmailFilter(e.target.value)}
-                    placeholder="Филтър..."
-                    className="w-full border border-gray-200 rounded px-2 py-1 text-xs font-normal focus:outline-none focus:ring-1 focus:ring-[var(--color-brand-navy)]"
-                  />
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={emailFilter}
+                      onChange={(e) => handleEmailChange(e.target.value)}
+                      placeholder="Филтър..."
+                      className="w-full border border-gray-200 rounded px-2 py-1 pr-6 text-xs font-normal focus:outline-none focus:ring-1 focus:ring-[var(--color-brand-navy)]"
+                    />
+                    {emailFilter && (
+                      <button onClick={() => handleEmailChange('')} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 text-xs">✕</button>
+                    )}
+                  </div>
                 </th>
                 <th className="px-4 py-2">
-                  <input
-                    type="text"
-                    value={phoneFilter}
-                    onChange={(e) => setPhoneFilter(e.target.value)}
-                    placeholder="Филтър..."
-                    className="w-full border border-gray-200 rounded px-2 py-1 text-xs font-normal focus:outline-none focus:ring-1 focus:ring-[var(--color-brand-navy)]"
-                  />
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={phoneFilter}
+                      onChange={(e) => handlePhoneChange(e.target.value)}
+                      placeholder="Филтър..."
+                      className="w-full border border-gray-200 rounded px-2 py-1 pr-6 text-xs font-normal focus:outline-none focus:ring-1 focus:ring-[var(--color-brand-navy)]"
+                    />
+                    {phoneFilter && (
+                      <button onClick={() => handlePhoneChange('')} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 text-xs">✕</button>
+                    )}
+                  </div>
                 </th>
                 <th className="px-4 py-2">
                   <select
                     value={subscriberFilter}
-                    onChange={(e) => setSubscriberFilter(e.target.value as BoolFilter)}
+                    onChange={(e) => handleSubscriberChange(e.target.value as BoolFilter)}
                     className="w-full border border-gray-200 rounded px-2 py-1 text-xs font-normal bg-white focus:outline-none focus:ring-1 focus:ring-[var(--color-brand-navy)]"
                   >
                     <option value="">Всички</option>
@@ -132,19 +189,24 @@ export function CustomersTable({
                   </select>
                 </th>
                 <th className="px-4 py-2">
-                  <input
-                    type="number"
-                    value={minOrders}
-                    onChange={(e) => setMinOrders(e.target.value)}
-                    placeholder="Мин."
-                    min="0"
-                    className="w-full border border-gray-200 rounded px-2 py-1 text-xs font-normal focus:outline-none focus:ring-1 focus:ring-[var(--color-brand-navy)]"
-                  />
+                  <div className="relative">
+                    <input
+                      type="number"
+                      value={minOrders}
+                      onChange={(e) => handleMinOrdersChange(e.target.value)}
+                      placeholder="Мин."
+                      min="0"
+                      className="w-full border border-gray-200 rounded px-2 py-1 pr-6 text-xs font-normal focus:outline-none focus:ring-1 focus:ring-[var(--color-brand-navy)]"
+                    />
+                    {minOrders && (
+                      <button onClick={() => handleMinOrdersChange('')} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-500 text-xs">✕</button>
+                    )}
+                  </div>
                 </th>
                 <th className="px-4 py-2">
                   <select
                     value={subscriptionFilter}
-                    onChange={(e) => setSubscriptionFilter(e.target.value as BoolFilter)}
+                    onChange={(e) => handleSubscriptionChange(e.target.value as BoolFilter)}
                     className="w-full border border-gray-200 rounded px-2 py-1 text-xs font-normal bg-white focus:outline-none focus:ring-1 focus:ring-[var(--color-brand-navy)]"
                   >
                     <option value="">Всички</option>
@@ -157,14 +219,14 @@ export function CustomersTable({
               </tr>
             </thead>
             <tbody>
-              {filtered.length === 0 ? (
+              {customers.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="px-4 py-8 text-center text-gray-400">
                     Няма съвпадения за зададените филтри.
                   </td>
                 </tr>
               ) : (
-                filtered.map((customer) => (
+                customers.map((customer) => (
                   <tr
                     key={customer.id}
                     className="border-b border-gray-100 hover:bg-gray-50 transition-colors"
