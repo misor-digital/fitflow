@@ -203,14 +203,7 @@ export default function ThankYouPersonalization({ onSave, onDone }: ThankYouPers
       <div ref={submitRef} className="scroll-mt-24">
         {error && <div className="mb-4 p-4 bg-red-50 text-red-700 rounded-lg text-sm">{error}</div>}
 
-        {saved ? (
-          <button
-            onClick={onDone}
-            className="w-full bg-[#FB7D00] text-white py-3 sm:py-4 rounded-full text-base sm:text-lg font-semibold uppercase tracking-wide shadow-lg hover:bg-[#e67100] transition-all hover:-translate-y-0.5 hover:shadow-xl"
-          >
-            Към начална страница
-          </button>
-        ) : (
+        <div className="space-y-3 sm:space-y-4">
           <button
             onClick={handleSave}
             disabled={!canSave || saving}
@@ -218,7 +211,14 @@ export default function ThankYouPersonalization({ onSave, onDone }: ThankYouPers
           >
             {saving ? 'Запазване...' : 'Запази предпочитанията'}
           </button>
-        )}
+          
+          <button
+            onClick={onDone}
+            className="w-full bg-[#FB7D00] text-white py-3 sm:py-4 rounded-full text-base sm:text-lg font-semibold uppercase tracking-wide shadow-lg hover:bg-[#e67100] transition-all hover:-translate-y-0.5 hover:shadow-xl"
+          >
+            Към начална страница
+          </button>
+        </div>
       </div>
     </div>
   );
