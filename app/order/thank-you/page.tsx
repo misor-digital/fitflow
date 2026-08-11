@@ -203,6 +203,28 @@ export default function OrderThankYou() {
             </div>
           ) : null}
 
+          {/* Divider */}
+          <div className="w-12 sm:w-16 h-1 bg-black mx-auto my-4 sm:my-5 md:my-6 rounded" />
+
+          {/* Go home / Post-checkout personalization */}
+          {(orderInfo.isSubscription && orderInfo.subscriptionId) ||
+          (orderInfo.orderId && orderInfo.personalizationToken) ? (
+            <ThankYouPersonalization
+              onSave={handleSavePersonalization}
+              onDone={handleGoHome}
+            />
+          ) : (
+            <button
+              onClick={handleGoHome}
+              className="w-full bg-[#FB7D00] text-white py-3 sm:py-4 rounded-full text-base sm:text-lg font-semibold uppercase tracking-wide shadow-lg hover:bg-[#e67100] transition-all hover:-translate-y-0.5 hover:shadow-xl"
+            >
+              Към начална страница
+            </button>
+          )}
+
+          {/* Divider */}
+          <div className="w-12 sm:w-16 h-1 bg-black mx-auto my-4 sm:my-5 md:my-6 rounded" />
+
           {/* Email confirmation */}
           {orderInfo.email && (
             <p className="text-gray-600 text-base sm:text-lg mb-4 sm:mb-5 leading-relaxed">
@@ -255,7 +277,7 @@ export default function OrderThankYou() {
           )}
 
           {/* Divider */}
-          <div className="w-12 sm:w-16 h-1 bg-[#FB7D00] mx-auto mb-5 sm:mb-6 md:mb-8 rounded" />
+          <div className="w-12 sm:w-16 h-1 bg-black mx-auto mb-5 sm:mb-6 md:mb-8 rounded" />
 
           {/* Contact info */}
           <div className="bg-gradient-to-br from-[#FB7D00]/10 to-[#FB7D00]/5 rounded-xl sm:rounded-2xl p-4 sm:p-5 md:p-6 mb-5 sm:mb-6 md:mb-8">
@@ -269,22 +291,7 @@ export default function OrderThankYou() {
               </a>
             </p>
           </div>
-
-          {/* Go home / Post-checkout personalization */}
-          {(orderInfo.isSubscription && orderInfo.subscriptionId) ||
-          (orderInfo.orderId && orderInfo.personalizationToken) ? (
-            <ThankYouPersonalization
-              onSave={handleSavePersonalization}
-              onDone={handleGoHome}
-            />
-          ) : (
-            <button
-              onClick={handleGoHome}
-              className="w-full bg-[#FB7D00] text-white py-3 sm:py-4 rounded-full text-base sm:text-lg font-semibold uppercase tracking-wide shadow-lg hover:bg-[#e67100] transition-all hover:-translate-y-0.5 hover:shadow-xl"
-            >
-              Към начална страница
-            </button>
-          )}
+          
         </div>
       </div>
     </div>
