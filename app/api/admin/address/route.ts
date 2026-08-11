@@ -2,24 +2,26 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { verifySession } from '@/lib/auth';
 import { CUSTOMER_VIEW_ROLES, STAFF_MANAGEMENT_ROLES } from '@/lib/auth/permissions';
-import { getAddressesByUser, createAddress, countAddressesByUser } from '@/lib/data';
-import { validateAddress, validateSpeedyOffice } from '@/lib/order';
-import type { SpeedyOfficeSelection } from '@/lib/order';
-import { isValidPhone } from '@/lib/catalog';
-import { checkRateLimit } from '@/lib/utils/rateLimit';
-import { supabaseAdmin } from '@/lib/supabase/admin';
 import {
+  getAddressesByUser,
+  createAddress,
+  countAddressesByUser,
+  syncPhoneToProfile,
+  unsetDefaultAddresses,
+} from '@/lib/data';
+import {
+  MAX_ADDRESSES,
   sanitizeAddressBody,
   validateFieldLengths,
-  generateAddressLabel,
-  syncPhoneToProfile,
-} from '@/app/api/address/route';
-import type { AddressInsert } from '@/lib/supabase/types';
+  validatePhone,
+  validateAddressDomain,
+  buildAddressInsert,
+} from '@/lib/order/address-write';
+import { checkRateLimit } from '@/lib/utils/rateLimit';
+import { supabaseAdmin } from '@/lib/supabase/admin';
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
-const MAX_ADDRESSES = 10;
 
 // ============================================================================
 // GET /api/admin/address?userId=<uuid> - List addresses for a user
@@ -154,135 +156,29 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // Phone validation (required for all delivery methods)
-    if (!sanitized.phone?.trim()) {
+    const phoneErrors = validatePhone(sanitized.phone);
+    if (phoneErrors.length > 0) {
       return NextResponse.json(
-        {
-          error: 'Невалидни данни',
-          details: [{ field: 'phone', message: 'Телефонният номер е задължителен', code: 'required' }],
-        },
+        { error: 'Невалидни данни', details: phoneErrors },
         { status: 400 },
       );
     }
-    if (!isValidPhone(sanitized.phone)) {
-      return NextResponse.json(
-        {
-          error: 'Невалидни данни',
-          details: [
-            {
-              field: 'phone',
-              message:
-                'Моля, въведете само цифри и символи за форматиране (+, -, (, ), интервал)',
-              code: 'invalid_format',
-            },
-          ],
-        },
-        { status: 400 },
-      );
-    }
-
-    const deliveryMethod = sanitized.deliveryMethod ?? 'address';
 
     // Domain validation - conditional on delivery method
-    if (deliveryMethod === 'speedy_office') {
-      const officeSelection: SpeedyOfficeSelection | null =
-        sanitized.speedyOfficeId && sanitized.speedyOfficeName
-          ? {
-              id: sanitized.speedyOfficeId,
-              name: sanitized.speedyOfficeName,
-              address: sanitized.speedyOfficeAddress ?? '',
-            }
-          : null;
-
-      const validationResult = validateSpeedyOffice(
-        {
-          label: sanitized.label ?? '',
-          firstName: sanitized.firstName ?? '',
-          lastName: sanitized.lastName ?? '',
-          phone: sanitized.phone ?? '',
-          city: '',
-          postalCode: '',
-          streetAddress: '',
-          buildingEntrance: '',
-          floor: '',
-          apartment: '',
-          deliveryNotes: sanitized.deliveryNotes ?? '',
-          isDefault: sanitized.isDefault ?? false,
-        },
-        officeSelection,
+    const validationResult = validateAddressDomain(sanitized);
+    if (!validationResult.valid) {
+      return NextResponse.json(
+        { error: 'Невалидни данни', details: validationResult.errors },
+        { status: 400 },
       );
-
-      if (!validationResult.valid) {
-        return NextResponse.json(
-          { error: 'Невалидни данни', details: validationResult.errors },
-          { status: 400 },
-        );
-      }
-    } else {
-      const validationResult = validateAddress({
-        label: sanitized.label ?? '',
-        firstName: sanitized.firstName ?? '',
-        lastName: sanitized.lastName ?? '',
-        phone: sanitized.phone ?? '',
-        city: sanitized.city ?? '',
-        postalCode: sanitized.postalCode ?? '',
-        streetAddress: sanitized.streetAddress ?? '',
-        buildingEntrance: sanitized.buildingEntrance ?? '',
-        floor: sanitized.floor ?? '',
-        apartment: sanitized.apartment ?? '',
-        deliveryNotes: sanitized.deliveryNotes ?? '',
-        isDefault: sanitized.isDefault ?? false,
-      });
-
-      if (!validationResult.valid) {
-        return NextResponse.json(
-          { error: 'Невалидни данни', details: validationResult.errors },
-          { status: 400 },
-        );
-      }
     }
 
     // Build insert payload - use target userId, not session userId
-    const autoLabel = generateAddressLabel(deliveryMethod, sanitized);
-
-    const insertData: AddressInsert =
-      deliveryMethod === 'speedy_office'
-        ? {
-            user_id: userId,
-            delivery_method: 'speedy_office',
-            first_name: sanitized.firstName!,
-            last_name: sanitized.lastName!,
-            phone: sanitized.phone || null,
-            speedy_office_id: sanitized.speedyOfficeId!,
-            speedy_office_name: sanitized.speedyOfficeName!,
-            speedy_office_address: sanitized.speedyOfficeAddress || null,
-            label: autoLabel,
-            delivery_notes: sanitized.deliveryNotes || null,
-            is_default: sanitized.isDefault ?? false,
-          }
-        : {
-            user_id: userId,
-            delivery_method: 'address',
-            first_name: sanitized.firstName!,
-            last_name: sanitized.lastName!,
-            city: sanitized.city!,
-            postal_code: sanitized.postalCode!,
-            street_address: sanitized.streetAddress!,
-            label: autoLabel,
-            phone: sanitized.phone || null,
-            building_entrance: sanitized.buildingEntrance || null,
-            floor: sanitized.floor || null,
-            apartment: sanitized.apartment || null,
-            delivery_notes: sanitized.deliveryNotes || null,
-            is_default: sanitized.isDefault ?? false,
-          };
+    const insertData = buildAddressInsert(userId, sanitized);
 
     // Explicitly unset other defaults before insert (defense against trigger edge cases)
     if (insertData.is_default) {
-      await supabaseAdmin
-        .from('addresses')
-        .update({ is_default: false })
-        .eq('user_id', userId)
-        .eq('is_default', true);
+      await unsetDefaultAddresses(userId);
     }
 
     const address = await createAddress(insertData);
