@@ -61,6 +61,8 @@ export {
   getAddressByIdAdmin,
   updateAddressAdmin,
   deleteAddressAdmin,
+  syncPhoneToProfile,
+  unsetDefaultAddresses,
 } from './addresses';
 
 // Order data
