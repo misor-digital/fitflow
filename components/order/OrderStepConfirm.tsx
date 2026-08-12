@@ -8,7 +8,7 @@ import { useDeliveryPricing } from '@/hooks/useDeliveryPricing';
 import { trackFunnelStep } from '@/lib/analytics';
 import PriceDisplay from '@/components/PriceDisplay';
 import type { PricesMap, CatalogData, PriceInfo } from '@/lib/catalog';
-import { formatPriceDual, formatSavings, isPremiumBox, isSubscriptionBox } from '@/lib/catalog';
+import { formatPriceEur, formatSavings, isPremiumBox, isSubscriptionBox } from '@/lib/catalog';
 import type { OrderStep } from '@/lib/order';
 import { formatDeliveryMethodLabel } from '@/lib/order';
 
@@ -147,7 +147,7 @@ export default function OrderStepConfirm({
                 </span>
               </div>
               <div className="text-xs sm:text-sm text-gray-500 mt-1">
-                {formatSavings(priceInfo.discountAmountEur, priceInfo.discountAmountBgn)}
+                {formatSavings(priceInfo.discountAmountEur)}
               </div>
             </div>
           )}
@@ -334,17 +334,17 @@ export default function OrderStepConfirm({
                   <div className="flex justify-between text-sm sm:text-base">
                     <span className="text-gray-600">Оригинална цена:</span>
                     <span className="text-gray-400 line-through">
-                      {formatPriceDual(priceInfo.originalPriceEur, priceInfo.originalPriceBgn)}
+                      {formatPriceEur(priceInfo.originalPriceEur)}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm sm:text-base text-green-600">
                     <span>Отстъпка ({priceInfo.discountPercent}%):</span>
-                    <span>-{formatPriceDual(priceInfo.discountAmountEur, priceInfo.discountAmountBgn)}</span>
+                    <span>-{formatPriceEur(priceInfo.discountAmountEur)}</span>
                   </div>
                   <div className="flex justify-between text-sm sm:text-base">
                     <span className="text-gray-600">Кутия:</span>
                     <span className="text-[var(--color-brand-navy)] font-semibold">
-                      {formatPriceDual(priceInfo.finalPriceEur, priceInfo.finalPriceBgn)}
+                      {formatPriceEur(priceInfo.finalPriceEur)}
                     </span>
                   </div>
                 </>
@@ -352,7 +352,7 @@ export default function OrderStepConfirm({
                 <div className="flex justify-between text-sm sm:text-base">
                   <span className="text-gray-600">Кутия:</span>
                   <span className="text-[var(--color-brand-navy)] font-semibold">
-                    {formatPriceDual(priceInfo.originalPriceEur, priceInfo.originalPriceBgn)}
+                    {formatPriceEur(priceInfo.originalPriceEur)}
                   </span>
                 </div>
               )}
@@ -362,11 +362,8 @@ export default function OrderStepConfirm({
                 const deliveryFee = deliveryPricing.get(store.deliveryMethod);
                 const deliveryLabel = deliveryFee?.label ?? formatDeliveryMethodLabel(store.deliveryMethod);
                 const deliveryPriceEur = deliveryFee?.priceEur ?? 0;
-                const deliveryPriceBgn = deliveryPriceEur * 1.95583;
                 const boxPriceEur = hasDiscount ? priceInfo.finalPriceEur : priceInfo.originalPriceEur;
-                const boxPriceBgn = hasDiscount ? priceInfo.finalPriceBgn : priceInfo.originalPriceBgn;
                 const totalEur = boxPriceEur + deliveryPriceEur;
-                const totalBgn = boxPriceBgn + deliveryPriceBgn;
 
                 return (
                   <>
@@ -374,14 +371,14 @@ export default function OrderStepConfirm({
                       <span className="text-gray-600">{deliveryLabel}:</span>
                       <span className="text-[var(--color-brand-navy)] font-semibold">
                         {deliveryPriceEur > 0
-                          ? formatPriceDual(deliveryPriceEur, deliveryPriceBgn)
+                          ? formatPriceEur(deliveryPriceEur)
                           : 'ще бъде изчислена'}
                       </span>
                     </div>
                     <div className="flex justify-between text-lg sm:text-xl font-bold pt-2 border-t border-gray-100">
                       <span className="text-[var(--color-brand-navy)]">Общо:</span>
                       <span className="text-[var(--color-brand-orange)]">
-                        {formatPriceDual(totalEur, totalBgn)}
+                        {formatPriceEur(totalEur)}
                       </span>
                     </div>
                   </>

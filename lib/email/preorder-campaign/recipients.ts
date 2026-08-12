@@ -8,7 +8,6 @@
 import 'server-only';
 
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import { eurToBgn } from '@/lib/data';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -47,8 +46,6 @@ export interface PreorderRecipient {
   promoCode: string | null;
   originalPriceEur: number | null;
   finalPriceEur: number | null;
-  originalPriceBgn: number | null;
-  finalPriceBgn: number | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -84,13 +81,10 @@ export async function getEligiblePreorderRecipients(): Promise<PreorderRecipient
 
   if (!preorders?.length) return [];
 
-  // Compute BGN equivalents for each recipient
   const recipients: PreorderRecipient[] = await Promise.all(
     preorders.map(async (p) => {
       const originalEur = p.original_price_eur ?? null;
       const finalEur = p.final_price_eur ?? null;
-      const originalBgn = originalEur != null ? await eurToBgn(originalEur) : null;
-      const finalBgn = finalEur != null ? await eurToBgn(finalEur) : null;
 
       return {
         preorderId: p.id,
@@ -113,8 +107,6 @@ export async function getEligiblePreorderRecipients(): Promise<PreorderRecipient
         promoCode: p.promo_code ?? null,
         originalPriceEur: originalEur,
         finalPriceEur: finalEur,
-        originalPriceBgn: originalBgn,
-        finalPriceBgn: finalBgn,
       };
     }),
   );

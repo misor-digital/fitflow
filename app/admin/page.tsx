@@ -1,5 +1,5 @@
 import { requireStaff } from '@/lib/auth';
-import { getOrdersCount, getSubscriptionsCount, getSubscriptionMRR, getSiteConfig, getEurToBgnRate } from '@/lib/data';
+import { getOrdersCount, getSubscriptionsCount, getSubscriptionMRR, getSiteConfig } from '@/lib/data';
 import { getStaffCount } from '@/lib/data/customers';
 import { formatDateTimeShort } from '@/lib/utils/date';
 
@@ -11,14 +11,13 @@ export default async function AdminDashboard() {
   const session = await requireStaff();
 
   // Basic stats
-  const [orderCount, staffCount, subscriptionCounts, mrr, cronLastRun, cronLastResult, eurToBgnRate] = await Promise.all([
+  const [orderCount, staffCount, subscriptionCounts, mrr, cronLastRun, cronLastResult] = await Promise.all([
     getOrdersCount(),
     getStaffCount(),
     getSubscriptionsCount(),
     getSubscriptionMRR(),
     getSiteConfig('cron_last_run'),
     getSiteConfig('cron_last_result'),
-    getEurToBgnRate(),
   ]);
 
   const parsedCronResult = cronLastResult ? (() => {
@@ -61,7 +60,6 @@ export default async function AdminDashboard() {
           <p className="text-3xl font-bold text-[var(--color-brand-navy)]">
             €{mrr.toFixed(2)}
           </p>
-          <p className="text-sm text-gray-500 mt-0.5">{(mrr * eurToBgnRate).toFixed(2)} лв</p>
         </div>
       </div>
 

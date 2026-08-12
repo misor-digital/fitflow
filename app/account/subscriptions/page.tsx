@@ -9,7 +9,6 @@ import {
   getBoxTypes,
   getOptions,
   getColors,
-  getEurToBgnRate,
   enrichSubscriptionsWithLastCycle,
 } from '@/lib/data';
 import { SubscriptionDashboard } from '@/components/account/SubscriptionDashboard';
@@ -38,7 +37,6 @@ export default async function SubscriptionsPage() {
     flavors,
     dietary,
     sizes,
-    eurToBgnRate,
   ] = await Promise.all([
     getSubscriptionsByUser(userId),
     getUpcomingCycles(),
@@ -52,7 +50,6 @@ export default async function SubscriptionsPage() {
     getOptions('flavors'),
     getOptions('dietary'),
     getOptions('sizes'),
-    getEurToBgnRate(),
   ]);
 
   // Sort all cycles ascending by date for shouldIncludeInCycle
@@ -115,7 +112,6 @@ export default async function SubscriptionsPage() {
         addresses={addresses}
         prices={prices}
         catalogOptions={catalogOptions}
-        eurToBgnRate={eurToBgnRate}
       />
     </div>
   );

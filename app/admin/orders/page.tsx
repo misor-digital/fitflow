@@ -1,6 +1,6 @@
 import { requireStaff } from '@/lib/auth';
 import { ORDER_VIEW_ROLES } from '@/lib/auth/permissions';
-import { getOrdersPaginated, getOrdersCount, getBoxTypeNames, getOptionLabels, getEurToBgnRate, getReminderCountsByOrders, getDeliveryCyclesForDropdown, getCurrentCycleId } from '@/lib/data';
+import { getOrdersPaginated, getOrdersCount, getBoxTypeNames, getOptionLabels, getReminderCountsByOrders, getDeliveryCyclesForDropdown, getCurrentCycleId } from '@/lib/data';
 import { ORDER_STATUS_LABELS } from '@/lib/order/format';
 import { OrdersTable } from '@/components/admin/OrdersTable';
 import { AdminHelpLink } from '@/components/admin/AdminHelpLink';
@@ -55,7 +55,6 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
     flavorsLabels,
     dietaryLabels,
     sizesLabels,
-    eurToBgnRate,
     cycleOptions,
   ] = await Promise.all([
     getOrdersPaginated(page, PER_PAGE, {
@@ -71,7 +70,6 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
     getOptionLabels('flavors'),
     getOptionLabels('dietary'),
     getOptionLabels('sizes'),
-    getEurToBgnRate(),
     getDeliveryCyclesForDropdown(),
   ]);
 
@@ -223,7 +221,6 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
             orders={orders}
             boxTypeNames={boxTypeNames}
             optionLabels={optionLabels}
-            eurToBgnRate={eurToBgnRate}
             total={total}
             currentPage={page}
             perPage={PER_PAGE}

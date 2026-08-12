@@ -8,12 +8,11 @@ import {
   FREQUENCY_LABELS,
 } from '@/lib/subscription';
 import { formatDateTimeShort } from '@/lib/utils/date';
-import { formatPriceDual, eurToBgnSync } from '@/lib/catalog';
+import { formatPriceEur } from '@/lib/catalog';
 
 interface SubscriptionsTableProps {
   subscriptions: SubscriptionWithUserInfo[];
   boxTypeNames: Record<string, string>;
-  eurToBgnRate: number;
   total: number;
   currentPage: number;
   perPage: number;
@@ -22,7 +21,6 @@ interface SubscriptionsTableProps {
 export function SubscriptionsTable({
   subscriptions,
   boxTypeNames,
-  eurToBgnRate,
   total,
   currentPage,
   perPage,
@@ -97,7 +95,7 @@ export function SubscriptionsTable({
 
                   {/* Price */}
                   <td className="px-4 py-3 text-gray-700 font-mono">
-                    {formatPriceDual(Number(sub.current_price_eur), eurToBgnSync(Number(sub.current_price_eur), eurToBgnRate))}
+                    {formatPriceEur(Number(sub.current_price_eur))}
                   </td>
 
                   {/* Created */}

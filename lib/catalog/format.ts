@@ -19,31 +19,12 @@ export function formatPrice(price: number): string {
 }
 
 /**
- * Format a price with currency symbol (BGN)
- * @param price - The price in BGN
- * @returns Formatted price string (e.g., "24.90 лв")
- */
-export function formatPriceBgn(price: number): string {
-  return `${formatPrice(price)} лв`;
-}
-
-/**
  * Format a price with currency symbol (EUR)
  * @param price - The price in EUR
  * @returns Formatted price string (e.g., "24.90 €")
  */
 export function formatPriceEur(price: number): string {
   return `${formatPrice(price)} €`;
-}
-
-/**
- * Format a price in both currencies
- * @param priceEur - The price in EUR
- * @param priceBgn - The price in BGN
- * @returns Formatted price string (e.g., "24.90 € / 48.70 лв")
- */
-export function formatPriceDual(priceEur: number, priceBgn: number): string {
-  return `${formatPrice(priceEur)} € / ${formatPrice(priceBgn)} лв`;
 }
 
 /**
@@ -56,41 +37,12 @@ export function formatDiscount(percent: number): string {
 }
 
 /**
- * Format savings amount in both currencies
+ * Format savings amount in EUR
  * @param amountEur - Savings in EUR
- * @param amountBgn - Savings in BGN
- * @returns Formatted savings string (e.g., "Спестяваш 2.49 € / 4.87 лв")
+ * @returns Formatted savings string (e.g., "Спестяваш 2.49 €")
  */
-export function formatSavings(amountEur: number, amountBgn: number): string {
-  return `Спестяваш ${formatPrice(amountEur)} € / ${formatPrice(amountBgn)} лв`;
-}
-
-// ============================================================================
-// Currency Conversion
-// ============================================================================
-
-/**
- * Convert EUR to BGN using a provided rate (sync, for client-side display).
- * For server-side usage, prefer the async `eurToBgn` from `@/lib/data/catalog`
- * which fetches the rate from the database.
- *
- * @param eur - Amount in EUR
- * @param rate - EUR→BGN conversion rate
- * @returns Amount in BGN (rounded to 2 decimal places)
- */
-export function eurToBgnSync(eur: number, rate: number): number {
-  return Math.round(eur * rate * 100) / 100;
-}
-
-/**
- * Convert BGN to EUR using a provided rate (sync, for client-side display).
- *
- * @param bgn - Amount in BGN
- * @param rate - EUR→BGN conversion rate
- * @returns Amount in EUR (rounded to 2 decimal places)
- */
-export function bgnToEurSync(bgn: number, rate: number): number {
-  return Math.round((bgn / rate) * 100) / 100;
+export function formatSavings(amountEur: number): string {
+  return `Спестяваш ${formatPrice(amountEur)} €`;
 }
 
 // ============================================================================

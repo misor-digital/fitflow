@@ -54,12 +54,9 @@ export interface PriceInfo {
   boxTypeId: string;
   boxTypeName: string;
   originalPriceEur: number;
-  originalPriceBgn: number;
   discountPercent: number;
   discountAmountEur: number;
-  discountAmountBgn: number;
   finalPriceEur: number;
-  finalPriceBgn: number;
   promoCode: string | null;
 }
 
@@ -69,12 +66,9 @@ export interface PriceInfo {
  */
 export interface PriceDisplayInfo {
   originalPriceEur: number;
-  originalPriceBgn: number;
   finalPriceEur: number;
-  finalPriceBgn: number;
   discountPercent: number;
   discountAmountEur: number;
-  discountAmountBgn: number;
 }
 
 // ============================================================================

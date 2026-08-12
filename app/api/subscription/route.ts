@@ -27,7 +27,6 @@ import {
 } from '@/lib/email/order-subscription-conversion-email';
 import { resolveEmailLabels, FREQUENCY_LABELS, buildPersonalizationLines } from '@/lib/email/labels';
 import { sendTransactionalEmail } from '@/lib/email/brevo/transactional';
-import { eurToBgn } from '@/lib/data';
 import {
   getOrderByConversionToken,
   markOrderConvertedToSubscription,
@@ -585,8 +584,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           const labels = await resolveEmailLabels();
           const boxName = labels.boxTypes[effectiveBoxType] ?? effectiveBoxType;
           const frequencyLabel = FREQUENCY_LABELS[frequency] ?? frequency;
-          const basePriceBgn = await eurToBgn(subscription.base_price_eur);
-          const currentPriceBgn = await eurToBgn(subscription.current_price_eur);
           const personalizationLines = buildPersonalizationLines({
             wants_personalization: effectiveWantsPersonalization,
             sports: effectiveSports,
@@ -611,8 +608,6 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
             frequencyLabel,
             basePriceEur: subscription.base_price_eur,
             currentPriceEur: subscription.current_price_eur,
-            basePriceBgn,
-            currentPriceBgn,
             promoCode: subscription.promo_code,
             discountPercent: subscription.discount_percent,
             nextDeliveryDate: nextDate,

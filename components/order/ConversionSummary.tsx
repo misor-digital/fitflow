@@ -1,7 +1,7 @@
 'use client';
 
 import PriceDisplay from '@/components/PriceDisplay';
-import { formatPriceDual, formatSavings, isPremiumBox, isSubscriptionBox } from '@/lib/catalog';
+import { formatPriceEur, formatSavings, isPremiumBox, isSubscriptionBox } from '@/lib/catalog';
 import type { PriceInfo, CatalogData, BoxTypeId } from '@/lib/catalog';
 
 /**
@@ -120,7 +120,7 @@ export default function ConversionSummary({
               </span>
             </div>
             <div className="text-xs sm:text-sm text-gray-500 mt-1">
-              {formatSavings(priceInfo.discountAmountEur, priceInfo.discountAmountBgn)}
+              {formatSavings(priceInfo.discountAmountEur)}
             </div>
           </div>
         )}
@@ -233,19 +233,19 @@ export default function ConversionSummary({
               <div className="flex justify-between text-sm sm:text-base">
                 <span className="text-gray-600">Оригинална цена:</span>
                 <span className="text-gray-400 line-through">
-                  {formatPriceDual(priceInfo.originalPriceEur, priceInfo.originalPriceBgn)}
+                  {formatPriceEur(priceInfo.originalPriceEur)}
                 </span>
               </div>
               <div className="flex justify-between text-sm sm:text-base text-green-600">
                 <span>Отстъпка ({priceInfo.discountPercent}%):</span>
                 <span>
-                  -{formatPriceDual(priceInfo.discountAmountEur, priceInfo.discountAmountBgn)}
+                  -{formatPriceEur(priceInfo.discountAmountEur)}
                 </span>
               </div>
               <div className="flex justify-between text-lg sm:text-xl font-bold pt-2 border-t border-gray-100">
                 <span className="text-[var(--color-brand-navy)]">Крайна цена:</span>
                 <span className="text-[var(--color-brand-orange)]">
-                  {formatPriceDual(priceInfo.finalPriceEur, priceInfo.finalPriceBgn)}
+                  {formatPriceEur(priceInfo.finalPriceEur)}
                 </span>
               </div>
             </>
@@ -253,7 +253,7 @@ export default function ConversionSummary({
             <div className="flex justify-between text-lg sm:text-xl font-bold">
               <span className="text-[var(--color-brand-navy)]">Цена:</span>
               <span className="text-[var(--color-brand-orange)]">
-                {formatPriceDual(priceInfo.originalPriceEur, priceInfo.originalPriceBgn)}
+                {formatPriceEur(priceInfo.originalPriceEur)}
               </span>
             </div>
           )}

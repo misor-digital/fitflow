@@ -59,19 +59,13 @@ function getTemplate(): string {
 // Helpers
 // ---------------------------------------------------------------------------
 
-/** Format a price value as "XX.XX € / XX.XX лв" dual-currency or fallback */
+/** Format a price value as "XX.XX €" or fallback */
 function formatPrice(
   finalPriceEur: number,
   originalPriceEur: number,
-  finalPriceBgn: number,
-  originalPriceBgn: number,
 ): string {
   const eur = finalPriceEur || originalPriceEur;
-  const bgn = finalPriceBgn || originalPriceBgn;
   if (!eur) return '—';
-  if (bgn) {
-    return `${eur.toFixed(2)} € / ${bgn.toFixed(2)} лв`;
-  }
   return `${eur.toFixed(2)} €`;
 }
 
@@ -123,8 +117,6 @@ export function renderOrderConversionEmail(
     box_price: formatPrice(
       recipient.finalPriceEur,
       recipient.originalPriceEur,
-      recipient.finalPriceBgn,
-      recipient.originalPriceBgn,
     ),
     personalization: recipient.wantsPersonalization ? 'да' : 'не',
     wantsPersonalization: recipient.wantsPersonalization,

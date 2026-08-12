@@ -113,15 +113,9 @@ export {
 export {
   // Price formatting
   formatPrice,
-  formatPriceBgn,
   formatPriceEur,
-  formatPriceDual,
   formatDiscount,
   formatSavings,
-  
-  // Currency conversion
-  eurToBgnSync,
-  bgnToEurSync,
   
   // Discount calculation
   calculateDiscountAmount,

@@ -5,13 +5,12 @@ import {
   getPreorderByOrderId,
   getOrderById,
   getBoxTypeNames,
-  getEurToBgnRate,
 } from '@/lib/data';
 import {
   PREORDER_STATUS_LABELS,
   PREORDER_STATUS_COLORS,
 } from '@/lib/order';
-import { formatPriceDual } from '@/lib/catalog';
+import { formatPriceEur } from '@/lib/catalog';
 import { formatDateLong } from '@/lib/utils/date';
 import type { Metadata } from 'next';
 
@@ -42,9 +41,8 @@ export default async function PreorderDetailPage({
     notFound();
   }
 
-  const [boxTypeNames, eurToBgnRate] = await Promise.all([
+  const [boxTypeNames] = await Promise.all([
     getBoxTypeNames(),
-    getEurToBgnRate(),
   ]);
 
   // If converted, look up the linked order's order_number
@@ -146,10 +144,7 @@ export default async function PreorderDetailPage({
             <div>
               <span className="text-sm text-gray-500">Цена</span>
               <p className="font-semibold text-[var(--color-brand-navy)]">
-                {formatPriceDual(
-                  preorder.final_price_eur,
-                  preorder.final_price_eur * eurToBgnRate,
-                )}
+                {formatPriceEur(preorder.final_price_eur)}
               </p>
             </div>
           )}

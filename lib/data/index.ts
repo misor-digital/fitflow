@@ -15,11 +15,9 @@ export {
   getColorNames,
   getSiteConfig,
   upsertSiteConfig,
-  getEurToBgnRate,
   getAllBoxPrices,
   getAllBoxPricesMap,
   calculatePrice,
-  eurToBgn,
 } from './catalog';
 
 // Re-export formatPrice from its canonical location

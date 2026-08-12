@@ -6,7 +6,7 @@ import Link from 'next/link';
 import type { SubscriptionRow, SubscriptionDerivedState, SubscriptionHistoryRow, SubscriptionAction } from '@/lib/subscription';
 import { SUBSCRIPTION_STATUS_LABELS, SUBSCRIPTION_STATUS_COLORS, FREQUENCY_LABELS } from '@/lib/subscription';
 import { formatDateTimeShort } from '@/lib/utils/date';
-import { formatPriceDual, eurToBgnSync } from '@/lib/catalog';
+import { formatPriceEur } from '@/lib/catalog';
 import type { OrderRow, AddressRow } from '@/lib/supabase/types';
 import AdminAddressForm from '@/components/admin/AdminAddressForm';
 
@@ -80,7 +80,6 @@ interface SubscriptionDetailViewProps {
   userFirstName: string;
   userLastName: string;
   userEmail: string;
-  eurToBgnRate: number;
 }
 
 // ============================================================================
@@ -99,7 +98,6 @@ export function SubscriptionDetailView({
   userFirstName,
   userLastName,
   userEmail,
-  eurToBgnRate,
 }: SubscriptionDetailViewProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
@@ -289,10 +287,10 @@ export function SubscriptionDetailView({
             label="Цена"
             value={
               <span>
-                {formatPriceDual(Number(subscription.current_price_eur), eurToBgnSync(Number(subscription.current_price_eur), eurToBgnRate))}
+                {formatPriceEur(Number(subscription.current_price_eur))}
                 {subscription.discount_percent ? (
                   <span className="ml-2 text-xs text-green-600">
-                    (-{subscription.discount_percent}% от {formatPriceDual(Number(subscription.base_price_eur), eurToBgnSync(Number(subscription.base_price_eur), eurToBgnRate))})
+                    (-{subscription.discount_percent}% от {formatPriceEur(Number(subscription.base_price_eur))})
                   </span>
                 ) : null}
               </span>
@@ -724,7 +722,7 @@ export function SubscriptionDetailView({
                       </span>
                     </td>
                     <td className="px-4 py-3 font-mono text-gray-700">
-                      {order.final_price_eur != null ? formatPriceDual(Number(order.final_price_eur), eurToBgnSync(Number(order.final_price_eur), eurToBgnRate)) : '—'}
+                      {order.final_price_eur != null ? formatPriceEur(Number(order.final_price_eur)) : '—'}
                     </td>
                     <td className="px-4 py-3 text-gray-500">
                       {formatDateTimeShort(order.created_at)}

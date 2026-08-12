@@ -6,7 +6,7 @@
  */
 
 import { escapeHtml } from '@/lib/utils/sanitize';
-import { formatPriceDual } from '@/lib/catalog/format';
+import { formatPriceEur } from '@/lib/catalog/format';
 import { EMAIL } from './constants';
 import { wrapInEmailLayout, emailCtaButton, emailContactLine, emailDeliverySection, type EmailDeliveryInfo } from './layout';
 
@@ -24,8 +24,6 @@ export interface SubscriptionConversionEmailData {
   frequencyLabel: string;
   basePriceEur: number;
   currentPriceEur: number;
-  basePriceBgn: number;
-  currentPriceBgn: number;
   promoCode: string | null;
   discountPercent: number | null;
   nextDeliveryDate: string | null;
@@ -67,17 +65,17 @@ export function generateSubscriptionConversionEmail(
 
   if (hasDiscount) {
     priceLines.push(
-      `Редовна цена: <span style="text-decoration: line-through;">${formatPriceDual(data.basePriceEur, data.basePriceBgn)}</span>`,
+      `Редовна цена: <span style="text-decoration: line-through;">${formatPriceEur(data.basePriceEur)}</span>`,
     );
     priceLines.push(
-      `Цена с отстъпка: <strong>${formatPriceDual(data.currentPriceEur, data.currentPriceBgn)}</strong>`,
+      `Цена с отстъпка: <strong>${formatPriceEur(data.currentPriceEur)}</strong>`,
     );
     priceLines.push(
       `Приложен код: <strong>${escapeHtml(data.promoCode!)}</strong> (-${data.discountPercent}%)`,
     );
   } else {
     priceLines.push(
-      `Цена: <strong>${formatPriceDual(data.currentPriceEur, data.currentPriceBgn)}</strong>`,
+      `Цена: <strong>${formatPriceEur(data.currentPriceEur)}</strong>`,
     );
   }
 
@@ -93,7 +91,7 @@ export function generateSubscriptionConversionEmail(
 
   // -- Merged delivery info (adds date + fee into the delivery section) -----
   const feeLabel = data.deliveryFeeEur != null
-    ? (data.deliveryFeeEur > 0 ? formatPriceDual(data.deliveryFeeEur, data.deliveryFeeEur * 1.95583) : 'Безплатна')
+    ? (data.deliveryFeeEur > 0 ? formatPriceEur(data.deliveryFeeEur) : 'Безплатна')
     : null;
   const mergedDelivery: EmailDeliveryInfo | undefined = data.delivery
     ? { ...data.delivery, deliveryDate: data.nextDeliveryDate ?? null, deliveryFeeLabel: feeLabel }

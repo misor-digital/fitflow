@@ -44,8 +44,6 @@ export async function GET(): Promise<NextResponse> {
       promoCode: r.promoCode,
       originalPriceEur: r.originalPriceEur,
       finalPriceEur: r.finalPriceEur,
-      originalPriceBgn: r.originalPriceBgn,
-      finalPriceBgn: r.finalPriceBgn,
     }));
 
     return NextResponse.json({ recipients: masked, total: recipients.length });
