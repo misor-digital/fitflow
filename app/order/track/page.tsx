@@ -8,7 +8,7 @@ import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { ORDER_STATUS_COLORS, STATUS_BG_COLORS, formatShippingAddress } from '@/lib/order';
 import type { OrderStatus, ShippingAddressSnapshot } from '@/lib/supabase/types';
-import { formatPriceDual } from '@/lib/catalog';
+import { formatPriceEur } from '@/lib/catalog';
 import { formatDateLong } from '@/lib/utils/date';
 import { StatusTimeline } from '@/components/account/StatusTimeline';
 import type { StatusHistoryEntry } from '@/components/account/StatusTimeline';
@@ -28,9 +28,7 @@ interface TrackingOrder {
   shippingAddress: ShippingAddressSnapshot;
   deliveryMethod: 'address' | 'speedy_office' | 'speedy_automat';
   finalPriceEur: number | null;
-  finalPriceBgn: number | null;
   deliveryFeeEur: number | null;
-  deliveryFeeBgn: number | null;
   createdAt: string;
   deliveryCycleName: string | null;
   statusHistory: StatusHistoryEntry[];
@@ -180,8 +178,8 @@ function OrderTrackingContent() {
             <div>
               <dt className="text-gray-500 mb-1">Цена</dt>
               <dd className="font-semibold text-[var(--color-brand-orange)]">
-                {order.finalPriceEur != null && order.finalPriceBgn != null
-                  ? formatPriceDual(order.finalPriceEur, order.finalPriceBgn)
+                {order.finalPriceEur != null
+                  ? formatPriceEur(order.finalPriceEur)
                   : '—'}
               </dd>
             </div>
@@ -189,7 +187,7 @@ function OrderTrackingContent() {
               <div>
                 <dt className="text-gray-500 mb-1">Доставка</dt>
                 <dd className="font-semibold text-gray-900">
-                  {formatPriceDual(order.deliveryFeeEur, order.deliveryFeeBgn ?? order.deliveryFeeEur * 1.95583)}
+                  {formatPriceEur(order.deliveryFeeEur)}
                 </dd>
               </div>
             )}

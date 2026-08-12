@@ -8,7 +8,6 @@
 
 import type { ConfirmationEmailData } from './types';
 import {
-  formatPriceDual,
   formatPriceEur,
   formatSavings,
 } from '@/lib/catalog';
@@ -21,18 +20,16 @@ import { wrapInEmailLayout, emailCtaButton, emailContactLine } from './layout';
 // Safe Price Formatting (email-specific)
 // ============================================================================
 
-/** Format dual price for emails; shows EUR-only when BGN is unavailable */
-function safePriceDual(eur: number | null | undefined, bgn: number | null | undefined): string {
+/** Format EUR price for emails; shows placeholder when unavailable */
+function safePriceEur(eur: number | null | undefined): string {
   if (eur == null) return '—';
-  if (bgn != null && bgn > 0) return formatPriceDual(eur, bgn);
   return formatPriceEur(eur);
 }
 
-/** Format savings for emails; shows EUR-only when BGN is unavailable */
-function safeSavings(eur: number | null | undefined, bgn: number | null | undefined): string {
+/** Format savings for emails; empty when unavailable */
+function safeSavings(eur: number | null | undefined): string {
   if (eur == null || eur <= 0) return '';
-  if (bgn != null && bgn > 0) return formatSavings(eur, bgn);
-  return `Спестяваш ${formatPriceEur(eur)}`;
+  return formatSavings(eur);
 }
 
 // ============================================================================
@@ -175,7 +172,7 @@ function generateDeliverySection(data: ConfirmationEmailData): string {
       <h3 style="color: ${EMAIL.colors.textHeading}; margin-top: 0;">🚚 Данни за доставка</h3>
       ${recipientHtml}
       ${data.deliveryDate ? `<p style="margin: 5px 0;"><strong>Дата на доставка:</strong> ${formatDateLong(data.deliveryDate)}</p>` : ''}
-      <p style="margin: 5px 0;"><strong>Цена:</strong> ${data.deliveryFeeEur != null && data.deliveryFeeEur > 0 ? safePriceDual(data.deliveryFeeEur, null) : 'Безплатна'}</p>
+      <p style="margin: 5px 0;"><strong>Цена:</strong> ${data.deliveryFeeEur != null && data.deliveryFeeEur > 0 ? safePriceEur(data.deliveryFeeEur) : 'Безплатна'}</p>
       ${addressHtml}
       ${notesHtml}
     </div>
@@ -194,12 +191,12 @@ function generatePromoCodeSection(data: ConfirmationEmailData): string {
         ✅ Промо код ${data.promoCode} е приложен – ${data.discountPercent}% отстъпка
       </p>
       <p style="margin: 5px 0; color: ${EMAIL.sections.promoText};">
-        <span style="text-decoration: line-through; color: ${EMAIL.colors.textMutedAlt};">${safePriceDual(data.originalPriceEur, data.originalPriceBgn)}</span>
+        <span style="text-decoration: line-through; color: ${EMAIL.colors.textMutedAlt};">${safePriceEur(data.originalPriceEur)}</span>
         &nbsp;→&nbsp;
-        <strong>${safePriceDual(data.finalPriceEur, data.finalPriceBgn)}</strong>
+        <strong>${safePriceEur(data.finalPriceEur)}</strong>
       </p>
       <p style="margin: 5px 0 0 0; color: ${EMAIL.sections.promoText}; font-size: 14px;">
-        ${safeSavings(data.discountAmountEur, data.discountAmountBgn)}
+        ${safeSavings(data.discountAmountEur)}
       </p>
     </div>
   `;
@@ -276,7 +273,7 @@ export function generateConfirmationEmail(
             <div style="background-color: ${EMAIL.sections.personalization}; padding: 20px; border-radius: 8px; margin: 20px 0;">
               <h3 style="color: ${EMAIL.colors.textHeading}; margin-top: 0;">📦 Детайли на поръчката</h3>
               <p style="margin: 5px 0;"><strong>Поръчка:</strong> ${data.orderId}</p>
-              <p style="margin: 5px 0;"><strong>Кутия:</strong> ${data.boxTypeDisplay}${!data.hasPromoCode ? ` (${safePriceDual(data.originalPriceEur, data.originalPriceBgn)})` : ''}</p>
+              <p style="margin: 5px 0;"><strong>Кутия:</strong> ${data.boxTypeDisplay}${!data.hasPromoCode ? ` (${safePriceEur(data.originalPriceEur)})` : ''}</p>
               <p style="margin: 5px 0;"><strong>Цикъл:</strong> ${data.deliveryCycleName ? escapeHtml(data.deliveryCycleName) : 'следващия цикъл на доставка'}</p>
               <p style="margin: 5px 0;"><strong>Персонализация:</strong> ${data.wantsPersonalization ? 'Да' : 'Не'}</p>
             </div>

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/authStore';
-import { formatPriceDual } from '@/lib/catalog';
+import { formatPriceEur } from '@/lib/catalog';
 import { FREQUENCY_LABELS } from '@/lib/subscription';
 import {
   validateAddress,
@@ -921,10 +921,10 @@ export default function SubscriptionConversionFlow({
                 {priceInfo.discountPercent > 0 ? (
                   <div className="space-y-1">
                     <div className="text-sm text-gray-400 line-through">
-                      {formatPriceDual(priceInfo.originalPriceEur, priceInfo.originalPriceBgn)}
+                      {formatPriceEur(priceInfo.originalPriceEur)}
                     </div>
                     <div className="text-lg font-bold text-[var(--color-brand-orange)]">
-                      {formatPriceDual(priceInfo.finalPriceEur, priceInfo.finalPriceBgn)}
+                      {formatPriceEur(priceInfo.finalPriceEur)}
                     </div>
                     <div className="text-xs text-green-600 font-semibold">
                       -{priceInfo.discountPercent}% отстъпка
@@ -932,7 +932,7 @@ export default function SubscriptionConversionFlow({
                   </div>
                 ) : (
                   <div className="text-lg font-bold text-[var(--color-brand-navy)]">
-                    {formatPriceDual(priceInfo.originalPriceEur, priceInfo.originalPriceBgn)}
+                    {formatPriceEur(priceInfo.originalPriceEur)}
                   </div>
                 )}
               </div>
@@ -952,7 +952,7 @@ export default function SubscriptionConversionFlow({
             <div className="flex justify-between items-center text-sm text-gray-600 pt-2 border-t border-gray-100">
               <span>Такса доставка:</span>
               <span className="font-semibold text-[var(--color-brand-navy)]">
-                {deliveryFeeEur > 0 ? formatPriceDual(deliveryFeeEur, deliveryFeeEur * 1.95583) : 'Безплатна'}
+                {deliveryFeeEur > 0 ? formatPriceEur(deliveryFeeEur) : 'Безплатна'}
               </span>
             </div>
           </div>
@@ -1180,15 +1180,15 @@ export default function SubscriptionConversionFlow({
               {priceInfo.discountPercent > 0 ? (
                 <div className="space-y-1">
                   <div className="text-sm text-gray-400 line-through">
-                    {formatPriceDual(priceInfo.originalPriceEur, priceInfo.originalPriceBgn)}
+                    {formatPriceEur(priceInfo.originalPriceEur)}
                   </div>
                   <div className="text-lg font-bold text-[var(--color-brand-orange)]">
-                    {formatPriceDual(priceInfo.finalPriceEur, priceInfo.finalPriceBgn)}
+                    {formatPriceEur(priceInfo.finalPriceEur)}
                   </div>
                 </div>
               ) : (
                 <div className="text-lg font-bold text-[var(--color-brand-navy)]">
-                  {formatPriceDual(priceInfo.originalPriceEur, priceInfo.originalPriceBgn)}
+                  {formatPriceEur(priceInfo.originalPriceEur)}
                 </div>
               )}
             </div>
@@ -1203,7 +1203,7 @@ export default function SubscriptionConversionFlow({
           <div className="flex justify-between items-center text-sm text-gray-600 pt-2 border-t border-gray-100">
             <span>Такса доставка:</span>
             <span className="font-semibold text-[var(--color-brand-navy)]">
-              {deliveryFeeEur > 0 ? formatPriceDual(deliveryFeeEur, deliveryFeeEur * 1.95583) : 'Безплатна'}
+              {deliveryFeeEur > 0 ? formatPriceEur(deliveryFeeEur) : 'Безплатна'}
             </span>
           </div>
         </div>

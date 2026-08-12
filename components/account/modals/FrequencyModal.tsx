@@ -2,13 +2,12 @@
 
 import { useState } from 'react';
 import { FREQUENCY_LABELS } from '@/lib/subscription';
-import { formatPriceDual, eurToBgnSync } from '@/lib/catalog';
+import { formatPriceEur } from '@/lib/catalog';
 
 interface FrequencyModalProps {
   subscriptionId: string;
   currentFrequency: string;
   currentPriceEur: number;
-  eurToBgnRate: number;
   onSuccess: () => void;
   onClose: () => void;
 }
@@ -17,7 +16,6 @@ export default function FrequencyModal({
   subscriptionId,
   currentFrequency,
   currentPriceEur,
-  eurToBgnRate,
   onSuccess,
   onClose,
 }: FrequencyModalProps) {
@@ -51,7 +49,7 @@ export default function FrequencyModal({
     }
   };
 
-  const priceDisplay = formatPriceDual(currentPriceEur, eurToBgnSync(currentPriceEur, eurToBgnRate));
+  const priceDisplay = formatPriceEur(currentPriceEur);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">

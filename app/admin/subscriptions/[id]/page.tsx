@@ -7,7 +7,6 @@ import {
   getBoxTypeNames,
   getAddressById,
   getAddressesByUser,
-  getEurToBgnRate,
 } from '@/lib/data';
 import { computeSubscriptionState } from '@/lib/subscription';
 import { SubscriptionDetailView } from '@/components/admin/SubscriptionDetailView';
@@ -32,7 +31,7 @@ export default async function SubscriptionDetailPage({ params }: { params: Promi
   const subscription = await getSubscriptionById(id);
   if (!subscription) notFound();
 
-  const [history, linkedOrders, boxTypeNames, address, allAddresses, eurToBgnRate] = await Promise.all([
+  const [history, linkedOrders, boxTypeNames, address, allAddresses] = await Promise.all([
     getSubscriptionHistory(id),
     getOrdersBySubscription(id),
     getBoxTypeNames(),
@@ -40,7 +39,6 @@ export default async function SubscriptionDetailPage({ params }: { params: Promi
       ? getAddressById(subscription.default_address_id, subscription.user_id)
       : Promise.resolve(null),
     getAddressesByUser(subscription.user_id),
-    getEurToBgnRate(),
   ]);
 
   const derivedState = computeSubscriptionState(subscription);
@@ -86,7 +84,6 @@ export default async function SubscriptionDetailPage({ params }: { params: Promi
         userFirstName={userFirstName}
         userLastName={userLastName}
         userEmail={userEmail}
-        eurToBgnRate={eurToBgnRate}
       />
     </div>
   );

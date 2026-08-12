@@ -8,7 +8,6 @@
 import 'server-only';
 
 import { getEligibleOrdersForSubscription, getAllCycleOrdersForCampaign } from '@/lib/data/order-subscription-conversion';
-import { eurToBgn } from '@/lib/data';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -49,8 +48,6 @@ export interface OrderConversionRecipient {
   sizeLower: string | null;
   originalPriceEur: number;
   finalPriceEur: number;
-  originalPriceBgn: number;
-  finalPriceBgn: number;
   promoCode: string | null;
   conversionUrl: string;
   subscriptionConversionToken: string | null;
@@ -76,7 +73,6 @@ function maskEmail(email: string): string {
  * Maps each eligible order to an `OrderConversionRecipient` with:
  * - Masked email for admin previews
  * - Bulgarian box label
- * - EUR → BGN price conversion
  * - Empty conversionUrl (tokens are generated in the send step)
  */
 export async function getEligibleOrderConversionRecipients(
@@ -90,8 +86,6 @@ export async function getEligibleOrderConversionRecipients(
     orders.map(async (o) => {
       const originalEur = o.original_price_eur ?? 0;
       const finalEur = o.final_price_eur ?? 0;
-      const originalBgn = await eurToBgn(originalEur);
-      const finalBgn = await eurToBgn(finalEur);
       const email = o.customer_email.trim().toLowerCase();
 
       return {
@@ -115,8 +109,6 @@ export async function getEligibleOrderConversionRecipients(
         sizeLower: o.size_lower ?? null,
         originalPriceEur: originalEur,
         finalPriceEur: finalEur,
-        originalPriceBgn: originalBgn,
-        finalPriceBgn: finalBgn,
         promoCode: o.promo_code ?? null,
         conversionUrl: '',
         subscriptionConversionToken: o.subscription_conversion_token ?? null,
@@ -147,8 +139,6 @@ export async function getAllCampaignRecipients(
     orders.map(async (o) => {
       const originalEur = o.original_price_eur ?? 0;
       const finalEur = o.final_price_eur ?? 0;
-      const originalBgn = await eurToBgn(originalEur);
-      const finalBgn = await eurToBgn(finalEur);
       const email = o.customer_email.trim().toLowerCase();
 
       return {
@@ -172,8 +162,6 @@ export async function getAllCampaignRecipients(
         sizeLower: o.size_lower ?? null,
         originalPriceEur: originalEur,
         finalPriceEur: finalEur,
-        originalPriceBgn: originalBgn,
-        finalPriceBgn: finalBgn,
         promoCode: o.promo_code ?? null,
         conversionUrl: '',
         subscriptionConversionToken: o.subscription_conversion_token ?? null,

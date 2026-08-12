@@ -22,8 +22,6 @@ interface Recipient {
   promoCode: string | null;
   originalPriceEur: number;
   finalPriceEur: number;
-  originalPriceBgn: number;
-  finalPriceBgn: number;
   conversionStatus: 'none' | 'sent' | 'converted';
 }
 
@@ -618,8 +616,6 @@ export default function OrderSubscriptionCampaignPage() {
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-900">
                     {r.finalPriceEur.toFixed(2)} €
-                    <span className="text-gray-400"> / </span>
-                    {r.finalPriceBgn.toFixed(2)} лв
                   </td>
                   <td className="px-4 py-3 text-sm">
                     <AccountBadge hasAccount={r.hasAccount} />

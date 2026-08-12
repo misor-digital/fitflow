@@ -13,7 +13,7 @@ import { revalidateTag } from 'next/cache';
 // Tag constants (keep alphabetical)
 // ---------------------------------------------------------------------------
 
-/** Box types, prices, EUR→BGN rate, options, colors */
+/** Box types, prices, options, colors */
 export const TAG_CATALOG = 'catalog';
 
 /** Customer aggregate stats (counts, subscriber count) */

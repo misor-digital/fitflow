@@ -5,7 +5,6 @@ import {
   getOrderByNumber,
   getOrderStatusHistory,
   getBoxTypeNames,
-  getEurToBgnRate,
   getDeliveryCycleById,
   getUpcomingCycle,
 } from '@/lib/data';
@@ -19,7 +18,7 @@ import {
   formatShippingAddress,
   formatDeliveryMethodLabel,
 } from '@/lib/order';
-import { formatPriceDual } from '@/lib/catalog';
+import { formatPriceEur } from '@/lib/catalog';
 import { formatDateLong } from '@/lib/utils/date';
 import { StatusTimeline } from '@/components/account/StatusTimeline';
 import { CancelRequestButton } from '@/components/account/CancelRequestButton';
@@ -65,10 +64,9 @@ export default async function OrderDetailPage({
   }
 
   // Fetch related data in parallel
-  const [statusHistory, boxTypeNames, eurToBgnRate] = await Promise.all([
+  const [statusHistory, boxTypeNames] = await Promise.all([
     getOrderStatusHistory(order.id),
     getBoxTypeNames(),
-    getEurToBgnRate(),
   ]);
 
   // Secondary parallel fetches (depend on order data)
@@ -169,7 +167,7 @@ export default async function OrderDetailPage({
             <dt className="text-gray-500 mb-1">Цена</dt>
             <dd className="font-semibold text-[var(--color-brand-orange)]">
               {order.final_price_eur != null
-                ? formatPriceDual(order.final_price_eur, order.final_price_eur * eurToBgnRate)
+                ? formatPriceEur(order.final_price_eur)
                 : '—'}
             </dd>
           </div>
@@ -177,7 +175,7 @@ export default async function OrderDetailPage({
             <div>
               <dt className="text-gray-500 mb-1">Доставка</dt>
               <dd className="font-semibold text-gray-900">
-                {formatPriceDual(order.delivery_fee_eur, order.delivery_fee_eur * eurToBgnRate)}
+                {formatPriceEur(order.delivery_fee_eur)}
               </dd>
             </div>
           )}

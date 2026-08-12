@@ -4,7 +4,6 @@ import {
   getOrdersByUser,
   getPreordersByUser,
   getBoxTypeNames,
-  getEurToBgnRate,
   getOrderStatusHistoryBatch,
 } from '@/lib/data';
 import { OrdersList } from '@/components/account/OrdersList';
@@ -18,11 +17,10 @@ export default async function OrdersPage() {
   const { userId } = await requireAuth();
 
   // Fetch all data in parallel
-  const [orders, preorders, boxTypeNames, eurToBgnRate] = await Promise.all([
+  const [orders, preorders, boxTypeNames] = await Promise.all([
     getOrdersByUser(userId),
     getPreordersByUser(userId),
     getBoxTypeNames(),
-    getEurToBgnRate(),
   ]);
 
   // Batch-fetch status histories for all orders in a single query
@@ -40,7 +38,6 @@ export default async function OrdersPage() {
           orders={orders}
           preorders={preorders}
           boxTypeNames={boxTypeNames}
-          eurToBgnRate={eurToBgnRate}
           statusHistories={statusHistories}
         />
       </Suspense>

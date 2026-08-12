@@ -95,9 +95,6 @@ export interface ConfirmationEmailData {
   originalPriceEur?: number | null;
   finalPriceEur?: number | null;
   discountAmountEur?: number | null;
-  originalPriceBgn?: number | null;
-  finalPriceBgn?: number | null;
-  discountAmountBgn?: number | null;
   // Delivery fields
   deliveryMethod?: 'address' | 'speedy_office' | 'speedy_automat';
   deliveryFeeEur?: number | null;

@@ -95,12 +95,9 @@ export async function GET(request: Request): Promise<NextResponse> {
         // Transform to expected format
         const prices: Record<string, {
           originalPriceEur: number;
-          originalPriceBgn: number;
           finalPriceEur: number;
-          finalPriceBgn: number;
           discountPercent: number;
           discountAmountEur: number;
-          discountAmountBgn: number;
         }> = {};
 
         const boxTypes: Record<string, string> = {};
@@ -108,12 +105,9 @@ export async function GET(request: Request): Promise<NextResponse> {
         for (const [boxTypeId, priceInfo] of Object.entries(pricesMap) as [string, PriceInfo][]) {
           prices[boxTypeId] = {
             originalPriceEur: priceInfo.originalPriceEur,
-            originalPriceBgn: priceInfo.originalPriceBgn,
             finalPriceEur: priceInfo.finalPriceEur,
-            finalPriceBgn: priceInfo.finalPriceBgn,
             discountPercent: priceInfo.discountPercent,
             discountAmountEur: priceInfo.discountAmountEur,
-            discountAmountBgn: priceInfo.discountAmountBgn,
           };
           boxTypes[boxTypeId] = priceInfo.boxTypeName;
         }

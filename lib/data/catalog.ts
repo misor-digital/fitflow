@@ -213,47 +213,6 @@ export async function upsertSiteConfig(key: string, value: string): Promise<void
   }
 }
 
-/**
- * The fixed BGN/EUR peg rate used by the Bulgarian Currency Board.
- * Last-resort fallback only used on very first cold start if the DB is unreachable.
- */
-const DEFAULT_EUR_TO_BGN_RATE = 1.9558;
-
-/**
- * Get EUR to BGN conversion rate.
- *
- * Wrapped in its own `unstable_cache` (1 hour, tag: catalog) so that once a
- * valid rate is fetched from the DB it survives even if subsequent
- * `getSiteConfig` calls fail (their 5 min TTL is shorter). The hardcoded
- * constant is only reached on a true cold start with no DB connectivity.
- */
-export const getEurToBgnRate = cache(
-  unstable_cache(
-    async (): Promise<number> => {
-      const { data, error } = await supabaseAdmin
-        .from('site_config')
-        .select('value')
-        .eq('key', 'EUR_TO_BGN_RATE')
-        .single();
-
-      if (error || !data) {
-        console.warn('EUR_TO_BGN_RATE not found in site_config - using default 1.9558');
-        return DEFAULT_EUR_TO_BGN_RATE;
-      }
-
-      const rate = parseFloat((data as { value: string }).value);
-      if (isNaN(rate) || rate <= 0) {
-        console.warn(`Invalid EUR_TO_BGN_RATE value "${(data as { value: string }).value}" - using default 1.9558`);
-        return DEFAULT_EUR_TO_BGN_RATE;
-      }
-
-      return rate;
-    },
-    ['eur-to-bgn-rate'],
-    { revalidate: 3600, tags: [TAG_CATALOG] },
-  ),
-);
-
 // ============================================================================
 // Price Calculation (Server-side only)
 // ============================================================================
@@ -292,12 +251,9 @@ const _getAllBoxPricesInner = unstable_cache(
       boxTypeId: row.box_type_id,
       boxTypeName: row.box_type_name,
       originalPriceEur: Number(row.original_price_eur),
-      originalPriceBgn: Number(row.original_price_bgn),
       discountPercent: row.discount_percent,
       discountAmountEur: Number(row.discount_amount_eur),
-      discountAmountBgn: Number(row.discount_amount_bgn),
       finalPriceEur: Number(row.final_price_eur),
-      finalPriceBgn: Number(row.final_price_bgn),
       promoCode: row.discount_percent > 0 ? (promoCode ?? null) : null,
     }));
   },
@@ -333,12 +289,4 @@ export async function calculatePrice(
   }
 
   return price;
-}
-
-/**
- * Convert EUR to BGN using the configured rate
- */
-export async function eurToBgn(eur: number): Promise<number> {
-  const rate = await getEurToBgnRate();
-  return Math.round(eur * rate * 100) / 100;
 }

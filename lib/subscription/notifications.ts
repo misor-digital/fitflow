@@ -8,7 +8,7 @@
 
 import { sendTransactionalEmail } from '@/lib/email/brevo';
 import { resolveEmailLabels, FREQUENCY_LABELS, buildPersonalizationLines } from '@/lib/email/labels';
-import { formatPriceDual } from '@/lib/catalog';
+import { formatPriceEur } from '@/lib/catalog';
 import { getDeliveryFee } from '@/lib/delivery/pricing';
 import {
   generateSubscriptionCreatedEmail,
@@ -56,7 +56,7 @@ export async function sendSubscriptionCreatedEmail(
     }, labels);
 
     const feeEur = address ? await getDeliveryFee(address.delivery_method) : null;
-    const feeLabel = feeEur != null ? (feeEur > 0 ? formatPriceDual(feeEur, feeEur * 1.95583) : 'Безплатна') : null;
+    const feeLabel = feeEur != null ? (feeEur > 0 ? formatPriceEur(feeEur) : 'Безплатна') : null;
 
     const htmlContent = generateSubscriptionCreatedEmail({
       subscriptionNumber: subscription.subscription_number,

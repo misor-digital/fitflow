@@ -54,8 +54,6 @@ export async function GET(request: Request): Promise<NextResponse> {
       promoCode: r.promoCode,
       originalPriceEur: r.originalPriceEur,
       finalPriceEur: r.finalPriceEur,
-      originalPriceBgn: r.originalPriceBgn,
-      finalPriceBgn: r.finalPriceBgn,
       conversionStatus: r.conversionStatus,
     }));
 

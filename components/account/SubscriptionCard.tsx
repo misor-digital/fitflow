@@ -12,7 +12,7 @@ import {
 } from '@/lib/subscription';
 import { formatDeliveryDate, formatCutoffAt } from '@/lib/delivery';
 import { formatDateShort } from '@/lib/utils/date';
-import { formatPriceDual, eurToBgnSync } from '@/lib/catalog';
+import { formatPriceEur } from '@/lib/catalog';
 import type { AddressRow } from '@/lib/supabase/types';
 import type { PricesMap, CatalogData, PriceDisplayInfo } from '@/lib/catalog';
 import PriceDisplay from '@/components/PriceDisplay';
@@ -33,7 +33,6 @@ interface SubscriptionCardProps {
   addresses: AddressRow[];
   prices: PricesMap;
   catalogOptions: CatalogData;
-  eurToBgnRate: number;
   onRefresh: () => void;
 }
 
@@ -43,7 +42,6 @@ export default function SubscriptionCard({
   addresses,
   prices,
   catalogOptions,
-  eurToBgnRate,
   onRefresh,
 }: SubscriptionCardProps) {
   const [activeModal, setActiveModal] = useState<ModalType>(null);
@@ -74,12 +72,9 @@ export default function SubscriptionCard({
   const priceDisplayInfo: PriceDisplayInfo | null = priceInfo
     ? {
         originalPriceEur: subscription.base_price_eur,
-        originalPriceBgn: eurToBgnSync(subscription.base_price_eur, eurToBgnRate),
         finalPriceEur: subscription.current_price_eur,
-        finalPriceBgn: eurToBgnSync(subscription.current_price_eur, eurToBgnRate),
         discountPercent: subscription.discount_percent ?? 0,
         discountAmountEur: subscription.base_price_eur - subscription.current_price_eur,
-        discountAmountBgn: eurToBgnSync(subscription.base_price_eur - subscription.current_price_eur, eurToBgnRate),
       }
     : null;
 
@@ -163,7 +158,7 @@ export default function SubscriptionCard({
                 <PriceDisplay priceInfo={priceDisplayInfo} />
               ) : (
                 <p className="text-sm font-medium text-gray-900">
-                  {formatPriceDual(subscription.current_price_eur, eurToBgnSync(subscription.current_price_eur, eurToBgnRate))}
+                  {formatPriceEur(subscription.current_price_eur)}
                 </p>
               )}
             </div>
@@ -444,7 +439,6 @@ export default function SubscriptionCard({
           subscriptionId={subscription.id}
           currentFrequency={subscription.frequency}
           currentPriceEur={subscription.current_price_eur}
-          eurToBgnRate={eurToBgnRate}
           onSuccess={handleActionSuccess}
           onClose={closeModal}
         />

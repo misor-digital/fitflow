@@ -14,7 +14,7 @@ import {
   formatDeliveryMethodLabel,
   getStatusIcon,
 } from '@/lib/order';
-import { formatPriceDual } from '@/lib/catalog';
+import { formatPriceEur } from '@/lib/catalog';
 import { formatDateShort } from '@/lib/utils/date';
 import type {
   OrderRow,
@@ -124,8 +124,8 @@ const PAGE_SIZE = 15;
 // Helpers
 // ---------------------------------------------------------------------------
 
-function dualPrice(eur: number, rate: number): string {
-  return formatPriceDual(eur, eur * rate);
+function dualPrice(eur: number): string {
+  return formatPriceEur(eur);
 }
 
 // ---------------------------------------------------------------------------
@@ -136,7 +136,6 @@ export interface OrdersListProps {
   orders: OrderRow[];
   preorders: Preorder[];
   boxTypeNames: Record<string, string>;
-  eurToBgnRate: number;
   /** Status history per order ID - enables inline progress indicator */
   statusHistories?: Record<string, OrderStatusHistoryRow[]>;
 }
@@ -149,7 +148,6 @@ export function OrdersList({
   orders,
   preorders,
   boxTypeNames,
-  eurToBgnRate,
   statusHistories,
 }: OrdersListProps) {
   const searchParams = useSearchParams();
@@ -466,7 +464,7 @@ export function OrdersList({
             </span>
             {order.final_price_eur != null && (
               <span className="font-semibold text-[var(--color-brand-navy)]">
-                {dualPrice(order.final_price_eur, eurToBgnRate)}
+                {dualPrice(order.final_price_eur)}
               </span>
             )}
           </div>
@@ -584,7 +582,7 @@ export function OrdersList({
               <div>
                 <span className="font-medium text-gray-700">Такса доставка:</span>{' '}
                 {order.delivery_fee_eur > 0
-                  ? dualPrice(order.delivery_fee_eur, eurToBgnRate)
+                  ? dualPrice(order.delivery_fee_eur)
                   : 'Безплатна'}
               </div>
             )}
@@ -640,7 +638,7 @@ export function OrdersList({
           </span>
           {preorder.final_price_eur != null && (
             <span className="font-semibold text-[var(--color-brand-navy)]">
-              {dualPrice(preorder.final_price_eur, eurToBgnRate)}
+              {dualPrice(preorder.final_price_eur)}
             </span>
           )}
         </div>
