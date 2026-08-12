@@ -251,3 +251,33 @@ export async function setDefaultAddress(addressId: string, userId: string): Prom
     throw new Error('Address not found or does not belong to this user.');
   }
 }
+
+/**
+ * If the user profile has no phone, copy the address phone to the profile.
+ * Returns true if the phone was synced.
+ */
+export async function syncPhoneToProfile(userId: string, phone: string): Promise<boolean> {
+  const { data: profile } = await supabaseAdmin
+    .from('user_profiles')
+    .select('phone')
+    .eq('id', userId)
+    .single();
+
+  if (profile && !profile.phone?.trim()) {
+    await supabaseAdmin.from('user_profiles').update({ phone }).eq('id', userId);
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Unset all default addresses for a user. Defense against trigger edge cases
+ * before inserting a new default address.
+ */
+export async function unsetDefaultAddresses(userId: string): Promise<void> {
+  await supabaseAdmin
+    .from('addresses')
+    .update({ is_default: false })
+    .eq('user_id', userId)
+    .eq('is_default', true);
+}

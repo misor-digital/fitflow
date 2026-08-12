@@ -6,12 +6,14 @@ import {
   deleteAddress,
   setDefaultAddress,
 } from '@/lib/data';
-import { validateAddress, validateSpeedyOffice } from '@/lib/order';
-import type { SpeedyOfficeSelection } from '@/lib/order';
-import { isValidPhone } from '@/lib/catalog';
 import { checkRateLimit } from '@/lib/utils/rateLimit';
-import { validateFieldLengths, sanitizeAddressBody } from '../route';
-import type { AddressUpdate } from '@/lib/supabase/types';
+import {
+  sanitizeAddressBody,
+  validateFieldLengths,
+  validatePhone,
+  validateAddressDomain,
+  buildAddressUpdate,
+} from '@/lib/order/address-write';
 
 /** Rate limit: 20 requests per minute */
 const RATE_LIMIT_MAX = 20;
@@ -101,135 +103,25 @@ export async function PUT(
     }
 
     // Phone validation (required for all delivery methods)
-    if (!sanitized.phone?.trim()) {
+    const phoneErrors = validatePhone(sanitized.phone);
+    if (phoneErrors.length > 0) {
       return NextResponse.json(
-        {
-          error: 'Невалидни данни',
-          details: [{ field: 'phone', message: 'Телефонният номер е задължителен', code: 'required' }],
-        },
+        { error: 'Невалидни данни', details: phoneErrors },
         { status: 400 },
       );
     }
-    if (!isValidPhone(sanitized.phone)) {
-      return NextResponse.json(
-        {
-          error: 'Невалидни данни',
-          details: [
-            {
-              field: 'phone',
-              message:
-                'Моля, въведете само цифри и символи за форматиране (+, -, (, ), интервал)',
-              code: 'invalid_format',
-            },
-          ],
-        },
-        { status: 400 },
-      );
-    }
-
-    const deliveryMethod = sanitized.deliveryMethod ?? 'address';
 
     // Domain validation - conditional on delivery method
-    if (deliveryMethod === 'speedy_office' || deliveryMethod === 'speedy_automat') {
-      const officeSelection: SpeedyOfficeSelection | null =
-        sanitized.speedyOfficeId && sanitized.speedyOfficeName
-          ? {
-              id: sanitized.speedyOfficeId,
-              name: sanitized.speedyOfficeName,
-              address: sanitized.speedyOfficeAddress ?? '',
-            }
-          : null;
-
-      const validationResult = validateSpeedyOffice(
-        {
-          label: sanitized.label ?? '',
-          firstName: sanitized.firstName ?? '',
-          lastName: sanitized.lastName ?? '',
-          phone: sanitized.phone ?? '',
-          city: '',
-          postalCode: '',
-          streetAddress: '',
-          buildingEntrance: '',
-          floor: '',
-          apartment: '',
-          deliveryNotes: sanitized.deliveryNotes ?? '',
-          isDefault: sanitized.isDefault ?? false,
-        },
-        officeSelection,
+    const validationResult = validateAddressDomain(sanitized);
+    if (!validationResult.valid) {
+      return NextResponse.json(
+        { error: 'Невалидни данни', details: validationResult.errors },
+        { status: 400 },
       );
-
-      if (!validationResult.valid) {
-        return NextResponse.json(
-          { error: 'Невалидни данни', details: validationResult.errors },
-          { status: 400 },
-        );
-      }
-    } else {
-      const validationResult = validateAddress({
-        label: sanitized.label ?? '',
-        firstName: sanitized.firstName ?? '',
-        lastName: sanitized.lastName ?? '',
-        phone: sanitized.phone ?? '',
-        city: sanitized.city ?? '',
-        postalCode: sanitized.postalCode ?? '',
-        streetAddress: sanitized.streetAddress ?? '',
-        buildingEntrance: sanitized.buildingEntrance ?? '',
-        floor: sanitized.floor ?? '',
-        apartment: sanitized.apartment ?? '',
-        deliveryNotes: sanitized.deliveryNotes ?? '',
-        isDefault: sanitized.isDefault ?? false,
-      });
-
-      if (!validationResult.valid) {
-        return NextResponse.json(
-          { error: 'Невалидни данни', details: validationResult.errors },
-          { status: 400 },
-        );
-      }
     }
 
-    // Build update payload - conditional on delivery method
-    // When switching method, explicitly null out fields that no longer apply
-    const updateData: AddressUpdate =
-      deliveryMethod === 'speedy_office' || deliveryMethod === 'speedy_automat'
-        ? {
-            delivery_method: deliveryMethod,
-            first_name: sanitized.firstName!,
-            last_name: sanitized.lastName!,
-            phone: sanitized.phone || null,
-            speedy_office_id: sanitized.speedyOfficeId!,
-            speedy_office_name: sanitized.speedyOfficeName!,
-            speedy_office_address: sanitized.speedyOfficeAddress || null,
-            label: sanitized.label || null,
-            delivery_notes: sanitized.deliveryNotes || null,
-            is_default: sanitized.isDefault ?? false,
-            // Null out home-delivery fields
-            city: null,
-            postal_code: null,
-            street_address: null,
-            building_entrance: null,
-            floor: null,
-            apartment: null,
-          }
-        : {
-            delivery_method: 'address',
-            first_name: sanitized.firstName!,
-            last_name: sanitized.lastName!,
-            city: sanitized.city!,
-            postal_code: sanitized.postalCode!,
-            street_address: sanitized.streetAddress!,
-            label: sanitized.label || null,
-            phone: sanitized.phone || null,
-            building_entrance: sanitized.buildingEntrance || null,
-            floor: sanitized.floor || null,
-            apartment: sanitized.apartment || null,
-            delivery_notes: sanitized.deliveryNotes || null,
-            is_default: sanitized.isDefault ?? false,
-            // Null out Speedy fields
-            speedy_office_id: null,
-            speedy_office_name: null,
-            speedy_office_address: null,
-          };
+    // Build update payload - nulls out inapplicable fields when switching method
+    const updateData = buildAddressUpdate(sanitized);
 
     try {
       const address = await updateAddress(id, session.userId, updateData);
