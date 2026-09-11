@@ -422,9 +422,20 @@ export default function SubscriptionCard({
       )}
       {activeModal === 'preferences' && (
         <PreferencesModal
-          subscriptionId={subscription.id}
-          subscription={subscription}
+          boxType={subscription.box_type}
+          initialValues={subscription}
           catalogOptions={catalogOptions}
+          onSave={async (preferences) => {
+            const res = await fetch(`/api/subscription/${subscription.id}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ action: 'update_preferences', preferences }),
+            });
+            if (!res.ok) {
+              const data = await res.json().catch(() => ({}));
+              throw new Error(data.error || 'Възникна грешка.');
+            }
+          }}
           onSuccess={handleActionSuccess}
           onClose={closeModal}
         />

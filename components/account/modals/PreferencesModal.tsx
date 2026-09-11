@@ -1,39 +1,71 @@
 'use client';
 
 import { useState } from 'react';
-import type { SubscriptionWithDelivery } from '@/lib/subscription';
 import type { CatalogData, BoxTypeId } from '@/lib/catalog';
 import { isPremiumBox } from '@/lib/catalog';
 
+/** Snake_case personalization payload shared by all save handlers. */
+export interface PersonalizationPreferences {
+  wants_personalization: boolean;
+  sports: string[] | null;
+  sport_other: string | null;
+  colors: string[] | null;
+  flavors: string[] | null;
+  flavor_other: string | null;
+  dietary: string[] | null;
+  dietary_other: string | null;
+  size_upper: string | null;
+  size_lower: string | null;
+  additional_notes: string | null;
+}
+
+/** Initial field values used to seed the form. */
+export interface PersonalizationInitialValues {
+  wants_personalization?: boolean;
+  sports?: string[] | null;
+  sport_other?: string | null;
+  colors?: string[] | null;
+  flavors?: string[] | null;
+  flavor_other?: string | null;
+  dietary?: string[] | null;
+  dietary_other?: string | null;
+  size_upper?: string | null;
+  size_lower?: string | null;
+  additional_notes?: string | null;
+}
+
 interface PreferencesModalProps {
-  subscriptionId: string;
-  subscription: SubscriptionWithDelivery;
+  boxType: string;
+  initialValues: PersonalizationInitialValues;
   catalogOptions: CatalogData;
+  /** Persists the preferences. Should throw on failure. */
+  onSave: (preferences: PersonalizationPreferences) => Promise<void>;
   onSuccess: () => void;
   onClose: () => void;
 }
 
 export default function PreferencesModal({
-  subscriptionId,
-  subscription,
+  boxType,
+  initialValues,
   catalogOptions,
+  onSave,
   onSuccess,
   onClose,
 }: PreferencesModalProps) {
-  const isPremium = isPremiumBox(subscription.box_type as BoxTypeId);
+  const isPremium = isPremiumBox(boxType as BoxTypeId);
 
-  // Local form state initialized from subscription
-  const [wantsPersonalization, setWantsPersonalization] = useState(subscription.wants_personalization);
-  const [sports, setSports] = useState<string[]>(subscription.sports ?? []);
-  const [sportOther, setSportOther] = useState(subscription.sport_other ?? '');
-  const [colors, setColors] = useState<string[]>(subscription.colors ?? []);
-  const [flavors, setFlavors] = useState<string[]>(subscription.flavors ?? []);
-  const [flavorOther, setFlavorOther] = useState(subscription.flavor_other ?? '');
-  const [dietary, setDietary] = useState<string[]>(subscription.dietary ?? []);
-  const [dietaryOther, setDietaryOther] = useState(subscription.dietary_other ?? '');
-  const [sizeUpper, setSizeUpper] = useState(subscription.size_upper ?? '');
-  const [sizeLower, setSizeLower] = useState(subscription.size_lower ?? '');
-  const [notes, setNotes] = useState(subscription.additional_notes ?? '');
+  // Local form state initialized from the provided values
+  const [wantsPersonalization, setWantsPersonalization] = useState(initialValues.wants_personalization ?? false);
+  const [sports, setSports] = useState<string[]>(initialValues.sports ?? []);
+  const [sportOther, setSportOther] = useState(initialValues.sport_other ?? '');
+  const [colors, setColors] = useState<string[]>(initialValues.colors ?? []);
+  const [flavors, setFlavors] = useState<string[]>(initialValues.flavors ?? []);
+  const [flavorOther, setFlavorOther] = useState(initialValues.flavor_other ?? '');
+  const [dietary, setDietary] = useState<string[]>(initialValues.dietary ?? []);
+  const [dietaryOther, setDietaryOther] = useState(initialValues.dietary_other ?? '');
+  const [sizeUpper, setSizeUpper] = useState(initialValues.size_upper ?? '');
+  const [sizeLower, setSizeLower] = useState(initialValues.size_lower ?? '');
+  const [notes, setNotes] = useState(initialValues.additional_notes ?? '');
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -61,7 +93,7 @@ export default function PreferencesModal({
     setLoading(true);
     setError(null);
     try {
-      const preferences = {
+      const preferences: PersonalizationPreferences = {
         wants_personalization: wantsPersonalization,
         sports: sports.length > 0 ? sports : null,
         sport_other: sportOther || null,
@@ -75,21 +107,10 @@ export default function PreferencesModal({
         additional_notes: notes || null,
       };
 
-      const res = await fetch(`/api/subscription/${subscriptionId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'update_preferences', preferences }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        setError(data.error || 'Възникна грешка.');
-        return;
-      }
-
+      await onSave(preferences);
       onSuccess();
-    } catch {
-      setError('Възникна грешка. Моля, опитайте отново.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Възникна грешка. Моля, опитайте отново.');
     } finally {
       setLoading(false);
     }

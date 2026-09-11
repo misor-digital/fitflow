@@ -11,9 +11,11 @@ import {
   setUserProperties,
 } from '@/lib/analytics';
 import { trackSubscriptionCreated } from '@/lib/analytics/subscription';
-import ThankYouPersonalization, {
-  type ThankYouPreferences,
-} from '@/components/order/ThankYouPersonalization';
+import PreferencesModal, {
+  type PersonalizationPreferences,
+  type PersonalizationInitialValues,
+} from '@/components/account/modals/PreferencesModal';
+import type { CatalogData } from '@/lib/catalog';
 
 interface LastOrderInfo {
   orderNumber: string | null;
@@ -33,6 +35,9 @@ export default function OrderThankYou() {
   const hasTracked = useRef(false);
   const orderInfoRef = useRef<LastOrderInfo | null>(null);
   const [orderInfo, setOrderInfo] = useState<LastOrderInfo | null>(null);
+  const [showPrefsModal, setShowPrefsModal] = useState(false);
+  const [catalogOptions, setCatalogOptions] = useState<CatalogData | null>(null);
+  const [catalogLoading, setCatalogLoading] = useState(false);
 
   // Read order info from sessionStorage on mount
   useEffect(() => {
@@ -110,10 +115,52 @@ export default function OrderThankYou() {
     router.push('/');
   };
 
+  // Whether a personalization popup can be offered for this result.
+  const canPersonalize = Boolean(
+    (orderInfo?.isSubscription && orderInfo.subscriptionId) ||
+      (orderInfo?.orderId && orderInfo.personalizationToken),
+  );
+
+  // Seed the popup with the values already chosen in the order wizard.
+  const buildInitialValues = (): PersonalizationInitialValues => {
+    const s = useOrderStore.getState();
+    return {
+      wants_personalization: true,
+      sports: s.sports,
+      sport_other: s.sportOther,
+      colors: s.colors,
+      flavors: s.flavors,
+      flavor_other: s.flavorOther,
+      dietary: s.dietary,
+      dietary_other: s.dietaryOther,
+      size_upper: s.sizeUpper,
+      size_lower: s.sizeLower,
+      additional_notes: s.additionalNotes,
+    };
+  };
+
+  // Open the popup, lazily fetching the catalog option sets it needs.
+  const openPrefsModal = async () => {
+    if (!catalogOptions && !catalogLoading) {
+      setCatalogLoading(true);
+      try {
+        const res = await fetch('/api/catalog?type=all');
+        if (res.ok) {
+          setCatalogOptions((await res.json()) as CatalogData);
+        }
+      } catch {
+        /* modal will show empty option sets */
+      } finally {
+        setCatalogLoading(false);
+      }
+    }
+    setShowPrefsModal(true);
+  };
+
   // Save handler for the post-checkout personalization step. Subscriptions use
   // the session-authorized subscription endpoint; direct (one-time) orders use
   // the token-authorized order endpoint (guest-safe).
-  const handleSavePersonalization = async (preferences: ThankYouPreferences) => {
+  const handleSavePersonalization = async (preferences: PersonalizationPreferences) => {
     let url: string;
     let payload: Record<string, unknown>;
     if (orderInfo?.isSubscription && orderInfo.subscriptionId) {
@@ -207,12 +254,22 @@ export default function OrderThankYou() {
           <div className="w-12 sm:w-16 h-1 bg-black mx-auto my-4 sm:my-5 md:my-6 rounded" />
 
           {/* Go home / Post-checkout personalization */}
-          {(orderInfo.isSubscription && orderInfo.subscriptionId) ||
-          (orderInfo.orderId && orderInfo.personalizationToken) ? (
-            <ThankYouPersonalization
-              onSave={handleSavePersonalization}
-              onDone={handleGoHome}
-            />
+          {canPersonalize ? (
+            <div className="space-y-3 sm:space-y-4">
+              <button
+                onClick={openPrefsModal}
+                disabled={catalogLoading}
+                className="w-full bg-[#FB7D00] text-white py-3 sm:py-4 px-4 rounded-full text-sm sm:text-base font-semibold shadow-lg hover:bg-[#e67100] transition-all hover:-translate-y-0.5 hover:shadow-xl disabled:opacity-60"
+              >
+                {catalogLoading ? 'Зареждане...' : 'Помогни ни - персонализирай'}
+              </button>
+              <button
+                onClick={handleGoHome}
+                className="w-full bg-white text-[var(--color-brand-navy)] border-2 border-gray-300 py-3 sm:py-4 px-4 rounded-full text-sm sm:text-base font-semibold hover:border-gray-400 transition-all"
+              >
+                Към начална страница
+              </button>
+            </div>
           ) : (
             <button
               onClick={handleGoHome}
@@ -294,6 +351,17 @@ export default function OrderThankYou() {
           
         </div>
       </div>
+
+      {showPrefsModal && catalogOptions && orderInfo.boxType && (
+        <PreferencesModal
+          boxType={orderInfo.boxType}
+          initialValues={buildInitialValues()}
+          catalogOptions={catalogOptions}
+          onSave={handleSavePersonalization}
+          onSuccess={handleGoHome}
+          onClose={() => setShowPrefsModal(false)}
+        />
+      )}
     </div>
   );
 }
