@@ -34,7 +34,10 @@ export default function RootLayout({
       <head>
         <script
           dangerouslySetInnerHTML={{
-            __html: `if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js')}`,
+            __html:
+              process.env.NODE_ENV === 'production'
+                ? `if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js')}`
+                : '',
           }}
         />
       </head>
