@@ -380,8 +380,8 @@ export function DeliverySettingsForm({ config, pricing }: DeliverySettingsFormPr
 // ============================================================================
 
 const METHOD_LABELS: Record<string, string> = {
-  speedy_automat: '🔒 До автомат',
-  speedy_office: '📦 До офис',
+  speedy_automat: '🔒 Speedy автомат',
+  speedy_office: '📦 Speedy офис',
   address: '🏠 До адрес',
 };
 

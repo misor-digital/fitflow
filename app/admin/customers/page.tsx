@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { requireStaff } from '@/lib/auth';
 import { CUSTOMER_VIEW_ROLES } from '@/lib/auth/permissions';
 import { getCustomersPaginated, getCustomersStats } from '@/lib/data';
@@ -16,7 +17,11 @@ interface CustomersPageProps {
   searchParams: Promise<{
     page?: string;
     search?: string;
+    email?: string;
+    phone?: string;
     subscriber?: string;
+    subscription?: string;
+    minOrders?: string;
   }>;
 }
 
@@ -26,14 +31,23 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
   const params = await searchParams;
   const page = Math.max(1, parseInt(params.page ?? '1', 10) || 1);
   const search = params.search?.trim();
+  const email = params.email?.trim();
+  const phone = params.phone?.trim();
   const subscriber = params.subscriber;
+  const subscription = params.subscription;
+  const minOrders = params.minOrders ? parseInt(params.minOrders, 10) : undefined;
 
   const isSubscriber = subscriber === 'true' ? true : subscriber === 'false' ? false : undefined;
+  const hasActiveSubscription = subscription === 'true' ? true : subscription === 'false' ? false : undefined;
 
   const [{ customers, total }, stats] = await Promise.all([
     getCustomersPaginated(page, PER_PAGE, {
       search: search || undefined,
+      email: email || undefined,
+      phone: phone || undefined,
       isSubscriber,
+      hasActiveSubscription,
+      minOrders: minOrders && minOrders > 0 ? minOrders : undefined,
     }),
     getCustomersStats(),
   ]);
@@ -44,7 +58,11 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
     const p = new URLSearchParams();
     const merged = {
       search: params.search,
+      email: params.email,
+      phone: params.phone,
       subscriber: params.subscriber,
+      subscription: params.subscription,
+      minOrders: params.minOrders,
       page: params.page,
       ...overrides,
     };
@@ -86,67 +104,24 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
         </div>
       </div>
 
-      {/* Filters */}
-      <form className="flex flex-wrap gap-3 mb-6">
-        <input
-          name="search"
-          type="text"
-          placeholder="Търси по име..."
-          defaultValue={search ?? ''}
-          className="border rounded-lg px-3 py-2 text-sm flex-1 min-w-[200px]"
-        />
-
-        <select
-          name="subscriber"
-          defaultValue={subscriber ?? ''}
-          className="border rounded-lg px-3 py-2 text-sm bg-white"
-        >
-          <option value="">Всички</option>
-          <option value="true">Абонати</option>
-          <option value="false">Не абонати</option>
-        </select>
-
-        <button
-          type="submit"
-          className="bg-[var(--color-brand-navy)] text-white px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity"
-        >
-          Търси
-        </button>
-
-        {(search || subscriber) && (
-          <Link
-            href="/admin/customers"
-            className="text-sm text-gray-500 hover:text-gray-700 self-center underline"
-          >
-            Изчисти
-          </Link>
-        )}
-      </form>
-
       {/* Table */}
-      {customers.length === 0 ? (
-        <div className="text-center py-16 text-gray-500">
-          <p className="text-lg mb-2">Няма намерени клиенти.</p>
-          {(search || subscriber) && (
-            <Link
-              href="/admin/customers"
-              className="text-[var(--color-brand-orange)] hover:underline text-sm"
-            >
-              Нулирай филтрите
-            </Link>
-          )}
-        </div>
-      ) : (
-        <>
-          <CustomersTable
-            customers={customers}
-            total={total}
-            currentPage={page}
-            perPage={PER_PAGE}
-          />
+      <Suspense fallback={<div className="animate-pulse bg-gray-100 rounded-xl h-64" />}>
+        <CustomersTable
+          customers={customers}
+          total={total}
+          currentPage={page}
+          perPage={PER_PAGE}
+          initialName={search ?? ''}
+          initialEmail={email ?? ''}
+          initialPhone={phone ?? ''}
+          initialSubscriber={subscriber ?? ''}
+          initialSubscription={subscription ?? ''}
+          initialMinOrders={params.minOrders ?? ''}
+        />
+      </Suspense>
 
-          {/* Pagination */}
-          {totalPages > 1 && (
+      {/* Pagination */}
+      {totalPages > 1 && (
             <nav className="flex justify-center items-center gap-2 mt-6">
               {page > 1 && (
                 <Link href={buildUrl({ page: String(page - 1) })} className="px-3 py-1.5 text-sm border rounded-lg hover:bg-gray-50">
@@ -184,8 +159,6 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
               )}
             </nav>
           )}
-        </>
-      )}
     </div>
   );
 }

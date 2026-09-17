@@ -505,7 +505,7 @@ export default function SubscriptionConversionFlow({
       {renderField('Телефон', 'phone', address.phone, (v) => handleAddressChange('phone', v), true, addressErrors, { type: 'tel' })}
       <div>
         <label className="block text-sm sm:text-base font-semibold text-[var(--color-brand-navy)] mb-1.5">
-          Офис на Speedy <span className="text-red-500">*</span>
+          Speedy офис <span className="text-red-500">*</span>
         </label>
         <SpeedyOfficeSelector
           selectedOffice={speedyOffice}
@@ -561,7 +561,7 @@ export default function SubscriptionConversionFlow({
                   </div>
                   {(addr.delivery_method === 'speedy_office' || addr.delivery_method === 'speedy_automat') && addr.speedy_office_name ? (
                     <div className="text-sm text-gray-600 mt-0.5">
-                      📦 {addr.delivery_method === 'speedy_automat' ? 'Автомат на Speedy' : 'Офис на Speedy'}: {addr.speedy_office_name}
+                      📦 {addr.delivery_method === 'speedy_automat' ? 'Speedy автомат' : 'Speedy офис'}: {addr.speedy_office_name}
                     </div>
                   ) : (
                     <>
@@ -757,7 +757,7 @@ export default function SubscriptionConversionFlow({
       const addr = savedAddresses.find((a) => a.id === selectedAddressId);
       if (addr) {
         if ((addr.delivery_method === 'speedy_office' || addr.delivery_method === 'speedy_automat') && addr.speedy_office_name) {
-          const label = addr.delivery_method === 'speedy_automat' ? 'Автомат на Speedy' : 'Офис на Speedy';
+          const label = addr.delivery_method === 'speedy_automat' ? 'Speedy автомат' : 'Speedy офис';
           return {
             line1: `📦 ${label}: ${addr.speedy_office_name}`,
             line2: addr.speedy_office_address ?? '',
@@ -774,7 +774,7 @@ export default function SubscriptionConversionFlow({
 
     if ((deliveryMethod === 'speedy_office' || deliveryMethod === 'speedy_automat') && speedyOffice) {
       return {
-        line1: `📦 Офис на Speedy: ${speedyOffice.name}`,
+        line1: `📦 Speedy офис: ${speedyOffice.name}`,
         line2: speedyOffice.address,
       };
     }

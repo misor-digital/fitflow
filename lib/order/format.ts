@@ -73,7 +73,7 @@ export function formatShippingAddress(address: ShippingAddressSnapshot): string 
   if ((address.delivery_method === 'speedy_office' || address.delivery_method === 'speedy_automat') && address.speedy_office_name) {
     const lines: string[] = [];
     lines.push(`${address.first_name} ${address.last_name}`.trim());
-    const label = address.delivery_method === 'speedy_automat' ? 'Автомат на Speedy' : 'Офис на Speedy';
+    const label = address.delivery_method === 'speedy_automat' ? 'Speedy автомат' : 'Speedy офис';
     lines.push(`${label}: ${address.speedy_office_name}`);
     if (address.speedy_office_address) {
       lines.push(address.speedy_office_address);
@@ -112,7 +112,7 @@ export function formatShippingAddress(address: ShippingAddressSnapshot): string 
 export function formatShippingAddressOneLine(address: ShippingAddressSnapshot): string {
   // Speedy office / automat delivery
   if ((address.delivery_method === 'speedy_office' || address.delivery_method === 'speedy_automat') && address.speedy_office_name) {
-    const label = address.delivery_method === 'speedy_automat' ? 'Автомат на Speedy' : 'Офис на Speedy';
+    const label = address.delivery_method === 'speedy_automat' ? 'Speedy автомат' : 'Speedy офис';
     return `${label}: ${address.speedy_office_name}`;
   }
 
@@ -179,11 +179,34 @@ export const ORDER_TYPE_COLORS: Record<string, string> = {
 export function formatDeliveryMethodLabel(method: 'address' | 'speedy_office' | 'speedy_automat' | undefined): string {
   switch (method) {
     case 'speedy_office':
-      return 'До офис на Speedy';
+      return 'Speedy офис';
     case 'speedy_automat':
-      return 'До автомат на Speedy';
+      return 'Speedy автомат';
     case 'address':
     default:
-      return 'Доставка до адрес';
+      return 'До адрес';
   }
+}
+
+/**
+ * Compute a display label for a saved address. Uses the user-set label if
+ * present, otherwise derives one from the address data (office name or
+ * city/street). This ensures the displayed name always reflects the current
+ * address content, even when the address is edited.
+ */
+export function getAddressDisplayLabel(addr: {
+  label?: string | null;
+  delivery_method: 'address' | 'speedy_office' | 'speedy_automat';
+  speedy_office_name?: string | null;
+  city?: string | null;
+  street_address?: string | null;
+}): string {
+  if (addr.label) return addr.label;
+
+  if (addr.delivery_method === 'speedy_office' || addr.delivery_method === 'speedy_automat') {
+    return addr.speedy_office_name || 'Speedy';
+  }
+
+  const parts = [addr.city, addr.street_address].filter(Boolean);
+  return parts.join(' - ') || 'Адрес';
 }

@@ -17,8 +17,34 @@ import { withRetryOrFallback } from './retry';
 import type { CustomerWithStats } from '@/lib/supabase/types';
 
 // ============================================================================
-// Read operations
+// Helpers
 // ============================================================================
+
+/**
+ * Look up user IDs by partial email match via Supabase Auth admin API.
+ * Returns an array of matching user IDs (may be empty).
+ */
+async function getUserIdsByEmail(emailQuery: string): Promise<string[]> {
+  const ids: string[] = [];
+  // Supabase admin.listUsers supports server-side filtering but not partial
+  // match on email. We fetch pages and filter in-memory. For ≤1000 users
+  // this is fast; the TODO at the top of this file covers the future fix.
+  let page = 1;
+  const perPage = 1000;
+  while (true) {
+    const { data } = await supabaseAdmin.auth.admin.listUsers({ page, perPage });
+    if (!data?.users?.length) break;
+    const q = emailQuery.toLowerCase();
+    for (const u of data.users) {
+      if (u.email?.toLowerCase().includes(q)) {
+        ids.push(u.id);
+      }
+    }
+    if (data.users.length < perPage) break;
+    page++;
+  }
+  return ids;
+}
 
 /**
  * Fetch a paginated list of customers with aggregated stats.
@@ -36,11 +62,24 @@ export const getCustomersPaginated = cache(
     perPage: number,
     filters?: {
       search?: string;
+      email?: string;
+      phone?: string;
       isSubscriber?: boolean;
+      hasActiveSubscription?: boolean;
+      minOrders?: number;
     },
   ): Promise<{ customers: CustomerWithStats[]; total: number }> => {
     const from = (page - 1) * perPage;
     const to = from + perPage - 1;
+
+    // If email filter is provided, resolve matching user IDs from auth first
+    let emailMatchIds: string[] | null = null;
+    if (filters?.email) {
+      emailMatchIds = await getUserIdsByEmail(filters.email);
+      if (emailMatchIds.length === 0) {
+        return { customers: [], total: 0 };
+      }
+    }
 
     // Build query on user_profiles table
     let query = supabaseAdmin
@@ -52,8 +91,50 @@ export const getCustomersPaginated = cache(
     if (filters?.search) {
       query = query.or(`first_name.ilike.%${filters.search}%,last_name.ilike.%${filters.search}%`);
     }
+    if (emailMatchIds) {
+      query = query.in('id', emailMatchIds);
+    }
+    if (filters?.phone) {
+      query = query.ilike('phone', `%${filters.phone}%`);
+    }
     if (filters?.isSubscriber !== undefined) {
       query = query.eq('is_subscriber', filters.isSubscriber);
+    }
+
+    // Subscription filter: resolve user IDs with/without active subscriptions
+    if (filters?.hasActiveSubscription !== undefined) {
+      const { data: subRows } = await supabaseAdmin
+        .from('subscriptions')
+        .select('user_id')
+        .eq('status', 'active');
+      const activeSubIds = new Set((subRows ?? []).map(s => s.user_id));
+      if (filters.hasActiveSubscription) {
+        const ids = [...activeSubIds];
+        if (ids.length === 0) return { customers: [], total: 0 };
+        query = query.in('id', ids);
+      } else {
+        const ids = [...activeSubIds];
+        if (ids.length > 0) {
+          query = query.not('id', 'in', `(${ids.join(',')})`);
+        }
+      }
+    }
+
+    // Min orders filter: resolve user IDs with at least N orders
+    if (filters?.minOrders) {
+      const { data: orderRows } = await supabaseAdmin
+        .from('orders')
+        .select('user_id');
+      const countMap = new Map<string, number>();
+      for (const o of orderRows ?? []) {
+        if (!o.user_id) continue;
+        countMap.set(o.user_id, (countMap.get(o.user_id) ?? 0) + 1);
+      }
+      const qualifiedIds = [...countMap.entries()]
+        .filter(([, cnt]) => cnt >= filters.minOrders!)
+        .map(([id]) => id);
+      if (qualifiedIds.length === 0) return { customers: [], total: 0 };
+      query = query.in('id', qualifiedIds);
     }
 
     // Execute paginated query
