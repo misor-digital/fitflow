@@ -1,8 +1,18 @@
 import type { NextConfig } from "next";
+import { networkInterfaces } from "node:os";
+
+// Auto-detect this machine's LAN IPv4 addresses so dev access over the
+// network keeps working when DHCP changes the IP. Falls back to nothing.
+function localNetworkOrigins(): string[] {
+  return Object.values(networkInterfaces())
+    .flat()
+    .filter((net) => net && !net.internal && net.family === 'IPv4')
+    .map((net) => net!.address);
+}
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
-  allowedDevOrigins: ['192.168.56.1'],
+  allowedDevOrigins: localNetworkOrigins(),
   experimental: {
     authInterrupts: true,
   },
