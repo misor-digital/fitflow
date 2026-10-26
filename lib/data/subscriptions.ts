@@ -958,7 +958,7 @@ export const getOrdersBySubscription = cache(
 
 /**
  * Get paginated subscriptions with optional filters.
- * Returns SubscriptionWithUserInfo (includes user_email + user_first_name + user_last_name).
+ * Returns SubscriptionWithUserInfo (includes user_email, user_first_name, user_last_name, user_phone).
  * Supports filtering by status, boxType, frequency, and search (user name/email).
  */
 export const getSubscriptionsPaginated = cache(
@@ -1041,25 +1041,24 @@ export const getSubscriptionsPaginated = cache(
     // Fetch profiles
     const { data: profiles } = await supabaseAdmin
       .from('user_profiles')
-      .select('id, first_name, last_name')
+      .select('id, first_name, last_name, phone')
       .in('id', uniqueUserIds);
 
-    const profileFirstNameMap = new Map(
-      (profiles ?? []).map((p) => [p.id, p.first_name]),
-    );
-    const profileLastNameMap = new Map(
-      (profiles ?? []).map((p) => [p.id, p.last_name]),
-    );
+    const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]));
 
     // Fetch emails via auth - single batch query via PostgREST
     const emailMap = await getUserEmailsByIds(uniqueUserIds);
 
-    const subscriptions: SubscriptionWithUserInfo[] = rows.map((row) => ({
-      ...row,
-      user_first_name: profileFirstNameMap.get(row.user_id) ?? '',
-      user_last_name: profileLastNameMap.get(row.user_id) ?? '',
-      user_email: emailMap.get(row.user_id) ?? '',
-    }));
+    const subscriptions: SubscriptionWithUserInfo[] = rows.map((row) => {
+      const profile = profileMap.get(row.user_id);
+      return {
+        ...row,
+        user_first_name: profile?.first_name ?? '',
+        user_last_name: profile?.last_name ?? '',
+        user_email: emailMap.get(row.user_id) ?? '',
+        user_phone: profile?.phone?.trim() ?? '',
+      };
+    });
 
     return {
       subscriptions,

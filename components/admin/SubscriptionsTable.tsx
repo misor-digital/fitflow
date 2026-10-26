@@ -8,6 +8,7 @@ import {
   FREQUENCY_LABELS,
 } from '@/lib/subscription';
 import { formatDateTimeShort } from '@/lib/utils/date';
+import { toTelHref } from '@/lib/utils/sanitize';
 import { formatPriceEur } from '@/lib/catalog';
 
 interface SubscriptionsTableProps {
@@ -70,6 +71,14 @@ export function SubscriptionsTable({
                   <td className="px-4 py-3">
                     <div className="font-medium text-gray-900">{sub.user_first_name} {sub.user_last_name}</div>
                     <div className="text-xs text-gray-500">{sub.user_email}</div>
+                    {sub.user_phone && (
+                      <div className="text-xs text-gray-500">
+                        Тел:{' '}
+                        <a href={toTelHref(sub.user_phone)} className="hover:underline">
+                          {sub.user_phone}
+                        </a>
+                      </div>
+                    )}
                   </td>
 
                   {/* Box Type */}

@@ -55,6 +55,7 @@ export interface SubscriptionWithUserInfo extends SubscriptionRow {
   user_email: string;
   user_first_name: string;
   user_last_name: string;
+  user_phone: string;
 }
 
 /** History action types for type safety */

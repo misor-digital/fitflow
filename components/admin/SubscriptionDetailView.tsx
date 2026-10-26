@@ -6,6 +6,7 @@ import Link from 'next/link';
 import type { SubscriptionRow, SubscriptionDerivedState, SubscriptionHistoryRow, SubscriptionAction } from '@/lib/subscription';
 import { SUBSCRIPTION_STATUS_LABELS, SUBSCRIPTION_STATUS_COLORS, FREQUENCY_LABELS } from '@/lib/subscription';
 import { formatDateTimeShort } from '@/lib/utils/date';
+import { toTelHref } from '@/lib/utils/sanitize';
 import { formatPriceEur } from '@/lib/catalog';
 import type { OrderRow, AddressRow } from '@/lib/supabase/types';
 import AdminAddressForm from '@/components/admin/AdminAddressForm';
@@ -80,6 +81,7 @@ interface SubscriptionDetailViewProps {
   userFirstName: string;
   userLastName: string;
   userEmail: string;
+  userPhone: string;
 }
 
 // ============================================================================
@@ -98,9 +100,15 @@ export function SubscriptionDetailView({
   userFirstName,
   userLastName,
   userEmail,
+  userPhone,
 }: SubscriptionDetailViewProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+
+  // Mirrors the order's shipping_address.phone; falls back to the profile phone.
+  const addressPhone = defaultAddress?.phone?.trim() ?? '';
+  const contactPhone = addressPhone || userPhone;
+  const isProfilePhoneFallback = !addressPhone && !!userPhone;
 
   // Modal state
   const [confirmModal, setConfirmModal] = useState<{
@@ -326,20 +334,31 @@ export function SubscriptionDetailView({
           <InfoItem
             label="Адрес"
             value={
-              defaultAddress ? (
-                <span className="flex items-center gap-2">
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded ${
-                    defaultAddress.delivery_method === 'speedy_office'
-                      ? 'bg-orange-100 text-orange-800'
-                      : 'bg-blue-100 text-blue-800'
-                  }`}>
-                    {defaultAddress.delivery_method === 'speedy_office' ? 'Speedy офис' : 'До адрес'}
+              <>
+                {defaultAddress ? (
+                  <span className="flex items-center gap-2">
+                    <span className={`text-xs font-semibold px-2 py-0.5 rounded ${
+                      defaultAddress.delivery_method === 'speedy_office'
+                        ? 'bg-orange-100 text-orange-800'
+                        : 'bg-blue-100 text-blue-800'
+                    }`}>
+                      {defaultAddress.delivery_method === 'speedy_office' ? 'Speedy офис' : 'До адрес'}
+                    </span>
+                    <span>{formatAddress(defaultAddress)}</span>
                   </span>
-                  <span>{formatAddress(defaultAddress)}</span>
-                </span>
-              ) : (
-                'Не е зададен'
-              )
+                ) : (
+                  'Не е зададен'
+                )}
+                {contactPhone && (
+                  <span className="block text-xs text-gray-500 mt-0.5">
+                    Тел:{' '}
+                    <a href={toTelHref(contactPhone)} className="hover:underline">
+                      {contactPhone}
+                    </a>
+                    {isProfilePhoneFallback && <span className="text-gray-400"> (от профила)</span>}
+                  </span>
+                )}
+              </>
             }
           />
           {subscription.first_cycle_id && (
@@ -756,7 +775,7 @@ export function SubscriptionDetailView({
               <AdminAddressForm
                 mode="create"
                 userId={subscription.user_id}
-                customerDefaults={{ firstName: userFirstName, lastName: userLastName, phone: defaultAddress?.phone ?? '' }}
+                customerDefaults={{ firstName: userFirstName, lastName: userLastName, phone: contactPhone }}
                 onSuccess={(newAddress) => {
                   setLocalAddresses((prev) =>
                     [
