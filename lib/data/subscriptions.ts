@@ -958,7 +958,7 @@ export const getOrdersBySubscription = cache(
 
 /**
  * Get paginated subscriptions with optional filters.
- * Returns SubscriptionWithUserInfo (includes user_email, user_first_name, user_last_name, user_phone).
+ * Returns SubscriptionWithUserInfo (includes user_email, user_first_name, user_last_name, user_phone, default_address).
  * Supports filtering by status, boxType, frequency, and search (user name/email).
  */
 export const getSubscriptionsPaginated = cache(
@@ -1037,26 +1037,39 @@ export const getSubscriptionsPaginated = cache(
     }
 
     const uniqueUserIds = [...new Set(rows.map((r) => r.user_id))];
+    const addressIds = [...new Set(rows.map((r) => r.default_address_id).filter((id): id is string => !!id))];
 
-    // Fetch profiles
-    const { data: profiles } = await supabaseAdmin
-      .from('user_profiles')
-      .select('id, first_name, last_name, phone')
-      .in('id', uniqueUserIds);
+    // Profiles, emails and default addresses are independent - fetch in parallel
+    const [{ data: profiles }, emailMap, addressResult] = await Promise.all([
+      supabaseAdmin
+        .from('user_profiles')
+        .select('id, first_name, last_name, phone')
+        .in('id', uniqueUserIds),
+      getUserEmailsByIds(uniqueUserIds),
+      addressIds.length > 0
+        ? supabaseAdmin.from('addresses').select('*').in('id', addressIds)
+        : Promise.resolve({ data: [] as AddressRow[], error: null }),
+    ]);
+
+    if (addressResult.error) {
+      // Non-critical: the list still renders, the inline details show "Не е зададен"
+      console.error('Error fetching subscription default addresses:', addressResult.error);
+    }
 
     const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]));
-
-    // Fetch emails via auth - single batch query via PostgREST
-    const emailMap = await getUserEmailsByIds(uniqueUserIds);
+    const addressMap = new Map((addressResult.data ?? []).map((a) => [a.id, a]));
 
     const subscriptions: SubscriptionWithUserInfo[] = rows.map((row) => {
       const profile = profileMap.get(row.user_id);
+      const address = row.default_address_id ? addressMap.get(row.default_address_id) : undefined;
       return {
         ...row,
         user_first_name: profile?.first_name ?? '',
         user_last_name: profile?.last_name ?? '',
         user_email: emailMap.get(row.user_id) ?? '',
         user_phone: profile?.phone?.trim() ?? '',
+        // Ownership guard, same as getAddressById(addressId, userId)
+        default_address: address && address.user_id === row.user_id ? address : null,
       };
     });
 
