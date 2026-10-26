@@ -1,5 +1,35 @@
 # fitflow
 
+## 1.10.0
+
+### Minor Changes
+
+- 9a2ba96: Add inline „Детайли“ panel to the admin subscriptions list
+
+  Each row in `/admin/subscriptions` now has a „▼ Детайли“ button, like the orders list. It opens the subscription's core data inline: user, status, frequency, price, promo code, start date, delivery address with phone, and personalization. The panel looks the same as the detail page. Only one row is open at a time. The button has `aria-expanded`/`aria-controls`, and „Виж →“ still opens the full page.
+
+  `getSubscriptionsPaginated` now also loads each subscription's default address in one batch query, checking that the address belongs to the subscriber. Profiles, emails and addresses are loaded in parallel, so the panel opens without extra requests. The detail page's info grid and personalization tags moved into shared `SubscriptionSummaryParts` components, with no visual change to the detail page.
+
+### Patch Changes
+
+- 9a2ba96: Show the customer phone number in the admin subscription views
+
+  The subscription detail page now shows `Тел:` under the delivery address, in the same way as the direct order data view. It uses the default address phone, which is the number copied into generated orders. If that is empty, it uses the profile phone and marks it „(от профила)“. The phone is a sanitized `tel:` link, and the inline new-address form is pre-filled with the same number. The subscriptions list also shows the profile phone in the „Клиент“ column, loaded by the existing profile query with no extra request.
+
+- 88909bf: Auto-detect LAN IPs for `allowedDevOrigins` so network dev access survives DHCP changes
+
+  The dev server's `allowedDevOrigins` previously relied on a hardcoded list of LAN IPs. When DHCP reassigned the machine's address, the list went stale and Next.js blocked `/_next/*` for network access, breaking Fast Refresh and causing full-page reloads that wiped form input. `next.config.ts` now derives the allowed origins from the machine's non-internal IPv4 addresses at startup, so network development keeps working without manual edits. Production is unaffected.
+
+- 9a2ba96: Fix Speedy automat addresses showing as an empty „До адрес“ in the admin subscription view
+
+  The admin subscription detail page checked only for `speedy_office`, so subscriptions delivering to a Speedy automat showed the „До адрес“ badge with no address text (pickup rows have no street fields). The „Адрес“ field and the address picker now show a „Speedy автомат“ badge with the automat name and address. Badges come from a map typed by delivery method, so TypeScript flags any delivery method that has no badge.
+
+  Address formatting now lives in shared helpers in `lib/order/format` (`formatAddressOneLine`, `formatAddressDisplay`, `speedyPointName`, `isSpeedyPickup`). The admin and account address managers, the subscription address-changed email and the admin orders delivery column now use them instead of their own copies, with unchanged output. An empty Speedy pickup point name now falls back to „Speedy офис“ / „Speedy автомат“ instead of showing blank.
+
+- 2c21158: Register the service worker only in production to stop constant page reloads in local development
+
+  The root layout previously registered `/sw.js` in every environment. In development its passthrough `fetch` handler intercepted Next.js Fast Refresh/HMR traffic, forcing full-page reloads that wiped in-progress form input. The service worker now registers only when `NODE_ENV === 'production'`, so dev keeps Fast Refresh's in-place updates. Production PWA behavior is unchanged.
+
 ## 1.9.2
 
 ### Patch Changes
