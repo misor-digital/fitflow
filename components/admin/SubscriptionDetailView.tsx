@@ -8,6 +8,7 @@ import { SUBSCRIPTION_STATUS_LABELS, SUBSCRIPTION_STATUS_COLORS, FREQUENCY_LABEL
 import { formatDateTimeShort } from '@/lib/utils/date';
 import { toTelHref } from '@/lib/utils/sanitize';
 import { formatPriceEur } from '@/lib/catalog';
+import { formatAddressOneLine, isSpeedyPickup } from '@/lib/order/format';
 import type { OrderRow, AddressRow } from '@/lib/supabase/types';
 import AdminAddressForm from '@/components/admin/AdminAddressForm';
 
@@ -63,6 +64,13 @@ const ORDER_STATUS_COLORS: Record<string, string> = {
   delivered: 'bg-green-100 text-green-800',
   cancelled: 'bg-red-100 text-red-800',
   refunded: 'bg-gray-100 text-gray-800',
+};
+
+// Exhaustive by type: adding a delivery method fails compilation until it gets a badge.
+const DELIVERY_METHOD_BADGES: Record<AddressRow['delivery_method'], { label: string; className: string }> = {
+  address: { label: 'До адрес', className: 'bg-blue-100 text-blue-800' },
+  speedy_office: { label: 'Speedy офис', className: 'bg-orange-100 text-orange-800' },
+  speedy_automat: { label: 'Speedy автомат', className: 'bg-amber-100 text-amber-800' },
 };
 
 // ============================================================================
@@ -221,20 +229,6 @@ export function SubscriptionDetailView({
   // Helpers
   // ============================================================================
 
-  function formatAddress(addr: AddressRow): string {
-    if (addr.delivery_method === 'speedy_office') {
-      const name = addr.speedy_office_name ?? 'Speedy офис';
-      return addr.speedy_office_address
-        ? `📦 ${name} - ${addr.speedy_office_address}`
-        : `📦 ${name}`;
-    }
-    const parts = [addr.street_address, addr.city, addr.postal_code].filter(Boolean);
-    if (addr.building_entrance) parts.push(`вх. ${addr.building_entrance}`);
-    if (addr.floor) parts.push(`ет. ${addr.floor}`);
-    if (addr.apartment) parts.push(`ап. ${addr.apartment}`);
-    return parts.join(', ');
-  }
-
   function formatDateTime(iso: string): string {
     return formatDateTimeShort(iso);
   }
@@ -337,14 +331,8 @@ export function SubscriptionDetailView({
               <>
                 {defaultAddress ? (
                   <span className="flex items-center gap-2">
-                    <span className={`text-xs font-semibold px-2 py-0.5 rounded ${
-                      defaultAddress.delivery_method === 'speedy_office'
-                        ? 'bg-orange-100 text-orange-800'
-                        : 'bg-blue-100 text-blue-800'
-                    }`}>
-                      {defaultAddress.delivery_method === 'speedy_office' ? 'Speedy офис' : 'До адрес'}
-                    </span>
-                    <span>{formatAddress(defaultAddress)}</span>
+                    <DeliveryMethodBadge method={defaultAddress.delivery_method} />
+                    <span>{formatAddressLine(defaultAddress)}</span>
                   </span>
                 ) : (
                   'Не е зададен'
@@ -823,22 +811,14 @@ export function SubscriptionDetailView({
                           {addr.label && (
                             <span className="text-sm font-semibold text-gray-900">{addr.label}</span>
                           )}
-                          <span
-                            className={`text-xs font-semibold px-2 py-0.5 rounded ${
-                              addr.delivery_method === 'speedy_office'
-                                ? 'bg-orange-100 text-orange-800'
-                                : 'bg-blue-100 text-blue-800'
-                            }`}
-                          >
-                            {addr.delivery_method === 'speedy_office' ? 'Speedy офис' : 'До адрес'}
-                          </span>
+                          <DeliveryMethodBadge method={addr.delivery_method} />
                           {addr.is_default && (
                             <span className="text-xs font-semibold px-2 py-0.5 rounded bg-green-100 text-green-800">
                               По подразбиране
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-gray-600 mt-1">{formatAddress(addr)}</p>
+                        <p className="text-sm text-gray-600 mt-1">{formatAddressLine(addr)}</p>
                         {addr.phone && (
                           <p className="text-xs text-gray-400 mt-0.5">Тел: {addr.phone}</p>
                         )}
@@ -1020,6 +1000,20 @@ function InfoItem({ label, value }: { label: string; value: React.ReactNode }) {
       <dd className="mt-0.5 text-sm text-gray-900">{typeof value === 'string' ? value : value}</dd>
     </div>
   );
+}
+
+function DeliveryMethodBadge({ method }: { method: AddressRow['delivery_method'] }) {
+  const badge = DELIVERY_METHOD_BADGES[method] ?? DELIVERY_METHOD_BADGES.address;
+  return (
+    <span className={`shrink-0 text-xs font-semibold px-2 py-0.5 rounded ${badge.className}`}>
+      {badge.label}
+    </span>
+  );
+}
+
+function formatAddressLine(addr: AddressRow): string {
+  const line = formatAddressOneLine(addr, { fallback: '—' });
+  return isSpeedyPickup(addr.delivery_method) ? `📦 ${line}` : line;
 }
 
 function Tag({ label, color }: { label: string; color: string }) {
