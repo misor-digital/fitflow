@@ -4,7 +4,7 @@
  * Types for subscription lifecycle management.
  */
 
-import type { SubscriptionRow, SubscriptionStatus, SubscriptionHistoryRow } from '@/lib/supabase/types';
+import type { SubscriptionRow, SubscriptionStatus, SubscriptionHistoryRow, AddressRow } from '@/lib/supabase/types';
 import type { DeliveryCycleRow } from '@/lib/supabase/types';
 
 // Re-export for convenience
@@ -55,6 +55,8 @@ export interface SubscriptionWithUserInfo extends SubscriptionRow {
   user_email: string;
   user_first_name: string;
   user_last_name: string;
+  user_phone: string;
+  default_address: AddressRow | null;
 }
 
 /** History action types for type safety */

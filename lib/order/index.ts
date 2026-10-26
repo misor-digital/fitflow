@@ -104,6 +104,11 @@ export {
   // Address formatting
   formatShippingAddress,
   formatShippingAddressOneLine,
+  formatAddressOneLine,
+  formatAddressDisplay,
+  speedyPointName,
+  isSpeedyPickup,
+  type AddressDisplayFields,
 
   // Order type labels & colors
   ORDER_TYPE_LABELS,

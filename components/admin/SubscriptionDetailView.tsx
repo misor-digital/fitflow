@@ -9,6 +9,14 @@ import { formatDateTimeShort } from '@/lib/utils/date';
 import { formatPriceEur } from '@/lib/catalog';
 import type { OrderRow, AddressRow } from '@/lib/supabase/types';
 import AdminAddressForm from '@/components/admin/AdminAddressForm';
+import {
+  InfoItem,
+  DeliveryMethodBadge,
+  formatAddressLine,
+  resolveContactPhone,
+  SubscriptionCoreInfo,
+  SubscriptionPersonalization,
+} from '@/components/admin/SubscriptionSummaryParts';
 
 // ============================================================================
 // Constants
@@ -80,6 +88,7 @@ interface SubscriptionDetailViewProps {
   userFirstName: string;
   userLastName: string;
   userEmail: string;
+  userPhone: string;
 }
 
 // ============================================================================
@@ -98,9 +107,13 @@ export function SubscriptionDetailView({
   userFirstName,
   userLastName,
   userEmail,
+  userPhone,
 }: SubscriptionDetailViewProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+
+  // Pre-fills the inline new-address form.
+  const { phone: contactPhone } = resolveContactPhone(defaultAddress, userPhone);
 
   // Modal state
   const [confirmModal, setConfirmModal] = useState<{
@@ -213,20 +226,6 @@ export function SubscriptionDetailView({
   // Helpers
   // ============================================================================
 
-  function formatAddress(addr: AddressRow): string {
-    if (addr.delivery_method === 'speedy_office') {
-      const name = addr.speedy_office_name ?? 'Speedy офис';
-      return addr.speedy_office_address
-        ? `📦 ${name} - ${addr.speedy_office_address}`
-        : `📦 ${name}`;
-    }
-    const parts = [addr.street_address, addr.city, addr.postal_code].filter(Boolean);
-    if (addr.building_entrance) parts.push(`вх. ${addr.building_entrance}`);
-    if (addr.floor) parts.push(`ет. ${addr.floor}`);
-    if (addr.apartment) parts.push(`ап. ${addr.apartment}`);
-    return parts.join(', ');
-  }
-
   function formatDateTime(iso: string): string {
     return formatDateTimeShort(iso);
   }
@@ -273,74 +272,13 @@ export function SubscriptionDetailView({
 
         {/* Info Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <InfoItem label="Потребител" value={`${userFirstName} ${userLastName} (${userEmail})`} />
-          <InfoItem
-            label="Статус"
-            value={
-              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${SUBSCRIPTION_STATUS_COLORS[subscription.status]}`}>
-                {SUBSCRIPTION_STATUS_LABELS[subscription.status]}
-              </span>
-            }
-          />
-          <InfoItem label="Честота" value={FREQUENCY_LABELS[subscription.frequency] ?? subscription.frequency} />
-          <InfoItem
-            label="Цена"
-            value={
-              <span>
-                {formatPriceEur(Number(subscription.current_price_eur))}
-                {subscription.discount_percent ? (
-                  <span className="ml-2 text-xs text-green-600">
-                    (-{subscription.discount_percent}% от {formatPriceEur(Number(subscription.base_price_eur))})
-                  </span>
-                ) : null}
-              </span>
-            }
-          />
-          {subscription.promo_code && (
-            <InfoItem
-              label="Промо код"
-              value={
-                <span className="flex items-center gap-2 flex-wrap">
-                  <span className="bg-purple-100 text-purple-800 text-xs font-semibold px-2 py-0.5 rounded">
-                    {subscription.promo_code}
-                  </span>
-                  {subscription.discount_percent && (
-                    <span className="text-xs text-green-600">
-                      -{subscription.discount_percent}%
-                    </span>
-                  )}
-                  <span className="text-xs text-gray-500">
-                    Цикли: {subscription.promo_cycles_used ?? 0}/{subscription.promo_max_cycles ?? '∞'}
-                  </span>
-                </span>
-              }
-            />
-          )}
-          {!subscription.promo_code && (
-            <InfoItem
-              label="Промо код"
-              value={<span className="text-gray-400 text-sm">Няма</span>}
-            />
-          )}
-          <InfoItem label="Стартиран" value={formatDateTimeShort(subscription.started_at)} />
-          <InfoItem
-            label="Адрес"
-            value={
-              defaultAddress ? (
-                <span className="flex items-center gap-2">
-                  <span className={`text-xs font-semibold px-2 py-0.5 rounded ${
-                    defaultAddress.delivery_method === 'speedy_office'
-                      ? 'bg-orange-100 text-orange-800'
-                      : 'bg-blue-100 text-blue-800'
-                  }`}>
-                    {defaultAddress.delivery_method === 'speedy_office' ? 'Speedy офис' : 'До адрес'}
-                  </span>
-                  <span>{formatAddress(defaultAddress)}</span>
-                </span>
-              ) : (
-                'Не е зададен'
-              )
-            }
+          <SubscriptionCoreInfo
+            subscription={subscription}
+            userFirstName={userFirstName}
+            userLastName={userLastName}
+            userEmail={userEmail}
+            userPhone={userPhone}
+            defaultAddress={defaultAddress}
           />
           {subscription.first_cycle_id && (
             <InfoItem
@@ -374,45 +312,7 @@ export function SubscriptionDetailView({
         </div>
 
         {/* Personalization Summary */}
-        {subscription.wants_personalization && (
-          <div className="border-t border-gray-100 pt-4">
-            <h3 className="text-sm font-semibold text-gray-600 mb-3">Персонализация</h3>
-            <div className="flex flex-wrap gap-2">
-              {subscription.sports?.map((s) => (
-                <Tag key={s} label={s} color="bg-blue-100 text-blue-800" />
-              ))}
-              {subscription.sport_other && (
-                <Tag label={`Друг: ${subscription.sport_other}`} color="bg-blue-50 text-blue-700" />
-              )}
-              {subscription.colors?.map((c) => (
-                <Tag key={c} label={c} color="bg-pink-100 text-pink-800" />
-              ))}
-              {subscription.flavors?.map((f) => (
-                <Tag key={f} label={f} color="bg-amber-100 text-amber-800" />
-              ))}
-              {subscription.flavor_other && (
-                <Tag label={`Друг: ${subscription.flavor_other}`} color="bg-amber-50 text-amber-700" />
-              )}
-              {subscription.dietary?.map((d) => (
-                <Tag key={d} label={d} color="bg-green-100 text-green-800" />
-              ))}
-              {subscription.dietary_other && (
-                <Tag label={`Друго: ${subscription.dietary_other}`} color="bg-green-50 text-green-700" />
-              )}
-              {subscription.size_upper && (
-                <Tag label={`Горе: ${subscription.size_upper}`} color="bg-purple-100 text-purple-800" />
-              )}
-              {subscription.size_lower && (
-                <Tag label={`Долу: ${subscription.size_lower}`} color="bg-purple-100 text-purple-800" />
-              )}
-            </div>
-            {subscription.additional_notes && (
-              <p className="mt-2 text-sm text-gray-600 italic">
-                Бележки: {subscription.additional_notes}
-              </p>
-            )}
-          </div>
-        )}
+        <SubscriptionPersonalization subscription={subscription} />
 
         {/* ================================================================ */}
         {/* Section B: Admin Actions */}
@@ -756,7 +656,7 @@ export function SubscriptionDetailView({
               <AdminAddressForm
                 mode="create"
                 userId={subscription.user_id}
-                customerDefaults={{ firstName: userFirstName, lastName: userLastName, phone: defaultAddress?.phone ?? '' }}
+                customerDefaults={{ firstName: userFirstName, lastName: userLastName, phone: contactPhone }}
                 onSuccess={(newAddress) => {
                   setLocalAddresses((prev) =>
                     [
@@ -804,22 +704,14 @@ export function SubscriptionDetailView({
                           {addr.label && (
                             <span className="text-sm font-semibold text-gray-900">{addr.label}</span>
                           )}
-                          <span
-                            className={`text-xs font-semibold px-2 py-0.5 rounded ${
-                              addr.delivery_method === 'speedy_office'
-                                ? 'bg-orange-100 text-orange-800'
-                                : 'bg-blue-100 text-blue-800'
-                            }`}
-                          >
-                            {addr.delivery_method === 'speedy_office' ? 'Speedy офис' : 'До адрес'}
-                          </span>
+                          <DeliveryMethodBadge method={addr.delivery_method} />
                           {addr.is_default && (
                             <span className="text-xs font-semibold px-2 py-0.5 rounded bg-green-100 text-green-800">
                               По подразбиране
                             </span>
                           )}
                         </div>
-                        <p className="text-sm text-gray-600 mt-1">{formatAddress(addr)}</p>
+                        <p className="text-sm text-gray-600 mt-1">{formatAddressLine(addr)}</p>
                         {addr.phone && (
                           <p className="text-xs text-gray-400 mt-0.5">Тел: {addr.phone}</p>
                         )}
@@ -993,20 +885,3 @@ export function SubscriptionDetailView({
 // ============================================================================
 // Subcomponents
 // ============================================================================
-
-function InfoItem({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div>
-      <dt className="text-xs font-medium text-gray-500 uppercase tracking-wider">{label}</dt>
-      <dd className="mt-0.5 text-sm text-gray-900">{typeof value === 'string' ? value : value}</dd>
-    </div>
-  );
-}
-
-function Tag({ label, color }: { label: string; color: string }) {
-  return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${color}`}>
-      {label}
-    </span>
-  );
-}

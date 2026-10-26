@@ -54,7 +54,7 @@ export default async function SubscriptionDetailPage({ params }: { params: Promi
   const [profileResult, authResult] = await Promise.all([
     supabaseAdmin
       .from('user_profiles')
-      .select('first_name, last_name')
+      .select('first_name, last_name, phone')
       .eq('id', subscription.user_id)
       .single(),
     supabaseAdmin.auth.admin.getUserById(subscription.user_id),
@@ -63,6 +63,7 @@ export default async function SubscriptionDetailPage({ params }: { params: Promi
   const userFirstName = profileResult.data?.first_name ?? '';
   const userLastName = profileResult.data?.last_name ?? '';
   const userEmail = authResult.data?.user?.email ?? '';
+  const userPhone = profileResult.data?.phone?.trim() ?? '';
 
   return (
     <div>
@@ -84,6 +85,7 @@ export default async function SubscriptionDetailPage({ params }: { params: Promi
         userFirstName={userFirstName}
         userLastName={userLastName}
         userEmail={userEmail}
+        userPhone={userPhone}
       />
     </div>
   );

@@ -6,6 +6,9 @@ import type { OrderRow, OrderStatus, OrderStatusHistoryRow, CycleDropdownOption 
 import {
   ORDER_STATUS_LABELS,
   ORDER_STATUS_COLORS,
+  formatAddressOneLine,
+  isSpeedyPickup,
+  speedyPointName,
 } from '@/lib/order/format';
 import { formatShippingAddressOneLine, ALLOWED_TRANSITIONS } from '@/lib/order';
 import { formatPriceEur } from '@/lib/catalog';
@@ -72,19 +75,16 @@ const FIELD_LABELS: Record<string, string> = {
 // ============================================================================
 
 function formatShortDelivery(order: OrderRow): { text: string; tooltip: string; isSpeedy: boolean } {
-  const addr = order.shipping_address;
-  const dm = order.delivery_method ?? addr.delivery_method;
-  if (dm === 'speedy_office' || dm === 'speedy_automat') {
-    const name = addr.speedy_office_name ?? (dm === 'speedy_automat' ? 'Speedy автомат' : 'Speedy офис');
+  const addr = { ...order.shipping_address, delivery_method: order.delivery_method ?? order.shipping_address.delivery_method };
+  if (isSpeedyPickup(addr.delivery_method)) {
     return {
-      text: name,
-      tooltip: addr.speedy_office_address ? `📦 ${name} - ${addr.speedy_office_address}` : `📦 ${name}`,
+      text: speedyPointName(addr),
+      tooltip: `📦 ${formatAddressOneLine(addr)}`,
       isSpeedy: true,
     };
   }
   const short = [addr.city, addr.postal_code].filter(Boolean).join(' ');
-  const full = [addr.street_address, addr.city, addr.postal_code].filter(Boolean).join(', ');
-  return { text: short, tooltip: full, isSpeedy: false };
+  return { text: short, tooltip: formatAddressOneLine(addr, { includeBuildingDetails: false }), isSpeedy: false };
 }
 
 // ============================================================================

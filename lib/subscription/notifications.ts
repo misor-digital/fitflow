@@ -9,6 +9,7 @@
 import { sendTransactionalEmail } from '@/lib/email/brevo';
 import { resolveEmailLabels, FREQUENCY_LABELS, buildPersonalizationLines } from '@/lib/email/labels';
 import { formatPriceEur } from '@/lib/catalog';
+import { formatAddressOneLine, type AddressDisplayFields } from '@/lib/order/format';
 import { getDeliveryFee } from '@/lib/delivery/pricing';
 import {
   generateSubscriptionCreatedEmail,
@@ -365,20 +366,8 @@ export async function sendSubscriptionPreferencesUpdatedEmail(
 /**
  * Format an address row into a single-line string for emails.
  */
-export function formatAddressForEmail(addr: {
-  delivery_method: string;
-  speedy_office_name?: string | null;
-  speedy_office_address?: string | null;
-  street_address?: string | null;
-  city?: string | null;
-  postal_code?: string | null;
-} | null): string {
-  if (!addr) return 'Не е зададен';
-  if (addr.delivery_method === 'speedy_office' || addr.delivery_method === 'speedy_automat') {
-    const name = addr.speedy_office_name ?? (addr.delivery_method === 'speedy_automat' ? 'Speedy автомат' : 'Speedy офис');
-    return addr.speedy_office_address ? `${name} - ${addr.speedy_office_address}` : name;
-  }
-  return [addr.street_address, addr.city, addr.postal_code].filter(Boolean).join(', ') || 'Не е зададен';
+export function formatAddressForEmail(addr: AddressDisplayFields | null): string {
+  return formatAddressOneLine(addr, { includeBuildingDetails: false, fallback: 'Не е зададен' });
 }
 
 /**

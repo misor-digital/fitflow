@@ -9,6 +9,7 @@
  */
 
 import { validateAddress, validateSpeedyOffice } from './validation';
+import { isSpeedyPickup } from './format';
 import type { SpeedyOfficeSelection } from './types';
 import { isValidPhone } from '@/lib/catalog';
 import type { ValidationError } from '@/lib/catalog';
@@ -39,11 +40,6 @@ export const VALID_DELIVERY_METHODS = [
   'speedy_automat',
 ] as const;
 export type DeliveryMethodValue = (typeof VALID_DELIVERY_METHODS)[number];
-
-/** True for delivery methods that use a Speedy pickup point (office or automat). */
-export function isSpeedyPickup(method: DeliveryMethodValue): boolean {
-  return method === 'speedy_office' || method === 'speedy_automat';
-}
 
 // ============================================================================
 // Sanitization

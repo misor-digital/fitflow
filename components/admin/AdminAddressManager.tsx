@@ -3,6 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import type { AddressRow } from '@/lib/supabase/types';
+import { formatAddressDisplay } from '@/lib/order/format';
 import AdminAddressForm from './AdminAddressForm';
 
 // ============================================================================
@@ -27,20 +28,6 @@ type FormMode = 'hidden' | 'create' | 'edit';
 // ============================================================================
 // Helpers
 // ============================================================================
-
-function formatAddressDisplay(addr: AddressRow): { primary: string; secondary?: string } {
-  if (addr.delivery_method === 'speedy_office' || addr.delivery_method === 'speedy_automat') {
-    return {
-      primary: addr.speedy_office_name ?? (addr.delivery_method === 'speedy_automat' ? 'Speedy автомат' : 'Speedy офис'),
-      secondary: addr.speedy_office_address ?? undefined,
-    };
-  }
-  const parts = [addr.street_address, addr.city, addr.postal_code].filter(Boolean);
-  if (addr.building_entrance) parts.push(`вх. ${addr.building_entrance}`);
-  if (addr.floor) parts.push(`ет. ${addr.floor}`);
-  if (addr.apartment) parts.push(`ап. ${addr.apartment}`);
-  return { primary: parts.join(', ') };
-}
 
 function Spinner() {
   return (

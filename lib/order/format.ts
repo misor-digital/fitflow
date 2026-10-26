@@ -4,7 +4,7 @@
  * Format order data for display. Reuses price formatting from @/lib/catalog/format.
  */
 
-import type { OrderStatus, ShippingAddressSnapshot } from '@/lib/supabase/types';
+import type { AddressRow, OrderStatus, ShippingAddressSnapshot } from '@/lib/supabase/types';
 
 /** Compose a display name from first + last name parts. */
 export function displayName(firstName: string, lastName: string): string {
@@ -123,6 +123,84 @@ export function formatShippingAddressOneLine(address: ShippingAddressSnapshot): 
   if (address.apartment) parts.push(`ап. ${address.apartment}`);
   parts.push(`${address.postal_code} ${address.city}`);
   return parts.join(', ');
+}
+
+// ============================================================================
+// Saved Address Formatting (AddressRow & compatible shapes)
+// ============================================================================
+
+type DeliveryMethod = AddressRow['delivery_method'];
+type SpeedyPickupMethod = Exclude<DeliveryMethod, 'address'>;
+
+/** Display fields shared by `AddressRow` and `ShippingAddressSnapshot`. */
+export interface AddressDisplayFields {
+  delivery_method?: DeliveryMethod | null;
+  speedy_office_name?: string | null;
+  speedy_office_address?: string | null;
+  street_address?: string | null;
+  city?: string | null;
+  postal_code?: string | null;
+  building_entrance?: string | null;
+  floor?: string | null;
+  apartment?: string | null;
+}
+
+/** True for delivery methods that use a Speedy pickup point (office or automat). */
+export function isSpeedyPickup(method: string | null | undefined): method is SpeedyPickupMethod {
+  return method === 'speedy_office' || method === 'speedy_automat';
+}
+
+/** Speedy pickup point name, falling back to a generic office/automat label. */
+export function speedyPointName(address: AddressDisplayFields): string {
+  return address.speedy_office_name || (address.delivery_method === 'speedy_automat' ? 'Speedy автомат' : 'Speedy офис');
+}
+
+interface AddressOneLineOptions {
+  /** Append entrance/floor/apartment for street addresses. Default: true. */
+  includeBuildingDetails?: boolean;
+  /** Returned when nothing displayable is available. Default: ''. */
+  fallback?: string;
+}
+
+/**
+ * Format a saved address as a single line.
+ *
+ * Example output:
+ *   ЕЛХОВО - гр. ЕЛХОВО [8700] ул. ТЪРГОВСКА No 69
+ *   ул. Витоша 1, София, 1000, вх. А, ет. 3, ап. 12
+ */
+export function formatAddressOneLine(
+  address: AddressDisplayFields | null | undefined,
+  { includeBuildingDetails = true, fallback = '' }: AddressOneLineOptions = {},
+): string {
+  if (!address) return fallback;
+
+  if (isSpeedyPickup(address.delivery_method)) {
+    const name = speedyPointName(address);
+    return address.speedy_office_address ? `${name} - ${address.speedy_office_address}` : name;
+  }
+
+  const parts = [address.street_address, address.city, address.postal_code];
+  if (includeBuildingDetails) {
+    if (address.building_entrance) parts.push(`вх. ${address.building_entrance}`);
+    if (address.floor) parts.push(`ет. ${address.floor}`);
+    if (address.apartment) parts.push(`ап. ${address.apartment}`);
+  }
+  return parts.filter(Boolean).join(', ') || fallback;
+}
+
+/**
+ * Split a saved address into a primary line (pickup point name or street line)
+ * and an optional secondary line (pickup point address), for card layouts.
+ */
+export function formatAddressDisplay(address: AddressDisplayFields): { primary: string; secondary?: string } {
+  if (isSpeedyPickup(address.delivery_method)) {
+    return {
+      primary: speedyPointName(address),
+      secondary: address.speedy_office_address || undefined,
+    };
+  }
+  return { primary: formatAddressOneLine(address) };
 }
 
 // ============================================================================
