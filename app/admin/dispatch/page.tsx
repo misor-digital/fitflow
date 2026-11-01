@@ -1,5 +1,5 @@
 import { requireStaff } from '@/lib/auth';
-import { getDeliveryCyclesForDropdown } from '@/lib/data';
+import { getCurrentCycleId, getDeliveryCyclesForDropdown } from '@/lib/data';
 import DispatchDashboard from './DispatchDashboard';
 import Link from 'next/link';
 import type { Metadata } from 'next';
@@ -10,7 +10,10 @@ export const metadata: Metadata = {
 
 export default async function DispatchPage() {
   await requireStaff(['super_admin', 'admin']);
-  const cycles = await getDeliveryCyclesForDropdown();
+  const [cycles, defaultCycleId] = await Promise.all([
+    getDeliveryCyclesForDropdown(),
+    getCurrentCycleId(),
+  ]);
 
   return (
     <div>
@@ -25,7 +28,7 @@ export default async function DispatchPage() {
           ⚙️ Настройки
         </Link>
       </div>
-      <DispatchDashboard cycles={cycles} />
+      <DispatchDashboard cycles={cycles} defaultCycleId={defaultCycleId} />
     </div>
   );
 }

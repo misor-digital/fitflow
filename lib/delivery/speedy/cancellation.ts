@@ -5,6 +5,12 @@ import { getOrderById } from '@/lib/data';
 import { CANCEL_COMMENT_MAX, isWaybillCancellable } from '@/lib/constants/speedy';
 import { cancelShipment, SpeedyApiError } from './client';
 import { mapCancelError } from './errors';
+import { trackParcelsBulk } from './tracking';
+
+/** Speedy tracking operation code for a cancelled shipment */
+export const SPEEDY_CANCELED_OPERATION_CODE = 128;
+
+export const ALREADY_CANCELLED_MESSAGE = 'Товарителницата вече е анулирана в Speedy — данните са изчистени.';
 
 export type CancelOrderWaybillFailureReason =
   | 'invalid_comment'
@@ -16,7 +22,14 @@ export type CancelOrderWaybillFailureReason =
   | 'db_error';
 
 export type CancelOrderWaybillResult =
-  | { ok: true; orderId: string; orderNumber: string; waybillId: string }
+  | {
+      ok: true;
+      orderId: string;
+      orderNumber: string;
+      waybillId: string;
+      /** The waybill had already been cancelled in Speedy (e.g. in the Speedy portal) */
+      alreadyCancelled: boolean;
+    }
   | {
       ok: false;
       orderId: string;
@@ -48,6 +61,53 @@ export function normalizeCancelComment(comment: unknown): string | null {
  */
 export async function cancelWaybill(shipmentId: string, comment: string): Promise<void> {
   await cancelShipment({ shipmentId, comment });
+}
+
+/**
+ * Clear an order's Speedy waybill data (and any courier-request link) so a new
+ * waybill can be created. Only touches the row while it still holds `waybillId`,
+ * so a waybill created in the meantime is never cleared.
+ */
+export async function clearOrderWaybill(
+  orderId: string,
+  waybillId: string,
+): Promise<{ cleared: boolean; error: unknown }> {
+  const { data, error } = await supabaseAdmin
+    .from('orders')
+    .update({
+      speedy_waybill_id: null,
+      speedy_parcel_ids: null,
+      speedy_created_at: null,
+      speedy_status: 'canceled',
+      speedy_status_code: null,
+      speedy_last_tracked_at: null,
+      speedy_sender_mode: null,
+      speedy_pickup_request_id: null,
+      speedy_pickup_requested_at: null,
+      delivery_fee_actual_eur: null,
+    })
+    .eq('id', orderId)
+    .eq('speedy_waybill_id', waybillId)
+    .select('id');
+
+  return { cleared: (data?.length ?? 0) > 0, error };
+}
+
+/** Whether Speedy tracking reports every parcel of the waybill as cancelled. */
+export async function isCancelledInSpeedy(parcelIds: string[] | null): Promise<boolean> {
+  if (!parcelIds?.length) return false;
+  try {
+    const results = await trackParcelsBulk(parcelIds);
+    return (
+      results.length > 0 &&
+      results.every((r) => r.lastStatusCode === SPEEDY_CANCELED_OPERATION_CODE)
+    );
+  } catch (err) {
+    console.error('[Speedy Cancel] Tracking check failed', {
+      message: err instanceof Error ? err.message : String(err),
+    });
+    return false;
+  }
 }
 
 /**
@@ -95,6 +155,37 @@ export async function cancelOrderWaybill(
     };
   }
 
+  async function clearAfterSpeedyCancel(alreadyCancelled: boolean): Promise<CancelOrderWaybillResult> {
+    const { error } = await clearOrderWaybill(orderId, waybillId!);
+    if (error) {
+      console.error('[Speedy Cancel] Failed to clear waybill data after cancellation', {
+        orderId,
+        waybillId,
+        error,
+      });
+      return {
+        ok: false,
+        orderId,
+        orderNumber,
+        waybillId: waybillId!,
+        reason: 'db_error',
+        message: 'Товарителницата е анулирана в Speedy, но данните не бяха изчистени.',
+        httpStatus: 500,
+      };
+    }
+    console.log(
+      alreadyCancelled
+        ? `[Speedy Cancel] Order ${orderNumber} (${orderId}) — waybill ${waybillId} was already cancelled in Speedy; data cleared by ${actor.name} (${actor.userId})`
+        : `[Speedy Cancel] Order ${orderNumber} (${orderId}) — waybill ${waybillId} canceled by ${actor.name} (${actor.userId}). Comment: ${normalizedComment}`,
+    );
+    return { ok: true, orderId, orderNumber, waybillId: waybillId!, alreadyCancelled };
+  }
+
+  // Tracking already reported the waybill as cancelled in Speedy (e.g. via the Speedy portal)
+  if (order.speedy_status === 'canceled') {
+    return clearAfterSpeedyCancel(true);
+  }
+
   if (order.speedy_pickup_request_id) {
     const { data: pickup } = await supabaseAdmin
       .from('speedy_pickup_requests')
@@ -130,6 +221,10 @@ export async function cancelOrderWaybill(
   try {
     await cancelWaybill(waybillId, normalizedComment);
   } catch (err) {
+    // Speedy refuses to cancel a waybill twice — check whether it is already cancelled there
+    if (await isCancelledInSpeedy(order.speedy_parcel_ids)) {
+      return clearAfterSpeedyCancel(true);
+    }
     console.error('[Speedy Cancel] Speedy rejected cancellation', {
       orderId,
       waybillId,
@@ -148,41 +243,5 @@ export async function cancelOrderWaybill(
     };
   }
 
-  // Clear waybill data from order (so it can be recreated)
-  const { error: updateError } = await supabaseAdmin
-    .from('orders')
-    .update({
-      speedy_waybill_id: null,
-      speedy_parcel_ids: null,
-      speedy_created_at: null,
-      speedy_status: 'canceled',
-      speedy_status_code: null,
-      speedy_last_tracked_at: null,
-      speedy_sender_mode: null,
-      delivery_fee_actual_eur: null,
-    })
-    .eq('id', orderId);
-
-  if (updateError) {
-    console.error('[Speedy Cancel] Failed to clear waybill data after cancellation', {
-      orderId,
-      waybillId,
-      error: updateError,
-    });
-    return {
-      ok: false,
-      orderId,
-      orderNumber,
-      waybillId,
-      reason: 'db_error',
-      message: 'Товарителницата е анулирана в Speedy, но данните не бяха изчистени.',
-      httpStatus: 500,
-    };
-  }
-
-  console.log(
-    `[Speedy Cancel] Order ${orderNumber} (${orderId}) — waybill ${waybillId} canceled by ${actor.name} (${actor.userId}). Comment: ${normalizedComment}`,
-  );
-
-  return { ok: true, orderId, orderNumber, waybillId };
+  return clearAfterSpeedyCancel(false);
 }

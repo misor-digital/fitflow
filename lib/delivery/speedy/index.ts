@@ -101,8 +101,20 @@ export {
   trackParcelFull,
 } from './tracking';
 
-export type { CancelOrderWaybillResult, CancelOrderWaybillFailureReason, CancelActor } from './cancellation';
-export { cancelWaybill, cancelOrderWaybill, normalizeCancelComment } from './cancellation';
+export type {
+  CancelOrderWaybillResult,
+  CancelOrderWaybillFailureReason,
+  CancelActor,
+} from './cancellation';
+export {
+  cancelWaybill,
+  cancelOrderWaybill,
+  normalizeCancelComment,
+  clearOrderWaybill,
+  isCancelledInSpeedy,
+  SPEEDY_CANCELED_OPERATION_CODE,
+  ALREADY_CANCELLED_MESSAGE,
+} from './cancellation';
 
 export { mapCancelError } from './errors';
 

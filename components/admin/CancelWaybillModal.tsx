@@ -24,6 +24,7 @@ interface BulkCancelResponse {
     orderNumber?: string;
     waybillId?: string;
     status: 'cancelled' | 'failed';
+    alreadyCancelled?: boolean;
     error?: string;
   }>;
 }
@@ -33,6 +34,7 @@ export default function CancelWaybillModal({ waybills, onClose, onDone }: Cancel
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [bulkResult, setBulkResult] = useState<BulkCancelResponse | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const isBulk = waybills.length > 1;
   const trimmed = comment.trim();
@@ -49,7 +51,7 @@ export default function CancelWaybillModal({ waybills, onClose, onDone }: Cancel
   function handleClose() {
     if (submitting) return;
     // Refresh only once the bulk summary is dismissed — the refresh unmounts this modal
-    if (bulkResult && bulkResult.cancelled > 0) onDone();
+    if (notice || (bulkResult && bulkResult.cancelled > 0)) onDone();
     onClose();
   }
 
@@ -68,6 +70,11 @@ export default function CancelWaybillModal({ waybills, onClose, onDone }: Cancel
         const json = await res.json().catch(() => null);
         if (!res.ok) {
           setError(json?.error ?? `Грешка (${res.status}).`);
+          return;
+        }
+        // Already cancelled in Speedy: keep the modal open so the admin sees why
+        if (json?.alreadyCancelled) {
+          setNotice(json.message);
           return;
         }
         onDone();
@@ -95,6 +102,7 @@ export default function CancelWaybillModal({ waybills, onClose, onDone }: Cancel
   }
 
   const failures = bulkResult?.results.filter((r) => r.status === 'failed') ?? [];
+  const alreadyCancelledCount = bulkResult?.results.filter((r) => r.alreadyCancelled).length ?? 0;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
@@ -107,7 +115,22 @@ export default function CancelWaybillModal({ waybills, onClose, onDone }: Cancel
           {isBulk ? `Анулиране на ${waybills.length} товарителници` : 'Анулиране на товарителница'}
         </h3>
 
-        {bulkResult ? (
+        {notice ? (
+          <div className="space-y-4">
+            <div className="text-sm rounded-lg px-4 py-3 bg-green-50 text-green-700 border border-green-200">
+              {notice}
+            </div>
+            <div className="flex justify-end mt-6">
+              <button
+                type="button"
+                onClick={handleClose}
+                className="bg-[var(--color-brand-navy)] text-white px-4 py-2 rounded-lg text-sm font-semibold hover:opacity-90 transition-opacity"
+              >
+                Затвори
+              </button>
+            </div>
+          </div>
+        ) : bulkResult ? (
           <div className="space-y-4">
             <div
               className={`text-sm rounded-lg px-4 py-3 border ${
@@ -117,6 +140,11 @@ export default function CancelWaybillModal({ waybills, onClose, onDone }: Cancel
               }`}
             >
               Анулирани: {bulkResult.cancelled}, неуспешни: {bulkResult.failed}
+              {alreadyCancelledCount > 0 && (
+                <span className="block mt-1">
+                  От тях {alreadyCancelledCount} вече бяха анулирани в Speedy — данните са изчистени.
+                </span>
+              )}
             </div>
             {failures.length > 0 && (
               <ul className="text-sm text-red-700 space-y-1 max-h-40 overflow-y-auto">

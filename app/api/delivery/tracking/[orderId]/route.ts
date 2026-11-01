@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { verifySession } from '@/lib/auth/dal';
 import { supabaseAdmin } from '@/lib/supabase/admin';
-import { trackParcelsBulk } from '@/lib/delivery/speedy';
+import { clearOrderWaybill, SPEEDY_CANCELED_OPERATION_CODE, trackParcelsBulk } from '@/lib/delivery/speedy';
 import { STATUS_LABELS, STATUS_COLORS } from '@/lib/delivery/speedy/tracking';
 
 /**
@@ -40,14 +40,23 @@ export async function GET(
     }
 
     // No waybill yet — order is still being prepared
-    if (!order.speedy_waybill_id || !order.speedy_parcel_ids?.length) {
-      return NextResponse.json({
+    const preparingResponse = () =>
+      NextResponse.json({
         status: 'processing',
         statusLabel: 'В подготовка',
         statusColor: 'bg-blue-100 text-blue-700',
         message: 'Поръчката се подготвя за изпращане.',
         lastUpdated: null,
       });
+
+    if (!order.speedy_waybill_id || !order.speedy_parcel_ids?.length) {
+      return preparingResponse();
+    }
+
+    // Waybill cancelled in Speedy (seen by an earlier sync) — clear it so a new one can be created
+    if (order.speedy_status === 'canceled') {
+      await clearOrderWaybill(orderId, order.speedy_waybill_id);
+      return preparingResponse();
     }
 
     // Check if cached status is fresh enough (< 1 hour)
@@ -64,6 +73,11 @@ export async function GET(
     if (isStale) {
       try {
         const results = await trackParcelsBulk(order.speedy_parcel_ids);
+        if (results.length > 0 && results[0].lastStatusCode === SPEEDY_CANCELED_OPERATION_CODE) {
+          // Cancelled directly in Speedy — clear the waybill so a new one can be created
+          await clearOrderWaybill(orderId, order.speedy_waybill_id);
+          return preparingResponse();
+        }
         if (results.length > 0) {
           const result = results[0];
           statusCode = result.lastStatusCode;

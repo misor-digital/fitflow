@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { verifySession } from '@/lib/auth/dal';
 import { STAFF_MANAGEMENT_ROLES } from '@/lib/auth/permissions';
-import { cancelOrderWaybill } from '@/lib/delivery/speedy/cancellation';
+import { ALREADY_CANCELLED_MESSAGE, cancelOrderWaybill } from '@/lib/delivery/speedy/cancellation';
 
 /**
  * POST /api/admin/speedy/shipment/cancel
@@ -46,7 +46,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     return NextResponse.json({
       success: true,
-      message: `Товарителница ${result.waybillId} е анулирана успешно.`,
+      alreadyCancelled: result.alreadyCancelled,
+      message: result.alreadyCancelled
+        ? ALREADY_CANCELLED_MESSAGE
+        : `Товарителница ${result.waybillId} е анулирана успешно.`,
     });
   } catch (error) {
     console.error('Speedy cancel error:', error);

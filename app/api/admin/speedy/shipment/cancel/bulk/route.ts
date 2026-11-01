@@ -15,6 +15,8 @@ interface BulkCancelResultItem {
   orderNumber?: string;
   waybillId?: string;
   status: 'cancelled' | 'failed';
+  /** Waybill had already been cancelled in Speedy; only our data was cleared */
+  alreadyCancelled?: boolean;
   error?: string;
 }
 
@@ -73,6 +75,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           orderNumber: result.orderNumber,
           waybillId: result.waybillId,
           status: 'cancelled',
+          alreadyCancelled: result.alreadyCancelled,
         });
         cancelled++;
       } else {
