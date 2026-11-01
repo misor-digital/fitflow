@@ -355,7 +355,7 @@ export default function DispatchTable({
               {SENDER_MODES.map((mode) => (
                 <th
                   key={mode}
-                  className={`w-px whitespace-nowrap px-1.5 pb-2 text-center border-b text-xs font-semibold ${
+                  className={`w-px whitespace-nowrap px-1.5 text-center border-b text-xs font-semibold ${
                     pricesCalculated ? 'bg-amber-100' : ''
                   }`}
                 >
