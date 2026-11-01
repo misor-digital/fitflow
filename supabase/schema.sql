@@ -727,6 +727,39 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON addresses TO authenticated;
 GRANT ALL ON addresses TO service_role;
 
 
+-- ---------- speedy_pickup_requests ----------
+
+CREATE TABLE speedy_pickup_requests (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'requested', 'failed')),
+  delivery_cycle_id UUID REFERENCES delivery_cycles(id) ON DELETE SET NULL,
+  speedy_order_ids BIGINT[],
+  pickup_date DATE NOT NULL,
+  visit_end_time TEXT NOT NULL CHECK (visit_end_time ~ '^([01]?\d|2[0-3]):[0-5]\d$'),
+  contact_name TEXT,
+  phone_number TEXT,
+  pickup_period_from TIMESTAMPTZ,
+  pickup_period_to TIMESTAMPTZ,
+  shipment_count INTEGER NOT NULL DEFAULT 0,
+  visit_fee_eur NUMERIC(6,2),
+  error_message TEXT,
+  requested_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+COMMENT ON TABLE speedy_pickup_requests IS 'Courier pickup requests sent to Speedy (POST /pickup)';
+
+CREATE TRIGGER trigger_speedy_pickup_requests_updated_at
+  BEFORE UPDATE ON speedy_pickup_requests FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+ALTER TABLE speedy_pickup_requests ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY speedy_pickup_requests_service ON speedy_pickup_requests
+  FOR ALL USING (auth.role() = 'service_role');
+
+
 -- ---------- orders ----------
 
 CREATE TABLE orders (
@@ -777,6 +810,9 @@ CREATE TABLE orders (
   speedy_status TEXT,
   speedy_status_code INTEGER,
   speedy_last_tracked_at TIMESTAMPTZ,
+  speedy_sender_mode TEXT CHECK (speedy_sender_mode IN ('pickup', 'dropoff')),
+  speedy_pickup_request_id UUID REFERENCES speedy_pickup_requests(id) ON DELETE SET NULL,
+  speedy_pickup_requested_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
@@ -825,6 +861,8 @@ COMMENT ON COLUMN orders.subscription_conversion_status IS 'NULL = not targeted,
 COMMENT ON COLUMN orders.converted_to_subscription_id IS 'FK to the subscription created from this order. UNIQUE enforces one-to-one.';
 COMMENT ON COLUMN orders.delivery_fee_eur IS 'Fixed delivery fee charged to customer (EUR)';
 COMMENT ON COLUMN orders.delivery_fee_actual_eur IS 'Actual courier cost from Speedy API (filled at waybill creation)';
+COMMENT ON COLUMN orders.speedy_sender_mode IS 'How the parcel reaches Speedy: pickup (courier collects from sender address) or dropoff (sender drops at office)';
+COMMENT ON COLUMN orders.speedy_pickup_request_id IS 'Pickup request that includes this waybill; once set the waybill can no longer be cancelled via API';
 
 CREATE INDEX idx_orders_user_id ON orders(user_id);
 CREATE INDEX idx_orders_order_number ON orders(order_number);
@@ -837,6 +875,7 @@ CREATE INDEX idx_orders_order_type ON orders(order_type);
 CREATE INDEX idx_orders_delivery_method ON orders(delivery_method);
 CREATE INDEX idx_orders_subscription ON orders(subscription_id) WHERE subscription_id IS NOT NULL;
 CREATE INDEX idx_orders_sub_conversion_token ON orders(subscription_conversion_token) WHERE subscription_conversion_token IS NOT NULL;
+CREATE INDEX idx_orders_speedy_pickup_request ON orders(speedy_pickup_request_id) WHERE speedy_pickup_request_id IS NOT NULL;
 
 CREATE TRIGGER trigger_orders_updated_at
   BEFORE UPDATE ON orders FOR EACH ROW

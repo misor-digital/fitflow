@@ -440,6 +440,9 @@ export interface OrderRow {
   speedy_status: string | null;
   speedy_status_code: number | null;
   speedy_last_tracked_at: string | null;
+  speedy_sender_mode: SpeedySenderMode | null;
+  speedy_pickup_request_id: string | null;
+  speedy_pickup_requested_at: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -485,6 +488,9 @@ export interface OrderInsert {
   speedy_status?: string | null;
   speedy_status_code?: number | null;
   speedy_last_tracked_at?: string | null;
+  speedy_sender_mode?: SpeedySenderMode | null;
+  speedy_pickup_request_id?: string | null;
+  speedy_pickup_requested_at?: string | null;
 }
 
 export interface OrderUpdate {
@@ -512,6 +518,63 @@ export interface OrderUpdate {
   speedy_status?: string | null;
   speedy_status_code?: number | null;
   speedy_last_tracked_at?: string | null;
+  speedy_sender_mode?: SpeedySenderMode | null;
+  speedy_pickup_request_id?: string | null;
+  speedy_pickup_requested_at?: string | null;
+}
+
+// ============================================================================
+// Speedy Pickup Requests Table (courier pickup from sender address)
+// ============================================================================
+
+/** How the parcel reaches Speedy: courier pickup from sender address or office drop-off */
+export type SpeedySenderMode = 'pickup' | 'dropoff';
+
+export type SpeedyPickupRequestStatus = 'pending' | 'requested' | 'failed';
+
+export interface SpeedyPickupRequestRow {
+  id: string;
+  status: SpeedyPickupRequestStatus;
+  delivery_cycle_id: string | null;
+  speedy_order_ids: number[] | null;
+  pickup_date: string; // DATE as YYYY-MM-DD
+  visit_end_time: string; // HH:mm
+  contact_name: string | null;
+  phone_number: string | null;
+  pickup_period_from: string | null;
+  pickup_period_to: string | null;
+  shipment_count: number;
+  visit_fee_eur: number | null;
+  error_message: string | null;
+  requested_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SpeedyPickupRequestInsert {
+  id?: string;
+  status?: SpeedyPickupRequestStatus;
+  delivery_cycle_id?: string | null;
+  speedy_order_ids?: number[] | null;
+  pickup_date: string;
+  visit_end_time: string;
+  contact_name?: string | null;
+  phone_number?: string | null;
+  pickup_period_from?: string | null;
+  pickup_period_to?: string | null;
+  shipment_count?: number;
+  visit_fee_eur?: number | null;
+  error_message?: string | null;
+  requested_by?: string | null;
+}
+
+export interface SpeedyPickupRequestUpdate {
+  status?: SpeedyPickupRequestStatus;
+  speedy_order_ids?: number[] | null;
+  pickup_period_from?: string | null;
+  pickup_period_to?: string | null;
+  shipment_count?: number;
+  error_message?: string | null;
 }
 
 // ============================================================================
@@ -1284,6 +1347,22 @@ export interface Database {
           foreignKeyName: 'orders_subscription_id_fkey';
           columns: ['subscription_id'];
           referencedRelation: 'subscriptions';
+          referencedColumns: ['id'];
+        }, {
+          foreignKeyName: 'orders_speedy_pickup_request_id_fkey';
+          columns: ['speedy_pickup_request_id'];
+          referencedRelation: 'speedy_pickup_requests';
+          referencedColumns: ['id'];
+        }];
+      };
+      speedy_pickup_requests: {
+        Row: ToRecord<SpeedyPickupRequestRow>;
+        Insert: ToRecord<SpeedyPickupRequestInsert>;
+        Update: ToRecord<SpeedyPickupRequestUpdate>;
+        Relationships: [{
+          foreignKeyName: 'speedy_pickup_requests_delivery_cycle_id_fkey';
+          columns: ['delivery_cycle_id'];
+          referencedRelation: 'delivery_cycles';
           referencedColumns: ['id'];
         }];
       };
