@@ -6,14 +6,14 @@ import { getOrderById } from '@/lib/data';
 import { createWaybillForOrder, SpeedyApiError } from '@/lib/delivery/speedy';
 import { bgnToEur } from '@/lib/delivery/speedy/config';
 import { isValidYmd, todaySofia } from '@/lib/delivery/speedy/dates';
-import type { OrderForShipment } from '@/lib/delivery/speedy';
-import type { ShippingAddressSnapshot } from '@/lib/supabase/types';
+import { toOrderForShipment } from '@/lib/delivery/speedy/shipments';
 
 /**
  * POST /api/admin/speedy/shipment
  *
  * Admin-only. Creates a Speedy waybill for a single order.
- * Body: { orderId: string, pickupDate?: 'YYYY-MM-DD' }
+ * Body: { orderId: string, pickupDate?: 'YYYY-MM-DD', senderMode?: 'pickup' | 'dropoff' }
+ * (senderMode defaults to the configured mode)
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
@@ -28,7 +28,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // 2. Parse body
     const body = await request.json();
-    const { orderId, pickupDate } = body as { orderId?: string; pickupDate?: unknown };
+    const { orderId, pickupDate, senderMode } = body as {
+      orderId?: string;
+      pickupDate?: unknown;
+      senderMode?: unknown;
+    };
 
     if (!orderId || typeof orderId !== 'string') {
       return NextResponse.json({ error: 'Полето orderId е задължително.' }, { status: 400 });
@@ -36,6 +40,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     if (pickupDate !== undefined && (!isValidYmd(pickupDate) || pickupDate < todaySofia())) {
       return NextResponse.json({ error: 'Невалидна дата за взимане.' }, { status: 400 });
+    }
+
+    if (senderMode !== undefined && senderMode !== 'pickup' && senderMode !== 'dropoff') {
+      return NextResponse.json({ error: "senderMode трябва да е 'pickup' или 'dropoff'." }, { status: 400 });
     }
 
     // 3. Fetch order
@@ -52,36 +60,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // 4. Build order for shipment
-    const addr = order.shipping_address as ShippingAddressSnapshot;
-    const orderForShipment: OrderForShipment = {
-      id: order.id,
-      deliveryMethod: order.delivery_method,
-      shippingAddress: {
-        first_name: addr.first_name,
-        last_name: addr.last_name,
-        phone: addr.phone,
-        city: addr.city,
-        postal_code: addr.postal_code,
-        street_address: addr.street_address,
-        building_entrance: addr.building_entrance,
-        floor: addr.floor,
-        apartment: addr.apartment,
-        delivery_notes: addr.delivery_notes,
-        speedy_office_id: addr.speedy_office_id,
-        speedy_office_name: addr.speedy_office_name,
-        speedy_office_address: addr.speedy_office_address,
-      },
-      userEmail: order.customer_email,
-      userPhone: order.customer_phone || addr.phone || '',
-      readableId: order.order_number,
-      finalPriceEur: Number(order.final_price_eur) || 0,
-      deliveryFeeEur: Number(order.delivery_fee_eur) || 0,
-    };
-
-    // 5. Create waybill via Speedy API
-    const result = await createWaybillForOrder(orderForShipment, {
+    // 4. Create waybill via Speedy API
+    const result = await createWaybillForOrder(toOrderForShipment(order), {
       pickupDate: typeof pickupDate === 'string' ? pickupDate : undefined,
+      senderMode,
     });
 
     // 6. Convert actual cost to EUR (Speedy returns BGN)

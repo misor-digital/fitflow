@@ -5,8 +5,8 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import { createWaybillForOrder, SpeedyApiError } from '@/lib/delivery/speedy';
 import { bgnToEur } from '@/lib/delivery/speedy/config';
 import { isValidYmd, todaySofia } from '@/lib/delivery/speedy/dates';
-import type { OrderForShipment } from '@/lib/delivery/speedy';
-import type { OrderRow, ShippingAddressSnapshot } from '@/lib/supabase/types';
+import { toOrderForShipment } from '@/lib/delivery/speedy/shipments';
+import type { OrderRow, SpeedySenderMode } from '@/lib/supabase/types';
 
 interface BulkResultItem {
   orderId: string;
@@ -21,7 +21,8 @@ interface BulkResultItem {
  * POST /api/admin/speedy/shipment/bulk
  *
  * Admin-only. Bulk create Speedy waybills for orders in a cycle.
- * Body: { cycleId: string } or { orderIds: string[] }, optional pickupDate: 'YYYY-MM-DD'
+ * Body: { cycleId: string } or { orderIds: string[] }, optional pickupDate: 'YYYY-MM-DD',
+ * optional senderModes: { [orderId]: 'pickup' | 'dropoff' } (others use the configured mode)
  * Processes sequentially to avoid rate limits.
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
@@ -35,10 +36,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     const body = await request.json();
-    const { cycleId, orderIds, pickupDate } = body as {
+    const { cycleId, orderIds, pickupDate, senderModes } = body as {
       cycleId?: string;
       orderIds?: string[];
       pickupDate?: unknown;
+      senderModes?: unknown;
     };
 
     if (!cycleId && !orderIds) {
@@ -48,6 +50,20 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (pickupDate !== undefined && (!isValidYmd(pickupDate) || pickupDate < todaySofia())) {
       return NextResponse.json({ error: 'Невалидна дата за взимане.' }, { status: 400 });
     }
+
+    if (
+      senderModes !== undefined &&
+      (typeof senderModes !== 'object' ||
+        senderModes === null ||
+        Array.isArray(senderModes) ||
+        !Object.values(senderModes).every((m) => m === 'pickup' || m === 'dropoff'))
+    ) {
+      return NextResponse.json(
+        { error: "senderModes трябва да съдържа само 'pickup' или 'dropoff'." },
+        { status: 400 },
+      );
+    }
+    const modeByOrder = (senderModes ?? {}) as Record<string, SpeedySenderMode>;
 
     // Fetch orders that need waybills
     let query = supabaseAdmin
@@ -86,34 +102,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     for (const order of orders as OrderRow[]) {
       try {
-        const addr = order.shipping_address as ShippingAddressSnapshot;
-        const orderForShipment: OrderForShipment = {
-          id: order.id,
-          deliveryMethod: order.delivery_method,
-          shippingAddress: {
-            first_name: addr.first_name,
-            last_name: addr.last_name,
-            phone: addr.phone,
-            city: addr.city,
-            postal_code: addr.postal_code,
-            street_address: addr.street_address,
-            building_entrance: addr.building_entrance,
-            floor: addr.floor,
-            apartment: addr.apartment,
-            delivery_notes: addr.delivery_notes,
-            speedy_office_id: addr.speedy_office_id,
-            speedy_office_name: addr.speedy_office_name,
-            speedy_office_address: addr.speedy_office_address,
-          },
-          userEmail: order.customer_email,
-          userPhone: order.customer_phone || addr.phone || '',
-          readableId: order.order_number,
-          finalPriceEur: Number(order.final_price_eur) || 0,
-          deliveryFeeEur: Number(order.delivery_fee_eur) || 0,
-        };
-
-        const result = await createWaybillForOrder(orderForShipment, {
+        const result = await createWaybillForOrder(toOrderForShipment(order), {
           pickupDate: typeof pickupDate === 'string' ? pickupDate : undefined,
+          senderMode: modeByOrder[order.id],
         });
 
         const actualCostEur = result.actualCost.currency === 'BGN'

@@ -64,6 +64,7 @@ export {
 
 export {
   getSpeedySenderConfig,
+  getConfiguredSenderMode,
   getSpeedyPickupDefaults,
   SPEEDY_SENDER_CLIENT_ID,
   SPEEDY_SERVICE_ID,
@@ -79,7 +80,10 @@ export type {
   ShipmentRequestOptions,
   CalculationRequestOptions,
 } from './shipments';
-export { createWaybillForOrder, buildShipmentRequest, buildCalculationRequest } from './shipments';
+export { createWaybillForOrder, buildShipmentRequest, buildCalculationRequest, toOrderForShipment } from './shipments';
+
+export type { OrderCostCalculation } from './estimates';
+export { calculateOrderCost, estimateOrderCost } from './estimates';
 
 export type { LabelFormat } from './labels';
 export { generateLabels, generateLabelsInBatches, mergePdfBuffers } from './labels';

@@ -2,11 +2,10 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { verifySession } from '@/lib/auth/dal';
 import { STAFF_MANAGEMENT_ROLES } from '@/lib/auth/permissions';
 import { getOrderById } from '@/lib/data';
-import { calculateShipment, SpeedyApiError } from '@/lib/delivery/speedy';
-import { buildCalculationRequest, loadParcelConfig } from '@/lib/delivery/speedy/shipments';
-import { bgnToEur, getSpeedySenderConfig } from '@/lib/delivery/speedy/config';
-import type { OrderForShipment } from '@/lib/delivery/speedy';
-import type { ShippingAddressSnapshot } from '@/lib/supabase/types';
+import { SpeedyApiError } from '@/lib/delivery/speedy';
+import { toOrderForShipment } from '@/lib/delivery/speedy/shipments';
+import { getSpeedySenderConfig } from '@/lib/delivery/speedy/config';
+import { calculateOrderCost } from '@/lib/delivery/speedy/estimates';
 
 /**
  * POST /api/admin/speedy/calculate
@@ -40,52 +39,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: 'Поръчката не е намерена.' }, { status: 404 });
     }
 
-    const addr = order.shipping_address as ShippingAddressSnapshot;
-    const orderForShipment: OrderForShipment = {
-      id: order.id,
-      deliveryMethod: order.delivery_method,
-      shippingAddress: {
-        first_name: addr.first_name,
-        last_name: addr.last_name,
-        phone: addr.phone,
-        city: addr.city,
-        postal_code: addr.postal_code,
-        street_address: addr.street_address,
-        building_entrance: addr.building_entrance,
-        floor: addr.floor,
-        apartment: addr.apartment,
-        delivery_notes: addr.delivery_notes,
-        speedy_office_id: addr.speedy_office_id,
-        speedy_office_name: addr.speedy_office_name,
-        speedy_office_address: addr.speedy_office_address,
-      },
-      userEmail: order.customer_email,
-      userPhone: order.customer_phone || addr.phone || '',
-      readableId: order.order_number,
-      finalPriceEur: Number(order.final_price_eur) || 0,
-      deliveryFeeEur: Number(order.delivery_fee_eur) || 0,
-    };
-
     const senderMode = requestedMode ?? (await getSpeedySenderConfig()).senderMode;
-    const parcel = await loadParcelConfig();
-    const params = await buildCalculationRequest(orderForShipment, parcel, { senderMode });
-    const calcResult = await calculateShipment(params);
-
-    const calculation = calcResult.calculations[0];
-    if (!calculation) {
-      return NextResponse.json({ error: 'Няма калкулация от Speedy.' }, { status: 502 });
-    }
-
-    if (calculation.error) {
-      return NextResponse.json(
-        { error: `Speedy API грешка: ${calculation.error.message}`, senderMode },
-        { status: 502 },
-      );
-    }
-
-    const costEur = calculation.price.currency === 'BGN'
-      ? bgnToEur(calculation.price.total)
-      : Math.round(calculation.price.total * 100) / 100;
+    const { calculation, costEur } = await calculateOrderCost(toOrderForShipment(order), senderMode);
 
     return NextResponse.json({
       serviceId: calculation.serviceId,

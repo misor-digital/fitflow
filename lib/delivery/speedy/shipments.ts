@@ -10,7 +10,7 @@ import 'server-only';
 import { createShipment } from './client';
 import { getSpeedySenderConfig } from './config';
 import { getDeliveryConfigMap } from '@/lib/data';
-import type { SpeedySenderMode } from '@/lib/supabase/types';
+import type { OrderRow, ShippingAddressSnapshot, SpeedySenderMode } from '@/lib/supabase/types';
 import type {
   CalculateParams,
   CalculationRecipient,
@@ -70,11 +70,42 @@ export interface WaybillResult {
 export interface ShipmentRequestOptions {
   /** yyyy-MM-dd; when set, Speedy plans the pickup for this date */
   pickupDate?: string;
+  /** Override the configured sender mode for this waybill */
+  senderMode?: SpeedySenderMode;
 }
 
 export interface CalculationRequestOptions {
   /** Override the configured sender mode (e.g. to compare pickup vs drop-off prices) */
   senderMode?: SpeedySenderMode;
+}
+
+/** Map a DB order row to the shape used for Speedy shipment/calculation requests. */
+export function toOrderForShipment(order: OrderRow): OrderForShipment {
+  const addr = order.shipping_address as ShippingAddressSnapshot;
+  return {
+    id: order.id,
+    deliveryMethod: order.delivery_method,
+    shippingAddress: {
+      first_name: addr.first_name,
+      last_name: addr.last_name,
+      phone: addr.phone,
+      city: addr.city,
+      postal_code: addr.postal_code,
+      street_address: addr.street_address,
+      building_entrance: addr.building_entrance,
+      floor: addr.floor,
+      apartment: addr.apartment,
+      delivery_notes: addr.delivery_notes,
+      speedy_office_id: addr.speedy_office_id,
+      speedy_office_name: addr.speedy_office_name,
+      speedy_office_address: addr.speedy_office_address,
+    },
+    userEmail: order.customer_email,
+    userPhone: order.customer_phone || addr.phone || '',
+    readableId: order.order_number,
+    finalPriceEur: Number(order.final_price_eur) || 0,
+    deliveryFeeEur: Number(order.delivery_fee_eur) || 0,
+  };
 }
 
 // ============================================================================
@@ -150,10 +181,11 @@ export async function buildShipmentRequest(
 ): Promise<CreateShipmentParams> {
   const config = await getSpeedySenderConfig();
   const recipient = buildRecipient(order);
+  const senderMode = opts.senderMode ?? config.senderMode;
 
   return {
     sender:
-      config.senderMode === 'pickup'
+      senderMode === 'pickup'
         ? { clientId: config.clientId }
         : { clientId: config.clientId, dropoffOfficeId: config.dropoffOfficeId },
     recipient,

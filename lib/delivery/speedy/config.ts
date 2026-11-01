@@ -33,6 +33,19 @@ async function readConfigMap(): Promise<Record<string, string | null>> {
   }
 }
 
+function resolveSenderMode(configMap: Record<string, string | null>): SpeedySenderMode {
+  return (
+    parseSenderMode(configMap.SPEEDY_SENDER_MODE) ??
+    parseSenderMode(process.env.SPEEDY_SENDER_MODE) ??
+    'pickup'
+  );
+}
+
+/** Configured sender mode (DB → env → 'pickup'); does not require SPEEDY_CLIENT_ID. */
+export async function getConfiguredSenderMode(): Promise<SpeedySenderMode> {
+  return resolveSenderMode(await readConfigMap());
+}
+
 export async function getSpeedySenderConfig(): Promise<{
   clientId: number;
   serviceId: number;
@@ -49,10 +62,7 @@ export async function getSpeedySenderConfig(): Promise<{
   const dbOfficeId = Number(configMap.SPEEDY_DROPOFF_OFFICE_ID);
   if (dbOfficeId) dropoffOfficeId = dbOfficeId;
 
-  const senderMode =
-    parseSenderMode(configMap.SPEEDY_SENDER_MODE) ??
-    parseSenderMode(process.env.SPEEDY_SENDER_MODE) ??
-    'pickup';
+  const senderMode = resolveSenderMode(configMap);
 
   return {
     clientId: SPEEDY_SENDER_CLIENT_ID,

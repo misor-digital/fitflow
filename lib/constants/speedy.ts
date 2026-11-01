@@ -102,3 +102,40 @@ export function isWaybillCancellable(order: CancellableWaybillOrder): boolean {
   }
   return true;
 }
+
+// ============================================================================
+// Price estimates (pickup vs drop-off comparison)
+// ============================================================================
+
+export type SenderMode = 'pickup' | 'dropoff';
+
+export const SENDER_MODES: readonly SenderMode[] = ['pickup', 'dropoff'];
+
+export const SENDER_MODE_LABELS: Record<SenderMode, string> = {
+  pickup: 'Pick up',
+  dropoff: 'Drop off',
+};
+
+/** Max orders per POST /api/admin/speedy/calculate/bulk request */
+export const BULK_CALCULATE_MAX = 50;
+
+export type CostEstimate =
+  | { ok: true; costEur: number; marginEur: number }
+  | { ok: false; error: string };
+
+export type OrderCostEstimates = Record<SenderMode, CostEstimate>;
+
+/**
+ * Mode with the higher estimated margin, or null when neither estimate succeeded.
+ * Ties resolve to `fallback`.
+ */
+export function getCheaperMode(estimates: OrderCostEstimates, fallback: SenderMode): SenderMode | null {
+  const { pickup, dropoff } = estimates;
+  if (pickup.ok && dropoff.ok) {
+    if (pickup.marginEur === dropoff.marginEur) return fallback;
+    return pickup.marginEur > dropoff.marginEur ? 'pickup' : 'dropoff';
+  }
+  if (pickup.ok) return 'pickup';
+  if (dropoff.ok) return 'dropoff';
+  return null;
+}

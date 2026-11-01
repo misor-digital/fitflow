@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { verifySession } from '@/lib/auth/dal';
 import { STAFF_MANAGEMENT_ROLES } from '@/lib/auth/permissions';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { getConfiguredSenderMode, getSpeedyPickupDefaults } from '@/lib/delivery/speedy/config';
 
 /**
  * GET /api/admin/speedy/dispatch?cycleId=xxx
@@ -37,7 +38,16 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: 'Грешка при извличане на поръчки.' }, { status: 500 });
     }
 
-    return NextResponse.json({ orders: orders ?? [] });
+    const [senderMode, pickupDefaults] = await Promise.all([
+      getConfiguredSenderMode(),
+      getSpeedyPickupDefaults(),
+    ]);
+
+    return NextResponse.json({
+      orders: orders ?? [],
+      senderMode,
+      visitFeeEur: pickupDefaults.visitFeeEur,
+    });
   } catch (error) {
     console.error('Dispatch API error:', error);
     return NextResponse.json(
