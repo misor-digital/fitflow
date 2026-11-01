@@ -95,6 +95,26 @@ export async function cancelOrderWaybill(
     };
   }
 
+  if (order.speedy_pickup_request_id) {
+    const { data: pickup } = await supabaseAdmin
+      .from('speedy_pickup_requests')
+      .select('pickup_date')
+      .eq('id', order.speedy_pickup_request_id)
+      .maybeSingle();
+    const pickupDate = pickup?.pickup_date
+      ? pickup.pickup_date.split('-').reverse().join('.')
+      : '—';
+    return {
+      ok: false,
+      orderId,
+      orderNumber,
+      waybillId,
+      reason: 'pickup_requested',
+      message: `Товарителницата е включена в заявка за куриер (${pickupDate}). Анулирането през системата не е възможно — свържете се със Speedy.`,
+      httpStatus: 409,
+    };
+  }
+
   if (!isWaybillCancellable(order)) {
     return {
       ok: false,

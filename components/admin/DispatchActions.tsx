@@ -9,6 +9,8 @@ interface DispatchActionsProps {
   hasWaybills: boolean;
   onBulkCreate: () => void;
   isBulkCreating: boolean;
+  pickupEligibleCount: number;
+  onRequestPickup: () => void;
 }
 
 export default function DispatchActions({
@@ -17,6 +19,8 @@ export default function DispatchActions({
   hasWaybills,
   onBulkCreate,
   isBulkCreating,
+  pickupEligibleCount,
+  onRequestPickup,
 }: DispatchActionsProps) {
   const [labelFormat, setLabelFormat] = useState<LabelFormat>('A6');
   const [senderCopy, setSenderCopy] = useState(false);
@@ -96,6 +100,15 @@ export default function DispatchActions({
           {isPrinting ? 'Генериране...' : 'Принтирай етикети'}
         </button>
       </div>
+
+      {/* Request courier pickup */}
+      <button
+        onClick={onRequestPickup}
+        disabled={pickupEligibleCount === 0}
+        className="bg-[var(--color-brand-navy)] text-white px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        Заяви куриер ({pickupEligibleCount})
+      </button>
     </div>
   );
 }

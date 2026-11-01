@@ -3,9 +3,9 @@
 import { useState, useCallback } from 'react';
 import Link from 'next/link';
 import CancelWaybillModal, { type CancelWaybillTarget } from './CancelWaybillModal';
-import { isWaybillCancellable } from '@/lib/constants/speedy';
+import { formatPickupPeriod, formatYmdBg, isWaybillCancellable } from '@/lib/constants/speedy';
 
-interface DispatchOrder {
+export interface DispatchOrder {
   id: string;
   order_number: string;
   user_id: string;
@@ -22,6 +22,15 @@ interface DispatchOrder {
   speedy_status: string | null;
   delivery_fee_eur: number;
   delivery_fee_actual_eur: number | null;
+  speedy_sender_mode: 'pickup' | 'dropoff' | null;
+  speedy_pickup_request_id: string | null;
+  speedy_pickup_requested_at: string | null;
+  speedy_pickup_requests: {
+    pickup_date: string;
+    pickup_period_from: string | null;
+    pickup_period_to: string | null;
+    status: 'pending' | 'requested' | 'failed';
+  } | null;
 }
 
 interface DispatchTableProps {
@@ -120,6 +129,21 @@ export default function DispatchTable({ orders, onRefresh }: DispatchTableProps)
     return margin.toFixed(2);
   }
 
+  function getNotCancellableReason(order: DispatchOrder): string {
+    if (!order.speedy_waybill_id) return 'Няма товарителница';
+    if (order.speedy_pickup_request_id) {
+      return 'Включена в заявка за куриер — анулирането през системата не е възможно';
+    }
+    return 'Статусът на пратката не позволява анулиране';
+  }
+
+  function getPickupTitle(order: DispatchOrder): string {
+    const pickup = order.speedy_pickup_requests;
+    if (!pickup) return 'Куриер заявен';
+    const period = formatPickupPeriod(pickup.pickup_period_from, pickup.pickup_period_to);
+    return `Куриер заявен за ${formatYmdBg(pickup.pickup_date)}${period ? `, ${period}` : ''}`;
+  }
+
   return (
     <div>
       {error && (
@@ -182,10 +206,11 @@ export default function DispatchTable({ orders, onRefresh }: DispatchTableProps)
               const cancellable = isWaybillCancellable(order);
               return (
                 <tr key={order.id} className="hover:bg-gray-50 border-b">
-                  <td className="p-2">
+                  <td className="p-2" title={cancellable ? undefined : getNotCancellableReason(order)}>
                     <input
                       type="checkbox"
                       aria-label={`Избери ${order.order_number}`}
+                      title={cancellable ? undefined : getNotCancellableReason(order)}
                       checked={cancellable && selectedIds.has(order.id)}
                       onChange={() => toggleSelected(order.id)}
                       disabled={!cancellable}
@@ -213,8 +238,27 @@ export default function DispatchTable({ orders, onRefresh }: DispatchTableProps)
                   </td>
                   <td className="p-2">
                     {hasWaybill ? (
-                      <span className="inline-flex items-center gap-1 text-green-700 bg-green-100 px-2 py-0.5 rounded-full text-xs font-semibold">
-                        ✓ Създадена
+                      <span className="inline-flex flex-wrap items-center gap-1">
+                        {order.speedy_pickup_request_id ? (
+                          <span
+                            className="inline-flex items-center gap-1 text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full text-xs font-semibold"
+                            title={getPickupTitle(order)}
+                          >
+                            🚚 Куриер заявен
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-green-700 bg-green-100 px-2 py-0.5 rounded-full text-xs font-semibold">
+                            ✓ Създадена
+                          </span>
+                        )}
+                        {order.speedy_sender_mode === 'dropoff' && (
+                          <span
+                            className="text-gray-600 bg-gray-100 px-1.5 py-0.5 rounded text-[10px] font-semibold"
+                            title="Създадена за предаване в офис на Speedy"
+                          >
+                            Офис
+                          </span>
+                        )}
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1 text-yellow-700 bg-yellow-100 px-2 py-0.5 rounded-full text-xs font-semibold">

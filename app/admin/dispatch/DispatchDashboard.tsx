@@ -1,33 +1,22 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import DispatchTable from '@/components/admin/DispatchTable';
+import DispatchTable, { type DispatchOrder } from '@/components/admin/DispatchTable';
 import DispatchActions from '@/components/admin/DispatchActions';
+import RequestPickupModal from '@/components/admin/RequestPickupModal';
+import {
+  formatPickupPeriod,
+  formatYmdBg,
+  getPickupSkipReason,
+  isFinalSpeedyStatus,
+  isPickupEligible,
+} from '@/lib/constants/speedy';
 
 interface CycleOption {
   id: string;
   delivery_date: string;
   status: string;
   title: string | null;
-}
-
-interface DispatchOrder {
-  id: string;
-  order_number: string;
-  user_id: string;
-  customer_first_name: string;
-  customer_last_name: string;
-  delivery_method: 'address' | 'speedy_office' | 'speedy_automat';
-  shipping_address: {
-    city?: string;
-    speedy_office_name?: string;
-    speedy_office_id?: string;
-  };
-  speedy_waybill_id: string | null;
-  speedy_parcel_ids: string[] | null;
-  speedy_status: string | null;
-  delivery_fee_eur: number;
-  delivery_fee_actual_eur: number | null;
 }
 
 interface DispatchDashboardProps {
@@ -40,6 +29,7 @@ export default function DispatchDashboard({ cycles }: DispatchDashboardProps) {
   const [loading, setLoading] = useState(false);
   const [isBulkCreating, setIsBulkCreating] = useState(false);
   const [bulkResult, setBulkResult] = useState<{ created: number; failed: number } | null>(null);
+  const [showPickupModal, setShowPickupModal] = useState(false);
 
   const fetchOrders = useCallback(async () => {
     if (!selectedCycleId) return;
@@ -90,6 +80,28 @@ export default function DispatchDashboard({ cycles }: DispatchDashboardProps) {
     return sum;
   }, 0);
 
+  // Courier pickup
+  const pickupEligibleCount = orders.filter((o) => isPickupEligible(o)).length;
+  const pickupSkippedCount = orders.filter((o) => {
+    if (!o.speedy_waybill_id) return false;
+    const reason = getPickupSkipReason(o);
+    return reason === 'dropoff_waybill' || reason === 'already_requested';
+  }).length;
+  const requestedPickups = Array.from(
+    new Map(
+      orders
+        .filter((o) => o.speedy_pickup_request_id && o.speedy_pickup_requests?.status === 'requested')
+        .map((o) => [o.speedy_pickup_request_id!, o.speedy_pickup_requests!]),
+    ).entries(),
+  );
+  const pendingDropoffCount = orders.filter(
+    (o) =>
+      o.speedy_waybill_id &&
+      o.speedy_sender_mode === 'dropoff' &&
+      !o.speedy_pickup_request_id &&
+      !isFinalSpeedyStatus(o.speedy_status),
+  ).length;
+
   return (
     <div className="space-y-6">
       {/* Cycle Selector */}
@@ -137,7 +149,29 @@ export default function DispatchDashboard({ cycles }: DispatchDashboardProps) {
         hasWaybills={withWaybill > 0}
         onBulkCreate={handleBulkCreate}
         isBulkCreating={isBulkCreating}
+        pickupEligibleCount={pickupEligibleCount}
+        onRequestPickup={() => setShowPickupModal(true)}
       />
+
+      {/* Courier pickup info */}
+      {requestedPickups.map(([requestId, pickup]) => {
+        const period = formatPickupPeriod(pickup.pickup_period_from, pickup.pickup_period_to);
+        return (
+          <div
+            key={requestId}
+            className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg text-sm"
+          >
+            🚚 Куриер заявен за {formatYmdBg(pickup.pickup_date)}
+            {period ? ` ${period}` : ''}
+          </div>
+        );
+      })}
+      {pendingDropoffCount > 0 && (
+        <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-3 rounded-lg text-sm">
+          {pendingDropoffCount} товарителници са създадени за предаване в офис — занесете ги в офис
+          или ги анулирайте и създайте отново.
+        </div>
+      )}
 
       {/* Bulk result */}
       {bulkResult && (
@@ -151,6 +185,16 @@ export default function DispatchDashboard({ cycles }: DispatchDashboardProps) {
         <div className="text-center py-8 text-gray-500">Зареждане...</div>
       ) : (
         <DispatchTable orders={orders} onRefresh={fetchOrders} />
+      )}
+
+      {showPickupModal && (
+        <RequestPickupModal
+          cycleId={selectedCycleId}
+          eligibleCount={pickupEligibleCount}
+          skippedCount={pickupSkippedCount}
+          onClose={() => setShowPickupModal(false)}
+          onDone={fetchOrders}
+        />
       )}
     </div>
   );

@@ -25,6 +25,10 @@ import type {
   ContractClientsResponse,
   DestinationServicesParams,
   DestinationServicesResponse,
+  PickupRequestParams,
+  PickupResponse,
+  PickupTermsParams,
+  PickupTermsResponse,
 } from './types';
 
 // ============================================================================
@@ -258,6 +262,26 @@ export async function getDestinationServices(
 ): Promise<DestinationServicesResponse> {
   return speedyRequest<DestinationServicesResponse>(
     'services/destination/',
+    params as unknown as Record<string, unknown>
+  );
+}
+
+/** Request a courier visit to collect the given shipments. Dispatches a real courier. */
+export async function requestPickup(
+  params: PickupRequestParams
+): Promise<PickupResponse> {
+  return speedyRequest<PickupResponse>(
+    'pickup/',
+    params as unknown as Record<string, unknown>
+  );
+}
+
+/** Get the days (and cut-off times) on which a pickup can be requested. */
+export async function getPickupTerms(
+  params: PickupTermsParams
+): Promise<PickupTermsResponse> {
+  return speedyRequest<PickupTermsResponse>(
+    'pickup/terms/',
     params as unknown as Record<string, unknown>
   );
 }

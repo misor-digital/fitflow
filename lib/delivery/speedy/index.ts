@@ -38,6 +38,13 @@ export type {
   DestinationServicesParams,
   DestinationService,
   DestinationServicesResponse,
+  ShipmentPhoneNumber,
+  PickupScope,
+  PickupRequestParams,
+  PickupOrder,
+  PickupResponse,
+  PickupTermsParams,
+  PickupTermsResponse,
 } from './types';
 
 export {
@@ -51,6 +58,8 @@ export {
   cancelShipment,
   getContractClients,
   getDestinationServices,
+  requestPickup,
+  getPickupTerms,
 } from './client';
 
 export {
@@ -92,3 +101,19 @@ export type { CancelOrderWaybillResult, CancelOrderWaybillFailureReason, CancelA
 export { cancelWaybill, cancelOrderWaybill, normalizeCancelComment } from './cancellation';
 
 export { mapCancelError } from './errors';
+
+export type {
+  PickupCutoff,
+  RequestPickupInput,
+  RequestPickupResult,
+  PickupOrderRef,
+  PickupSkippedOrder,
+} from './pickup';
+export {
+  PickupRequestError,
+  getPickupCutoffs,
+  requestPickupForOrders,
+  sofiaOffset,
+  toSpeedyDateTime,
+  todaySofia,
+} from './pickup';
