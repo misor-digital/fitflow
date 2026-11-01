@@ -148,14 +148,16 @@ export default function DispatchDashboard({ cycles, defaultCycleId }: DispatchDa
     }
   }
 
-  async function handleBulkCreate() {
-    const pendingIds = orders.filter((o) => !o.speedy_waybill_id).map((o) => o.id);
+  /** Create waybills for the given orders, or for every pending order in the cycle. */
+  async function handleBulkCreate(orderIds?: string[]) {
+    const pendingIds = orderIds ?? orders.filter((o) => !o.speedy_waybill_id).map((o) => o.id);
+    if (pendingIds.length === 0) return;
     const senderModes = Object.fromEntries(pendingIds.map((id) => [id, modeFor(id)]));
     const pickupCount = pendingIds.filter((id) => senderModes[id] === 'pickup').length;
     const dropoffCount = pendingIds.length - pickupCount;
     if (
       !confirm(
-        `Създаване на товарителници за всички чакащи поръчки?\n` +
+        `${orderIds ? `Създаване на товарителници за ${pendingIds.length} избрани поръчки?` : 'Създаване на товарителници за всички чакащи поръчки?'}\n` +
           `${SENDER_MODE_LABELS.pickup}: ${pickupCount}, ${SENDER_MODE_LABELS.dropoff}: ${dropoffCount}`,
       )
     ) {
@@ -167,7 +169,9 @@ export default function DispatchDashboard({ cycles, defaultCycleId }: DispatchDa
       const res = await fetch('/api/admin/speedy/shipment/bulk', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cycleId: selectedCycleId, senderModes }),
+        body: JSON.stringify(
+          orderIds ? { orderIds, senderModes } : { cycleId: selectedCycleId, senderModes },
+        ),
       });
       if (res.ok) {
         const data = await res.json();
@@ -257,7 +261,7 @@ export default function DispatchDashboard({ cycles, defaultCycleId }: DispatchDa
         cycleId={selectedCycleId}
         hasPendingOrders={pending > 0}
         hasWaybills={withWaybill > 0}
-        onBulkCreate={handleBulkCreate}
+        onBulkCreate={() => handleBulkCreate()}
         isBulkCreating={isBulkCreating}
         pickupEligibleCount={pickupEligibleCount}
         onRequestPickup={() => setShowPickupModal(true)}
@@ -316,6 +320,8 @@ export default function DispatchDashboard({ cycles, defaultCycleId }: DispatchDa
           selectedModes={selectedModes}
           onSelectMode={handleSelectMode}
           visitFeeEur={visitFeeEur}
+          onCreateSelected={(orderIds) => handleBulkCreate(orderIds)}
+          isBulkCreating={isBulkCreating}
         />
       )}
 

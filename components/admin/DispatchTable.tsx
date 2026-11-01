@@ -53,6 +53,9 @@ interface DispatchTableProps {
   /** Per-order sender mode chosen for waybill creation */
   selectedModes: Record<string, SenderMode>;
   onSelectMode: (orderId: string, mode: SenderMode) => void;
+  /** Create waybills for the given orders (each in its selected sender mode) */
+  onCreateSelected: (orderIds: string[]) => void;
+  isBulkCreating: boolean;
   /** Informational per-visit pickup fee, subtracted from the pickup total */
   visitFeeEur: number | null;
 }
@@ -89,6 +92,8 @@ export default function DispatchTable({
   selectedModes,
   onSelectMode,
   visitFeeEur,
+  onCreateSelected,
+  isBulkCreating,
 }: DispatchTableProps) {
   const [creatingId, setCreatingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -102,10 +107,14 @@ export default function DispatchTable({
     setSelectedIds(new Set());
   }
 
-  const cancellableOrders = orders.filter((o) => isWaybillCancellable(o));
-  const selectedCancellable = cancellableOrders.filter((o) => selectedIds.has(o.id));
-  const allSelected = cancellableOrders.length > 0 && selectedCancellable.length === cancellableOrders.length;
-  const someSelected = selectedCancellable.length > 0 && !allSelected;
+  // Rows can be selected to create a waybill (no waybill yet) or to cancel one
+  const isSelectable = (o: DispatchOrder) => !o.speedy_waybill_id || isWaybillCancellable(o);
+  const selectableOrders = orders.filter(isSelectable);
+  const selectedOrders = selectableOrders.filter((o) => selectedIds.has(o.id));
+  const selectedPending = selectedOrders.filter((o) => !o.speedy_waybill_id);
+  const selectedCancellable = selectedOrders.filter((o) => !!o.speedy_waybill_id);
+  const allSelected = selectableOrders.length > 0 && selectedOrders.length === selectableOrders.length;
+  const someSelected = selectedOrders.length > 0 && !allSelected;
 
   function toCancelTarget(order: DispatchOrder): CancelWaybillTarget {
     return {
@@ -125,7 +134,7 @@ export default function DispatchTable({
   }
 
   function toggleAll() {
-    setSelectedIds(allSelected ? new Set() : new Set(cancellableOrders.map((o) => o.id)));
+    setSelectedIds(allSelected ? new Set() : new Set(selectableOrders.map((o) => o.id)));
   }
 
   const handleCancelDone = useCallback(() => {
@@ -294,15 +303,28 @@ export default function DispatchTable({
         </div>
       )}
 
-      {selectedCancellable.length > 0 && (
+      {selectedOrders.length > 0 && (
         <div className="flex flex-wrap items-center gap-3 mb-3">
-          <button
-            type="button"
-            onClick={() => setCancelTargets(selectedCancellable.map(toCancelTarget))}
-            className="text-sm bg-red-600 text-white px-3 py-1.5 rounded-lg font-semibold hover:opacity-90 transition-opacity"
-          >
-            Анулирай избраните ({selectedCancellable.length})
-          </button>
+          {selectedPending.length > 0 && (
+            <button
+              type="button"
+              onClick={() => onCreateSelected(selectedPending.map((o) => o.id))}
+              disabled={isBulkCreating}
+              className="text-sm bg-[var(--color-brand-orange)] text-white px-3 py-1.5 rounded-lg font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              {isBulkCreating ? 'Създаване...' : `Създай за избраните (${selectedPending.length})`}
+            </button>
+          )}
+          {selectedCancellable.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setCancelTargets(selectedCancellable.map(toCancelTarget))}
+              disabled={isBulkCreating}
+              className="text-sm bg-red-600 text-white px-3 py-1.5 rounded-lg font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+              Анулирай избраните ({selectedCancellable.length})
+            </button>
+          )}
           <button
             type="button"
             onClick={() => setSelectedIds(new Set())}
@@ -326,13 +348,13 @@ export default function DispatchTable({
               <th rowSpan={2} className="p-2 border-b w-8">
                 <input
                   type="checkbox"
-                  aria-label="Избери всички товарителници за анулиране"
+                  aria-label="Избери всички поръчки"
                   checked={allSelected}
                   ref={(el) => {
                     if (el) el.indeterminate = someSelected;
                   }}
                   onChange={toggleAll}
-                  disabled={cancellableOrders.length === 0}
+                  disabled={selectableOrders.length === 0}
                 />
               </th>
               <th rowSpan={2} className="p-2 border-b font-semibold">Поръчка</th>
@@ -368,16 +390,17 @@ export default function DispatchTable({
             {orders.map((order) => {
               const hasWaybill = !!order.speedy_waybill_id;
               const cancellable = isWaybillCancellable(order);
+              const selectable = !hasWaybill || cancellable;
               return (
                 <tr key={order.id} className="hover:bg-gray-50 border-b">
-                  <td className="p-2" title={cancellable ? undefined : getNotCancellableReason(order)}>
+                  <td className="p-2" title={selectable ? undefined : getNotCancellableReason(order)}>
                     <input
                       type="checkbox"
                       aria-label={`Избери ${order.order_number}`}
-                      title={cancellable ? undefined : getNotCancellableReason(order)}
-                      checked={cancellable && selectedIds.has(order.id)}
+                      title={selectable ? undefined : getNotCancellableReason(order)}
+                      checked={selectable && selectedIds.has(order.id)}
                       onChange={() => toggleSelected(order.id)}
-                      disabled={!cancellable}
+                      disabled={!selectable}
                     />
                   </td>
                   <td className="p-2 font-mono text-xs">
