@@ -66,6 +66,9 @@ function formatSignedEur(value: number): string {
   return `${value >= 0 ? '+' : '−'}${Math.abs(value).toFixed(2)} €`;
 }
 
+/** Margin sub-columns shrink to their content instead of sharing the table's spare width */
+const MARGIN_CELL = 'w-px whitespace-nowrap px-1.5 py-2 text-right';
+
 const METHOD_ICONS: Record<string, string> = {
   speedy_office: '📦',
   speedy_automat: '🔒',
@@ -223,7 +226,7 @@ export default function DispatchTable({
   const mixedModes = modesInUse.size > 1;
 
   function renderMarginCell(order: DispatchOrder, mode: SenderMode) {
-    const base = `p-2 text-right ${highlight}`;
+    const base = `${MARGIN_CELL} ${highlight}`;
 
     if (order.speedy_waybill_id) {
       if (waybillMode(order) !== mode) return <td key={mode} className={base} />;
@@ -268,7 +271,7 @@ export default function DispatchTable({
     const total = mode === 'pickup' ? pickupNet : dropoffTotal.sum;
     const missing = mode === 'pickup' ? pickupTotal.missing : dropoffTotal.missing;
     return (
-      <td key={mode} className={`p-2 text-right ${highlight}`}>
+      <td key={mode} className={`${MARGIN_CELL} ${highlight}`}>
         <span
           className={`italic ${total >= 0 ? 'text-green-600' : 'text-red-600'} ${
             betterTotal === mode ? 'font-bold' : betterTotal ? 'opacity-50' : ''
@@ -352,11 +355,11 @@ export default function DispatchTable({
               {SENDER_MODES.map((mode) => (
                 <th
                   key={mode}
-                  className={`px-2 pb-2 border-b text-xs font-semibold text-right whitespace-nowrap ${
+                  className={`w-px whitespace-nowrap px-1.5 pb-2 text-right border-b text-xs font-semibold ${
                     pricesCalculated ? 'bg-amber-100' : ''
                   }`}
                 >
-                  {mode === 'pickup' ? '🚚' : '🏢'} {SENDER_MODE_LABELS[mode]}
+                  {SENDER_MODE_LABELS[mode]}
                 </th>
               ))}
             </tr>
