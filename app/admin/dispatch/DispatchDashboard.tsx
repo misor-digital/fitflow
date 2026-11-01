@@ -27,10 +27,14 @@ interface CycleOption {
 
 interface DispatchDashboardProps {
   cycles: CycleOption[];
+  /** Nearest upcoming cycle (or latest delivered), preselected on load */
+  defaultCycleId: string | null;
 }
 
-export default function DispatchDashboard({ cycles }: DispatchDashboardProps) {
-  const [selectedCycleId, setSelectedCycleId] = useState(cycles[0]?.id ?? '');
+export default function DispatchDashboard({ cycles, defaultCycleId }: DispatchDashboardProps) {
+  const [selectedCycleId, setSelectedCycleId] = useState(
+    (defaultCycleId && cycles.some((c) => c.id === defaultCycleId) ? defaultCycleId : cycles[0]?.id) ?? '',
+  );
   const [orders, setOrders] = useState<DispatchOrder[]>([]);
   const [loading, setLoading] = useState(false);
   const [isBulkCreating, setIsBulkCreating] = useState(false);
