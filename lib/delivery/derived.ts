@@ -11,6 +11,7 @@ import type {
   DeliveryConfig,
   DeliveryCycleStatus,
 } from './types';
+import { sofiaParts } from '@/lib/utils/sofia-time';
 
 // ============================================================================
 // Constants
@@ -345,19 +346,16 @@ function toISODateStr(d: Date): string {
 // ============================================================================
 
 /**
- * Format an ISO timestamp as "DD.MM.YYYY, HH:MM" for display.
+ * Format an ISO timestamp as "DD.MM.YYYY, HH:MM" in Bulgarian time
+ * (independent of the server or browser time zone).
  *
- * @example formatCutoffAt('2026-04-15T14:00:00+03:00') → '15.04.2026, 14:00'
+ * @example formatCutoffAt('2026-04-15T11:00:00Z') → '15.04.2026, 14:00'
  */
 export function formatCutoffAt(isoStr: string): string {
   const d = new Date(isoStr);
   if (isNaN(d.getTime())) return isoStr;
-  const dd = String(d.getDate()).padStart(2, '0');
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const yyyy = d.getFullYear();
-  const hh = String(d.getHours()).padStart(2, '0');
-  const min = String(d.getMinutes()).padStart(2, '0');
-  return `${dd}.${mm}.${yyyy}, ${hh}:${min}`;
+  const p = sofiaParts(d);
+  return `${p.day}.${p.month}.${p.year}, ${p.hour}:${p.minute}`;
 }
 
 /**

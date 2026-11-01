@@ -9,6 +9,7 @@ import type {
   DeliveryCycleDerivedState,
 } from '@/lib/delivery';
 import { formatDateShort } from '@/lib/utils/date';
+import { toSofiaDateTimeLocal } from '@/lib/utils/sofia-time';
 
 // ============================================================================
 // Constants
@@ -60,14 +61,6 @@ interface CycleDetailViewProps {
   cycleState: DeliveryCycleDerivedState;
 }
 
-/** Convert an ISO/UTC date string to `datetime-local` input value in the browser's local timezone */
-function toDatetimeLocal(iso: string): string {
-  const d = new Date(iso);
-  const off = d.getTimezoneOffset();
-  const local = new Date(d.getTime() - off * 60_000);
-  return local.toISOString().slice(0, 16);
-}
-
 // ============================================================================
 // Component
 // ============================================================================
@@ -86,7 +79,7 @@ export function CycleDetailView({
   const [deliveryDate, setDeliveryDate] = useState(cycle.delivery_date);
   const [orderCutoffAt, setOrderCutoffAt] = useState(
     // Convert ISO to datetime-local format in local timezone (YYYY-MM-DDTHH:MM)
-    cycle.order_cutoff_at ? toDatetimeLocal(cycle.order_cutoff_at) : '',
+    cycle.order_cutoff_at ? toSofiaDateTimeLocal(cycle.order_cutoff_at) : '',
   );
   const [isEditing, setIsEditing] = useState(false);
 
@@ -121,7 +114,7 @@ export function CycleDetailView({
     setDescription(cycle.description ?? '');
     setDeliveryDate(cycle.delivery_date);
     setOrderCutoffAt(
-      cycle.order_cutoff_at ? toDatetimeLocal(cycle.order_cutoff_at) : '',
+      cycle.order_cutoff_at ? toSofiaDateTimeLocal(cycle.order_cutoff_at) : '',
     );
     setIsEditing(true);
     clearFeedback();
@@ -132,7 +125,7 @@ export function CycleDetailView({
     setDescription(cycle.description ?? '');
     setDeliveryDate(cycle.delivery_date);
     setOrderCutoffAt(
-      cycle.order_cutoff_at ? toDatetimeLocal(cycle.order_cutoff_at) : '',
+      cycle.order_cutoff_at ? toSofiaDateTimeLocal(cycle.order_cutoff_at) : '',
     );
     setIsEditing(false);
     clearFeedback();
@@ -146,12 +139,12 @@ export function CycleDetailView({
     if (description !== (cycle.description ?? '')) updates.description = description;
     if (deliveryDate !== cycle.delivery_date) updates.delivery_date = deliveryDate;
 
-    // Convert datetime-local back to ISO for the API
+    // datetime-local values are Bulgarian wall time; the API converts them
     const originalCutoff = cycle.order_cutoff_at
-      ? toDatetimeLocal(cycle.order_cutoff_at)
+      ? toSofiaDateTimeLocal(cycle.order_cutoff_at)
       : '';
     if (orderCutoffAt !== originalCutoff) {
-      updates.order_cutoff_at = new Date(orderCutoffAt).toISOString();
+      updates.order_cutoff_at = orderCutoffAt;
     }
 
     if (Object.keys(updates).length === 0) {
