@@ -67,7 +67,7 @@ function formatSignedEur(value: number): string {
 }
 
 /** Margin sub-columns shrink to their content instead of sharing the table's spare width */
-const MARGIN_CELL = 'w-px whitespace-nowrap px-1.5 py-2 text-right';
+const MARGIN_CELL = 'w-px whitespace-nowrap px-1.5 py-2 text-center';
 
 const METHOD_ICONS: Record<string, string> = {
   speedy_office: '📦',
@@ -355,7 +355,7 @@ export default function DispatchTable({
               {SENDER_MODES.map((mode) => (
                 <th
                   key={mode}
-                  className={`w-px whitespace-nowrap px-1.5 pb-2 text-right border-b text-xs font-semibold ${
+                  className={`w-px whitespace-nowrap px-1.5 pb-2 text-center border-b text-xs font-semibold ${
                     pricesCalculated ? 'bg-amber-100' : ''
                   }`}
                 >
