@@ -6,6 +6,7 @@ import {
   isFirstDelivery,
   formatMonthYear,
 } from '@/lib/delivery';
+import { toLocalYmd } from '@/lib/utils/sofia-time';
 
 // ============================================================================
 // GET /api/delivery/upcoming - Public: Next delivery date
@@ -52,7 +53,7 @@ export async function GET(): Promise<NextResponse> {
 
     // 3. No upcoming cycle - derive from config
     const nextDate = calculateNextDeliveryDate(config);
-    const nextDateStr = nextDate.toISOString().split('T')[0];
+    const nextDateStr = toLocalYmd(nextDate);
 
     const response = NextResponse.json({
       cycle: null,

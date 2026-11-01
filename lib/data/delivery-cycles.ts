@@ -21,6 +21,7 @@ import type {
   CycleDropdownOption,
 } from '@/lib/supabase/types';
 import { TAG_DELIVERY, TAG_SITE_CONFIG } from './cache-tags';
+import { todaySofia } from '@/lib/utils/sofia-time';
 
 // ============================================================================
 // Delivery-related site_config keys
@@ -122,7 +123,7 @@ export const getUpcomingCycle = cache(
         .from('delivery_cycles')
         .select('*')
         .eq('status', 'upcoming')
-        .gte('delivery_date', new Date().toISOString().split('T')[0])
+        .gte('delivery_date', todaySofia())
         .order('delivery_date', { ascending: true })
         .limit(1)
         .maybeSingle();
@@ -151,7 +152,7 @@ export const getUpcomingCycles = cache(
         .from('delivery_cycles')
         .select('*')
         .eq('status', 'upcoming')
-        .gte('delivery_date', new Date().toISOString().split('T')[0])
+        .gte('delivery_date', todaySofia())
         .order('delivery_date', { ascending: true });
 
       if (error) {
@@ -266,7 +267,7 @@ export const getDeliveryCyclesForDropdown = cache(
  * Prefers the nearest upcoming cycle; falls back to latest delivered.
  */
 export async function getCurrentCycleId(): Promise<string | null> {
-  const today = new Date().toISOString().split('T')[0];
+  const today = todaySofia();
 
   // 1. Nearest upcoming cycle
   const { data: upcoming } = await supabaseAdmin

@@ -11,7 +11,7 @@ import type {
   DeliveryConfig,
   DeliveryCycleStatus,
 } from './types';
-import { sofiaParts } from '@/lib/utils/sofia-time';
+import { sofiaParts, todaySofiaAsLocalDate } from '@/lib/utils/sofia-time';
 
 // ============================================================================
 // Constants
@@ -133,7 +133,7 @@ export function calculateNextDeliveryDate(
   config: DeliveryConfig,
   fromDate?: Date,
 ): Date {
-  const now = fromDate ? startOfDay(fromDate) : startOfDay(new Date());
+  const now = fromDate ? startOfDay(fromDate) : todaySofiaAsLocalDate();
 
   // Check first-delivery override
   if (config.firstDeliveryDate) {
@@ -202,7 +202,7 @@ export function isFirstDelivery(
   if (!config.firstDeliveryDate) return false;
   const first = parseISODate(config.firstDeliveryDate);
   if (!first) return false;
-  const today = now ? startOfDay(now) : startOfDay(new Date());
+  const today = now ? startOfDay(now) : todaySofiaAsLocalDate();
   return first >= today;
 }
 
@@ -217,7 +217,7 @@ export function computeCycleState(
   cycle: DeliveryCycleRow,
   now?: Date,
 ): DeliveryCycleDerivedState {
-  const today = now ? startOfDay(now) : startOfDay(new Date());
+  const today = now ? startOfDay(now) : todaySofiaAsLocalDate();
   const currentTime = now ?? new Date();
   const deliveryDate = parseISODate(cycle.delivery_date) ?? today;
 
