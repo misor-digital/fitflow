@@ -13,9 +13,13 @@ interface AvailableDate {
 
 interface CreateCycleFormProps {
   availableDates: AvailableDate[];
+  /** Default cutoff from settings: days before delivery */
+  cutoffDaysBefore: number;
+  /** Default cutoff from settings: HH:mm Bulgarian time */
+  cutoffTime: string;
 }
 
-export function CreateCycleForm({ availableDates }: CreateCycleFormProps) {
+export function CreateCycleForm({ availableDates, cutoffDaysBefore, cutoffTime }: CreateCycleFormProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
@@ -25,7 +29,7 @@ export function CreateCycleForm({ availableDates }: CreateCycleFormProps) {
   const [useCustom, setUseCustom] = useState(false);
   const [title, setTitle] = useState(firstAvailable?.monthYear ?? '');
   const [orderCutoffAt, setOrderCutoffAt] = useState(
-    firstAvailable ? calculateDefaultCutoffAt(firstAvailable.value) : '',
+    firstAvailable ? calculateDefaultCutoffAt(firstAvailable.value, cutoffDaysBefore, cutoffTime) : '',
   );
   const [error, setError] = useState<string | null>(null);
 
@@ -36,7 +40,7 @@ export function CreateCycleForm({ availableDates }: CreateCycleFormProps) {
     setUseCustom(false);
     setSelectedDate(date.value);
     setTitle(date.monthYear);
-    setOrderCutoffAt(calculateDefaultCutoffAt(date.value));
+    setOrderCutoffAt(calculateDefaultCutoffAt(date.value, cutoffDaysBefore, cutoffTime));
     setError(null);
   }
 
@@ -54,7 +58,7 @@ export function CreateCycleForm({ availableDates }: CreateCycleFormProps) {
       if (m >= 1 && m <= 12) {
         setTitle(`${months[m - 1]} ${y}`);
       }
-      setOrderCutoffAt(calculateDefaultCutoffAt(value));
+      setOrderCutoffAt(calculateDefaultCutoffAt(value, cutoffDaysBefore, cutoffTime));
     }
     setError(null);
   }
@@ -197,8 +201,9 @@ export function CreateCycleForm({ availableDates }: CreateCycleFormProps) {
           className="w-full border rounded-lg px-3 py-2 text-sm"
         />
         <p className="text-xs text-gray-400 mt-1">
-          След този момент нови поръчки няма да бъдат приемани за този цикъл.
-          По подразбиране: 2 дни преди доставката, 14:00ч.
+          След този момент нови поръчки няма да бъдат приемани за този цикъл. Часът е българско време.
+          По подразбиране: {cutoffDaysBefore === 0 ? 'в деня на доставката' : `${cutoffDaysBefore} дни преди доставката`}, {cutoffTime}ч.
+          (Настройки → Цикли и цени)
         </p>
       </div>
 

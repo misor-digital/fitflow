@@ -33,6 +33,8 @@ const DELIVERY_CONFIG_KEYS = [
   'SUBSCRIPTION_ENABLED',
   'REVEALED_BOX_ENABLED',
   'ORDER_CUTOFF_DISPLAY_DAYS',
+  'ORDER_CUTOFF_DAYS_BEFORE',
+  'ORDER_CUTOFF_TIME',
   'CUTOFF_WIDGETS_ENABLED',
   'CUTOFF_BANNER_ENABLED',
   'CUTOFF_POPUP_ENABLED',
@@ -734,6 +736,16 @@ export async function updateDeliveryConfig(
     if (isNaN(days) || days < 1 || days > 30) {
       throw new Error('ORDER_CUTOFF_DISPLAY_DAYS must be a number between 1 and 30.');
     }
+  }
+
+  if (key === 'ORDER_CUTOFF_DAYS_BEFORE') {
+    if (!/^\d+$/.test(value) || Number(value) > 14) {
+      throw new Error('ORDER_CUTOFF_DAYS_BEFORE must be a whole number between 0 and 14.');
+    }
+  }
+
+  if (key === 'ORDER_CUTOFF_TIME' && !/^([01]\d|2[0-3]):[0-5]\d$/.test(value)) {
+    throw new Error('ORDER_CUTOFF_TIME must be in HH:mm format.');
   }
 
   if (

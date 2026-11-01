@@ -24,6 +24,8 @@ export interface DeliveryConfig {
   subscriptionEnabled: boolean;
   revealedBoxEnabled: boolean;
   orderCutoffDisplayDays: number; // days before cutoff to show countdown (default 5)
+  orderCutoffDaysBefore: number; // default cutoff for new cycles: days before delivery (default 2)
+  orderCutoffTime: string; // default cutoff for new cycles: HH:mm Bulgarian time (default '14:00')
   cutoffWidgetsEnabled: boolean; // master toggle for banner + popup (default true)
   cutoffBannerEnabled: boolean; // sliding banner toggle (default true)
   cutoffPopupEnabled: boolean; // floating countdown popup toggle (default true)

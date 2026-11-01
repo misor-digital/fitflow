@@ -1,59 +1,18 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import type { DeliveryConfig } from '@/lib/delivery';
+import {
+  calculateDefaultCutoffAt,
+  calculateNextDeliveryDate,
+  formatDeliveryDate,
+  type DeliveryConfig,
+} from '@/lib/delivery';
 import type { DeliveryPricing } from '@/lib/delivery/pricing';
-import { formatDateShort } from '@/lib/utils/date';
+import { HHMM_PATTERN, toLocalYmd } from '@/lib/utils/sofia-time';
 
 interface DeliverySettingsFormProps {
   config: DeliveryConfig;
   pricing?: DeliveryPricing[];
-}
-
-/**
- * Client-side calculation of next delivery date for live preview.
- * Mirrors the server-side `calculateNextDeliveryDate` logic.
- */
-function calculatePreviewDate(deliveryDay: number, firstDate: string | null): string {
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-
-  // Check first delivery override
-  if (firstDate) {
-    const [y, m, d] = firstDate.split('-').map(Number);
-    if (y && m && d) {
-      const first = new Date(y, m - 1, d);
-      if (first >= today) {
-        return formatDateShort(toISODate(first));
-      }
-    }
-  }
-
-  // Normal: find next deliveryDay
-  const year = today.getFullYear();
-  const month = today.getMonth();
-
-  const lastDay = new Date(year, month + 1, 0).getDate();
-  const clampedDay = Math.min(deliveryDay, lastDay);
-  const thisMonth = new Date(year, month, clampedDay);
-
-  if (thisMonth > today) {
-    return formatDateShort(toISODate(thisMonth));
-  }
-
-  // Next month
-  const nextMonth = month === 11 ? 0 : month + 1;
-  const nextYear = month === 11 ? year + 1 : year;
-  const nextLastDay = new Date(nextYear, nextMonth + 1, 0).getDate();
-  const nextClamped = Math.min(deliveryDay, nextLastDay);
-  return formatDateShort(toISODate(new Date(nextYear, nextMonth, nextClamped)));
-}
-
-function toISODate(d: Date): string {
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}`;
 }
 
 export function DeliverySettingsForm({ config, pricing }: DeliverySettingsFormProps) {
@@ -65,6 +24,8 @@ export function DeliverySettingsForm({ config, pricing }: DeliverySettingsFormPr
   const [cutoffWidgetsEnabled, setCutoffWidgetsEnabled] = useState(config.cutoffWidgetsEnabled);
   const [cutoffBannerEnabled, setCutoffBannerEnabled] = useState(config.cutoffBannerEnabled);
   const [cutoffPopupEnabled, setCutoffPopupEnabled] = useState(config.cutoffPopupEnabled);
+  const [cutoffDaysBefore, setCutoffDaysBefore] = useState(config.orderCutoffDaysBefore);
+  const [cutoffTime, setCutoffTime] = useState(config.orderCutoffTime);
 
   // Snapshot of what's been saved — starts as server config, updates after each successful save
   const [savedSnapshot, setSavedSnapshot] = useState({
@@ -76,6 +37,8 @@ export function DeliverySettingsForm({ config, pricing }: DeliverySettingsFormPr
     cutoffWidgetsEnabled: config.cutoffWidgetsEnabled,
     cutoffBannerEnabled: config.cutoffBannerEnabled,
     cutoffPopupEnabled: config.cutoffPopupEnabled,
+    cutoffDaysBefore: config.orderCutoffDaysBefore,
+    cutoffTime: config.orderCutoffTime,
   });
 
   const [saving, setSaving] = useState(false);
@@ -109,16 +72,29 @@ export function DeliverySettingsForm({ config, pricing }: DeliverySettingsFormPr
     if (cutoffPopupEnabled !== savedSnapshot.cutoffPopupEnabled) {
       c.push({ key: 'CUTOFF_POPUP_ENABLED', value: String(cutoffPopupEnabled) });
     }
+    if (cutoffDaysBefore !== savedSnapshot.cutoffDaysBefore) {
+      c.push({ key: 'ORDER_CUTOFF_DAYS_BEFORE', value: String(cutoffDaysBefore) });
+    }
+    if (cutoffTime !== savedSnapshot.cutoffTime) {
+      c.push({ key: 'ORDER_CUTOFF_TIME', value: cutoffTime });
+    }
     return c;
-  }, [deliveryDay, firstDeliveryDate, subscriptionEnabled, revealedBoxEnabled, cutoffDisplayDays, cutoffWidgetsEnabled, cutoffBannerEnabled, cutoffPopupEnabled, savedSnapshot]);
+  }, [deliveryDay, firstDeliveryDate, subscriptionEnabled, revealedBoxEnabled, cutoffDisplayDays, cutoffWidgetsEnabled, cutoffBannerEnabled, cutoffPopupEnabled, cutoffDaysBefore, cutoffTime, savedSnapshot]);
 
   const hasChanges = changes.length > 0;
 
-  // Live preview of next delivery date
-  const previewDate = useMemo(
-    () => calculatePreviewDate(deliveryDay, firstDeliveryDate || null),
-    [deliveryDay, firstDeliveryDate],
-  );
+  // Live preview of next delivery date and its default cutoff (shared calculation)
+  const preview = useMemo(() => {
+    const next = toLocalYmd(
+      calculateNextDeliveryDate({ ...config, deliveryDay, firstDeliveryDate: firstDeliveryDate || null }),
+    );
+    let cutoff: string | null = null;
+    if (HHMM_PATTERN.test(cutoffTime)) {
+      const [date, time] = calculateDefaultCutoffAt(next, cutoffDaysBefore, cutoffTime).split('T');
+      cutoff = `${formatDeliveryDate(date)}, ${time}`;
+    }
+    return { date: formatDeliveryDate(next), cutoff };
+  }, [config, deliveryDay, firstDeliveryDate, cutoffDaysBefore, cutoffTime]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,6 +104,14 @@ export function DeliverySettingsForm({ config, pricing }: DeliverySettingsFormPr
     // Validate
     if (deliveryDay < 1 || deliveryDay > 28 || !Number.isInteger(deliveryDay)) {
       setError('Денят трябва да е цяло число между 1 и 28.');
+      return;
+    }
+    if (!Number.isInteger(cutoffDaysBefore) || cutoffDaysBefore < 0 || cutoffDaysBefore > 14) {
+      setError('Дните преди доставката за краен срок трябва да са цяло число между 0 и 14.');
+      return;
+    }
+    if (!/^([01]\d|2[0-3]):[0-5]\d$/.test(cutoffTime)) {
+      setError('Невалиден час за краен срок (ЧЧ:ММ).');
       return;
     }
 
@@ -160,6 +144,8 @@ export function DeliverySettingsForm({ config, pricing }: DeliverySettingsFormPr
         cutoffWidgetsEnabled,
         cutoffBannerEnabled,
         cutoffPopupEnabled,
+        cutoffDaysBefore,
+        cutoffTime,
       });
       setTimeout(() => setSuccess(null), 3000);
     } catch {
@@ -173,7 +159,12 @@ export function DeliverySettingsForm({ config, pricing }: DeliverySettingsFormPr
     <form onSubmit={handleSubmit} className="max-w-xl space-y-6">
       {/* Next delivery preview */}
       <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-800">
-        Следваща доставка ще бъде на: <strong>{previewDate}</strong>
+        Следваща доставка ще бъде на: <strong>{preview.date}</strong>
+        {preview.cutoff && (
+          <span className="block mt-1">
+            Краен срок за поръчки по подразбиране: <strong>{preview.cutoff}</strong>
+          </span>
+        )}
       </div>
 
       {/* Delivery Day */}
@@ -218,6 +209,45 @@ export function DeliverySettingsForm({ config, pricing }: DeliverySettingsFormPr
         )}
         <p className="text-xs text-gray-400 mt-1">
           Ако е зададена и е в бъдещето, тя ще бъде следващата дата на доставка вместо автоматичната.
+        </p>
+      </div>
+
+      {/* Default order cutoff for new cycles */}
+      <div>
+        <p className="block text-sm font-semibold text-gray-700 mb-1">
+          Краен срок за поръчки (по подразбиране за нови цикли)
+        </p>
+        <div className="flex flex-wrap items-end gap-4">
+          <div>
+            <label htmlFor="cutoffDaysBefore" className="block text-xs text-gray-600 mb-1">
+              Дни преди доставката
+            </label>
+            <input
+              id="cutoffDaysBefore"
+              type="number"
+              min={0}
+              max={14}
+              value={cutoffDaysBefore}
+              onChange={(e) => setCutoffDaysBefore(parseInt(e.target.value, 10) || 0)}
+              className="w-32 border rounded-lg px-3 py-2 text-sm focus:border-[var(--color-brand-orange)] focus:outline-none"
+            />
+          </div>
+          <div>
+            <label htmlFor="cutoffTime" className="block text-xs text-gray-600 mb-1">
+              Час
+            </label>
+            <input
+              id="cutoffTime"
+              type="time"
+              value={cutoffTime}
+              onChange={(e) => setCutoffTime(e.target.value)}
+              className="w-32 border rounded-lg px-3 py-2 text-sm focus:border-[var(--color-brand-orange)] focus:outline-none"
+            />
+          </div>
+        </div>
+        <p className="text-xs text-gray-400 mt-1">
+          Попълва се автоматично при създаване на нов цикъл и може да се промени за всеки цикъл. Часът е българско време.
+          Не променя вече създадени цикли.
         </p>
       </div>
 

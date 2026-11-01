@@ -55,7 +55,11 @@ export default async function CreateDeliveryCyclePage() {
         Нов цикъл на доставка
       </h1>
 
-      <CreateCycleForm availableDates={availableDates} />
+      <CreateCycleForm
+        availableDates={availableDates}
+        cutoffDaysBefore={config.orderCutoffDaysBefore}
+        cutoffTime={config.orderCutoffTime}
+      />
     </div>
   );
 }

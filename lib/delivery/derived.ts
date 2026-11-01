@@ -61,6 +61,8 @@ export const CYCLE_STATUS_COLORS: Record<DeliveryCycleStatus, string> = {
  * - FIRST_DELIVERY_DATE        → firstDeliveryDate (ISO date or null)
  * - SUBSCRIPTION_ENABLED       → subscriptionEnabled (default true)
  * - REVEALED_BOX_ENABLED       → revealedBoxEnabled (default false)
+ * - ORDER_CUTOFF_DAYS_BEFORE   → orderCutoffDaysBefore (0-14, default 2)
+ * - ORDER_CUTOFF_TIME          → orderCutoffTime (HH:mm, default '14:00')
  */
 export function getDeliveryConfig(
   configMap: Record<string, string | null>,
@@ -82,6 +84,8 @@ export function getDeliveryConfig(
     revealedBoxEnabled:
       configMap.REVEALED_BOX_ENABLED?.toLowerCase() === 'true',
     orderCutoffDisplayDays: parseIntSafe(configMap.ORDER_CUTOFF_DISPLAY_DAYS, 5),
+    orderCutoffDaysBefore: parseCutoffDaysBefore(configMap.ORDER_CUTOFF_DAYS_BEFORE),
+    orderCutoffTime: parseCutoffTime(configMap.ORDER_CUTOFF_TIME),
     cutoffWidgetsEnabled:
       configMap.CUTOFF_WIDGETS_ENABLED?.toLowerCase() !== 'false',
     cutoffBannerEnabled:
@@ -358,23 +362,40 @@ export function formatCutoffAt(isoStr: string): string {
   return `${p.day}.${p.month}.${p.year}, ${p.hour}:${p.minute}`;
 }
 
+export const DEFAULT_CUTOFF_DAYS_BEFORE = 2;
+export const DEFAULT_CUTOFF_TIME = '14:00';
+
 /**
- * Calculate the default cutoff datetime for a given delivery date.
- * Default: delivery_date - 2 days at 14:00 local time.
+ * Calculate the default cutoff datetime for a given delivery date:
+ * `daysBefore` days before delivery at `time` (Bulgarian wall time).
+ * Defaults come from site_config (ORDER_CUTOFF_DAYS_BEFORE / ORDER_CUTOFF_TIME).
  *
- * @returns ISO string suitable for datetime-local input
- * @example calculateDefaultCutoffAt('2026-04-17') → '2026-04-15T14:00'
+ * @returns value suitable for a datetime-local input
+ * @example calculateDefaultCutoffAt('2026-04-17', 2, '14:00') → '2026-04-15T14:00'
  */
-export function calculateDefaultCutoffAt(deliveryDateStr: string): string {
+export function calculateDefaultCutoffAt(
+  deliveryDateStr: string,
+  daysBefore: number = DEFAULT_CUTOFF_DAYS_BEFORE,
+  time: string = DEFAULT_CUTOFF_TIME,
+): string {
   const delivery = parseISODate(deliveryDateStr);
   if (!delivery) return '';
   const cutoff = new Date(delivery);
-  cutoff.setDate(cutoff.getDate() - 2);
-  cutoff.setHours(14, 0, 0, 0);
+  cutoff.setDate(cutoff.getDate() - daysBefore);
   const yyyy = cutoff.getFullYear();
   const mm = String(cutoff.getMonth() + 1).padStart(2, '0');
   const dd = String(cutoff.getDate()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}T14:00`;
+  return `${yyyy}-${mm}-${dd}T${time}`;
+}
+
+function parseCutoffDaysBefore(value: string | null | undefined): number {
+  if (!value || !/^\d+$/.test(value)) return DEFAULT_CUTOFF_DAYS_BEFORE;
+  const days = Number(value);
+  return days <= 14 ? days : DEFAULT_CUTOFF_DAYS_BEFORE;
+}
+
+function parseCutoffTime(value: string | null | undefined): string {
+  return value && /^([01]\d|2[0-3]):[0-5]\d$/.test(value) ? value : DEFAULT_CUTOFF_TIME;
 }
 
 /** Parse a string to int with a fallback default */
