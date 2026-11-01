@@ -138,7 +138,7 @@ export default async function OrdersPage({ searchParams }: OrdersPageProps) {
           {cycleOptions.map((cycle) => {
             const date = new Date(cycle.delivery_date);
             const label = cycle.title
-              ?? date.toLocaleDateString('bg-BG', { month: 'long', year: 'numeric' });
+              ?? date.toLocaleDateString('bg-BG', { timeZone: 'Europe/Sofia', month: 'long', year: 'numeric' });
             const isCurrent = cycle.id === defaultCycleId;
             const statusIcon =
               cycle.status === 'upcoming' ? '🟢' :

@@ -78,7 +78,7 @@ export function CycleDetailView({
   const [description, setDescription] = useState(cycle.description ?? '');
   const [deliveryDate, setDeliveryDate] = useState(cycle.delivery_date);
   const [orderCutoffAt, setOrderCutoffAt] = useState(
-    // Convert ISO to datetime-local format in local timezone (YYYY-MM-DDTHH:MM)
+    // Convert ISO to datetime-local format in Bulgarian time (YYYY-MM-DDTHH:MM)
     cycle.order_cutoff_at ? toSofiaDateTimeLocal(cycle.order_cutoff_at) : '',
   );
   const [isEditing, setIsEditing] = useState(false);
