@@ -1,5 +1,59 @@
 # fitflow
 
+## 1.11.0
+
+### Minor Changes
+
+- 26b9e7f: Make the default order cutoff for new delivery cycles configurable
+
+  The create-cycle form used to pre-fill the order cutoff with a hardcoded „2 days before delivery at 14:00“. „Настройки → Цикли и цени“ now has „Краен срок за поръчки (по подразбиране за нови цикли)“, with days before delivery (0–14, default 2) and a time (default 14:00, Bulgarian time). The create-cycle form pre-fills the cutoff from these values and its hint shows them. The cutoff can still be changed per cycle, and existing cycles are not affected. The settings preview now also shows the default cutoff for the next delivery. It uses the same next-delivery calculation as the server instead of a separate copy.
+
+  Requires migration `20261101130000_add_order_cutoff_default_keys.sql`, which adds the `ORDER_CUTOFF_DAYS_BEFORE` and `ORDER_CUTOFF_TIME` site_config rows. Until it runs, the defaults (2 days, 14:00) are used.
+
+- 26b9e7f: Add Speedy courier pickup from our address to the dispatch panel
+
+  Waybills are now created for courier pickup by default: the sender is only our Speedy contract client, so Speedy collects the parcels from its registered address instead of expecting a drop-off at an office. A new „Заяви куриер (N)“ action in `/admin/dispatch` loads the available pickup days from Speedy (`pickup/terms`), lets the admin pick a date, the latest visit time, contact and phone, and sends one `POST /pickup` for all eligible waybills in the cycle. Requests are stored in the new `speedy_pickup_requests` table, and orders are linked to them through an atomic claim, so a double submit cannot order two couriers. Once a waybill is in a pickup request it shows „🚚 Куриер заявен“ and can no longer be cancelled through the system. Waybills created for office drop-off show an „Офис“ tag, are skipped, and trigger a banner.
+
+  A new „Изпращане и куриер“ section in `/admin/settings/dispatch` sets the sender mode (pickup by default, office drop-off as a fallback), the drop-off office (moved here from the parcel settings), pickup contact, phone, latest visit time and an optional per-visit fee. The fee is informational only and does not change the delivery margin. The shipment routes save the sender mode on each order and accept an optional `pickupDate`. The bulk route now also reports orders whose DB update failed. `/calculate` now sends Speedy's calculation request shape (`serviceIds`, `addressLocation`) instead of reusing the shipment payload, and accepts `senderMode` to compare pickup and drop-off prices.
+
+  Requires migration `20261101120000_add_speedy_pickup_requests.sql`, which adds the table, three `orders` columns, marks existing waybills as `dropoff` and seeds the new `site_config` keys. `supabase/schema.sql` was synced with the earlier Speedy migrations and now includes these objects.
+
+- 26b9e7f: Compare Speedy pickup and drop-off prices per order in the dispatch panel
+
+  A new „Изчисли цени (N)“ button in `/admin/dispatch` runs Speedy's price calculation for every order without a waybill, in both sender modes, without creating anything. The „Марж“ column is split into „Pick up“ and „Drop off“ sub-columns. After the calculation they are highlighted and show the estimated margin per order, with the better option in bold and Speedy errors shown as ⚠ with the reason. A totals row compares both modes for the whole cycle, subtracting the configured pickup visit fee, and shows the total for the selected modes. A warning appears when the cycle would mix pickup and drop-off. Estimates stay in the browser only and are cleared on refresh or cycle change.
+
+  Each order without a waybill has a „Pick up / Drop off“ toggle that preselects the cheaper mode after the calculation. Single and bulk waybill creation now send the chosen mode per order (`senderMode` / `senderModes`), falling back to the configured mode. Once a waybill exists, only its actual margin is shown, under the mode it was created with. The new `POST /api/admin/speedy/calculate/bulk` route prices up to 50 orders per request with limited parallel calls. The order-to-shipment mapping that was copied in three routes now lives in one shared helper.
+
+### Patch Changes
+
+- 26b9e7f: Show all dates and times in Bulgarian time across the app
+
+  The shared formatters in `lib/utils/date.ts` (`formatDateShort`, `formatDateTimeShort`, `formatDateCompact`, `formatDateLong`, `formatDateTimeLong`) used the time zone of wherever they ran. Pages rendered on the server and transactional emails therefore showed UTC times in production. Examples: order, subscription, customer, campaign and feedback timestamps in admin, and order history and tracking for customers. Times were 2–3 hours behind, and dates were a day off between midnight and 02:00/03:00. The formatters now always use Europe/Sofia, so the server, emails and browsers in any time zone show the same wall-clock time.
+
+  The promo code form's start and end fields are now read and filled in as Bulgarian time instead of the browser's time zone, like the delivery cycle cutoff. The cycle dropdown on the admin orders page also formats in Europe/Sofia.
+
+- 26b9e7f: Fix delivery cycle order cutoffs being saved and shown in the server's time zone
+
+  Cutoff times entered when creating a cycle were read in the server's time zone. In production (UTC) a cutoff of 14:00 was saved as 14:00 UTC, so orders stayed open until 16:00 (17:00 in summer) Bulgarian time and the customer banner showed that later time. Admin pages formatted cutoffs on the server too, so they showed UTC hours and hid the difference. Editing a cycle had the opposite mismatch.
+
+  Cutoffs are now always Bulgarian time. The create and update routes read the `datetime-local` value as Europe/Sofia wall time (summer and winter time included), and the edit form sends it unchanged. `formatCutoffAt` (admin cycle list and detail, account subscriptions), the cutoff banner and the edit form show Europe/Sofia time whatever the server or browser time zone. The Sofia time zone helpers moved from the Speedy module to a shared `lib/utils/sofia-time`. Existing cycles created in production may have cutoffs 2–3 hours late and should be checked and re-saved.
+
+- 26b9e7f: Fix suggested delivery dates being one day early outside UTC
+
+  The create-cycle page and `/api/delivery/upcoming` turned calculated delivery dates into text with `toISOString()`, which converts local midnight to UTC first. On a server in Bulgarian time (for example local development) every suggested date was the day before the configured delivery day. Creating a cycle from a suggestion then saved that wrong date, and the „Зает“ check and the default cutoff were based on it. Dates are now formatted from their calendar parts.
+
+  „Today“ in cycle logic now means today in Bulgaria. That covers the upcoming-cycle queries, the current-cycle filter, the cycle status („след N дни“, past or upcoming) and the next-delivery calculation. Before, a UTC server still treated the time between 00:00 and 02:00/03:00 Bulgarian time as the previous day.
+
+- 26b9e7f: Fix Speedy waybill cancellation and add bulk cancel to the dispatch panel
+
+  Cancelling a waybill from `/admin/dispatch` always failed. The request sent `parcels: [{ id }]` with the first parcel id, but Speedy's `shipment/cancel` expects `shipmentId` (the waybill number) and a required `comment`. The error mapping also matched English phrases, while Speedy answers in Bulgarian, so admins saw raw or generic errors. Cancellation now sends `{ shipmentId, comment }`, the Speedy client parses the structured error (`message`, `code`, `id`, `component`) for HTTP errors too, and Speedy messages are mapped to clear Bulgarian texts, including the „заявена за взимане“ case.
+
+  The `window.confirm` prompt is replaced by a modal with an editable reason (default „Анулирана от администратор“, up to 1024 characters). The dispatch table has a checkbox column and an „Анулирай избраните“ toolbar that cancels several waybills in one go through the new `POST /api/admin/speedy/shipment/cancel/bulk` route, followed by a summary of cancelled and failed waybills. The Cancel button and checkbox only show for waybills that can still be cancelled (not delivered, returned, in transit, at an office or already cancelled). Single and bulk cancel share one helper, so validation, DB cleanup and logging stay the same.
+
+- 26b9e7f: Rename the admin menu items for delivery cycles and Speedy dispatch
+
+  The two menu items had near-identical names, which made it easy to open the wrong page. „Доставки“ (`/admin/delivery`, planning delivery cycles) is now „Цикли“, and „Изпращане“ (`/admin/dispatch`, Speedy waybills, labels, courier pickup and tracking) is now „Доставки“. In settings, „Доставки“ is now „Цикли и цени“ and „Изпращане (Speedy)“ is now „Доставки (Speedy)“. Page headings, browser tab titles and the admin docs use the new names. The Speedy page now has its own browser tab title, and the „Първи стъпки“ and „Роли и права“ docs now list it. URLs, routes and access rights are unchanged.
+
 ## 1.10.0
 
 ### Minor Changes
