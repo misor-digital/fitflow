@@ -11,6 +11,10 @@ interface DispatchActionsProps {
   isBulkCreating: boolean;
   pickupEligibleCount: number;
   onRequestPickup: () => void;
+  calculableCount: number;
+  onCalculatePrices: () => void;
+  isCalculating: boolean;
+  calcProgress: { done: number; total: number } | null;
 }
 
 export default function DispatchActions({
@@ -21,6 +25,10 @@ export default function DispatchActions({
   isBulkCreating,
   pickupEligibleCount,
   onRequestPickup,
+  calculableCount,
+  onCalculatePrices,
+  isCalculating,
+  calcProgress,
 }: DispatchActionsProps) {
   const [labelFormat, setLabelFormat] = useState<LabelFormat>('A6');
   const [senderCopy, setSenderCopy] = useState(false);
@@ -59,6 +67,18 @@ export default function DispatchActions({
 
   return (
     <div className="flex flex-wrap gap-3 items-center">
+      {/* Dry-run price calculation (pickup vs drop-off) */}
+      <button
+        onClick={onCalculatePrices}
+        disabled={calculableCount === 0 || isCalculating}
+        title="Изчислява цената от Speedy за всяка поръчка без товарителница при Pick up и Drop off. Нищо не се създава."
+        className="border border-[var(--color-brand-navy)] text-[var(--color-brand-navy)] bg-white px-4 py-2 rounded-lg text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+      >
+        {isCalculating
+          ? `Изчисляване...${calcProgress ? ` (${calcProgress.done}/${calcProgress.total})` : ''}`
+          : `Изчисли цени (${calculableCount})`}
+      </button>
+
       {/* Bulk create waybills */}
       <button
         onClick={onBulkCreate}

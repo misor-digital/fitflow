@@ -3,7 +3,17 @@
 import { useState, useCallback } from 'react';
 import Link from 'next/link';
 import CancelWaybillModal, { type CancelWaybillTarget } from './CancelWaybillModal';
-import { formatPickupPeriod, formatYmdBg, isWaybillCancellable } from '@/lib/constants/speedy';
+import {
+  formatPickupPeriod,
+  formatYmdBg,
+  getCheaperMode,
+  isFinalSpeedyStatus,
+  isWaybillCancellable,
+  SENDER_MODE_LABELS,
+  SENDER_MODES,
+  type OrderCostEstimates,
+  type SenderMode,
+} from '@/lib/constants/speedy';
 
 export interface DispatchOrder {
   id: string;
@@ -36,6 +46,24 @@ export interface DispatchOrder {
 interface DispatchTableProps {
   orders: DispatchOrder[];
   onRefresh: () => void;
+  /** Dry-run price estimates per order (orders without a waybill) */
+  estimates: Record<string, OrderCostEstimates>;
+  /** Configured sender mode, used when no per-order mode is selected */
+  defaultSenderMode: SenderMode;
+  /** Per-order sender mode chosen for waybill creation */
+  selectedModes: Record<string, SenderMode>;
+  onSelectMode: (orderId: string, mode: SenderMode) => void;
+  /** Informational per-visit pickup fee, subtracted from the pickup total */
+  visitFeeEur: number | null;
+}
+
+/** Sender mode an existing waybill was created with (legacy rows were drop-off). */
+function waybillMode(order: DispatchOrder): SenderMode {
+  return order.speedy_sender_mode ?? 'dropoff';
+}
+
+function formatSignedEur(value: number): string {
+  return `${value >= 0 ? '+' : '−'}${Math.abs(value).toFixed(2)} €`;
 }
 
 const METHOD_ICONS: Record<string, string> = {
@@ -50,7 +78,15 @@ const METHOD_LABELS: Record<string, string> = {
   address: 'Адрес',
 };
 
-export default function DispatchTable({ orders, onRefresh }: DispatchTableProps) {
+export default function DispatchTable({
+  orders,
+  onRefresh,
+  estimates,
+  defaultSenderMode,
+  selectedModes,
+  onSelectMode,
+  visitFeeEur,
+}: DispatchTableProps) {
   const [creatingId, setCreatingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
@@ -94,14 +130,14 @@ export default function DispatchTable({ orders, onRefresh }: DispatchTableProps)
     onRefresh();
   }, [onRefresh]);
 
-  const handleCreateSingle = useCallback(async (orderId: string) => {
+  const handleCreateSingle = useCallback(async (orderId: string, senderMode: SenderMode) => {
     setCreatingId(orderId);
     setError(null);
     try {
       const res = await fetch('/api/admin/speedy/shipment', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId }),
+        body: JSON.stringify({ orderId, senderMode }),
       });
       if (!res.ok) {
         const data = await res.json();
@@ -144,6 +180,109 @@ export default function DispatchTable({ orders, onRefresh }: DispatchTableProps)
     return `Куриер заявен за ${formatYmdBg(pickup.pickup_date)}${period ? `, ${period}` : ''}`;
   }
 
+  // ---------- Price comparison ----------
+
+  const pricesCalculated = Object.keys(estimates).length > 0;
+  const highlight = pricesCalculated ? 'bg-amber-50' : '';
+
+  function modeFor(order: DispatchOrder): SenderMode {
+    return selectedModes[order.id] ?? defaultSenderMode;
+  }
+
+  const pendingOrders = orders.filter((o) => !o.speedy_waybill_id);
+  const estimatedPending = pendingOrders.filter((o) => estimates[o.id]);
+
+  function sumMargins(pick: (order: DispatchOrder) => SenderMode) {
+    let sum = 0;
+    let missing = 0;
+    for (const o of estimatedPending) {
+      const est = estimates[o.id][pick(o)];
+      if (est.ok) sum += est.marginEur;
+      else missing++;
+    }
+    return { sum: Math.round(sum * 100) / 100, missing };
+  }
+
+  const fee = visitFeeEur ?? 0;
+  const pickupTotal = sumMargins(() => 'pickup');
+  const dropoffTotal = sumMargins(() => 'dropoff');
+  const pickupNet = Math.round((pickupTotal.sum - fee) * 100) / 100;
+  const selectedTotal = sumMargins(modeFor);
+  const anySelectedPickup = estimatedPending.some((o) => modeFor(o) === 'pickup');
+  const selectedNet = Math.round((selectedTotal.sum - (anySelectedPickup ? fee : 0)) * 100) / 100;
+  const betterTotal: SenderMode | null =
+    pickupNet === dropoffTotal.sum ? null : pickupNet > dropoffTotal.sum ? 'pickup' : 'dropoff';
+
+  // Mixing modes means both a courier visit and an office trip
+  const modesInUse = new Set<SenderMode>([
+    ...pendingOrders.map(modeFor),
+    ...orders
+      .filter((o) => o.speedy_waybill_id && !isFinalSpeedyStatus(o.speedy_status))
+      .map(waybillMode),
+  ]);
+  const mixedModes = modesInUse.size > 1;
+
+  function renderMarginCell(order: DispatchOrder, mode: SenderMode) {
+    const base = `p-2 text-right ${highlight}`;
+
+    if (order.speedy_waybill_id) {
+      if (waybillMode(order) !== mode) return <td key={mode} className={base} />;
+      const margin = getMargin(order);
+      return (
+        <td key={mode} className={base}>
+          {margin != null ? (
+            <span className={Number(margin) >= 0 ? 'text-green-600' : 'text-red-600'}>
+              {margin} €
+            </span>
+          ) : '—'}
+        </td>
+      );
+    }
+
+    const orderEstimates = estimates[order.id];
+    const est = orderEstimates?.[mode];
+    if (!est) return <td key={mode} className={`${base} text-gray-400`}>—</td>;
+    if (!est.ok) {
+      return (
+        <td key={mode} className={base}>
+          <span className="text-amber-600 cursor-help" title={est.error}>⚠</span>
+        </td>
+      );
+    }
+
+    const isBetter = getCheaperMode(orderEstimates, defaultSenderMode) === mode;
+    return (
+      <td key={mode} className={base} title={`Оценка: цена ${est.costEur.toFixed(2)} €`}>
+        <span
+          className={`italic ${est.marginEur >= 0 ? 'text-green-600' : 'text-red-600'} ${
+            isBetter ? 'font-bold' : 'opacity-50'
+          }`}
+        >
+          ≈ {formatSignedEur(est.marginEur)}
+        </span>
+      </td>
+    );
+  }
+
+  function renderTotalCell(mode: SenderMode) {
+    const total = mode === 'pickup' ? pickupNet : dropoffTotal.sum;
+    const missing = mode === 'pickup' ? pickupTotal.missing : dropoffTotal.missing;
+    return (
+      <td key={mode} className={`p-2 text-right ${highlight}`}>
+        <span
+          className={`italic ${total >= 0 ? 'text-green-600' : 'text-red-600'} ${
+            betterTotal === mode ? 'font-bold' : betterTotal ? 'opacity-50' : ''
+          }`}
+        >
+          ≈ {formatSignedEur(total)}
+        </span>
+        {missing > 0 && (
+          <span className="block text-[10px] font-normal text-amber-600">{missing} без оценка</span>
+        )}
+      </td>
+    );
+  }
+
   return (
     <div>
       {error && (
@@ -171,11 +310,17 @@ export default function DispatchTable({ orders, onRefresh }: DispatchTableProps)
         </div>
       )}
 
+      {mixedModes && pendingOrders.length > 0 && (
+        <div className="bg-amber-50 border border-amber-200 text-amber-800 px-4 py-2 rounded-lg text-sm mb-3">
+          ⚠ Смесени режими — ще е нужен и куриер (Pick up), и посещение в офис (Drop off).
+        </div>
+      )}
+
       <div className="overflow-x-auto">
         <table className="w-full text-sm border-collapse">
           <thead>
             <tr className="bg-gray-100 text-left">
-              <th className="p-2 border-b w-8">
+              <th rowSpan={2} className="p-2 border-b w-8">
                 <input
                   type="checkbox"
                   aria-label="Избери всички товарителници за анулиране"
@@ -187,22 +332,38 @@ export default function DispatchTable({ orders, onRefresh }: DispatchTableProps)
                   disabled={cancellableOrders.length === 0}
                 />
               </th>
-              <th className="p-2 border-b font-semibold">Поръчка</th>
-              <th className="p-2 border-b font-semibold">Клиент</th>
-              <th className="p-2 border-b font-semibold">Метод</th>
-              <th className="p-2 border-b font-semibold">Дестинация</th>
-              <th className="p-2 border-b font-semibold">Статус</th>
-              <th className="p-2 border-b font-semibold">Товарителница</th>
-              <th className="p-2 border-b font-semibold text-right">Такса</th>
-              <th className="p-2 border-b font-semibold text-right">Реална цена</th>
-              <th className="p-2 border-b font-semibold text-right">Марж</th>
-              <th className="p-2 border-b font-semibold">Действие</th>
+              <th rowSpan={2} className="p-2 border-b font-semibold">Поръчка</th>
+              <th rowSpan={2} className="p-2 border-b font-semibold">Клиент</th>
+              <th rowSpan={2} className="p-2 border-b font-semibold">Метод</th>
+              <th rowSpan={2} className="p-2 border-b font-semibold">Дестинация</th>
+              <th rowSpan={2} className="p-2 border-b font-semibold">Статус</th>
+              <th rowSpan={2} className="p-2 border-b font-semibold">Товарителница</th>
+              <th rowSpan={2} className="p-2 border-b font-semibold text-right">Такса</th>
+              <th rowSpan={2} className="p-2 border-b font-semibold text-right">Реална цена</th>
+              <th
+                colSpan={2}
+                className={`p-2 border-b font-semibold text-center ${pricesCalculated ? 'bg-amber-100' : ''}`}
+              >
+                Марж
+              </th>
+              <th rowSpan={2} className="p-2 border-b font-semibold">Действие</th>
+            </tr>
+            <tr className="bg-gray-100">
+              {SENDER_MODES.map((mode) => (
+                <th
+                  key={mode}
+                  className={`px-2 pb-2 border-b text-xs font-semibold text-right whitespace-nowrap ${
+                    pricesCalculated ? 'bg-amber-100' : ''
+                  }`}
+                >
+                  {mode === 'pickup' ? '🚚' : '🏢'} {SENDER_MODE_LABELS[mode]}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
             {orders.map((order) => {
               const hasWaybill = !!order.speedy_waybill_id;
-              const margin = getMargin(order);
               const cancellable = isWaybillCancellable(order);
               return (
                 <tr key={order.id} className="hover:bg-gray-50 border-b">
@@ -304,22 +465,43 @@ export default function DispatchTable({ orders, onRefresh }: DispatchTableProps)
                       ? `${order.delivery_fee_actual_eur.toFixed(2)} €`
                       : '—'}
                   </td>
-                  <td className="p-2 text-right">
-                    {margin != null ? (
-                      <span className={Number(margin) >= 0 ? 'text-green-600' : 'text-red-600'}>
-                        {margin} €
-                      </span>
-                    ) : '—'}
-                  </td>
+                  {SENDER_MODES.map((mode) => renderMarginCell(order, mode))}
                   <td className="p-2">
                     {!hasWaybill && (
-                      <button
-                        onClick={() => handleCreateSingle(order.id)}
-                        disabled={creatingId === order.id}
-                        className="text-xs bg-[var(--color-brand-orange)] text-white px-2 py-1 rounded font-semibold disabled:opacity-50"
-                      >
-                        {creatingId === order.id ? '...' : 'Създай'}
-                      </button>
+                      <span className="inline-flex items-center gap-2">
+                        <span
+                          role="radiogroup"
+                          aria-label={`Начин на предаване за ${order.order_number}`}
+                          className="inline-flex rounded border overflow-hidden text-[10px] font-semibold whitespace-nowrap"
+                        >
+                          {SENDER_MODES.map((mode) => {
+                            const selected = modeFor(order) === mode;
+                            return (
+                              <button
+                                key={mode}
+                                type="button"
+                                role="radio"
+                                aria-checked={selected}
+                                onClick={() => onSelectMode(order.id, mode)}
+                                className={`px-1.5 py-0.5 ${
+                                  selected
+                                    ? 'bg-[var(--color-brand-navy)] text-white'
+                                    : 'bg-white text-gray-600 hover:bg-gray-50'
+                                }`}
+                              >
+                                {SENDER_MODE_LABELS[mode]}
+                              </button>
+                            );
+                          })}
+                        </span>
+                        <button
+                          onClick={() => handleCreateSingle(order.id, modeFor(order))}
+                          disabled={creatingId === order.id}
+                          className="text-xs bg-[var(--color-brand-orange)] text-white px-2 py-1 rounded font-semibold disabled:opacity-50"
+                        >
+                          {creatingId === order.id ? '...' : 'Създай'}
+                        </button>
+                      </span>
                     )}
                     {cancellable && (
                       <button
@@ -334,6 +516,27 @@ export default function DispatchTable({ orders, onRefresh }: DispatchTableProps)
               );
             })}
           </tbody>
+          {estimatedPending.length > 0 && (
+            <tfoot>
+              <tr className="bg-gray-50 border-t-2 font-semibold">
+                <td colSpan={9} className="p-2 text-right text-xs">
+                  Общо за {estimatedPending.length} чакащи (оценка)
+                  {fee > 0 && (
+                    <span className="block font-normal text-gray-500">
+                      Pick up включва такса посещение −{fee.toFixed(2)} €
+                    </span>
+                  )}
+                </td>
+                {SENDER_MODES.map(renderTotalCell)}
+                <td className="p-2 text-xs whitespace-nowrap">
+                  Избрано:{' '}
+                  <span className={`italic ${selectedNet >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                    ≈ {formatSignedEur(selectedNet)}
+                  </span>
+                </td>
+              </tr>
+            </tfoot>
+          )}
         </table>
       </div>
 
