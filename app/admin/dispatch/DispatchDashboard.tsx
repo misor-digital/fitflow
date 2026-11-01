@@ -47,20 +47,29 @@ export default function DispatchDashboard({ cycles, defaultCycleId }: DispatchDa
   const [isCalculating, setIsCalculating] = useState(false);
   const [calcProgress, setCalcProgress] = useState<{ done: number; total: number } | null>(null);
   const [calcError, setCalcError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const fetchOrders = useCallback(async () => {
     if (!selectedCycleId) return;
     setLoading(true);
+    setLoadError(null);
     try {
       const res = await fetch(`/api/admin/speedy/dispatch?cycleId=${selectedCycleId}`);
-      if (res.ok) {
-        const data = await res.json();
-        setOrders(data.orders ?? []);
-        if (data.senderMode === 'pickup' || data.senderMode === 'dropoff') {
-          setDefaultSenderMode(data.senderMode);
-        }
-        setVisitFeeEur(typeof data.visitFeeEur === 'number' ? data.visitFeeEur : null);
+      if (!res.ok) {
+        const json = await res.json().catch(() => null);
+        setOrders([]);
+        setLoadError(json?.error ?? `Грешка при зареждане на поръчките (${res.status}).`);
+        return;
       }
+      const data = await res.json();
+      setOrders(data.orders ?? []);
+      if (data.senderMode === 'pickup' || data.senderMode === 'dropoff') {
+        setDefaultSenderMode(data.senderMode);
+      }
+      setVisitFeeEur(typeof data.visitFeeEur === 'number' ? data.visitFeeEur : null);
+    } catch {
+      setOrders([]);
+      setLoadError('Мрежова грешка при зареждане на поръчките.');
     } finally {
       setLoading(false);
     }
@@ -294,6 +303,10 @@ export default function DispatchDashboard({ cycles, defaultCycleId }: DispatchDa
       {/* Table */}
       {loading ? (
         <div className="text-center py-8 text-gray-500">Зареждане...</div>
+      ) : loadError ? (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+          {loadError}
+        </div>
       ) : (
         <DispatchTable
           orders={orders}

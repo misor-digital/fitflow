@@ -6,13 +6,16 @@ export const DEFAULT_CANCEL_COMMENT = 'Анулирана от админист�
 export const CANCEL_COMMENT_MAX = 1024;
 export const BULK_CANCEL_MAX = 200;
 
-/** speedy_status values for which cancellation is never attempted */
+/**
+ * speedy_status values for which cancellation is never attempted.
+ * 'canceled' is not listed: a row still holding a waybill with that status was
+ * cancelled in the Speedy portal, and „Анулирай“ only clears our data.
+ */
 export const NON_CANCELLABLE_STATUSES = [
   'delivered',
   'returned',
   'destroyed',
   'theft',
-  'canceled',
   'closed',
   'in_transit',
   'at_office',

@@ -35,6 +35,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     if (error) {
       console.error('Failed to fetch dispatch orders:', error);
+      // 42703 = unknown column, PGRST200 = unknown relationship → a migration has not been applied
+      if (error.code === '42703' || error.code === 'PGRST200') {
+        return NextResponse.json(
+          { error: 'Базата данни не е обновена (липсва миграция). Изпълнете чакащите миграции в Supabase.' },
+          { status: 500 },
+        );
+      }
       return NextResponse.json({ error: 'Грешка при извличане на поръчки.' }, { status: 500 });
     }
 
