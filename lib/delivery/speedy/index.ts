@@ -69,5 +69,7 @@ export {
   trackParcelFull,
 } from './tracking';
 
-export type { CancellationResult } from './cancellation';
-export { cancelWaybill } from './cancellation';
+export type { CancelOrderWaybillResult, CancelOrderWaybillFailureReason, CancelActor } from './cancellation';
+export { cancelWaybill, cancelOrderWaybill, normalizeCancelComment } from './cancellation';
+
+export { mapCancelError } from './errors';

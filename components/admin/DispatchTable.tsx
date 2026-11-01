@@ -2,6 +2,8 @@
 
 import { useState, useCallback } from 'react';
 import Link from 'next/link';
+import CancelWaybillModal, { type CancelWaybillTarget } from './CancelWaybillModal';
+import { isWaybillCancellable } from '@/lib/constants/speedy';
 
 interface DispatchOrder {
   id: string;
@@ -41,34 +43,46 @@ const METHOD_LABELS: Record<string, string> = {
 
 export default function DispatchTable({ orders, onRefresh }: DispatchTableProps) {
   const [creatingId, setCreatingId] = useState<string | null>(null);
-  const [cancelingId, setCancelingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+  const [cancelTargets, setCancelTargets] = useState<CancelWaybillTarget[] | null>(null);
+  const [prevOrders, setPrevOrders] = useState(orders);
 
-  const handleCancelWaybill = useCallback(async (orderId: string, waybillId: string) => {
-    const confirmed = window.confirm(
-      `Сигурни ли сте, че искате да анулирате товарителница ${waybillId}? Това е възможно само ако пратката НЕ е взета от куриер.`,
-    );
-    if (!confirmed) return;
+  // Reset selection when the order list changes (cycle switch / refresh)
+  if (orders !== prevOrders) {
+    setPrevOrders(orders);
+    setSelectedIds(new Set());
+  }
 
-    setCancelingId(orderId);
-    setError(null);
-    try {
-      const res = await fetch('/api/admin/speedy/shipment/cancel', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderId }),
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || 'Грешка при анулиране.');
-      } else {
-        onRefresh();
-      }
-    } catch {
-      setError('Грешка при анулиране на товарителницата.');
-    } finally {
-      setCancelingId(null);
-    }
+  const cancellableOrders = orders.filter((o) => isWaybillCancellable(o));
+  const selectedCancellable = cancellableOrders.filter((o) => selectedIds.has(o.id));
+  const allSelected = cancellableOrders.length > 0 && selectedCancellable.length === cancellableOrders.length;
+  const someSelected = selectedCancellable.length > 0 && !allSelected;
+
+  function toCancelTarget(order: DispatchOrder): CancelWaybillTarget {
+    return {
+      orderId: order.id,
+      orderNumber: order.order_number,
+      waybillId: order.speedy_waybill_id!,
+    };
+  }
+
+  function toggleSelected(orderId: string) {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(orderId)) next.delete(orderId);
+      else next.add(orderId);
+      return next;
+    });
+  }
+
+  function toggleAll() {
+    setSelectedIds(allSelected ? new Set() : new Set(cancellableOrders.map((o) => o.id)));
+  }
+
+  const handleCancelDone = useCallback(() => {
+    setSelectedIds(new Set());
+    onRefresh();
   }, [onRefresh]);
 
   const handleCreateSingle = useCallback(async (orderId: string) => {
@@ -114,10 +128,41 @@ export default function DispatchTable({ orders, onRefresh }: DispatchTableProps)
         </div>
       )}
 
+      {selectedCancellable.length > 0 && (
+        <div className="flex flex-wrap items-center gap-3 mb-3">
+          <button
+            type="button"
+            onClick={() => setCancelTargets(selectedCancellable.map(toCancelTarget))}
+            className="text-sm bg-red-600 text-white px-3 py-1.5 rounded-lg font-semibold hover:opacity-90 transition-opacity"
+          >
+            Анулирай избраните ({selectedCancellable.length})
+          </button>
+          <button
+            type="button"
+            onClick={() => setSelectedIds(new Set())}
+            className="text-sm text-gray-600 hover:text-gray-800"
+          >
+            Изчисти избора
+          </button>
+        </div>
+      )}
+
       <div className="overflow-x-auto">
         <table className="w-full text-sm border-collapse">
           <thead>
             <tr className="bg-gray-100 text-left">
+              <th className="p-2 border-b w-8">
+                <input
+                  type="checkbox"
+                  aria-label="Избери всички товарителници за анулиране"
+                  checked={allSelected}
+                  ref={(el) => {
+                    if (el) el.indeterminate = someSelected;
+                  }}
+                  onChange={toggleAll}
+                  disabled={cancellableOrders.length === 0}
+                />
+              </th>
               <th className="p-2 border-b font-semibold">Поръчка</th>
               <th className="p-2 border-b font-semibold">Клиент</th>
               <th className="p-2 border-b font-semibold">Метод</th>
@@ -134,8 +179,18 @@ export default function DispatchTable({ orders, onRefresh }: DispatchTableProps)
             {orders.map((order) => {
               const hasWaybill = !!order.speedy_waybill_id;
               const margin = getMargin(order);
+              const cancellable = isWaybillCancellable(order);
               return (
                 <tr key={order.id} className="hover:bg-gray-50 border-b">
+                  <td className="p-2">
+                    <input
+                      type="checkbox"
+                      aria-label={`Избери ${order.order_number}`}
+                      checked={cancellable && selectedIds.has(order.id)}
+                      onChange={() => toggleSelected(order.id)}
+                      disabled={!cancellable}
+                    />
+                  </td>
                   <td className="p-2 font-mono text-xs">
                     <Link
                       href={`/admin/orders?search=${encodeURIComponent(order.order_number)}`}
@@ -222,13 +277,12 @@ export default function DispatchTable({ orders, onRefresh }: DispatchTableProps)
                         {creatingId === order.id ? '...' : 'Създай'}
                       </button>
                     )}
-                    {hasWaybill && order.speedy_status !== 'delivered' && (
+                    {cancellable && (
                       <button
-                        onClick={() => handleCancelWaybill(order.id, order.speedy_waybill_id!)}
-                        disabled={cancelingId === order.id}
+                        onClick={() => setCancelTargets([toCancelTarget(order)])}
                         className="text-xs bg-red-600 text-white px-2 py-1 rounded font-semibold disabled:opacity-50"
                       >
-                        {cancelingId === order.id ? '...' : 'Анулирай'}
+                        Анулирай
                       </button>
                     )}
                   </td>
@@ -241,6 +295,14 @@ export default function DispatchTable({ orders, onRefresh }: DispatchTableProps)
 
       {orders.length === 0 && (
         <p className="text-center text-gray-500 py-8">Няма поръчки за този цикъл.</p>
+      )}
+
+      {cancelTargets && (
+        <CancelWaybillModal
+          waybills={cancelTargets}
+          onClose={() => setCancelTargets(null)}
+          onDone={handleCancelDone}
+        />
       )}
     </div>
   );

@@ -28,8 +28,10 @@ export interface SpeedyRequestBase {
 export interface SpeedyErrorBody {
   error: {
     message: string;
-    context: string;
-    id?: number;
+    context?: string;
+    id?: string;
+    code?: number;
+    component?: string;
   };
 }
 
@@ -269,8 +271,8 @@ export interface TrackResponse {
 // ============================================================================
 
 export interface CancelShipmentParams {
-  parcels: Array<{ id: string }>;
-  comment?: string;
+  shipmentId: string;
+  comment: string;
 }
 
 // ============================================================================

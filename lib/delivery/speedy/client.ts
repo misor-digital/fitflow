@@ -21,6 +21,7 @@ import type {
   TrackParams,
   TrackResponse,
   CancelShipmentParams,
+  SpeedyErrorBody,
   ContractClientsResponse,
   DestinationServicesParams,
   DestinationServicesResponse,
@@ -36,15 +37,29 @@ const SPEEDY_API_BASE = 'https://api.speedy.bg/v1';
 // Error Class
 // ============================================================================
 
+export interface SpeedyApiErrorDetails {
+  code?: number;
+  errorId?: string;
+  component?: string;
+}
+
 export class SpeedyApiError extends Error {
+  public readonly code?: number;
+  public readonly errorId?: string;
+  public readonly component?: string;
+
   constructor(
     message: string,
     public readonly statusCode: number,
     public readonly responseBody: string,
-    public readonly context?: string
+    public readonly context?: string,
+    details: SpeedyApiErrorDetails = {}
   ) {
     super(message);
     this.name = 'SpeedyApiError';
+    this.code = details.code;
+    this.errorId = details.errorId;
+    this.component = details.component;
   }
 }
 
@@ -59,6 +74,33 @@ function getCredentials(): SpeedyCredentials {
     throw new Error('Missing SPEEDY_USERNAME or SPEEDY_PASSWORD env vars');
   }
   return { userName, password };
+}
+
+function toErrorDetails(error: SpeedyErrorBody['error']): SpeedyApiErrorDetails {
+  return {
+    code: typeof error.code === 'number' ? error.code : undefined,
+    errorId: error.id != null ? String(error.id) : undefined,
+    component: error.component,
+  };
+}
+
+/** Build a SpeedyApiError from a non-2xx response, using the Speedy error object when present. */
+function buildHttpError(status: number, rawBody: string): SpeedyApiError {
+  try {
+    const parsed = JSON.parse(rawBody) as Partial<SpeedyErrorBody>;
+    if (parsed?.error?.message) {
+      return new SpeedyApiError(
+        parsed.error.message,
+        status,
+        rawBody,
+        parsed.error.context,
+        toErrorDetails(parsed.error)
+      );
+    }
+  } catch {
+    // Not JSON — fall through
+  }
+  return new SpeedyApiError(`Speedy API error (${status})`, status, rawBody);
 }
 
 /**
@@ -85,23 +127,20 @@ async function speedyRequest<TRes>(
   });
 
   if (!response.ok) {
-    const errorBody = await response.text();
-    throw new SpeedyApiError(
-      `Speedy API error (${response.status}): ${errorBody}`,
-      response.status,
-      errorBody
-    );
+    throw buildHttpError(response.status, await response.text());
   }
 
   const json = await response.json();
 
   // Speedy sometimes returns 200 with an error object in the body
   if (json.error) {
+    const error = json.error as SpeedyErrorBody['error'];
     throw new SpeedyApiError(
-      json.error.message || 'Unknown Speedy API error',
+      error.message || 'Unknown Speedy API error',
       200,
-      JSON.stringify(json.error),
-      json.error.context
+      JSON.stringify(error),
+      error.context,
+      toErrorDetails(error)
     );
   }
 
@@ -130,12 +169,7 @@ async function speedyBinaryRequest(
   });
 
   if (!response.ok) {
-    const errorBody = await response.text();
-    throw new SpeedyApiError(
-      `Speedy API error (${response.status})`,
-      response.status,
-      errorBody
-    );
+    throw buildHttpError(response.status, await response.text());
   }
 
   return response.arrayBuffer();
@@ -203,7 +237,7 @@ export async function trackParcels(
   );
 }
 
-/** Cancel a shipment by parcel IDs. */
+/** Cancel a shipment by shipment (waybill) id. */
 export async function cancelShipment(
   params: CancelShipmentParams
 ): Promise<void> {
