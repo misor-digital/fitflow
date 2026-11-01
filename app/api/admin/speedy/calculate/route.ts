@@ -3,8 +3,8 @@ import { verifySession } from '@/lib/auth/dal';
 import { STAFF_MANAGEMENT_ROLES } from '@/lib/auth/permissions';
 import { getOrderById } from '@/lib/data';
 import { calculateShipment, SpeedyApiError } from '@/lib/delivery/speedy';
-import { buildShipmentRequest } from '@/lib/delivery/speedy/shipments';
-import { bgnToEur } from '@/lib/delivery/speedy/config';
+import { buildCalculationRequest, loadParcelConfig } from '@/lib/delivery/speedy/shipments';
+import { bgnToEur, getSpeedySenderConfig } from '@/lib/delivery/speedy/config';
 import type { OrderForShipment } from '@/lib/delivery/speedy';
 import type { ShippingAddressSnapshot } from '@/lib/supabase/types';
 
@@ -12,7 +12,7 @@ import type { ShippingAddressSnapshot } from '@/lib/supabase/types';
  * POST /api/admin/speedy/calculate
  *
  * Admin-only. Preview Speedy shipping cost for an order without creating a waybill.
- * Body: { orderId: string }
+ * Body: { orderId: string, senderMode?: 'pickup' | 'dropoff' } (defaults to the configured mode)
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
@@ -25,10 +25,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     const body = await request.json();
-    const { orderId } = body as { orderId?: string };
+    const { orderId, senderMode: requestedMode } = body as { orderId?: string; senderMode?: unknown };
 
     if (!orderId || typeof orderId !== 'string') {
       return NextResponse.json({ error: 'Полето orderId е задължително.' }, { status: 400 });
+    }
+
+    if (requestedMode !== undefined && requestedMode !== 'pickup' && requestedMode !== 'dropoff') {
+      return NextResponse.json({ error: "senderMode трябва да е 'pickup' или 'dropoff'." }, { status: 400 });
     }
 
     const order = await getOrderById(orderId);
@@ -62,12 +66,21 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       deliveryFeeEur: Number(order.delivery_fee_eur) || 0,
     };
 
-    const params = await buildShipmentRequest(orderForShipment);
+    const senderMode = requestedMode ?? (await getSpeedySenderConfig()).senderMode;
+    const parcel = await loadParcelConfig();
+    const params = await buildCalculationRequest(orderForShipment, parcel, { senderMode });
     const calcResult = await calculateShipment(params);
 
     const calculation = calcResult.calculations[0];
     if (!calculation) {
       return NextResponse.json({ error: 'Няма калкулация от Speedy.' }, { status: 502 });
+    }
+
+    if (calculation.error) {
+      return NextResponse.json(
+        { error: `Speedy API грешка: ${calculation.error.message}`, senderMode },
+        { status: 502 },
+      );
     }
 
     const costEur = calculation.price.currency === 'BGN'
@@ -76,6 +89,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     return NextResponse.json({
       serviceId: calculation.serviceId,
+      senderMode,
       price: calculation.price,
       costEur,
       deliveryDeadline: calculation.deliveryDeadline,

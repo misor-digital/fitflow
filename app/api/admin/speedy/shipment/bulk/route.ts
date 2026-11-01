@@ -4,6 +4,7 @@ import { STAFF_MANAGEMENT_ROLES } from '@/lib/auth/permissions';
 import { supabaseAdmin } from '@/lib/supabase/admin';
 import { createWaybillForOrder, SpeedyApiError } from '@/lib/delivery/speedy';
 import { bgnToEur } from '@/lib/delivery/speedy/config';
+import { isValidYmd, todaySofia } from '@/lib/delivery/speedy/dates';
 import type { OrderForShipment } from '@/lib/delivery/speedy';
 import type { OrderRow, ShippingAddressSnapshot } from '@/lib/supabase/types';
 
@@ -20,7 +21,7 @@ interface BulkResultItem {
  * POST /api/admin/speedy/shipment/bulk
  *
  * Admin-only. Bulk create Speedy waybills for orders in a cycle.
- * Body: { cycleId: string } or { orderIds: string[] }
+ * Body: { cycleId: string } or { orderIds: string[] }, optional pickupDate: 'YYYY-MM-DD'
  * Processes sequentially to avoid rate limits.
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
@@ -34,10 +35,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     const body = await request.json();
-    const { cycleId, orderIds } = body as { cycleId?: string; orderIds?: string[] };
+    const { cycleId, orderIds, pickupDate } = body as {
+      cycleId?: string;
+      orderIds?: string[];
+      pickupDate?: unknown;
+    };
 
     if (!cycleId && !orderIds) {
       return NextResponse.json({ error: 'Задължително е cycleId или orderIds.' }, { status: 400 });
+    }
+
+    if (pickupDate !== undefined && (!isValidYmd(pickupDate) || pickupDate < todaySofia())) {
+      return NextResponse.json({ error: 'Невалидна дата за взимане.' }, { status: 400 });
     }
 
     // Fetch orders that need waybills
@@ -103,23 +112,44 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           deliveryFeeEur: Number(order.delivery_fee_eur) || 0,
         };
 
-        const result = await createWaybillForOrder(orderForShipment);
+        const result = await createWaybillForOrder(orderForShipment, {
+          pickupDate: typeof pickupDate === 'string' ? pickupDate : undefined,
+        });
 
         const actualCostEur = result.actualCost.currency === 'BGN'
           ? bgnToEur(result.actualCost.total)
           : Math.round(result.actualCost.total * 100) / 100;
 
         // Update order in DB
-        await supabaseAdmin
+        const { error: updateError } = await supabaseAdmin
           .from('orders')
           .update({
             speedy_waybill_id: result.waybillId,
             speedy_parcel_ids: result.parcelIds,
             speedy_created_at: new Date().toISOString(),
             speedy_status: 'created',
+            speedy_sender_mode: result.senderMode,
             delivery_fee_actual_eur: actualCostEur,
           })
           .eq('id', order.id);
+
+        if (updateError) {
+          console.error('Failed to update order with waybill data (bulk):', {
+            orderId: order.id,
+            waybillId: result.waybillId,
+            error: updateError,
+          });
+          results.push({
+            orderId: order.id,
+            orderNumber: order.order_number,
+            status: 'failed',
+            waybillId: result.waybillId,
+            error: `Товарителница ${result.waybillId} е създадена, но записът в базата не е обновен.`,
+            actualCostEur,
+          });
+          failed++;
+          continue;
+        }
 
         results.push({
           orderId: order.id,

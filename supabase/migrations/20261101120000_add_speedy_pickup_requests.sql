@@ -42,5 +42,10 @@ UPDATE orders SET speedy_sender_mode = 'dropoff' WHERE speedy_waybill_id IS NOT 
 
 INSERT INTO site_config (key, value) VALUES
   ('SPEEDY_SENDER_MODE', 'pickup'),
-  ('SPEEDY_PICKUP_VISIT_END_TIME', '17:00')
+  ('SPEEDY_PICKUP_VISIT_END_TIME', '17:00'),
+  -- Empty placeholders: updateDeliveryConfig only updates existing rows
+  ('SPEEDY_PICKUP_CONTACT_NAME', ''),
+  ('SPEEDY_PICKUP_PHONE', ''),
+  ('SPEEDY_PICKUP_VISIT_FEE_EUR', ''),
+  ('SPEEDY_DROPOFF_OFFICE_ID', '')
 ON CONFLICT (key) DO NOTHING;

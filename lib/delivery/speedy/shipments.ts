@@ -10,7 +10,17 @@ import 'server-only';
 import { createShipment } from './client';
 import { getSpeedySenderConfig } from './config';
 import { getDeliveryConfigMap } from '@/lib/data';
-import type { CreateShipmentParams, ShipmentParty, SpeedyAddress } from './types';
+import type { SpeedySenderMode } from '@/lib/supabase/types';
+import type {
+  CalculateParams,
+  CalculationRecipient,
+  CreateShipmentParams,
+  ShipmentAdditionalServices,
+  ShipmentContent,
+  ShipmentParty,
+  ShipmentPayment,
+  SpeedyAddress,
+} from './types';
 
 // ============================================================================
 // Types
@@ -54,6 +64,17 @@ export interface WaybillResult {
     total: number;
     currency: string;
   };
+  senderMode: SpeedySenderMode;
+}
+
+export interface ShipmentRequestOptions {
+  /** yyyy-MM-dd; when set, Speedy plans the pickup for this date */
+  pickupDate?: string;
+}
+
+export interface CalculationRequestOptions {
+  /** Override the configured sender mode (e.g. to compare pickup vs drop-off prices) */
+  senderMode?: SpeedySenderMode;
 }
 
 // ============================================================================
@@ -100,9 +121,12 @@ async function getParcelConfig(): Promise<ParcelConfig> {
 /**
  * Create a Speedy waybill for a single FitFlow order.
  */
-export async function createWaybillForOrder(order: OrderForShipment): Promise<WaybillResult> {
+export async function createWaybillForOrder(
+  order: OrderForShipment,
+  opts: ShipmentRequestOptions = {},
+): Promise<WaybillResult> {
   const parcel = await getParcelConfig();
-  const params = await buildShipmentRequest(order, parcel);
+  const params = await buildShipmentRequest(order, parcel, opts);
   const response = await createShipment(params);
 
   return {
@@ -111,64 +135,128 @@ export async function createWaybillForOrder(order: OrderForShipment): Promise<Wa
     pickupDate: response.pickupDate,
     deliveryDeadline: response.deliveryDeadline,
     actualCost: response.price,
+    // sender without dropoffOfficeId means courier pickup from the contract client's address
+    senderMode: params.sender.dropoffOfficeId ? 'dropoff' : 'pickup',
   };
 }
 
 /**
  * Build Speedy shipment params from a FitFlow order.
  */
-export async function buildShipmentRequest(order: OrderForShipment, parcel: ParcelConfig = FALLBACK_PARCEL): Promise<CreateShipmentParams> {
+export async function buildShipmentRequest(
+  order: OrderForShipment,
+  parcel: ParcelConfig = FALLBACK_PARCEL,
+  opts: ShipmentRequestOptions = {},
+): Promise<CreateShipmentParams> {
   const config = await getSpeedySenderConfig();
   const recipient = buildRecipient(order);
 
-  // COD amount = box price + delivery fee (what the customer pays on delivery)
-  const codAmountEur = order.finalPriceEur + order.deliveryFeeEur;
-
   return {
-    sender: {
-      clientId: config.clientId,
-      dropoffOfficeId: config.dropoffOfficeId,
-    },
+    sender:
+      config.senderMode === 'pickup'
+        ? { clientId: config.clientId }
+        : { clientId: config.clientId, dropoffOfficeId: config.dropoffOfficeId },
     recipient,
     service: {
       serviceId: config.serviceId,
+      ...(opts.pickupDate ? { pickupDate: opts.pickupDate } : {}),
       autoAdjustPickupDate: true,
-      additionalServices: {
-        cod: {
-          amount: codAmountEur,
-          processingType: 'CASH',
-        },
-        declaredValue: {
-          amount: codAmountEur,
-          fragile: true,
-        },
-      },
+      additionalServices: buildAdditionalServices(order),
     },
-    content: {
-      parcelsCount: 1,
-      totalWeight: parcel.weight,
-      contents: parcel.contents,
-      package: parcel.package,
-      parcels: [
-        {
-          seqNo: 1,
-          weight: parcel.weight,
-          size: parcel.size,
-          ref1: order.readableId || order.id,
-        },
-      ],
-    },
-    payment: {
-      courierServicePayer: 'SENDER',
-      declaredValuePayer: 'SENDER',
-    },
+    content: buildContent(order, parcel),
+    payment: buildPayment(),
     ref1: order.readableId || order.id,
   };
+}
+
+/**
+ * Build Speedy calculation params (POST /calculate) from a FitFlow order.
+ * The calculation API uses its own sender/recipient/service shapes.
+ */
+export async function buildCalculationRequest(
+  order: OrderForShipment,
+  parcel: ParcelConfig = FALLBACK_PARCEL,
+  opts: CalculationRequestOptions = {},
+): Promise<CalculateParams> {
+  const config = await getSpeedySenderConfig();
+  const senderMode = opts.senderMode ?? config.senderMode;
+  const addr = order.shippingAddress;
+
+  const recipient: CalculationRecipient =
+    order.deliveryMethod === 'speedy_office' || order.deliveryMethod === 'speedy_automat'
+      ? { privatePerson: true, pickupOfficeId: Number(addr.speedy_office_id) }
+      : {
+          privatePerson: true,
+          addressLocation: {
+            countryId: 100, // Bulgaria
+            siteName: addr.city?.toUpperCase(),
+            postCode: addr.postal_code,
+          },
+        };
+
+  return {
+    sender:
+      senderMode === 'pickup'
+        ? { clientId: config.clientId }
+        : { clientId: config.clientId, dropoffOfficeId: config.dropoffOfficeId },
+    recipient,
+    service: {
+      serviceIds: [config.serviceId],
+      autoAdjustPickupDate: true,
+      additionalServices: buildAdditionalServices(order),
+    },
+    content: buildContent(order, parcel),
+    payment: buildPayment(),
+  };
+}
+
+/** Load the configured parcel parameters (DB → defaults). */
+export async function loadParcelConfig(): Promise<ParcelConfig> {
+  return getParcelConfig();
 }
 
 // ============================================================================
 // Internal Helpers
 // ============================================================================
+
+function buildAdditionalServices(order: OrderForShipment): ShipmentAdditionalServices {
+  // COD amount = box price + delivery fee (what the customer pays on delivery)
+  const codAmountEur = order.finalPriceEur + order.deliveryFeeEur;
+  return {
+    cod: {
+      amount: codAmountEur,
+      processingType: 'CASH',
+    },
+    declaredValue: {
+      amount: codAmountEur,
+      fragile: true,
+    },
+  };
+}
+
+function buildContent(order: OrderForShipment, parcel: ParcelConfig): ShipmentContent {
+  return {
+    parcelsCount: 1,
+    totalWeight: parcel.weight,
+    contents: parcel.contents,
+    package: parcel.package,
+    parcels: [
+      {
+        seqNo: 1,
+        weight: parcel.weight,
+        size: parcel.size,
+        ref1: order.readableId || order.id,
+      },
+    ],
+  };
+}
+
+function buildPayment(): ShipmentPayment {
+  return {
+    courierServicePayer: 'SENDER',
+    declaredValuePayer: 'SENDER',
+  };
+}
 
 function buildRecipient(order: OrderForShipment): ShipmentParty {
   const addr = order.shippingAddress;

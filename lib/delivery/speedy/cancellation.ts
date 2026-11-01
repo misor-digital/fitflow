@@ -138,6 +138,7 @@ export async function cancelOrderWaybill(
       speedy_status: 'canceled',
       speedy_status_code: null,
       speedy_last_tracked_at: null,
+      speedy_sender_mode: null,
       delivery_fee_actual_eur: null,
     })
     .eq('id', orderId);

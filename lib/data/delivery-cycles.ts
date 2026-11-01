@@ -42,6 +42,11 @@ const DELIVERY_CONFIG_KEYS = [
   'PARCEL_CONTENTS',
   'PARCEL_PACKAGE',
   'SPEEDY_DROPOFF_OFFICE_ID',
+  'SPEEDY_SENDER_MODE',
+  'SPEEDY_PICKUP_CONTACT_NAME',
+  'SPEEDY_PICKUP_PHONE',
+  'SPEEDY_PICKUP_VISIT_END_TIME',
+  'SPEEDY_PICKUP_VISIT_FEE_EUR',
 ] as const;
 
 type DeliveryConfigKey = (typeof DELIVERY_CONFIG_KEYS)[number];
@@ -760,6 +765,29 @@ export async function updateDeliveryConfig(
     if (!value || value.length > 100) {
       throw new Error('PARCEL_CONTENTS must be 1-100 characters.');
     }
+  }
+
+  if (key === 'SPEEDY_SENDER_MODE' && value !== 'pickup' && value !== 'dropoff') {
+    throw new Error("SPEEDY_SENDER_MODE must be 'pickup' or 'dropoff'.");
+  }
+
+  if (key === 'SPEEDY_PICKUP_VISIT_END_TIME' && !/^([01]?\d|2[0-3]):[0-5]\d$/.test(value)) {
+    throw new Error('SPEEDY_PICKUP_VISIT_END_TIME must be in HH:mm format.');
+  }
+
+  if (key === 'SPEEDY_PICKUP_VISIT_FEE_EUR' && value !== '') {
+    const fee = Number(value);
+    if (!Number.isFinite(fee) || fee < 0) {
+      throw new Error('SPEEDY_PICKUP_VISIT_FEE_EUR must be empty or a number >= 0.');
+    }
+  }
+
+  if (key === 'SPEEDY_PICKUP_PHONE' && value !== '' && !/^\+?[0-9 ]{6,20}$/.test(value)) {
+    throw new Error('SPEEDY_PICKUP_PHONE must be empty or 6-20 digits (optional leading +).');
+  }
+
+  if (key === 'SPEEDY_PICKUP_CONTACT_NAME' && value.length > 60) {
+    throw new Error('SPEEDY_PICKUP_CONTACT_NAME must be at most 60 characters.');
   }
 
   const { error } = await supabaseAdmin

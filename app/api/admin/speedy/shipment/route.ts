@@ -5,6 +5,7 @@ import { supabaseAdmin } from '@/lib/supabase/admin';
 import { getOrderById } from '@/lib/data';
 import { createWaybillForOrder, SpeedyApiError } from '@/lib/delivery/speedy';
 import { bgnToEur } from '@/lib/delivery/speedy/config';
+import { isValidYmd, todaySofia } from '@/lib/delivery/speedy/dates';
 import type { OrderForShipment } from '@/lib/delivery/speedy';
 import type { ShippingAddressSnapshot } from '@/lib/supabase/types';
 
@@ -12,7 +13,7 @@ import type { ShippingAddressSnapshot } from '@/lib/supabase/types';
  * POST /api/admin/speedy/shipment
  *
  * Admin-only. Creates a Speedy waybill for a single order.
- * Body: { orderId: string }
+ * Body: { orderId: string, pickupDate?: 'YYYY-MM-DD' }
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
@@ -27,10 +28,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // 2. Parse body
     const body = await request.json();
-    const { orderId } = body as { orderId?: string };
+    const { orderId, pickupDate } = body as { orderId?: string; pickupDate?: unknown };
 
     if (!orderId || typeof orderId !== 'string') {
       return NextResponse.json({ error: 'Полето orderId е задължително.' }, { status: 400 });
+    }
+
+    if (pickupDate !== undefined && (!isValidYmd(pickupDate) || pickupDate < todaySofia())) {
+      return NextResponse.json({ error: 'Невалидна дата за взимане.' }, { status: 400 });
     }
 
     // 3. Fetch order
@@ -75,7 +80,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     };
 
     // 5. Create waybill via Speedy API
-    const result = await createWaybillForOrder(orderForShipment);
+    const result = await createWaybillForOrder(orderForShipment, {
+      pickupDate: typeof pickupDate === 'string' ? pickupDate : undefined,
+    });
 
     // 6. Convert actual cost to EUR (Speedy returns BGN)
     const actualCostEur = result.actualCost.currency === 'BGN'
@@ -90,6 +97,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         speedy_parcel_ids: result.parcelIds,
         speedy_created_at: new Date().toISOString(),
         speedy_status: 'created',
+        speedy_sender_mode: result.senderMode,
         delivery_fee_actual_eur: actualCostEur,
       })
       .eq('id', orderId);

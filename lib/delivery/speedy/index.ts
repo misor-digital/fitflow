@@ -23,6 +23,11 @@ export type {
   CreateShipmentResponse,
   CalculateParams,
   CalculateResponse,
+  CalculationSender,
+  CalculationRecipient,
+  CalculationAddressLocation,
+  CalculationService,
+  ShipmentAdditionalServices,
   PrintParams,
   TrackParams,
   TrackingOperation,
@@ -48,10 +53,24 @@ export {
   getDestinationServices,
 } from './client';
 
-export { getSpeedySenderConfig, SPEEDY_SENDER_CLIENT_ID, SPEEDY_SERVICE_ID, BGN_TO_EUR_RATE, bgnToEur, eurToBgn } from './config';
+export {
+  getSpeedySenderConfig,
+  getSpeedyPickupDefaults,
+  SPEEDY_SENDER_CLIENT_ID,
+  SPEEDY_SERVICE_ID,
+  BGN_TO_EUR_RATE,
+  bgnToEur,
+  eurToBgn,
+} from './config';
+export type { SpeedyPickupDefaults } from './config';
 
-export type { OrderForShipment, WaybillResult } from './shipments';
-export { createWaybillForOrder, buildShipmentRequest } from './shipments';
+export type {
+  OrderForShipment,
+  WaybillResult,
+  ShipmentRequestOptions,
+  CalculationRequestOptions,
+} from './shipments';
+export { createWaybillForOrder, buildShipmentRequest, buildCalculationRequest } from './shipments';
 
 export type { LabelFormat } from './labels';
 export { generateLabels, generateLabelsInBatches, mergePdfBuffers } from './labels';
