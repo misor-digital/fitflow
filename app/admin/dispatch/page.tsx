@@ -2,6 +2,11 @@ import { requireStaff } from '@/lib/auth';
 import { getDeliveryCyclesForDropdown } from '@/lib/data';
 import DispatchDashboard from './DispatchDashboard';
 import Link from 'next/link';
+import type { Metadata } from 'next';
+
+export const metadata: Metadata = {
+  title: 'Доставки | Администрация | FitFlow',
+};
 
 export default async function DispatchPage() {
   await requireStaff(['super_admin', 'admin']);
@@ -11,7 +16,7 @@ export default async function DispatchPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-[var(--color-brand-navy)]">
-          Изпращане – Speedy
+          Доставки – Speedy
         </h1>
         <Link
           href="/admin/settings/dispatch"

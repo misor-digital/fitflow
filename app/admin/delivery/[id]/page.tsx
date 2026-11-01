@@ -17,7 +17,7 @@ export async function generateMetadata({
   const cycle = await getDeliveryCycleById(id);
   return {
     title: cycle
-      ? `${cycle.title || cycle.delivery_date} | Доставки | Администрация | FitFlow`
+      ? `${cycle.title || cycle.delivery_date} | Цикли | Администрация | FitFlow`
       : 'Цикъл не е намерен | Администрация | FitFlow',
   };
 }
@@ -73,7 +73,7 @@ export default async function CycleDetailPage({
           href="/admin/delivery"
           className="text-sm text-gray-500 hover:text-gray-700"
         >
-          ← Назад към доставки
+          ← Назад към цикли
         </Link>
       </div>
 

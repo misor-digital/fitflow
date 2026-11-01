@@ -51,7 +51,8 @@ npx tsx scripts/seed-super-admin.ts --dry-run
 - **📦 Поръчки** — `/admin/orders`
 - **🔄 Абонаменти** — `/admin/subscriptions`
 - **👥 Клиенти** — `/admin/customers`
-- **📅 Доставки** — `/admin/delivery`
+- **📅 Цикли** — `/admin/delivery`
+- **🚚 Доставки** — `/admin/dispatch`
 - **🏷️ Промо кодове** — `/admin/promo`
 - **📊 Имейли** — `/admin/emails`
 - **👤 Контакти** — `/admin/emails/contacts`

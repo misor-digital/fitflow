@@ -15,7 +15,7 @@ import type { Metadata } from 'next';
 import type { DeliveryCycleRow } from '@/lib/delivery';
 
 export const metadata: Metadata = {
-  title: 'Доставки | Администрация | FitFlow',
+  title: 'Цикли | Администрация | FitFlow',
 };
 
 export default async function DeliveryPage() {
@@ -59,7 +59,7 @@ export default async function DeliveryPage() {
       <div className="flex flex-wrap justify-between items-center gap-4 mb-6">
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold text-[var(--color-brand-navy)]">
-            Доставки
+            Цикли
           </h1>
           <AdminHelpLink section="delivery-cycles" />
           <span className="bg-[var(--color-brand-navy)] text-white text-xs font-semibold px-2.5 py-1 rounded-full">

@@ -10,13 +10,13 @@ export const metadata: Metadata = {
 const settingsLinks = [
   {
     href: '/admin/settings/delivery',
-    label: 'Доставки',
+    label: 'Цикли и цени',
     description: 'Ден на доставка, дати, функционалности, цени',
     icon: '📅',
   },
   {
     href: '/admin/settings/dispatch',
-    label: 'Изпращане (Speedy)',
+    label: 'Доставки (Speedy)',
     description: 'API конфигурация, параметри на пратките',
     icon: '🚚',
   },

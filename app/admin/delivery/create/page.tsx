@@ -12,7 +12,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Нов цикъл | Доставки | Администрация | FitFlow',
+  title: 'Нов цикъл | Цикли | Администрация | FitFlow',
 };
 
 export default async function CreateDeliveryCyclePage() {
@@ -46,7 +46,7 @@ export default async function CreateDeliveryCyclePage() {
           href="/admin/delivery"
           className="text-sm text-gray-500 hover:text-gray-700"
         >
-          ← Назад към доставки
+          ← Назад към цикли
         </Link>
       </div>
 

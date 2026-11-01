@@ -7,7 +7,7 @@ import SpeedySenderConfigEditor from '@/components/admin/SpeedySenderConfigEdito
 import { getDeliveryConfigMap } from '@/lib/data';
 
 export const metadata: Metadata = {
-  title: 'Настройки за изпращане | Администрация | FitFlow',
+  title: 'Настройки за доставки (Speedy) | Администрация | FitFlow',
 };
 
 export default async function DispatchSettingsPage() {
@@ -52,7 +52,7 @@ export default async function DispatchSettingsPage() {
       </div>
 
       <h1 className="text-2xl font-bold text-[var(--color-brand-navy)] mb-6">
-        Настройки за изпращане (Speedy)
+        Настройки за доставки (Speedy)
       </h1>
 
       {/* Speedy account (read-only from env) */}
