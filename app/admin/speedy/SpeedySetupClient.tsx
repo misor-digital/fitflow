@@ -119,6 +119,9 @@ export default function SpeedySetupClient() {
                 <code className="block mt-1 bg-white px-2 py-1 rounded border text-xs">
                   SPEEDY_CLIENT_ID={clients[0].clientId}
                 </code>
+                <p className="mt-2 text-xs text-gray-600">
+                  Адресът на този клиент се използва като адрес за взимане от куриер.
+                </p>
               </div>
             )}
           </div>

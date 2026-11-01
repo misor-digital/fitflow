@@ -1,5 +1,5 @@
 -- ============================================================================
--- FitFlow - Complete Database Schema (as of 2026-02-24, Phase E1)
+-- FitFlow - Complete Database Schema (as of 2026-10-31)
 -- ============================================================================
 --
 -- This file represents the complete database schema after all migrations.
@@ -670,16 +670,37 @@ CREATE TABLE addresses (
   phone TEXT,
   CONSTRAINT addresses_first_name_not_empty CHECK (char_length(trim(first_name)) >= 1),
   CONSTRAINT addresses_last_name_not_empty CHECK (char_length(trim(last_name)) >= 1),
-  city TEXT NOT NULL,
-  postal_code TEXT NOT NULL CONSTRAINT valid_postal_code CHECK (postal_code ~ '^\d{4}$'),
-  street_address TEXT NOT NULL,
+  city TEXT,
+  postal_code TEXT,
+  street_address TEXT,
   building_entrance TEXT,
   floor TEXT,
   apartment TEXT,
   delivery_notes TEXT,
+  delivery_method TEXT NOT NULL DEFAULT 'address',
+  speedy_office_id TEXT,
+  speedy_office_name TEXT,
+  speedy_office_address TEXT,
   is_default BOOLEAN NOT NULL DEFAULT false,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+
+  CONSTRAINT valid_delivery_method CHECK (
+    delivery_method IN ('address', 'speedy_office', 'speedy_automat')
+  ),
+
+  -- Speedy office/automat addresses need office id + name; regular addresses need city/postal/street
+  CONSTRAINT valid_address_fields CHECK (
+    CASE
+      WHEN delivery_method IN ('speedy_office', 'speedy_automat') THEN
+        speedy_office_id IS NOT NULL
+        AND speedy_office_name IS NOT NULL
+      ELSE
+        city IS NOT NULL AND city <> ''
+        AND postal_code IS NOT NULL AND postal_code ~ '^\d{4}$'
+        AND street_address IS NOT NULL AND street_address <> ''
+    END
+  )
 );
 
 CREATE INDEX idx_addresses_user_id ON addresses(user_id);
@@ -704,6 +725,39 @@ CREATE POLICY addresses_service_role ON addresses
 
 GRANT SELECT, INSERT, UPDATE, DELETE ON addresses TO authenticated;
 GRANT ALL ON addresses TO service_role;
+
+
+-- ---------- speedy_pickup_requests ----------
+
+CREATE TABLE speedy_pickup_requests (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'requested', 'failed')),
+  delivery_cycle_id UUID REFERENCES delivery_cycles(id) ON DELETE SET NULL,
+  speedy_order_ids BIGINT[],
+  pickup_date DATE NOT NULL,
+  visit_end_time TEXT NOT NULL CHECK (visit_end_time ~ '^([01]?\d|2[0-3]):[0-5]\d$'),
+  contact_name TEXT,
+  phone_number TEXT,
+  pickup_period_from TIMESTAMPTZ,
+  pickup_period_to TIMESTAMPTZ,
+  shipment_count INTEGER NOT NULL DEFAULT 0,
+  visit_fee_eur NUMERIC(6,2),
+  error_message TEXT,
+  requested_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+COMMENT ON TABLE speedy_pickup_requests IS 'Courier pickup requests sent to Speedy (POST /pickup)';
+
+CREATE TRIGGER trigger_speedy_pickup_requests_updated_at
+  BEFORE UPDATE ON speedy_pickup_requests FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+ALTER TABLE speedy_pickup_requests ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY speedy_pickup_requests_service ON speedy_pickup_requests
+  FOR ALL USING (auth.role() = 'service_role');
 
 
 -- ---------- orders ----------
@@ -748,6 +802,17 @@ CREATE TABLE orders (
     CHECK (subscription_conversion_status IN ('pending', 'converted', 'expired')),
   converted_to_subscription_id UUID UNIQUE                      -- FK to subscription created from this order
     REFERENCES subscriptions(id) ON DELETE SET NULL,
+  delivery_fee_eur NUMERIC(6,2) NOT NULL DEFAULT 0,
+  delivery_fee_actual_eur NUMERIC(6,2),
+  speedy_waybill_id TEXT,
+  speedy_parcel_ids TEXT[],
+  speedy_created_at TIMESTAMPTZ,
+  speedy_status TEXT,
+  speedy_status_code INTEGER,
+  speedy_last_tracked_at TIMESTAMPTZ,
+  speedy_sender_mode TEXT CHECK (speedy_sender_mode IN ('pickup', 'dropoff')),
+  speedy_pickup_request_id UUID REFERENCES speedy_pickup_requests(id) ON DELETE SET NULL,
+  speedy_pickup_requested_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
 
@@ -756,12 +821,13 @@ CREATE TABLE orders (
   ),
 
   CONSTRAINT valid_delivery_method CHECK (
-    delivery_method IN ('address', 'speedy_office')
+    delivery_method IN ('address', 'speedy_office', 'speedy_automat')
   ),
 
+  -- Automat uses the same shape as office (speedy_office_id, speedy_office_name, phone)
   CONSTRAINT valid_shipping_address CHECK (
     CASE
-      WHEN delivery_method = 'speedy_office' THEN
+      WHEN delivery_method IN ('speedy_office', 'speedy_automat') THEN
         shipping_address ? 'first_name'
         AND shipping_address ? 'last_name'
         AND shipping_address ? 'phone'
@@ -783,7 +849,7 @@ CREATE TABLE orders (
 COMMENT ON TABLE orders IS 'Customer orders for FitFlow subscription boxes';
 COMMENT ON COLUMN orders.shipping_address IS 'Frozen address snapshot at order time - immutable source of truth';
 COMMENT ON COLUMN orders.address_id IS 'Optional back-reference to saved address - SET NULL on delete';
-COMMENT ON COLUMN orders.delivery_method IS 'Delivery method: address (to door) or speedy_office (Speedy office pickup)';
+COMMENT ON COLUMN orders.delivery_method IS 'Delivery method: address (to door), speedy_office (Speedy office pickup) or speedy_automat (Speedy locker pickup)';
 COMMENT ON COLUMN orders.customer_email IS 'Customer email frozen at order time - used for guest tracking';
 COMMENT ON COLUMN orders.delivery_cycle_id IS 'FK to delivery cycle - set for subscription-generated, mystery, and revealed orders';
 COMMENT ON COLUMN orders.order_type IS 'Order origin: subscription (auto-generated), onetime-mystery (ships with cycle batch), onetime-revealed (ships ASAP, past cycle contents), direct (legacy/standard)';
@@ -793,6 +859,10 @@ COMMENT ON COLUMN orders.subscription_conversion_token IS 'One-time UUID token f
 COMMENT ON COLUMN orders.subscription_conversion_token_expires_at IS 'Token expiry (default 90 days from generation).';
 COMMENT ON COLUMN orders.subscription_conversion_status IS 'NULL = not targeted, pending = email sent, converted = subscription created, expired = token expired.';
 COMMENT ON COLUMN orders.converted_to_subscription_id IS 'FK to the subscription created from this order. UNIQUE enforces one-to-one.';
+COMMENT ON COLUMN orders.delivery_fee_eur IS 'Fixed delivery fee charged to customer (EUR)';
+COMMENT ON COLUMN orders.delivery_fee_actual_eur IS 'Actual courier cost from Speedy API (filled at waybill creation)';
+COMMENT ON COLUMN orders.speedy_sender_mode IS 'How the parcel reaches Speedy: pickup (courier collects from sender address) or dropoff (sender drops at office)';
+COMMENT ON COLUMN orders.speedy_pickup_request_id IS 'Pickup request that includes this waybill; once set the waybill can no longer be cancelled via API';
 
 CREATE INDEX idx_orders_user_id ON orders(user_id);
 CREATE INDEX idx_orders_order_number ON orders(order_number);
@@ -805,6 +875,7 @@ CREATE INDEX idx_orders_order_type ON orders(order_type);
 CREATE INDEX idx_orders_delivery_method ON orders(delivery_method);
 CREATE INDEX idx_orders_subscription ON orders(subscription_id) WHERE subscription_id IS NOT NULL;
 CREATE INDEX idx_orders_sub_conversion_token ON orders(subscription_conversion_token) WHERE subscription_conversion_token IS NOT NULL;
+CREATE INDEX idx_orders_speedy_pickup_request ON orders(speedy_pickup_request_id) WHERE speedy_pickup_request_id IS NOT NULL;
 
 CREATE TRIGGER trigger_orders_updated_at
   BEFORE UPDATE ON orders FOR EACH ROW
@@ -819,6 +890,28 @@ CREATE POLICY orders_service_role ON orders
 
 GRANT SELECT ON orders TO authenticated;
 GRANT ALL ON orders TO service_role;
+
+
+-- ---------- delivery_pricing ----------
+
+CREATE TABLE delivery_pricing (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  delivery_method TEXT NOT NULL UNIQUE CHECK (delivery_method IN ('address', 'speedy_office', 'speedy_automat')),
+  price_eur NUMERIC(6,2) NOT NULL,
+  label_bg TEXT NOT NULL,
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+COMMENT ON TABLE delivery_pricing IS 'Configurable fixed delivery pricing per method';
+
+ALTER TABLE delivery_pricing ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY delivery_pricing_read ON delivery_pricing
+  FOR SELECT USING (true);
+
+CREATE POLICY delivery_pricing_service_write ON delivery_pricing
+  FOR ALL USING (auth.role() = 'service_role');
 
 
 -- ---------- order_status_history ----------

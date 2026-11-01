@@ -8,11 +8,12 @@ import {
   formatMonthYear,
 } from '@/lib/delivery';
 import { CreateCycleForm } from '@/components/admin/CreateCycleForm';
+import { toLocalYmd } from '@/lib/utils/sofia-time';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Нов цикъл | Доставки | Администрация | FitFlow',
+  title: 'Нов цикъл | Цикли | Администрация | FitFlow',
 };
 
 export default async function CreateDeliveryCyclePage() {
@@ -30,7 +31,7 @@ export default async function CreateDeliveryCyclePage() {
   const existingDates = new Set(existingCycles.map((c) => c.delivery_date));
   const availableDates = suggestedDates
     .map((d) => {
-      const iso = d.toISOString().split('T')[0];
+      const iso = toLocalYmd(d);
       return {
         value: iso,
         label: formatDeliveryDate(iso),
@@ -46,7 +47,7 @@ export default async function CreateDeliveryCyclePage() {
           href="/admin/delivery"
           className="text-sm text-gray-500 hover:text-gray-700"
         >
-          ← Назад към доставки
+          ← Назад към цикли
         </Link>
       </div>
 
@@ -54,7 +55,11 @@ export default async function CreateDeliveryCyclePage() {
         Нов цикъл на доставка
       </h1>
 
-      <CreateCycleForm availableDates={availableDates} />
+      <CreateCycleForm
+        availableDates={availableDates}
+        cutoffDaysBefore={config.orderCutoffDaysBefore}
+        cutoffTime={config.orderCutoffTime}
+      />
     </div>
   );
 }

@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from 'next/server';
 import { verifySession } from '@/lib/auth/dal';
 import { STAFF_MANAGEMENT_ROLES } from '@/lib/auth/permissions';
 import { supabaseAdmin } from '@/lib/supabase/admin';
+import { getConfiguredSenderMode, getSpeedyPickupDefaults } from '@/lib/delivery/speedy/config';
 
 /**
  * GET /api/admin/speedy/dispatch?cycleId=xxx
@@ -26,7 +27,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const { data: orders, error } = await supabaseAdmin
       .from('orders')
       .select(
-        'id, order_number, user_id, customer_first_name, customer_last_name, delivery_method, shipping_address, speedy_waybill_id, speedy_parcel_ids, speedy_status, delivery_fee_eur, delivery_fee_actual_eur',
+        'id, order_number, user_id, customer_first_name, customer_last_name, delivery_method, shipping_address, speedy_waybill_id, speedy_parcel_ids, speedy_status, delivery_fee_eur, delivery_fee_actual_eur, speedy_sender_mode, speedy_pickup_request_id, speedy_pickup_requested_at, speedy_pickup_requests(pickup_date, pickup_period_from, pickup_period_to, status)',
       )
       .eq('delivery_cycle_id', cycleId)
       .neq('status', 'cancelled')
@@ -37,7 +38,16 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: 'Грешка при извличане на поръчки.' }, { status: 500 });
     }
 
-    return NextResponse.json({ orders: orders ?? [] });
+    const [senderMode, pickupDefaults] = await Promise.all([
+      getConfiguredSenderMode(),
+      getSpeedyPickupDefaults(),
+    ]);
+
+    return NextResponse.json({
+      orders: orders ?? [],
+      senderMode,
+      visitFeeEur: pickupDefaults.visitFeeEur,
+    });
   } catch (error) {
     console.error('Dispatch API error:', error);
     return NextResponse.json(

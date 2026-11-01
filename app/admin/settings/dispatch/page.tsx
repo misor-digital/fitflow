@@ -3,10 +3,11 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import SpeedySetupClient from '@/app/admin/speedy/SpeedySetupClient';
 import ParcelConfigEditor from '@/components/admin/ParcelConfigEditor';
+import SpeedySenderConfigEditor from '@/components/admin/SpeedySenderConfigEditor';
 import { getDeliveryConfigMap } from '@/lib/data';
 
 export const metadata: Metadata = {
-  title: 'Настройки за изпращане | Администрация | FitFlow',
+  title: 'Настройки за доставки (Speedy) | Администрация | FitFlow',
 };
 
 export default async function DispatchSettingsPage() {
@@ -26,7 +27,17 @@ export default async function DispatchSettingsPage() {
     height: configMap.PARCEL_HEIGHT_CM || '10',
     contents: configMap.PARCEL_CONTENTS || 'КУТИЯ СЪС СПОРТНИ СТОКИ',
     package: configMap.PARCEL_PACKAGE || 'КАШОН',
-    dropoffOfficeId: configMap.SPEEDY_DROPOFF_OFFICE_ID || '189',
+  };
+  const envSenderMode = process.env.SPEEDY_SENDER_MODE;
+  const senderConfig = {
+    senderMode: (configMap.SPEEDY_SENDER_MODE === 'dropoff' || configMap.SPEEDY_SENDER_MODE === 'pickup'
+      ? configMap.SPEEDY_SENDER_MODE
+      : envSenderMode === 'dropoff' ? 'dropoff' : 'pickup') as 'pickup' | 'dropoff',
+    dropoffOfficeId: configMap.SPEEDY_DROPOFF_OFFICE_ID || process.env.SPEEDY_DROPOFF_OFFICE_ID || '189',
+    contactName: configMap.SPEEDY_PICKUP_CONTACT_NAME || '',
+    phone: configMap.SPEEDY_PICKUP_PHONE || '',
+    visitEndTime: configMap.SPEEDY_PICKUP_VISIT_END_TIME || '17:00',
+    visitFeeEur: configMap.SPEEDY_PICKUP_VISIT_FEE_EUR || '',
   };
 
   return (
@@ -41,7 +52,7 @@ export default async function DispatchSettingsPage() {
       </div>
 
       <h1 className="text-2xl font-bold text-[var(--color-brand-navy)] mb-6">
-        Настройки за изпращане (Speedy)
+        Настройки за доставки (Speedy)
       </h1>
 
       {/* Speedy account (read-only from env) */}
@@ -66,6 +77,14 @@ export default async function DispatchSettingsPage() {
             Тези стойности се задават в <code>.env</code>. За промяна е необходим deploy.
           </p>
         </div>
+      </section>
+
+      {/* Sender mode + courier pickup defaults (editable from DB) */}
+      <section className="mb-8">
+        <h2 className="text-lg font-semibold text-[var(--color-brand-navy)] mb-3">
+          Изпращане и куриер
+        </h2>
+        <SpeedySenderConfigEditor initialConfig={senderConfig} />
       </section>
 
       {/* Parcel defaults (editable from DB) */}

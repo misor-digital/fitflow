@@ -8,7 +8,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Настройки за доставки | Администрация | FitFlow',
+  title: 'Настройки за цикли и цени | Администрация | FitFlow',
 };
 
 export default async function DeliverySettingsPage() {
@@ -32,7 +32,7 @@ export default async function DeliverySettingsPage() {
       </div>
 
       <h1 className="text-2xl font-bold text-[var(--color-brand-navy)] mb-6">
-        Настройки за доставки
+        Настройки за цикли и цени
       </h1>
 
       <DeliverySettingsForm config={config} pricing={pricing} />

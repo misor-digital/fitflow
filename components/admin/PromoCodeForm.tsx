@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { parseSofiaDateTimeLocal, toSofiaDateTimeLocal } from '@/lib/utils/sofia-time';
 
 interface PromoCodeFormProps {
   initialData?: {
@@ -32,15 +33,7 @@ interface PromoFormState {
 }
 
 function toDatetimeLocal(iso: string | null): string {
-  if (!iso) return '';
-  const d = new Date(iso);
-  if (isNaN(d.getTime())) return '';
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  const hours = String(d.getHours()).padStart(2, '0');
-  const minutes = String(d.getMinutes()).padStart(2, '0');
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
+  return iso ? toSofiaDateTimeLocal(iso) : '';
 }
 
 const INPUT_CLASS =
@@ -155,12 +148,9 @@ export default function PromoCodeForm({ initialData }: PromoCodeFormProps) {
       discount_percent: parseFloat(formState.discountPercent),
       description: formState.description.trim() || null,
       is_enabled: formState.isEnabled,
-      starts_at: formState.startsAt
-        ? new Date(formState.startsAt).toISOString()
-        : null,
-      ends_at: formState.endsAt
-        ? new Date(formState.endsAt).toISOString()
-        : null,
+      // datetime-local values are Bulgarian wall time
+      starts_at: parseSofiaDateTimeLocal(formState.startsAt)?.toISOString() ?? null,
+      ends_at: parseSofiaDateTimeLocal(formState.endsAt)?.toISOString() ?? null,
       max_uses: formState.maxUses ? parseInt(formState.maxUses, 10) : null,
       max_uses_per_user: formState.maxUsesPerUser
         ? parseInt(formState.maxUsesPerUser, 10)

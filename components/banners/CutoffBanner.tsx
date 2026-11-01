@@ -15,6 +15,7 @@ import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { useDeliveryStore } from '@/store/deliveryStore';
 import SlidingBanner from '@/components/SlidingBanner';
+import { sofiaParts } from '@/lib/utils/sofia-time';
 
 const MS_PER_DAY = 86_400_000;
 
@@ -27,11 +28,9 @@ function formatDeliveryDateShort(dateStr: string): string {
 function formatCutoffShort(isoStr: string): string {
   const d = new Date(isoStr);
   if (isNaN(d.getTime())) return isoStr;
-  const dd = String(d.getDate()).padStart(2, '0');
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const hh = String(d.getHours()).padStart(2, '0');
-  const min = String(d.getMinutes()).padStart(2, '0');
-  return `${dd}.${mm}, ${hh}:${min}ч`;
+  // Bulgarian time, regardless of the visitor's browser time zone
+  const p = sofiaParts(d);
+  return `${p.day}.${p.month}, ${p.hour}:${p.minute}ч`;
 }
 
 export function CutoffBanner() {

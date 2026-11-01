@@ -2,7 +2,11 @@
  * Shared date/time formatting utilities (Bulgarian locale).
  *
  * Import from '@/lib/utils/date' everywhere instead of defining local helpers.
+ * All formats use Bulgarian time (Europe/Sofia), so server-rendered pages,
+ * emails and browsers in other time zones show the same wall-clock time.
  */
+
+import { SOFIA_TZ } from './sofia-time';
 
 // ---------------------------------------------------------------------------
 // Short numeric formats
@@ -13,6 +17,7 @@ export function formatDateShort(iso: string): string {
   const d = new Date(iso);
   if (isNaN(d.getTime())) return iso;
   return d.toLocaleDateString('bg-BG', {
+    timeZone: SOFIA_TZ,
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
@@ -24,6 +29,7 @@ export function formatDateTimeShort(iso: string): string {
   const d = new Date(iso);
   if (isNaN(d.getTime())) return iso;
   return d.toLocaleString('bg-BG', {
+    timeZone: SOFIA_TZ,
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
@@ -37,6 +43,7 @@ export function formatDateCompact(iso: string): string {
   const d = new Date(iso);
   if (isNaN(d.getTime())) return iso;
   return d.toLocaleDateString('bg-BG', {
+    timeZone: SOFIA_TZ,
     day: '2-digit',
     month: '2-digit',
   });
@@ -51,6 +58,7 @@ export function formatDateLong(iso: string): string {
   const d = new Date(iso);
   if (isNaN(d.getTime())) return iso;
   return d.toLocaleDateString('bg-BG', {
+    timeZone: SOFIA_TZ,
     day: 'numeric',
     month: 'long',
     year: 'numeric',
@@ -62,6 +70,7 @@ export function formatDateTimeLong(iso: string): string {
   const d = new Date(iso);
   if (isNaN(d.getTime())) return iso;
   return d.toLocaleDateString('bg-BG', {
+    timeZone: SOFIA_TZ,
     day: 'numeric',
     month: 'long',
     year: 'numeric',

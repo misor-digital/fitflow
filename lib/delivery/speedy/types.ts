@@ -28,8 +28,10 @@ export interface SpeedyRequestBase {
 export interface SpeedyErrorBody {
   error: {
     message: string;
-    context: string;
-    id?: number;
+    context?: string;
+    id?: string;
+    code?: number;
+    component?: string;
   };
 }
 
@@ -109,16 +111,20 @@ export interface ShipmentParty {
 
 export interface ShipmentService {
   serviceId: number;
+  /** yyyy-MM-dd; defaults to today on Speedy's side */
+  pickupDate?: string;
   autoAdjustPickupDate?: boolean;
-  additionalServices?: {
-    cod?: {
-      amount: number;
-      processingType?: string;
-    };
-    declaredValue?: {
-      amount: number;
-      fragile?: boolean;
-    };
+  additionalServices?: ShipmentAdditionalServices;
+}
+
+export interface ShipmentAdditionalServices {
+  cod?: {
+    amount: number;
+    processingType?: string;
+  };
+  declaredValue?: {
+    amount: number;
+    fragile?: boolean;
   };
 }
 
@@ -206,10 +212,38 @@ export interface CreateShipmentResponse {
 // Request / Response — Calculate
 // ============================================================================
 
+export interface CalculationSender {
+  clientId?: number;
+  privatePerson?: boolean;
+  addressLocation?: CalculationAddressLocation;
+  dropoffOfficeId?: number;
+}
+
+export interface CalculationAddressLocation {
+  countryId?: number;
+  siteId?: number;
+  siteName?: string;
+  postCode?: string;
+}
+
+export interface CalculationRecipient {
+  clientId?: number;
+  privatePerson?: boolean;
+  addressLocation?: CalculationAddressLocation;
+  pickupOfficeId?: number;
+}
+
+export interface CalculationService {
+  serviceIds: number[];
+  pickupDate?: string;
+  autoAdjustPickupDate?: boolean;
+  additionalServices?: ShipmentAdditionalServices;
+}
+
 export interface CalculateParams {
-  sender: ShipmentParty;
-  recipient: ShipmentParty;
-  service: ShipmentService;
+  sender: CalculationSender;
+  recipient: CalculationRecipient;
+  service: CalculationService;
   content: ShipmentContent;
   payment: ShipmentPayment;
 }
@@ -225,6 +259,7 @@ export interface CalculateResponse {
     };
     deliveryDeadline: string;
     pickupDate: string;
+    error?: SpeedyErrorBody['error'];
   }>;
 }
 
@@ -269,8 +304,8 @@ export interface TrackResponse {
 // ============================================================================
 
 export interface CancelShipmentParams {
-  parcels: Array<{ id: string }>;
-  comment?: string;
+  shipmentId: string;
+  comment: string;
 }
 
 // ============================================================================
@@ -310,4 +345,55 @@ export interface DestinationService {
 
 export interface DestinationServicesResponse {
   services: DestinationService[];
+}
+
+// ============================================================================
+// Request / Response — Pickup
+// ============================================================================
+
+export interface ShipmentPhoneNumber {
+  number: string;
+  extension?: string;
+}
+
+export type PickupScope =
+  | 'EXPLICIT_SHIPMENT_ID_LIST'
+  | 'ALL_CREATED_BY_LOGGED_USER'
+  | 'ALL_CREATED_BY_SAME_CLIENT'
+  | 'ALL_CREATED_BY_SAME_CONTRACT_USERS';
+
+export interface PickupRequestParams {
+  /** yyyy-MM-dd'T'HH:mm:ssZ; defaults to now on Speedy's side */
+  pickupDateTime?: string;
+  autoAdjustPickupDate?: boolean;
+  pickupScope?: PickupScope;
+  explicitShipmentIdList?: string[];
+  /** HH:mm — latest time the courier may visit */
+  visitEndTime: string;
+  contactName?: string;
+  phoneNumber?: ShipmentPhoneNumber;
+}
+
+export interface PickupOrder {
+  id: number;
+  shipmentIds: string[];
+  pickupPeriodFrom?: string;
+  pickupPeriodTo?: string;
+}
+
+export interface PickupResponse {
+  orders: PickupOrder[];
+}
+
+export interface PickupTermsParams {
+  serviceId: number;
+  /** yyyy-MM-dd, not before today */
+  startingDate?: string;
+  sender?: CalculationSender;
+  senderHasPayment?: boolean;
+}
+
+export interface PickupTermsResponse {
+  /** yyyy-MM-dd'T'HH:mm:ssZ — one per day pickup is allowed */
+  cutoffs: string[];
 }

@@ -41,6 +41,8 @@ export {
   formatCutoffAt,
   calculateSendDate,
   calculateDefaultCutoffAt,
+  DEFAULT_CUTOFF_DAYS_BEFORE,
+  DEFAULT_CUTOFF_TIME,
 
   // Constants
   CYCLE_STATUS_LABELS,

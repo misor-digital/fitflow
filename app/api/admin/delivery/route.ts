@@ -3,6 +3,7 @@ import { verifySession } from '@/lib/auth/dal';
 import { STAFF_MANAGEMENT_ROLES } from '@/lib/auth/permissions';
 import { createDeliveryCycle, getDeliveryCycles } from '@/lib/data';
 import { revalidateDataTag, TAG_DELIVERY } from '@/lib/data/cache-tags';
+import { parseSofiaDateTimeLocal } from '@/lib/utils/sofia-time';
 
 // ============================================================================
 // POST /api/admin/delivery - Create delivery cycle
@@ -38,8 +39,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         { status: 400 },
       );
     }
-    const cutoffDate = new Date(order_cutoff_at);
-    if (isNaN(cutoffDate.getTime())) {
+    // datetime-local values are Bulgarian wall time, independent of the server time zone
+    const cutoffDate = parseSofiaDateTimeLocal(order_cutoff_at);
+    if (!cutoffDate) {
       return NextResponse.json(
         { error: 'Невалиден краен срок за поръчки.' },
         { status: 400 },

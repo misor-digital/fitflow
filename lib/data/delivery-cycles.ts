@@ -21,6 +21,7 @@ import type {
   CycleDropdownOption,
 } from '@/lib/supabase/types';
 import { TAG_DELIVERY, TAG_SITE_CONFIG } from './cache-tags';
+import { todaySofia } from '@/lib/utils/sofia-time';
 
 // ============================================================================
 // Delivery-related site_config keys
@@ -32,6 +33,8 @@ const DELIVERY_CONFIG_KEYS = [
   'SUBSCRIPTION_ENABLED',
   'REVEALED_BOX_ENABLED',
   'ORDER_CUTOFF_DISPLAY_DAYS',
+  'ORDER_CUTOFF_DAYS_BEFORE',
+  'ORDER_CUTOFF_TIME',
   'CUTOFF_WIDGETS_ENABLED',
   'CUTOFF_BANNER_ENABLED',
   'CUTOFF_POPUP_ENABLED',
@@ -42,6 +45,11 @@ const DELIVERY_CONFIG_KEYS = [
   'PARCEL_CONTENTS',
   'PARCEL_PACKAGE',
   'SPEEDY_DROPOFF_OFFICE_ID',
+  'SPEEDY_SENDER_MODE',
+  'SPEEDY_PICKUP_CONTACT_NAME',
+  'SPEEDY_PICKUP_PHONE',
+  'SPEEDY_PICKUP_VISIT_END_TIME',
+  'SPEEDY_PICKUP_VISIT_FEE_EUR',
 ] as const;
 
 type DeliveryConfigKey = (typeof DELIVERY_CONFIG_KEYS)[number];
@@ -117,7 +125,7 @@ export const getUpcomingCycle = cache(
         .from('delivery_cycles')
         .select('*')
         .eq('status', 'upcoming')
-        .gte('delivery_date', new Date().toISOString().split('T')[0])
+        .gte('delivery_date', todaySofia())
         .order('delivery_date', { ascending: true })
         .limit(1)
         .maybeSingle();
@@ -146,7 +154,7 @@ export const getUpcomingCycles = cache(
         .from('delivery_cycles')
         .select('*')
         .eq('status', 'upcoming')
-        .gte('delivery_date', new Date().toISOString().split('T')[0])
+        .gte('delivery_date', todaySofia())
         .order('delivery_date', { ascending: true });
 
       if (error) {
@@ -261,7 +269,7 @@ export const getDeliveryCyclesForDropdown = cache(
  * Prefers the nearest upcoming cycle; falls back to latest delivered.
  */
 export async function getCurrentCycleId(): Promise<string | null> {
-  const today = new Date().toISOString().split('T')[0];
+  const today = todaySofia();
 
   // 1. Nearest upcoming cycle
   const { data: upcoming } = await supabaseAdmin
@@ -730,6 +738,16 @@ export async function updateDeliveryConfig(
     }
   }
 
+  if (key === 'ORDER_CUTOFF_DAYS_BEFORE') {
+    if (!/^\d+$/.test(value) || Number(value) > 14) {
+      throw new Error('ORDER_CUTOFF_DAYS_BEFORE must be a whole number between 0 and 14.');
+    }
+  }
+
+  if (key === 'ORDER_CUTOFF_TIME' && !/^([01]\d|2[0-3]):[0-5]\d$/.test(value)) {
+    throw new Error('ORDER_CUTOFF_TIME must be in HH:mm format.');
+  }
+
   if (
     key === 'SUBSCRIPTION_ENABLED' ||
     key === 'REVEALED_BOX_ENABLED' ||
@@ -760,6 +778,29 @@ export async function updateDeliveryConfig(
     if (!value || value.length > 100) {
       throw new Error('PARCEL_CONTENTS must be 1-100 characters.');
     }
+  }
+
+  if (key === 'SPEEDY_SENDER_MODE' && value !== 'pickup' && value !== 'dropoff') {
+    throw new Error("SPEEDY_SENDER_MODE must be 'pickup' or 'dropoff'.");
+  }
+
+  if (key === 'SPEEDY_PICKUP_VISIT_END_TIME' && !/^([01]?\d|2[0-3]):[0-5]\d$/.test(value)) {
+    throw new Error('SPEEDY_PICKUP_VISIT_END_TIME must be in HH:mm format.');
+  }
+
+  if (key === 'SPEEDY_PICKUP_VISIT_FEE_EUR' && value !== '') {
+    const fee = Number(value);
+    if (!Number.isFinite(fee) || fee < 0) {
+      throw new Error('SPEEDY_PICKUP_VISIT_FEE_EUR must be empty or a number >= 0.');
+    }
+  }
+
+  if (key === 'SPEEDY_PICKUP_PHONE' && value !== '' && !/^\+?[0-9 ]{6,20}$/.test(value)) {
+    throw new Error('SPEEDY_PICKUP_PHONE must be empty or 6-20 digits (optional leading +).');
+  }
+
+  if (key === 'SPEEDY_PICKUP_CONTACT_NAME' && value.length > 60) {
+    throw new Error('SPEEDY_PICKUP_CONTACT_NAME must be at most 60 characters.');
   }
 
   const { error } = await supabaseAdmin

@@ -7,6 +7,7 @@ import {
   deleteDeliveryCycle,
 } from '@/lib/data';
 import { revalidateDataTag, TAG_DELIVERY } from '@/lib/data/cache-tags';
+import { parseSofiaDateTimeLocal } from '@/lib/utils/sofia-time';
 
 // ============================================================================
 // PATCH /api/admin/delivery/:id - Update cycle fields
@@ -63,8 +64,9 @@ export async function PATCH(
           { status: 400 },
         );
       }
-      const cutoffDate = new Date(body.order_cutoff_at);
-      if (isNaN(cutoffDate.getTime())) {
+      // datetime-local values are Bulgarian wall time, independent of the server time zone
+      const cutoffDate = parseSofiaDateTimeLocal(body.order_cutoff_at);
+      if (!cutoffDate) {
         return NextResponse.json(
           { error: 'Невалиден краен срок за поръчки.' },
           { status: 400 },

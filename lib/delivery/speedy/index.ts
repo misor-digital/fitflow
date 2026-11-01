@@ -23,6 +23,11 @@ export type {
   CreateShipmentResponse,
   CalculateParams,
   CalculateResponse,
+  CalculationSender,
+  CalculationRecipient,
+  CalculationAddressLocation,
+  CalculationService,
+  ShipmentAdditionalServices,
   PrintParams,
   TrackParams,
   TrackingOperation,
@@ -33,6 +38,13 @@ export type {
   DestinationServicesParams,
   DestinationService,
   DestinationServicesResponse,
+  ShipmentPhoneNumber,
+  PickupScope,
+  PickupRequestParams,
+  PickupOrder,
+  PickupResponse,
+  PickupTermsParams,
+  PickupTermsResponse,
 } from './types';
 
 export {
@@ -46,12 +58,32 @@ export {
   cancelShipment,
   getContractClients,
   getDestinationServices,
+  requestPickup,
+  getPickupTerms,
 } from './client';
 
-export { getSpeedySenderConfig, SPEEDY_SENDER_CLIENT_ID, SPEEDY_SERVICE_ID, BGN_TO_EUR_RATE, bgnToEur, eurToBgn } from './config';
+export {
+  getSpeedySenderConfig,
+  getConfiguredSenderMode,
+  getSpeedyPickupDefaults,
+  SPEEDY_SENDER_CLIENT_ID,
+  SPEEDY_SERVICE_ID,
+  BGN_TO_EUR_RATE,
+  bgnToEur,
+  eurToBgn,
+} from './config';
+export type { SpeedyPickupDefaults } from './config';
 
-export type { OrderForShipment, WaybillResult } from './shipments';
-export { createWaybillForOrder, buildShipmentRequest } from './shipments';
+export type {
+  OrderForShipment,
+  WaybillResult,
+  ShipmentRequestOptions,
+  CalculationRequestOptions,
+} from './shipments';
+export { createWaybillForOrder, buildShipmentRequest, buildCalculationRequest, toOrderForShipment } from './shipments';
+
+export type { OrderCostCalculation } from './estimates';
+export { calculateOrderCost, estimateOrderCost } from './estimates';
 
 export type { LabelFormat } from './labels';
 export { generateLabels, generateLabelsInBatches, mergePdfBuffers } from './labels';
@@ -69,5 +101,23 @@ export {
   trackParcelFull,
 } from './tracking';
 
-export type { CancellationResult } from './cancellation';
-export { cancelWaybill } from './cancellation';
+export type { CancelOrderWaybillResult, CancelOrderWaybillFailureReason, CancelActor } from './cancellation';
+export { cancelWaybill, cancelOrderWaybill, normalizeCancelComment } from './cancellation';
+
+export { mapCancelError } from './errors';
+
+export type {
+  PickupCutoff,
+  RequestPickupInput,
+  RequestPickupResult,
+  PickupOrderRef,
+  PickupSkippedOrder,
+} from './pickup';
+export {
+  PickupRequestError,
+  getPickupCutoffs,
+  requestPickupForOrders,
+  sofiaOffset,
+  toSpeedyDateTime,
+  todaySofia,
+} from './pickup';
